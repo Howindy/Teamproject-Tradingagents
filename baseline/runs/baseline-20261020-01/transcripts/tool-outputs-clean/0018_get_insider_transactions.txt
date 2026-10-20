@@ -1,0 +1,4 @@
+# Insider Transactions for NVDA
+# Point-in-time as of: 2026-10-19
+
+Insider transactions are withheld for this date. This vendor dates a trade by when it happened and reports no filing date, so it cannot show which trades were public on 2026-10-19.

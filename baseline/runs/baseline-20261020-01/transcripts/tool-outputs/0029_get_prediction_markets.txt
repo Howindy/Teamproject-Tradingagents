@@ -1,0 +1,1 @@
+content='Prediction-market odds are withheld for 2026-10-19. Polymarket serves only live odds on open markets, with no historical vintage, so serving them would put post-decision information into a 2026-10-19 analysis.' name='get_prediction_markets' tool_call_id='call_3d51188233ac4dfdb877a5c4'

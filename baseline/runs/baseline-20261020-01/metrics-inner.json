@@ -1,0 +1,23 @@
+{
+  "run_id": "baseline-20261020-01",
+  "started_at": "2026-10-20T19:28:54+08:00",
+  "finished_at": "2026-10-20T19:32:09+08:00",
+  "elapsed_monotonic_seconds": 194.41,
+  "exit_code": 0,
+  "error": null,
+  "llm_calls": 19,
+  "tool_calls": 31,
+  "tokens_in": 156541,
+  "tokens_out": 27639,
+  "llm_usage_missing": 0,
+  "retry_events": 0,
+  "llm_error_events": 0,
+  "tool_error_events": 0,
+  "tool_event_count": 31,
+  "prefetch_event_count": 3,
+  "final_state_captured": true,
+  "final_rating": "Hold",
+  "final_decision_preview": "**Rating**: Hold **Executive Summary**: Maintain the current NVDA position at a standard allocation without adding or trimming at current levels (~$217). The near-term risk/reward is skewed (~5% upside to the $223 confluence versus ~7% downside to the 200-day SMA at $202.81 and …",
+  "module_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/__init__.py",
+  "module_version": "0.7.0"
+}

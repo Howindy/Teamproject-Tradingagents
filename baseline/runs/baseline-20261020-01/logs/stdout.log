@@ -1,0 +1,41 @@
+╭────────────────────────── Welcome to TradingAgents ──────────────────────────╮
+│                                                                              │
+│                                                                              │
+│    ______               ___             ___                    __            │
+│   /_  __/________ _____/ (_)___  ____ _/   | ____ ____  ____  / /______      │
+│    / / / ___/ __ `/ __  / / __ \/ __ `/ /| |/ __ `/ _ \/ __ \/ __/ ___/      │
+│   / / / /  / /_/ / /_/ / / / / / /_/ / ___ / /_/ /  __/ / / / /_(__  )       │
+│  /_/ /_/   \__,_/\__,_/_/_/ /_/\__, /_/  |_\__, /\___/_/ /_/\__/____/        │
+│                               /____/      /____/                             │
+│                                                                              │
+│  TradingAgents: Multi-Agents LLM Financial Trading Framework - CLI           │
+│                                                                              │
+│  Workflow Steps:                                                             │
+│  I. Analyst Team → II. Research Team → III. Trader → IV. Risk Management →   │
+│  V. Portfolio Management                                                     │
+│                                                                              │
+│  Built by [Tauric Research](https://github.com/TauricResearch)               │
+│                                                                              │
+╰──────────────── Multi-Agents LLM Financial Trading Framework ────────────────╯
+
+
+✓ Ticker from --ticker: NVDA
+✓ Analysis date from --date: 2026-10-19
+✓ Output language from environment: English
+Selected analysts: market, social, news, fundamentals
+✓ Research depth from environment: 1 debate / 1 risk rounds
+✓ LLM provider from environment: openai_compatible
+✓ Backend URL: https://llm.cs.cityu.edu.hk/v1
+✓ Thinking agents from environment: quick=CS5351/DeepSeek-V4-Flash, 
+deep=CS5351/DeepSeek-V4-Flash
+
+Analysis Complete!
+
+Analyst wall time: Market 47.31s | Sentiment 25.74s | News 62.28s | Fundamentals
+56.83s
+
+✓ Report saved to: 
+/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-
+20261020-01/results/reports/NVDA_20261020_193209
+  Complete report: complete_report.md
+  HTML report: complete_report.html

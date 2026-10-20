@@ -1,0 +1,29 @@
+{
+  "final_state_exists": true,
+  "final_status_exists": true,
+  "complete_report_found": true,
+  "complete_report_path": "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/complete_report.md",
+  "full_states_log_found": true,
+  "full_states_log_path": "baseline/runs/baseline-20261020-01/results/NVDA/TradingAgentsStrategy_logs/full_states_log_2026-10-19.json",
+  "final_decision_nonempty": true,
+  "final_rating": "Hold",
+  "final_decision_matches_full_log": true,
+  "complete_report_contains_decision": true,
+  "rating_matches_full_log": true,
+  "section_file_count": 12,
+  "nonempty_section_files": 12,
+  "section_files": [
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/1_analysts/fundamentals.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/1_analysts/market.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/1_analysts/news.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/1_analysts/sentiment.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/2_research/bear.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/2_research/bull.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/2_research/manager.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/3_trading/trader.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/4_risk/aggressive.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/4_risk/conservative.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/4_risk/neutral.md",
+    "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/5_portfolio/decision.md"
+  ]
+}

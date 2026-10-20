@@ -1,0 +1,9 @@
+# macOS and Python-generated files
+.DS_Store
+__pycache__/
+*.pyc
+
+# Baseline temporary files and regenerable caches
+/baseline/**/tmp/
+/baseline/**/cache/
+/baseline/**/*.lock

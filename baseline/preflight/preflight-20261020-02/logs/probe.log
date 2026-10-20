@@ -1,0 +1,2 @@
+2026-10-20 19:26:51,826 WARNING yfinance: Cookie fetch from fc.yahoo.com failed (SSLError), continuing without it
+2026-10-20 19:27:01,074 WARNING tradingagents.dataflows.vendors.stocktwits: StockTwits fetch failed for NVDA: HTTP Error 403: Forbidden

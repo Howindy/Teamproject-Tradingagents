@@ -1,0 +1,1856 @@
+{
+  "root": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents",
+  "exists": true,
+  "generated_at": "2026-10-20T19:28:52+08:00",
+  "entries": [
+    {
+      "path": ".dockerignore",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 133,
+      "sha256": "6025a4327a76060af669ec6603fae88d10c6c228a456585c5c66585e16e83a31"
+    },
+    {
+      "path": ".env.enterprise.example",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 203,
+      "sha256": "219a6279e42eb00a1013a3270cb347f4d84c2553256a6208ca024bacd833d61c"
+    },
+    {
+      "path": ".env.example",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3015,
+      "sha256": "3592288b06720b23548c9aa6969672eb73236313fa5f49f91ae18f3a704d79d7"
+    },
+    {
+      "path": ".github",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1733,
+      "sha256": "63d7315b4de891408de899ee2611195dfa0baca7d7f05bf147ef00a83c66f804"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 394,
+      "sha256": "9dcd53e28cccef6c8bd420b0ec14c8dd460e41af350b2315e0a78f7276e9df8a"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/data-issue.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1573,
+      "sha256": "6dcb4a587db66f3df0050c24ea9df1b1dda670d3b98eb07f4d2ab44f7a3a1c24"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature-request.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 773,
+      "sha256": "70dc885c5f917297021339f17c2f3d331e3101c112ef040ec67c886fe89f12e0"
+    },
+    {
+      "path": ".github/workflows",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1999,
+      "sha256": "b931de62aa25127237e99c702f74935d73d16833436e609e5c2e3ae24d6107b7"
+    },
+    {
+      "path": ".github/workflows/release-assets.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2258,
+      "sha256": "63df0ecc69917c99b08bfb237184e4ccf3ab5a87b469a2764bf1e69714408fda"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4670,
+      "sha256": "edcfdbfe4a44a3a5eb7f171009c7cd41a51dba0783fe66b539c6e39b00cbdd6b"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 50340,
+      "sha256": "11a3c7e8666de15e53eadc91599ed84dda407e3c45400d4316b020dbcf1ef125"
+    },
+    {
+      "path": "Dockerfile",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 712,
+      "sha256": "a05ad3b46483afbf70ac66ea70024dfa9143318b1b08a2a636e30f0d1f07b6b6"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "README.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 27258,
+      "sha256": "fa3c3b517208e804b880c447f72a9f4730d856bc2f414d4618cf41e8c44d0cd7"
+    },
+    {
+      "path": "UPSTREAM.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 458,
+      "sha256": "0faee9d759ba2cd0dceacafa54c5b0d496f2417e77f4ed7ba65290216d7466f8"
+    },
+    {
+      "path": "assets",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "assets/TauricResearch.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 63581,
+      "sha256": "43832f43a5a3ad75b0d94a9315c85c59183f75dd1af19182e9f42f8f8ad1d85a"
+    },
+    {
+      "path": "assets/analyst.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 216595,
+      "sha256": "2360b4887d9576a606c543aa704fd1025bf5ea685eaf240fb89371935711a6f1"
+    },
+    {
+      "path": "assets/cli",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "assets/cli/cli_init.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 245297,
+      "sha256": "7f90ffb20b9aea88d477b8b579dcfd7af2098faec1ba1639ac06e22af6cfef7b"
+    },
+    {
+      "path": "assets/cli/cli_news.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 831209,
+      "sha256": "30228c6375bdf0f3c636ba4be1f395a229cdcfbfd13c3dab1fa6ad3b1b1defa7"
+    },
+    {
+      "path": "assets/cli/cli_technical.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 793084,
+      "sha256": "79fd1c8eb1e7f4746c5f2165eb1a26208dce3c4dc77dd13b6d75370799dc4002"
+    },
+    {
+      "path": "assets/cli/cli_transaction.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 810243,
+      "sha256": "2f667a193478484d99babeb13b9ab6bf34a3bdcc32f4f6dcaf437e03a3a636f8"
+    },
+    {
+      "path": "assets/researcher.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 140473,
+      "sha256": "f3fa680c89d195b7d899c05f30bebb87385c9015d7adc3c4b860d422bb380950"
+    },
+    {
+      "path": "assets/risk.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 165683,
+      "sha256": "540cf90687dea316eb2e58d122d8c73fcfbd1443c8203c331bf69ab9c44fab75"
+    },
+    {
+      "path": "assets/schema.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 365329,
+      "sha256": "4d1656ae6d5954228a9090a0d2af1ff584a4ec0d8788beb2e77ada67b9f020bf"
+    },
+    {
+      "path": "assets/trader.png",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 161842,
+      "sha256": "f4498d77cdab4e8ac43427f2d54bcb6f37139ffe94c9461e429c7bfef1e9c5b0"
+    },
+    {
+      "path": "cli",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "cli/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "cli/display.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 23542,
+      "sha256": "5e7e5bc05e280d450870b9c80d194ec0a363fad4b68e199567ddf6e130e8c97f"
+    },
+    {
+      "path": "cli/main.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8780,
+      "sha256": "965793dd4b016d8e69a03ba62ae6fe139ba3de9f31d42e431466721b5ed97a9d"
+    },
+    {
+      "path": "cli/models.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 359,
+      "sha256": "2363534e647d6278f2d6075739bd8373322a32775f303ce15dd83d29dc437072"
+    },
+    {
+      "path": "cli/prefs.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4013,
+      "sha256": "7bc559427bbec0913496c22e2d1d1e4bbfc643505200399d0929cd295e2c9b76"
+    },
+    {
+      "path": "cli/prompts.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 31060,
+      "sha256": "3946a01b442679ee8c98d6b9f8bc06f61db5280359dacb3444156e21c3eec655"
+    },
+    {
+      "path": "cli/run.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 22177,
+      "sha256": "1a9e1540e15cbe792e1539663500b7a877ba29a01968f3a6dadfc5ac549a6774"
+    },
+    {
+      "path": "cli/selections.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 16289,
+      "sha256": "c9271d35264144ebf0544c66745ec523cca546dcaa9edbff78f5d77d776f2fd3"
+    },
+    {
+      "path": "cli/static",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "cli/static/welcome.txt",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 427,
+      "sha256": "070c00fb5cf458d12fce27c57442ed3f54fb1871871e576688d84b456806ec0e"
+    },
+    {
+      "path": "cli/stats_handler.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2354,
+      "sha256": "3f9e0c9a37e50af1e5a26724b53b5dd5cb2f988dc277ac7a7347817a974dae22"
+    },
+    {
+      "path": "cli/updates.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8855,
+      "sha256": "fd5b5858d1f859bf6e96e76f876203114bec7168937a3cbc1f6831e10560837b"
+    },
+    {
+      "path": "docker-compose.yml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 726,
+      "sha256": "fc5b2fe2d49c377ee07207c2cb9859c79b71bab00b892e4fb29d5e3a496e80f9"
+    },
+    {
+      "path": "main.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 655,
+      "sha256": "f8aa9b469a7e1163340d6312b213076ad2ceec1495ca65ad562c31e5ac6c04ac"
+    },
+    {
+      "path": "pyproject.toml",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2477,
+      "sha256": "670cd3552c10b5dbb2ea4c420336c7b58af455c27b1a65599727ecbefb4f375c"
+    },
+    {
+      "path": "requirements.txt",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 147,
+      "sha256": "6ac3f12df423958e453e64fd9d335482017394e0036dddf08b5e3c93683c04a0"
+    },
+    {
+      "path": "tests",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tests/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "tests/conftest.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4704,
+      "sha256": "d2706a655ce34935152805d82ee85cc3ddcab5e89f97072d956792d8270e8193"
+    },
+    {
+      "path": "tests/test_alpha_vantage_hardening.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9799,
+      "sha256": "1c6a15ae063277be0e91c705017783de137dd509d9a5f38da2aff10a7f4d0b09"
+    },
+    {
+      "path": "tests/test_analyst_execution.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1323,
+      "sha256": "271caa8a65ff68557a7edad0ad138f6fa9f7f6de7337e445fed00f10682373bd"
+    },
+    {
+      "path": "tests/test_anthropic_effort.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3924,
+      "sha256": "e1d29a221f334652f86d5fe691c9c59f3edd12901c07cfd546faec7fffbe6e32"
+    },
+    {
+      "path": "tests/test_api_key_env.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7125,
+      "sha256": "c88fddb29fa3b3262dfe59bf4b8d358c013080078cbad297f5d1a8ce52e7471e"
+    },
+    {
+      "path": "tests/test_backtest.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11485,
+      "sha256": "85e934f027ea33316040fb8cdb45a6c6923fa164cd2b471ea8d7bd91b51fc28d"
+    },
+    {
+      "path": "tests/test_bedrock_provider.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3106,
+      "sha256": "4380298ce28f7bf5232ec341af75e4c27498fd7a157945c148ac0d1b7cb2c533"
+    },
+    {
+      "path": "tests/test_cache_writes.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5443,
+      "sha256": "7bfa9030d018c1841e7722c35fb6092e54751e887778a494c324178fde8d5b1a"
+    },
+    {
+      "path": "tests/test_capabilities.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7372,
+      "sha256": "845eb85289833935d0a857f145a40446cb9ab3f8d92e70df7eb61f2388e43d14"
+    },
+    {
+      "path": "tests/test_chatgpt_auth.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 17513,
+      "sha256": "01745d697c10758d0bdda298c26ae0fdf50564bfbfab4ee02ac16726f82a377c"
+    },
+    {
+      "path": "tests/test_chatgpt_provider.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11734,
+      "sha256": "dfc592f29967228a5c55eb53b5b05630038408b6df8dae1547ee49a0b8c7669b"
+    },
+    {
+      "path": "tests/test_checkpoint_lifecycle.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5820,
+      "sha256": "42d62f9046351e7f0c0bfd59bdc3b54d2b9a90548c65b228ebf9f990050c2fe8"
+    },
+    {
+      "path": "tests/test_checkpoint_resume.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 10711,
+      "sha256": "10d3e853b3b6199d5ef194432ef4ad981a7127bdbfa5f32672980e4740f1f3b9"
+    },
+    {
+      "path": "tests/test_cli_commands.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9098,
+      "sha256": "334243f8fb906b8d938e07070f4f1de71f3611d4fb2d87a96808c450f11ab6f9"
+    },
+    {
+      "path": "tests/test_cli_config_precedence.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5470,
+      "sha256": "581d9b412b8565161296e2e2211a21cd4282ce1b463ad4c2fb08d63d573b9f22"
+    },
+    {
+      "path": "tests/test_cli_display.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6394,
+      "sha256": "482276767f522e678fee95d344c0f04939361ffafe8ab4ecd7a60ba3516f3781"
+    },
+    {
+      "path": "tests/test_cli_env_skip.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7438,
+      "sha256": "2bde23a3886afeef6c89092b891dbfcf0645caf1d8bf4aa1168fa782f64a0565"
+    },
+    {
+      "path": "tests/test_cli_headless.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14340,
+      "sha256": "6b5230cecb80c55852c6c614816ccc8ebfdc769a7ee40e970af9cc5ac9c36c5c"
+    },
+    {
+      "path": "tests/test_cli_memory_log.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7549,
+      "sha256": "cfe9f6f80cc767f45950ad2e1874cc114afa01dc0acabf96e67003f0de9d1c7c"
+    },
+    {
+      "path": "tests/test_cli_no_console.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2137,
+      "sha256": "9ea36a88411f9a474c7beb458dbb2d9fa97fc5b41bd2fc700f1541951c2946fd"
+    },
+    {
+      "path": "tests/test_cli_prefs.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6754,
+      "sha256": "a60a99d243d19fca26fcbb7b4f874b3f98c5bb12922c55627b7a85b4d09beb13"
+    },
+    {
+      "path": "tests/test_cli_symbol_handling.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2629,
+      "sha256": "6dfa9bb90c64df487952160583e602b9d00197bbbf8d50fc977af89895943212"
+    },
+    {
+      "path": "tests/test_cli_updates.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 15536,
+      "sha256": "0d72e69dc3d6ef09274fe37b010bf7a1c4892cdcd567ede63f2dd9af2712e651"
+    },
+    {
+      "path": "tests/test_crypto_asset_mode.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1766,
+      "sha256": "6526e76df73aa9f79bd483332fce269687faf964c81bfc0c7186feb6f8099225"
+    },
+    {
+      "path": "tests/test_dataflows_config.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7493,
+      "sha256": "a5f929fca6d47ff426c976bae2000102cff01158ef13cb46a988dd53780918ae"
+    },
+    {
+      "path": "tests/test_date_boundaries.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2218,
+      "sha256": "dc04deadfa0a45e6c2afaa5f097773117b9cbfd469ea5530fa66ba8a20dee672"
+    },
+    {
+      "path": "tests/test_debate_opening.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4157,
+      "sha256": "5a2dac51652487be81ec1e1f21bb2b1dee6514048f30f208fcf7159a9741f0b0"
+    },
+    {
+      "path": "tests/test_deepseek_reasoning.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9927,
+      "sha256": "797d4b48c7948f769f338253a19bb34c6d268b0498f621b13e0239f483c449a8"
+    },
+    {
+      "path": "tests/test_env_overrides.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5331,
+      "sha256": "7d1262f41a9b081e1700c3cef4d082031a234aea4e2c5c57b4517be5b21122f2"
+    },
+    {
+      "path": "tests/test_fred.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 13886,
+      "sha256": "bd4dfdc7c63b993919148482656d1f079e3ea53138eb7630de3d73ad1159f8d4"
+    },
+    {
+      "path": "tests/test_fundamentals_lookahead.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5398,
+      "sha256": "8cd249e743423a36ef07253d92a5d94db2025f7e4cb2c155aa04b2040c1acc19"
+    },
+    {
+      "path": "tests/test_fundamentals_units.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3418,
+      "sha256": "2de699bfc827b214c7545ee465f46f96dd6ea7067e237c73ab262a7cbf713fe5"
+    },
+    {
+      "path": "tests/test_get_scrubbed.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2469,
+      "sha256": "a642d947aa3caa4ea3ac19441a5b86a2f7f3396ba2b6b322abc7eb8c2d76f6e5"
+    },
+    {
+      "path": "tests/test_google_api_key.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1167,
+      "sha256": "38e6348880b17eeda52f895959d56600f08ac7a24a567ed7035cdba3d11a50a6"
+    },
+    {
+      "path": "tests/test_google_thinking_level.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2583,
+      "sha256": "9bf07fc5ff7ab840fa47337d05ab7274ae6c72e5ef20a3912827154965bf31f4"
+    },
+    {
+      "path": "tests/test_graph_end_to_end.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 17955,
+      "sha256": "990f4993ed1703b03c577fed36ea362a045ae2196761885c4e15cc9da99266b7"
+    },
+    {
+      "path": "tests/test_i18n_coverage.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2655,
+      "sha256": "250eb9e46ce6e9f6786e038da99093bafd6d5f030f2cc43d7d0c3799fa2fb94d"
+    },
+    {
+      "path": "tests/test_instrument_identity.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5481,
+      "sha256": "16533939633c1fdd9adda2fe893cead4d15e4074c2464502cff8d6b081d62b5a"
+    },
+    {
+      "path": "tests/test_layering.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1133,
+      "sha256": "0997e048b0b8afc4a15124dec3aa53ba21d402a3399bc5b2d892d88b0343e377"
+    },
+    {
+      "path": "tests/test_llm_max_retries.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3242,
+      "sha256": "f56870d8b3b0cd3f30b2e6c3f082496b0017c46e328df7c00ba918321fcdb64f"
+    },
+    {
+      "path": "tests/test_llm_max_tokens.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4156,
+      "sha256": "a6824c7241de9427c29ce3c3c775547a260afb7bea9b6eff928a544ce13d3f91"
+    },
+    {
+      "path": "tests/test_memory_log.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 59920,
+      "sha256": "eab81b1073f2671fcf9ebd8c03a9e1c5bc784ec3f39dfef32087393d055da55b"
+    },
+    {
+      "path": "tests/test_memory_pointintime.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3976,
+      "sha256": "92f4249578ee6be5d53e5a7cdf34bb1b2b1b297b03b9570fee7113d8661ecf3b"
+    },
+    {
+      "path": "tests/test_minimax.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2926,
+      "sha256": "cea6ed1137ad8eb78412ab0368a9e3718a493878183bfc0d8427e71743baf05b"
+    },
+    {
+      "path": "tests/test_model_validation.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3823,
+      "sha256": "3708030c63d7c0f8799f513e048102b8d3c35be2c90b2ecfb3e6026b7e5d7244"
+    },
+    {
+      "path": "tests/test_news_analyst_prompt.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 804,
+      "sha256": "1e41c78a6cf6afb1a620d1336b57d36a4389f3aaeeeab0bc95dbf204397f5862"
+    },
+    {
+      "path": "tests/test_news_lookahead.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 17424,
+      "sha256": "fec34021e454b541e06c5cd2a02f7b6cd4f153fcc65c397df74f508dd3ce8897"
+    },
+    {
+      "path": "tests/test_no_data_handling.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4444,
+      "sha256": "572bcb98d51b82a5f1c09ba28dd9dbcf94a4d323bee31521d74416e80e1ffc90"
+    },
+    {
+      "path": "tests/test_ohlcv_cache_freshness.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4525,
+      "sha256": "a2dc768f1ea5fbf78cda8a91cd348106ca517f7f716f9798996af50ca194b748"
+    },
+    {
+      "path": "tests/test_ohlcv_date_column.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3046,
+      "sha256": "8b3f64c26a8f6e135deec42876e1667070b04bb87bc42423b31d62da02783c78"
+    },
+    {
+      "path": "tests/test_ohlcv_latest_bar.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9047,
+      "sha256": "c773d9ad6f687c4c19b7032573666d6234e1db3d55dff1869702c3e56eb205a2"
+    },
+    {
+      "path": "tests/test_ollama_base_url.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6694,
+      "sha256": "3bc87c8ddeae37879b7344e59ef730293f00d96fe1396aed8d411eae367b9e3b"
+    },
+    {
+      "path": "tests/test_openai_compatible_provider.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4310,
+      "sha256": "44e7736667b85e97194c49ef32a79a222e0db07c70f948d4978d87e758d614c8"
+    },
+    {
+      "path": "tests/test_openai_reasoning_effort.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1548,
+      "sha256": "1ac5da046653b0cc34ea860167a333ac2ea1ab0bb0c41b4491298f5c548aa19b"
+    },
+    {
+      "path": "tests/test_openai_responses_base_url.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1713,
+      "sha256": "bc5972e16d5855aef1c0e07de90209920fbf2ac547d46fab00b9d4c090ffa130"
+    },
+    {
+      "path": "tests/test_openrouter_model_select.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5072,
+      "sha256": "82c7dc331c2f6a07486f8ccb1c59f9bc090c33e61d6bd282da19269ae067ef65"
+    },
+    {
+      "path": "tests/test_polymarket.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5160,
+      "sha256": "b552632fc12092972a04f9ae7b83880c72b028f9b62e789df5fece5a1fca4e94"
+    },
+    {
+      "path": "tests/test_portfolio_context.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9419,
+      "sha256": "d82e8ee84538dfc47039c0f0669181418ced53e33a890b29edab69197f85215d"
+    },
+    {
+      "path": "tests/test_post_screen.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 10259,
+      "sha256": "96fc0fd9beaf459b63c4644ace4dfffb15db9201108097b6e2613f93be621fe2"
+    },
+    {
+      "path": "tests/test_prompt_integrity.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3883,
+      "sha256": "b1e544c4d0eaefad553ecb5bca97acdd5e78617972634573285f5e66f4b1a84a"
+    },
+    {
+      "path": "tests/test_provider_registry.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5249,
+      "sha256": "8a53a79514bb7e51ad2057568a5c60f160edfecb106f2ecae1e00112c7b39888"
+    },
+    {
+      "path": "tests/test_rating_integrity.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 13785,
+      "sha256": "6ca82dcbc89423846833da940f86367668d8930e6d8fcbff18d87e49280a2585"
+    },
+    {
+      "path": "tests/test_reddit_fallback.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14655,
+      "sha256": "8c692b88762e0408b17d5c0f9fac95f362e3d07e166e6f00557c3e597e5c88ad"
+    },
+    {
+      "path": "tests/test_report_html.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8372,
+      "sha256": "1d8897b2fb54d55ba7d6592cc617083a7abd38f9213e5f1ec4144950ad005d81"
+    },
+    {
+      "path": "tests/test_reporting.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5528,
+      "sha256": "542eca1ecd14f8d28f2e30ed62f378f17580532cda028773379eee6df34cfa48"
+    },
+    {
+      "path": "tests/test_risk_router_path_map.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3143,
+      "sha256": "6417619585336a46f41360daae92c5ac3535d46797e4fd419ee71841da681831"
+    },
+    {
+      "path": "tests/test_safe_ticker_component.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2202,
+      "sha256": "e55b45475265e828cd6c9482e19e74b28b655a617b7b7ee0f989c8cd95b543eb"
+    },
+    {
+      "path": "tests/test_sec_edgar.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14928,
+      "sha256": "6c81682256cba8f5744672404f6b93263589f5cde08e41fde910c69a64ea369a"
+    },
+    {
+      "path": "tests/test_signal_processing.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3204,
+      "sha256": "40e3aad1669fcae50df65d11d516df2808383a663b7395ae6469b1bd4b216fc2"
+    },
+    {
+      "path": "tests/test_social_lookahead.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9401,
+      "sha256": "286583d1680e38ac7b225becb2ce907d0831d2dbe0e994edce32f30bcb72ec9a"
+    },
+    {
+      "path": "tests/test_statement_knowledge_time.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3453,
+      "sha256": "d3340240d380d73e2e84f4b3895513e721fbb980640cddca6201e404fe47dbd3"
+    },
+    {
+      "path": "tests/test_stocktwits_resilience.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3942,
+      "sha256": "4f0b94e6ab8bd81d83bf94c75533ff74123d87f674241fadbffdef7a89bd5701"
+    },
+    {
+      "path": "tests/test_structured_agent_prompts.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6497,
+      "sha256": "1c4e96aba2dd07b31ae0981b556b3b7f8f4da2568d6429fc4e9d4c58abfd8ea8"
+    },
+    {
+      "path": "tests/test_structured_agents.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 22883,
+      "sha256": "cf7a2cc184b9a3a2d8ac20b35dc66bc552e6ed7cff7e81123b4707d57cfc1df1"
+    },
+    {
+      "path": "tests/test_suite_isolation.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2097,
+      "sha256": "6a411af717cc22edb25c0823065e62e8bb46a474d319b616c511619ad0829385"
+    },
+    {
+      "path": "tests/test_symbol_normalization_paths.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3104,
+      "sha256": "424248feb59576669d87aff475de59bdf4ee35888824c04db28c9a24d26e3eb3"
+    },
+    {
+      "path": "tests/test_symbols.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4543,
+      "sha256": "b847b17142c6ebf81042516be062626c309d2f9fe15e12c2b2be3f35af4ee822"
+    },
+    {
+      "path": "tests/test_temperature_config.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2824,
+      "sha256": "cc964ed52612687dd6c956b95450201ac5b5b81ff2fc011843f2522f4a5eb55c"
+    },
+    {
+      "path": "tests/test_ticker_symbol_handling.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 957,
+      "sha256": "b9ee32a7061ad8903602cca3acd0c5a9cb54e1e1a6730c97cd0685c33772aa5a"
+    },
+    {
+      "path": "tests/test_tier_providers.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3661,
+      "sha256": "6188cbdae8fbb4c6e74b98f30cc088790ca9b839763bf3b600c4816a33f596d0"
+    },
+    {
+      "path": "tests/test_tool_date_enforcement.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6408,
+      "sha256": "8c57ccc95034741a41e81fe104b0701711a0631a38f569d73ac1a5a7d6c0c076"
+    },
+    {
+      "path": "tests/test_undated_tools_as_of.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11528,
+      "sha256": "c6551f20d23291f173d6d723681c7d9b1d972012eb03817839962c25848029b5"
+    },
+    {
+      "path": "tests/test_vendor_errors.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5055,
+      "sha256": "29759e7d8ad79f53318ad7ba05165de62a4f7241c8ea5818332510593d4c20b5"
+    },
+    {
+      "path": "tests/test_vendor_routing.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5390,
+      "sha256": "bcf41f71fbba72ab902f484a97b3857b4d04153c36879670e1798e2d477eb236"
+    },
+    {
+      "path": "tests/test_version.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 625,
+      "sha256": "d59dd53d878f479ee8ad8226ae33b5e109e16919944271509ec961a082d60873"
+    },
+    {
+      "path": "tests/test_yahoo_rate_limit.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11178,
+      "sha256": "ed0eed61e33256542b04a87ca542426011a950a8ee7c849b3201a94dd645500c"
+    },
+    {
+      "path": "tests/test_yahoo_snapshot.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3437,
+      "sha256": "8e132048d84fc822c3ffaaad5eb19d9c613c9204e176f67486a486cb21723875"
+    },
+    {
+      "path": "tests/test_yfinance_stale_ohlcv_guard.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3917,
+      "sha256": "dee9d3dc24dda4c9153726e6e74dc8df6013c482cb4e9b072ebb6f2aeb5a17e1"
+    },
+    {
+      "path": "tradingagents",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 610,
+      "sha256": "8ff5684c16b40c7ad7794192378b35d45b41e0a86e07fee10cd24aef998bf0ed"
+    },
+    {
+      "path": "tradingagents/agents",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1261,
+      "sha256": "678113367f806b26a26ff36054ad866d0d9315073564ba06a8d61fd08ffaf9fb"
+    },
+    {
+      "path": "tradingagents/agents/analysts",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/analysts/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/agents/analysts/fundamentals_analyst.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3266,
+      "sha256": "daa6deb211ffea262da168a935464080cd75e61815d164502d6466dbd60845b4"
+    },
+    {
+      "path": "tradingagents/agents/analysts/market_analyst.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6610,
+      "sha256": "b9b1562d0c5beafd578380aa5b60534da7601b640b7e8d8869363d309ac0b066"
+    },
+    {
+      "path": "tradingagents/agents/analysts/news_analyst.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3402,
+      "sha256": "fbc22552cd6ae0306ef66a891fb7f7ca5de4f528f12402ebab3c68d2c8c58cba"
+    },
+    {
+      "path": "tradingagents/agents/analysts/sentiment_analyst.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9761,
+      "sha256": "120743700e4e9eb718b868b0e0c702c47e142c845e784f8ebb535e2d409263df"
+    },
+    {
+      "path": "tradingagents/agents/analysts/turn.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2017,
+      "sha256": "94fa951444f53fc3923e5100c1468c10f179eb4c22acc6f59a4351f1c2b8b484"
+    },
+    {
+      "path": "tradingagents/agents/context.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9021,
+      "sha256": "b039623a86856206ce397fcbafd8ef0d9de161d6042772bea2dfc6fec95233dd"
+    },
+    {
+      "path": "tradingagents/agents/managers",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/managers/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/agents/managers/portfolio_manager.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4593,
+      "sha256": "a6c62bf32a99003109179d645b2d98eee66090b5a6453ceb53a475f5bf900bba"
+    },
+    {
+      "path": "tradingagents/agents/managers/research_manager.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3080,
+      "sha256": "60386f2afe3e4b7411b68d8e67a83a6b899ba8aa61a2bec5e9d080feb731c1f7"
+    },
+    {
+      "path": "tradingagents/agents/post_screen.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7341,
+      "sha256": "1aa4ada438d9ffeb817b4fb0067bbd46d730e736b00e8640446da483f8be73a9"
+    },
+    {
+      "path": "tradingagents/agents/rating.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5619,
+      "sha256": "90ab5951c3438ba8d9f7536a80c6b5824a6b56ae5cda83f31ada1be311866a52"
+    },
+    {
+      "path": "tradingagents/agents/researchers",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/researchers/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/agents/researchers/bear_researcher.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3464,
+      "sha256": "112e9355e59acfe146b19f0c72d320ea487390b7dcbc711c953844966ba86f58"
+    },
+    {
+      "path": "tradingagents/agents/researchers/bull_researcher.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3388,
+      "sha256": "46783042b021db22e0586caacfbdd6f2dde42c74e4ef51c15420cb9192ee3350"
+    },
+    {
+      "path": "tradingagents/agents/risk_mgmt",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/risk_mgmt/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/agents/risk_mgmt/aggressive_debator.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4315,
+      "sha256": "f2ddbc28dbeb2786f4c1dcf0c1ef3a54b564fbf118ca14e6a72a3259870b6113"
+    },
+    {
+      "path": "tradingagents/agents/risk_mgmt/conservative_debator.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4218,
+      "sha256": "a1d688a37b05cf12a8e16aa51cafffe39594a50e1b49c225e5de564fb5254639"
+    },
+    {
+      "path": "tradingagents/agents/risk_mgmt/neutral_debator.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4075,
+      "sha256": "30dfd1b81bff24f8053a9583e6cc4411e3e3d3fdb94b32de10a42df753dc27e1"
+    },
+    {
+      "path": "tradingagents/agents/schemas.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 15228,
+      "sha256": "782b842c2ef030f690219385364ea2a3a58d98ff6478c62050f5d86a25127534"
+    },
+    {
+      "path": "tradingagents/agents/state.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3155,
+      "sha256": "6b665f8c3758adb6efebaf5ca5f01e375657ba7386ec9805607ceb2080b25e27"
+    },
+    {
+      "path": "tradingagents/agents/structured.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3742,
+      "sha256": "66bc812c51a11a696b84b6c3b3fe529a4aeb0a69ede8c3137f38ae9278bd830a"
+    },
+    {
+      "path": "tradingagents/agents/tools.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12056,
+      "sha256": "34172e04bb247923eef29620032b8e62bc1791a5b802637e46ed4cc0b5220837"
+    },
+    {
+      "path": "tradingagents/agents/trader",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/agents/trader/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/agents/trader/trader.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4336,
+      "sha256": "ce2ee336dc21a5cd59215a7944ab0a701e633c40478598f0416bee95d01c3cef"
+    },
+    {
+      "path": "tradingagents/assets",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/assets/tauric-logo.svg",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 16578,
+      "sha256": "798dfbe4ed4350da4f545f46189c877b1750c639fe21ee71828964de9f843af1"
+    },
+    {
+      "path": "tradingagents/backtest.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9445,
+      "sha256": "c25623d2acb22ff2bd0c144305c099b5858ba7dbf250e7c636a009109b2b805f"
+    },
+    {
+      "path": "tradingagents/dataflows",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/dataflows/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tradingagents/dataflows/config.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2516,
+      "sha256": "0158c7a3bf506eb8d633896632858eb086ecbd063c78344b58f145201928314f"
+    },
+    {
+      "path": "tradingagents/dataflows/date_window.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7851,
+      "sha256": "e2668904533e9ec0bfcf9dd7fd5adba7508d9597b4e85982625c819c2407072a"
+    },
+    {
+      "path": "tradingagents/dataflows/errors.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2294,
+      "sha256": "ceaff104123ac2a55b50635f27d39f80b6455c74617f67f7f54d908e00477b13"
+    },
+    {
+      "path": "tradingagents/dataflows/files.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3018,
+      "sha256": "dbeea3f16d2424678b664fb39ac484718fc6e452607bd6d0b3625943d755ebe1"
+    },
+    {
+      "path": "tradingagents/dataflows/net.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1573,
+      "sha256": "f7d9945e487c300867d111310e10316063cb0cac95a764ad4140d77d89a52b76"
+    },
+    {
+      "path": "tradingagents/dataflows/router.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12148,
+      "sha256": "1956d24f0f0bac0da044251e14a6f4a038d748fd8dbe9f9806365fd097a49ea9"
+    },
+    {
+      "path": "tradingagents/dataflows/symbols.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7713,
+      "sha256": "15335e01f1532ea51e12f6ace2d0bec3058d6975eac93bed5ed07f2d4e550528"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 84,
+      "sha256": "a867066a8b045938c175d598c2a5108275a8c825cc6d939d990aa9d053d79b8e"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 825,
+      "sha256": "1e21b5bae37737cba9e0c2e87132487332275a38b925f6fabc868e7b9d41f7d1"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/common.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6355,
+      "sha256": "225c2651a636c4a6b0733cd3a66feacaff1732fce7b2f512a16140bd483bd82a"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2105,
+      "sha256": "e7ecb7f3af77dd78ca8d334e925af3325d1cb06a20eae6e1c1be03740b781b66"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/indicator.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 10529,
+      "sha256": "d5f8ccc72aff89559611febf7eb543d54b6efb303d270049f300fcd5e0bf756b"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/news.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3256,
+      "sha256": "5aa9639cba6735d52cb02f14ccce3e78e42b0f287b1d9333fe5142cb4da66fc6"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/alpha_vantage/stock.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1315,
+      "sha256": "17633620192f0005f58de3f7dc1671ac3ee8b7d96cf20283e74648b70225cd5c"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/fred.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11106,
+      "sha256": "905ea6412067145a10c71f0e07b83624769d6e3379dd10391a47b045857ef6d7"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/polymarket.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5325,
+      "sha256": "2a50bbe8dc9daec7a029ed2c024d3a00268ca83cabbfa2271e7e8f5b6633a75c"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/reddit.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14593,
+      "sha256": "0b7f56fc3c757202cca3fd7cc3ed4390d5d3519fa5be6d7e38fe157c00e3186c"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/sec_edgar.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12571,
+      "sha256": "0189154cb5c76082e3aca5e0e187c677a857e56bd1a5aee49dddb10f1f989f9c"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/stocktwits.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6380,
+      "sha256": "675c41346d41cd8e21f283dfaff592ee047f4ac245a3e47a1a709a6073d3006e"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 79,
+      "sha256": "4edf2362854ee40ec5fa7e769d64bde32b7070b42c5dfa2abb728267884d6552"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/common.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3419,
+      "sha256": "6f75f46575fef14ad8fc3212b7c3a8d2ee00d2bd73de9a473c78ce02926e0821"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/fundamentals.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7543,
+      "sha256": "d0f7eb8d3d4e8798bd8c4d47a59299fe8f40479f936aa7c0008f9b8cd9acc7c2"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/market.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12447,
+      "sha256": "7f406c9c5109a4de818a33827bba747673f5e56db62fe4b9b6c88c81b5228979"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/news.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8531,
+      "sha256": "9f56dcc58bae002a4e7c19e0f659504fabfb7132aef535e248bc7d080b30b7eb"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/ohlcv.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11130,
+      "sha256": "0de8de042d903912711fa66e9f6e08d644bc474a54783ebf6ebbfc79892ff77d"
+    },
+    {
+      "path": "tradingagents/dataflows/vendors/yahoo/snapshot.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5106,
+      "sha256": "e84e4049516e88f5dd8eb70540f2356a498532b84cca16fc97e9df478ae58615"
+    },
+    {
+      "path": "tradingagents/default_config.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11200,
+      "sha256": "84576daffd9ab5e59bd5de3f2bdb650f7488a91cdbbd08d24d9dcc35e2c17615"
+    },
+    {
+      "path": "tradingagents/graph",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/graph/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 261,
+      "sha256": "3c5ec25eb68097a8ec82ab3e1877d2b028e1aa9c85339e7008b508a5e335210d"
+    },
+    {
+      "path": "tradingagents/graph/analyst_execution.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1718,
+      "sha256": "2cee40303e18c19bf77d36a7f3d91ba431c84dfd53031139dd34411f2c694456"
+    },
+    {
+      "path": "tradingagents/graph/checkpointer.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3340,
+      "sha256": "f1ccb055601a8267f0b136482b06d853bd173a83a63c7d04c30f69ac65f3c295"
+    },
+    {
+      "path": "tradingagents/graph/conditional_logic.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1474,
+      "sha256": "3c9f344071552b95b59e0e78302ba73b77236afc895effcc0007ebf3eea4a3e3"
+    },
+    {
+      "path": "tradingagents/graph/propagation.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2849,
+      "sha256": "49519fc3726d096fa1746e085537d886c27da633835cd693c097595ceb4c55b6"
+    },
+    {
+      "path": "tradingagents/graph/setup.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7969,
+      "sha256": "a2790ebd549ff082e114b43201997ac29b7e58d00e643536d4ced8e949c855be"
+    },
+    {
+      "path": "tradingagents/graph/trading_graph.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 23956,
+      "sha256": "7cbd1602cd30026b7ced30fcd1478fbaef274466cf710b248f1f2cd701eca020"
+    },
+    {
+      "path": "tradingagents/llm_clients",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/llm_clients/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 240,
+      "sha256": "548fda2ec116932a327f7dd9fae96cd9702f64dd872b8026d31635eb8264300c"
+    },
+    {
+      "path": "tradingagents/llm_clients/anthropic_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2819,
+      "sha256": "f9ea621a9820737b97bc336d2d67d64c8f66ae730aced02020d0f91cc2f0efaf"
+    },
+    {
+      "path": "tradingagents/llm_clients/api_key_env.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2347,
+      "sha256": "75044997cc0cdebed4df87addc720912c5604919a3d400227798d3df8558fadf"
+    },
+    {
+      "path": "tradingagents/llm_clients/azure_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1616,
+      "sha256": "8a269a0243d633631581f3c127885bba9dd2a2afb839dab5d160a1f19ef4058c"
+    },
+    {
+      "path": "tradingagents/llm_clients/base_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2069,
+      "sha256": "5af145a100b42e5de2c3baffcde0f3975fd826b14c1659c4ee44a300affa0c38"
+    },
+    {
+      "path": "tradingagents/llm_clients/bedrock_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3022,
+      "sha256": "aa279ec2956d1811683ebed4a7267657d53dc0a900c7185a07e2cfab03d9d99a"
+    },
+    {
+      "path": "tradingagents/llm_clients/capabilities.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5981,
+      "sha256": "b9fd431371cc8f70a2ac832adfd73a79c3b5339ad6fd9449641bef24df6ce564"
+    },
+    {
+      "path": "tradingagents/llm_clients/chatgpt_auth.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 18792,
+      "sha256": "f83a2878964091e374a3806afbd901efe1cf50c56f1b1e7de06711d64c67bd15"
+    },
+    {
+      "path": "tradingagents/llm_clients/factory.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6000,
+      "sha256": "6b8d11a71733638fb546b29b14966d74f64f7c9bfbc09e600600fb6e789bde33"
+    },
+    {
+      "path": "tradingagents/llm_clients/google_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3083,
+      "sha256": "6079f050a8a46cc388e5ce79e1e6f4489f350225838dd5bc17607d549a6d9ea4"
+    },
+    {
+      "path": "tradingagents/llm_clients/model_catalog.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11300,
+      "sha256": "2f617a54fac65b228de8c87a49f609616e3a2b906c51a174516b8d2245c9c7a7"
+    },
+    {
+      "path": "tradingagents/llm_clients/openai_client.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 19627,
+      "sha256": "5d4e993ccea48351051d7daeda48ca2756ba12018a65df30c5893afe3b1a2703"
+    },
+    {
+      "path": "tradingagents/llm_clients/validators.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 974,
+      "sha256": "626014bb0d1b78bd2b1fb519c7c93fa243cdaaad0f904044bd6836488607c31c"
+    },
+    {
+      "path": "tradingagents/memory",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "tradingagents/memory/__init__.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 387,
+      "sha256": "8e56b432cb14a223acd2a831845e79c5e0e978c5e1d561399e0028f0211c8636"
+    },
+    {
+      "path": "tradingagents/memory/log.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14841,
+      "sha256": "7b15db223fa839f09223e9f0fddd95d93fd8eb0dfd6911a218d1bb5b8c06841a"
+    },
+    {
+      "path": "tradingagents/memory/reflection.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3044,
+      "sha256": "f54582a8d1b5df7f2c7b6c9f82ca9ab215986dd2042d59f3955fe7af2cbba8bb"
+    },
+    {
+      "path": "tradingagents/memory/settlement.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8418,
+      "sha256": "809ad32352742834ed1d1a0491dc6046bc1b899dcffd8efddd0a46840a977c0f"
+    },
+    {
+      "path": "tradingagents/portfolio.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 2979,
+      "sha256": "59f52f1a0c5402ff1313eef9deae0c378aa3996e23ba202abc983d2cae6b07ed"
+    },
+    {
+      "path": "tradingagents/report_html.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 14821,
+      "sha256": "ac10574c39fc16b128cdc30aee60fab8e011b05a83fcddffa0cfa587ce05ae11"
+    },
+    {
+      "path": "tradingagents/reporting.py",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5685,
+      "sha256": "463a91765a8b5ec43a26cdfc3f6ff0ed0d7cb20748885644f59786de96528949"
+    }
+  ],
+  "summary": {
+    "files": 213,
+    "dirs": 23,
+    "symlinks": 0,
+    "other": 0,
+    "total": 236
+  }
+}

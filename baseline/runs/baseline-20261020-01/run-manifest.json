@@ -1,0 +1,964 @@
+{
+  "run_id": "baseline-20261020-01",
+  "ticker": "NVDA",
+  "analysis_date": "2026-10-19",
+  "analysts": [
+    "market",
+    "social",
+    "news",
+    "fundamentals"
+  ],
+  "language": "English",
+  "debate_rounds": 1,
+  "risk_rounds": 1,
+  "started_at": "2026-10-20T19:28:53+08:00",
+  "started_monotonic": 123019.46916625,
+  "command": [
+    "/opt/miniconda3/envs/tradingagents/bin/python",
+    "-B",
+    "-u",
+    "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/scripts/run_baseline.py",
+    "--inner",
+    "--run-id",
+    "baseline-20261020-01",
+    "--ticker",
+    "NVDA",
+    "--date",
+    "2026-10-19",
+    "--analysts",
+    "market,social,news,fundamentals",
+    "--language",
+    "English",
+    "--debate-rounds",
+    "1",
+    "--risk-rounds",
+    "1",
+    "--project-root",
+    "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents"
+  ],
+  "cwd": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents",
+  "environment": {
+    "generated_at": "2026-10-20T19:28:52+08:00",
+    "python_executable": "/opt/miniconda3/envs/tradingagents/bin/python",
+    "provider": "openai_compatible",
+    "endpoint": "https://llm.cs.cityu.edu.hk/v1",
+    "quick_model": "CS5351/DeepSeek-V4-Flash",
+    "deep_model": "CS5351/DeepSeek-V4-Flash",
+    "output_language": "English",
+    "max_debate_rounds": "1",
+    "max_risk_rounds": "1",
+    "checkpoint_enabled": "false",
+    "timezone": "CST",
+    "timezone_offset": "+0800",
+    "keys": {
+      "OPENAI_COMPATIBLE_API_KEY": true,
+      "OPENAI_API_KEY": false,
+      "DEEPSEEK_API_KEY": true,
+      "ANTHROPIC_API_KEY": false,
+      "GOOGLE_API_KEY": false,
+      "ALPHA_VANTAGE_API_KEY": false,
+      "FRED_API_KEY": false,
+      "TYPESAFE_API_KEY": false,
+      "SEC_EDGAR_USER_AGENT": false
+    },
+    "paths": {
+      "TRADINGAGENTS_RESULTS_DIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/results",
+      "TRADINGAGENTS_CACHE_DIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/cache",
+      "TRADINGAGENTS_MEMORY_LOG_PATH": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/memory/trading_memory.md",
+      "TRADINGAGENTS_LLM_BACKEND_URL": "https://llm.cs.cityu.edu.hk/v1",
+      "TRADINGAGENTS_LLM_PROVIDER": "openai_compatible",
+      "TRADINGAGENTS_QUICK_THINK_LLM": "CS5351/DeepSeek-V4-Flash",
+      "TRADINGAGENTS_DEEP_THINK_LLM": "CS5351/DeepSeek-V4-Flash",
+      "TRADINGAGENTS_OUTPUT_LANGUAGE": "English",
+      "TRADINGAGENTS_MAX_DEBATE_ROUNDS": "1",
+      "TRADINGAGENTS_MAX_RISK_ROUNDS": "1",
+      "TRADINGAGENTS_CHECKPOINT_ENABLED": "false",
+      "TMPDIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp",
+      "HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp/home",
+      "XDG_CACHE_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp/xdg-cache",
+      "XDG_CONFIG_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp/xdg-config",
+      "XDG_DATA_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp/xdg-data"
+    },
+    "dependencies": {
+      "packages": {
+        "cryptography": {
+          "installed": "50.0.1",
+          "required_minimum": "42.0"
+        },
+        "langchain-core": {
+          "installed": "1.6.3",
+          "required_minimum": "1.6.5"
+        },
+        "langchain-anthropic": {
+          "installed": "1.7.2",
+          "required_minimum": "1.7.4"
+        },
+        "langchain-google-genai": {
+          "installed": "4.4.0",
+          "required_minimum": "4.4.0"
+        },
+        "langchain-openai": {
+          "installed": "1.6.2",
+          "required_minimum": "1.6.6"
+        },
+        "langgraph": {
+          "installed": "1.2.11",
+          "required_minimum": "1.2.12"
+        },
+        "langgraph-checkpoint-sqlite": {
+          "installed": "3.1.1",
+          "required_minimum": "3.1.1"
+        },
+        "markdown-it-py": {
+          "installed": "4.2.0",
+          "required_minimum": "4.0"
+        },
+        "packaging": {
+          "installed": "26.3",
+          "required_minimum": "24.0"
+        },
+        "pandas": {
+          "installed": "3.0.5",
+          "required_minimum": "3.0.6"
+        },
+        "python-dotenv": {
+          "installed": "1.2.3",
+          "required_minimum": "1.0.0"
+        },
+        "pytz": {
+          "installed": "2026.3.post1",
+          "required_minimum": "2025.2"
+        },
+        "questionary": {
+          "installed": "2.1.1",
+          "required_minimum": "2.1.0"
+        },
+        "requests": {
+          "installed": "2.34.2",
+          "required_minimum": "2.32.4"
+        },
+        "rich": {
+          "installed": "15.0.0",
+          "required_minimum": "14.0.0"
+        },
+        "typer": {
+          "installed": "0.27.2",
+          "required_minimum": "0.21.0"
+        },
+        "stockstats": {
+          "installed": "0.6.8",
+          "required_minimum": "0.6.5"
+        },
+        "typing-extensions": {
+          "installed": "4.16.0",
+          "required_minimum": "4.14.0"
+        },
+        "yfinance": {
+          "installed": "1.7.0",
+          "required_minimum": "1.7.0"
+        }
+      },
+      "installed_tradingagents_distribution": "0.4.0"
+    },
+    "command": [
+      "/opt/miniconda3/envs/tradingagents/bin/python",
+      "-B",
+      "-u",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/scripts/run_baseline.py",
+      "--inner",
+      "--run-id",
+      "baseline-20261020-01",
+      "--ticker",
+      "NVDA",
+      "--date",
+      "2026-10-19",
+      "--analysts",
+      "market,social,news,fundamentals",
+      "--language",
+      "English",
+      "--debate-rounds",
+      "1",
+      "--risk-rounds",
+      "1",
+      "--project-root",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents"
+    ],
+    "cwd": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents",
+    "project_root": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents",
+    "python_runtime": {
+      "executable": "/opt/miniconda3/envs/tradingagents/bin/python",
+      "version": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:38:15) [Clang 20.1.8 ]",
+      "platform": "darwin"
+    },
+    "module_check": {
+      "returncode": 0,
+      "parsed": {
+        "sys_executable": "/opt/miniconda3/envs/tradingagents/bin/python",
+        "sys_version": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:38:15) [Clang 20.1.8 ]",
+        "cwd": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents",
+        "tradingagents_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/__init__.py",
+        "tradingagents_version": "0.7.0",
+        "cli_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/__init__.py",
+        "cli_main_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/main.py",
+        "config_results_dir": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/results",
+        "config_cache_dir": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/cache",
+        "config_memory_log_path": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/memory/trading_memory.md",
+        "sys_path": [
+          "",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents",
+          "/opt/miniconda3/envs/tradingagents/lib/python312.zip",
+          "/opt/miniconda3/envs/tradingagents/lib/python3.12",
+          "/opt/miniconda3/envs/tradingagents/lib/python3.12/lib-dynload",
+          "/opt/miniconda3/envs/tradingagents/lib/python3.12/site-packages"
+        ]
+      },
+      "stdout_tail": "{\"sys_executable\": \"/opt/miniconda3/envs/tradingagents/bin/python\", \"sys_version\": \"3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:38:15) [Clang 20.1.8 ]\", \"cwd\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents\", \"tradingagents_file\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/__init__.py\", \"tradingagents_version\": \"0.7.0\", \"cli_file\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/__init__.py\", \"cli_main_file\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/main.py\", \"config_results_dir\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/results\", \"config_cache_dir\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/cache\", \"config_memory_log_path\": \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/memory/trading_memory.md\", \"sys_path\": [\"\", \"/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents\", \"/opt/miniconda3/envs/tradingagents/lib/python312.zip\", \"/opt/miniconda3/envs/tradingagents/lib/python3.12\", \"/opt/miniconda3/envs/tradingagents/lib/python3.12/lib-dynload\", \"/opt/miniconda3/envs/tradingagents/lib/python3.12/site-packages\"]}\n",
+      "stderr_tail": ""
+    }
+  },
+  "paths": {
+    "results": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/results",
+    "cache": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/cache",
+    "memory": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/memory",
+    "home": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp/home",
+    "tmp": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/runs/baseline-20261020-01/tmp"
+  },
+  "finished_at": "2026-10-20T19:33:15+08:00",
+  "elapsed_monotonic_seconds": 195.383,
+  "exit_code": 0,
+  "source_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 213,
+        "dirs": 23,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "after": {
+        "files": 213,
+        "dirs": 23,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "outside_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 213,
+        "dirs": 24,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "after": {
+        "files": 213,
+        "dirs": 24,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "home_tradingagents_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 45,
+        "dirs": 22,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "after": {
+        "files": 45,
+        "dirs": 22,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "artifacts": [
+    {
+      "path": "README.md",
+      "size": 1557,
+      "sha256": "9098aaef7ee1a16b4577c532afaa8237a9571fdbef2b6e963093413ac030c46c"
+    },
+    {
+      "path": "cache/NVDA-YFin-data.csv",
+      "size": 138087,
+      "sha256": "7b2c126c063c378a4bd8f60e99feeca6441f6ee86b40d21cb071fee20ef2c1fc"
+    },
+    {
+      "path": "cache/sec_edgar/CIK0001045810.json",
+      "size": 4534615,
+      "sha256": "a7cf2857c67726f1627299e0e7533670272e37349da086efaebeb5b8a6c7970d"
+    },
+    {
+      "path": "cache/sec_edgar/company_tickers.json",
+      "size": 872364,
+      "sha256": "7a090d57319a182fdaa02206f0679acff3fe707ffc453882c6ab11114b9b28a0"
+    },
+    {
+      "path": "data-availability.csv",
+      "size": 9002,
+      "sha256": "c485d62043cca3131ca5430caa7a3eb1580b0ad9ab4557cdd05fedc485822d5e"
+    },
+    {
+      "path": "environment.json",
+      "size": 26729,
+      "sha256": "e8180e59e35376811079fbed88dbf3feb722052c133d0d9c469d052ba32a2f03"
+    },
+    {
+      "path": "environment.txt",
+      "size": 26730,
+      "sha256": "2d1ee832b1b5dde40b9594f92d28f6ccc6209eccbc7b74a14c072431c30283b6"
+    },
+    {
+      "path": "home-tradingagents-after.json",
+      "size": 14208,
+      "sha256": "51402c8c4a00fe45487b84da54a843168882fa986f96e7f83c98c3b7ed88e1b0"
+    },
+    {
+      "path": "home-tradingagents-before.json",
+      "size": 14208,
+      "sha256": "ca3d1b37c3bca54a510f24382516680a84a24683be47dff301312eec3ffc527f"
+    },
+    {
+      "path": "home-tradingagents-integrity.json",
+      "size": 375,
+      "sha256": "4b3a76bbbc678636c643cdaf51275c2cc44ffe0bbdbfbb6e516518f470057813"
+    },
+    {
+      "path": "logs/app.log",
+      "size": 2392,
+      "sha256": "042c083683e907afc14b1b69e16909ebdae7e16e805c216835c23f54805536cd"
+    },
+    {
+      "path": "logs/exit-code.txt",
+      "size": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "logs/module-check.stderr.txt",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/module-check.stdout.txt",
+      "size": 1338,
+      "sha256": "5bd281f54fe818b29f5d7c4a220d1610ebb2170039512ec980495c16059f2898"
+    },
+    {
+      "path": "logs/stderr.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/stdout.log",
+      "size": 2566,
+      "sha256": "2687976d4ec8de5bd95add42bacd45e01c8d5339201ed3264b0beada18472bdf"
+    },
+    {
+      "path": "memory/trading_memory.md",
+      "size": 3237,
+      "sha256": "52bfbb29cc971e982d7c6b312c3da0009923266692844f6553e918b437d00da6"
+    },
+    {
+      "path": "memory/trading_memory.md.lock",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "metrics-inner.json",
+      "size": 959,
+      "sha256": "d447836be677840f9112a10652e1283f4cf17f3635afbde9a5cd390db03bcae1"
+    },
+    {
+      "path": "metrics.json",
+      "size": 3055,
+      "sha256": "b9177b17865c8a53d2b4851f6068d52b94430b487314320915971b65d6cf979e"
+    },
+    {
+      "path": "outside-after.json",
+      "size": 56929,
+      "sha256": "0db219aec83649ad46d3fa03229421bf968a47faacd84febe9e7f86b87a6e388"
+    },
+    {
+      "path": "outside-before.json",
+      "size": 56929,
+      "sha256": "f20d3a8f3121800e811f3f345fa38409e1b578265bc7f7c7d1bdbf027fa46232"
+    },
+    {
+      "path": "outside-integrity.json",
+      "size": 379,
+      "sha256": "93070753238da967cacdc1bea1a88501b05ee9f77219386af2cdf821b80a35fc"
+    },
+    {
+      "path": "report-consistency.json",
+      "size": 1859,
+      "sha256": "a37c51121d937651fe0b95aea0cd86bf4a6975c777ceb894778efe992740a1cb"
+    },
+    {
+      "path": "reproduce.sh",
+      "size": 457,
+      "sha256": "103eec35f4b5c84099fe223e37e5ce87ccde0c6fc66d136c1a63eb0412dc4b20"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/message_tool.log",
+      "size": 102445,
+      "sha256": "9bb4394645baa8dc77a30d516c961ee6857d2555c8f9265500cff73743a7efc3"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/final_trade_decision.md",
+      "size": 3167,
+      "sha256": "e8a531be5e7e565a2461caee6e02cbc86b3bdf5cd98f537667298e448eaf90a4"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/fundamentals_report.md",
+      "size": 13069,
+      "sha256": "65353f8e1ab1a0958aa759f2369d727234e684eaaae4691b161f95fec4788d94"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/investment_plan.md",
+      "size": 5560,
+      "sha256": "48398b717183d27a4e003451886d1c717cc837435aa67467a336f61dc0d768f3"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/market_report.md",
+      "size": 11579,
+      "sha256": "d1a90a89c27751e7ee462a0afd599c6d1531fb09b0f01e4c363691c9853e22a2"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/news_report.md",
+      "size": 14229,
+      "sha256": "c4a39d795389fa7df598184e96977520ac7ceee1adeff96f255a515cc2b7c353"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/sentiment_report.md",
+      "size": 6552,
+      "sha256": "39f9b4ac5d507943464088cfbfdfee3db1d281aedde144109e3943ae4f959813"
+    },
+    {
+      "path": "results/NVDA/2026-10-19/reports/trader_investment_plan.md",
+      "size": 1079,
+      "sha256": "160fb74388c34c3b693702002246b6695cb55279f62b62b423ff9bb49dae4617"
+    },
+    {
+      "path": "results/NVDA/TradingAgentsStrategy_logs/full_states_log_2026-10-19.json",
+      "size": 149094,
+      "sha256": "760085b51ab70093a6f67c15b7632240078e15e27f4fe8263d3389073274145f"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/1_analysts/fundamentals.md",
+      "size": 13069,
+      "sha256": "65353f8e1ab1a0958aa759f2369d727234e684eaaae4691b161f95fec4788d94"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/1_analysts/market.md",
+      "size": 11579,
+      "sha256": "d1a90a89c27751e7ee462a0afd599c6d1531fb09b0f01e4c363691c9853e22a2"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/1_analysts/news.md",
+      "size": 14229,
+      "sha256": "c4a39d795389fa7df598184e96977520ac7ceee1adeff96f255a515cc2b7c353"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/1_analysts/sentiment.md",
+      "size": 6552,
+      "sha256": "39f9b4ac5d507943464088cfbfdfee3db1d281aedde144109e3943ae4f959813"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/2_research/bear.md",
+      "size": 15314,
+      "sha256": "42d627237a582be0c40d944816930f39a248d982f04c01b4d9de7254be17e159"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/2_research/bull.md",
+      "size": 10766,
+      "sha256": "c3823c226d22bb26bd237960bcfa1f8d173654ea78fa1ddf4bbbd41ac9bb9202"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/2_research/manager.md",
+      "size": 5560,
+      "sha256": "48398b717183d27a4e003451886d1c717cc837435aa67467a336f61dc0d768f3"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/3_trading/trader.md",
+      "size": 1079,
+      "sha256": "160fb74388c34c3b693702002246b6695cb55279f62b62b423ff9bb49dae4617"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/4_risk/aggressive.md",
+      "size": 6187,
+      "sha256": "616734334f7c83d42805d73eb477c00b3a400bf7e248253457a013c43d89ef0e"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/4_risk/conservative.md",
+      "size": 5399,
+      "sha256": "0077043e9affa075f3c7c1d8bd9731b4fa19c987a51e884d7eabdafd0f064896"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/4_risk/neutral.md",
+      "size": 4688,
+      "sha256": "ca61947f61cd2fb4efaf3fa7a1b2f157afe3fdc70324920ea5167ed6edf17759"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/5_portfolio/decision.md",
+      "size": 3167,
+      "sha256": "e8a531be5e7e565a2461caee6e02cbc86b3bdf5cd98f537667298e448eaf90a4"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/complete_report.html",
+      "size": 143910,
+      "sha256": "54b6954a52c2281c080f2060d313aa2354462f695076a2d2056345feef7dadd0"
+    },
+    {
+      "path": "results/reports/NVDA_20261020_193209/complete_report.md",
+      "size": 98503,
+      "sha256": "26083f3bf5a2688d3c528cf43eb6fe668a3d4e966c9406691b2640e61520caf7"
+    },
+    {
+      "path": "source-after.json",
+      "size": 53464,
+      "sha256": "74d6b3bbe070a5aa49f2e2b5b7bf25ffa54deab1ffa476bddc16c2b6739a60e0"
+    },
+    {
+      "path": "source-before.json",
+      "size": 53464,
+      "sha256": "e3844157eed3a0745994fc84ea5a3e3fe8884e37ba07a339d074a6fcba6d240f"
+    },
+    {
+      "path": "source-integrity.json",
+      "size": 379,
+      "sha256": "51b2a2141154aba8d6c16763f8113051d7d75b4c69178b41197aa9adfbb6d410"
+    },
+    {
+      "path": "summary.md",
+      "size": 8112,
+      "sha256": "71b6db49351ac3c903c81ea61be159dc77e1e2cee6f8d4048fd05df9a9e127c5"
+    },
+    {
+      "path": "tmp/home/.tradingagents/cli_prefs.json",
+      "size": 324,
+      "sha256": "c82df3f95eda22aaade53348dc97e830bf12803bcdebd40f05bbf8ecb383a0e5"
+    },
+    {
+      "path": "tmp/xdg-cache/py-yfinance/cookies.db",
+      "size": 8192,
+      "sha256": "cfd91e4f8e8f53373a88b1816bbc364ee2af8b4bb9dc9fd6d244d0ab9d3e8d75"
+    },
+    {
+      "path": "tmp/xdg-cache/py-yfinance/tkr-tz.db",
+      "size": 8192,
+      "sha256": "b2141fff732f7664caac6b79d94dcad8f247148adb6ed9ceb43de0bf9849d262"
+    },
+    {
+      "path": "transcripts/evidence-provenance.json",
+      "size": 9627,
+      "sha256": "4e217a51b6f186cd14cb80e9baae71affabb67ad8f8ec154c9180cb07ea2565e"
+    },
+    {
+      "path": "transcripts/final-status.json",
+      "size": 4095,
+      "sha256": "a6e54ff46b7e1dcc02bf170c150a7456c8d18b5cdc57eefebd1496381df22de9"
+    },
+    {
+      "path": "transcripts/final_state.json",
+      "size": 166693,
+      "sha256": "e580553d8a99cc8bb93dd4c143e67fb5679130433310b5c872ccc8f01e9ebe71"
+    },
+    {
+      "path": "transcripts/opencode-session.json",
+      "size": 7279208,
+      "sha256": "ecb40d723d2956a6f44d623647821a8874751ed4a50ef00732acd3aa2184e8a5"
+    },
+    {
+      "path": "transcripts/prefetch/001_sentiment_news.txt",
+      "size": 169,
+      "sha256": "7c439c914b0c56ce304778577a60362ef85189552b04a2d65277dfe2d9b623bf"
+    },
+    {
+      "path": "transcripts/prefetch/002_sentiment_stocktwits.txt",
+      "size": 35,
+      "sha256": "c30ce597d030fc06dba90924b2628ee94f478ae837e6717dfe8edf3cd9dd153d"
+    },
+    {
+      "path": "transcripts/prefetch/003_sentiment_reddit.txt",
+      "size": 3253,
+      "sha256": "1117167b87d8f27a54f367a2ae1f2801dd6e6b0c03e7cce44445f5dcfeae3daf"
+    },
+    {
+      "path": "transcripts/prefetch-events.jsonl",
+      "size": 881,
+      "sha256": "07f89f5dfa42c8ad237046186a5c031fe260c69951d7216149fc51a45c2709ad"
+    },
+    {
+      "path": "transcripts/tool-events-clean.jsonl",
+      "size": 26418,
+      "sha256": "bca55980ec2fc43f2705a5ec5a82c3718b00f3aaa5f8ad9471e3744606e32e23"
+    },
+    {
+      "path": "transcripts/tool-events.jsonl",
+      "size": 20747,
+      "sha256": "de44deaaa8df5bbaafe10916bb35febb49b02976a4a5f4326c78de1dcca2de80"
+    },
+    {
+      "path": "transcripts/tool-outputs/0007_get_stock_data.txt",
+      "size": 6981,
+      "sha256": "18732bd38b840eb4f88a2c14a03461f94f64d0b3d16c0f78984ba1e3b5c9bc26"
+    },
+    {
+      "path": "transcripts/tool-outputs/0008_get_verified_market_snapshot.txt",
+      "size": 1971,
+      "sha256": "01680117ce8fb8f5264ce35fbf37ef68952cf3ef917955864c1671e77215fe14"
+    },
+    {
+      "path": "transcripts/tool-outputs/0013_get_fundamentals.txt",
+      "size": 663,
+      "sha256": "28528c4b0a312cdec6bbf069bcc5826df3b289716fa28aa9a8df43cbea3b604a"
+    },
+    {
+      "path": "transcripts/tool-outputs/0018_get_insider_transactions.txt",
+      "size": 337,
+      "sha256": "cec3a9e5e98c04d3abf9f5bc2c04c5054e86bce211f7a410fbae7018a3f26ff6"
+    },
+    {
+      "path": "transcripts/tool-outputs/0019_get_income_statement.txt",
+      "size": 2920,
+      "sha256": "63c662600054be53c4198b58dd21e361912c0a92dec0e76b19ca09a362a08f40"
+    },
+    {
+      "path": "transcripts/tool-outputs/0025_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "088ce0b7d1b737c8b1108a67503ae7e1abf911f01740e69096c25281b5db42f1"
+    },
+    {
+      "path": "transcripts/tool-outputs/0029_get_prediction_markets.txt",
+      "size": 294,
+      "sha256": "a3d9ee332b47d5f2206b067035259c9bbf89825e7e8fbb55c5255b98435a565b"
+    },
+    {
+      "path": "transcripts/tool-outputs/0031_get_prediction_markets.txt",
+      "size": 294,
+      "sha256": "a2d764b502452240a757cfa07af4b9ddd117bb40ed24652d0d961f42397fa0a9"
+    },
+    {
+      "path": "transcripts/tool-outputs/0032_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "46f307a7e96fec1641ea0da619c9cf5671fd3024af2d4d4dbb6afb92d6140e21"
+    },
+    {
+      "path": "transcripts/tool-outputs/0033_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "01b40b453f09ef95afb484d9c7f8bc901fb8a1e3f5d79b3d2c9206bd8d06944a"
+    },
+    {
+      "path": "transcripts/tool-outputs/0034_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "8736798e00b0ee884febf63c830daceefdab7f92224d6b8e2a4aab44c132d46d"
+    },
+    {
+      "path": "transcripts/tool-outputs/0035_get_cashflow.txt",
+      "size": 2359,
+      "sha256": "d4ecd8ffe0f6246f599e035c4752cddb090fda6ab1fc865e738a8e617f0f22fd"
+    },
+    {
+      "path": "transcripts/tool-outputs/0036_get_balance_sheet.txt",
+      "size": 3369,
+      "sha256": "e479268edcb11695c8661066781565cf981ee1f5b47c991d0ce9cb49051fb7c3"
+    },
+    {
+      "path": "transcripts/tool-outputs/0038_get_global_news.txt",
+      "size": 4872,
+      "sha256": "702f48c2282b02566b0df730b3eb227b0bacc3f8d4a14fc8e2ad40fe8cfab685"
+    },
+    {
+      "path": "transcripts/tool-outputs/0039_get_news.txt",
+      "size": 240,
+      "sha256": "55d7fa528dce4afecde90e0b0ce73d7937ac64db50554049a3b8d98ba0947bb8"
+    },
+    {
+      "path": "transcripts/tool-outputs/0045_get_income_statement.txt",
+      "size": 1136,
+      "sha256": "909ec26f20372a0f617abc1b7530aa18137c716d3bd94136e0dcdd6addadeb80"
+    },
+    {
+      "path": "transcripts/tool-outputs/0046_get_balance_sheet.txt",
+      "size": 1139,
+      "sha256": "4b1cf5141a63f83134bb77709a77a3689c06fe8bd053b6de89b111138269908d"
+    },
+    {
+      "path": "transcripts/tool-outputs/0047_get_cashflow.txt",
+      "size": 876,
+      "sha256": "5c23aacbd65f34e973d77053d2872dac1d32ddfca470d58abd2c67de439f87a8"
+    },
+    {
+      "path": "transcripts/tool-outputs/0058_get_indicators.txt",
+      "size": 1548,
+      "sha256": "a793c6d116889910d94b840a46369560f83ba2d3485fe4d99e2da1a6c656c193"
+    },
+    {
+      "path": "transcripts/tool-outputs/0059_get_indicators.txt",
+      "size": 1593,
+      "sha256": "852e43f8632b6c9a72b601b218004cbc3c717b48a853fc04c1dec4244b29637e"
+    },
+    {
+      "path": "transcripts/tool-outputs/0060_get_indicators.txt",
+      "size": 1584,
+      "sha256": "413079afb6b31319732980ec8ddeb0fac4c9b1347d5bdfd20e3fb8cfb095fa0d"
+    },
+    {
+      "path": "transcripts/tool-outputs/0061_get_indicators.txt",
+      "size": 1562,
+      "sha256": "c659eb584c9b87fcc4143dea82f8a2358db467965c879b5ae83bd600f11872c7"
+    },
+    {
+      "path": "transcripts/tool-outputs/0062_get_indicators.txt",
+      "size": 1593,
+      "sha256": "fe3041d4679ec698ebd6b5a626f4ee0b916d2ddb8ba185ea673c7d2295e5f0f5"
+    },
+    {
+      "path": "transcripts/tool-outputs/0063_get_indicators.txt",
+      "size": 1580,
+      "sha256": "181eea9f22043a10ef124a8d81e84af4645928ded16ecb30f87defaf86764c02"
+    },
+    {
+      "path": "transcripts/tool-outputs/0064_get_indicators.txt",
+      "size": 1552,
+      "sha256": "c3ac63e8d8053d521c7abd7719ee73b433562dd3ae089c119482e47d06ecaef5"
+    },
+    {
+      "path": "transcripts/tool-outputs/0065_get_indicators.txt",
+      "size": 1578,
+      "sha256": "fa008a08f72ed13c92c592e0935f2c57eed843f8dc38c7e3152ea84d857619bb"
+    },
+    {
+      "path": "transcripts/tool-outputs/0071_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "a592fd39c3731da9c3bdd1581d4a123444a335c0f2121b8f5f1c06c76662ee86"
+    },
+    {
+      "path": "transcripts/tool-outputs/0073_get_macro_indicators.txt",
+      "size": 306,
+      "sha256": "66c2f9dde241406bd9b8054539f6b4d496bf9f9fa4d801095acf7e55625d2e8d"
+    },
+    {
+      "path": "transcripts/tool-outputs/0074_get_global_news.txt",
+      "size": 7201,
+      "sha256": "a8b38f521dadc886ec50e3e183387160100e2bb6d5e4c7581c785820e1383f84"
+    },
+    {
+      "path": "transcripts/tool-outputs/0075_get_news.txt",
+      "size": 240,
+      "sha256": "1ffa7c5b72427d56f5e505cfc0b53e29ced7aac4d8c26c9abf4cf9a8eb84fa17"
+    },
+    {
+      "path": "transcripts/tool-outputs/0080_get_global_news.txt",
+      "size": 3815,
+      "sha256": "f942b1cf6ec9db2bdcb7ae3855730be01a969d62050c45108e27cbc53ce26a6b"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0007_get_stock_data.txt",
+      "size": 6782,
+      "sha256": "4c0744089ba47430a5e993a7a32eed6bf54e9f301963300875dce1c5d936588d"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0008_get_verified_market_snapshot.txt",
+      "size": 1813,
+      "sha256": "207c4f3468464f3ce616158d5e793c24c97d3a335693750cc7d88b26629eaf71"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0013_get_fundamentals.txt",
+      "size": 581,
+      "sha256": "b84023b4b8fa60f9c687a355fc079ee3463bb83392093bed6286735b1cad3ad1"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0018_get_insider_transactions.txt",
+      "size": 247,
+      "sha256": "9c95092eab8b6c95ffb0fa090b5bddecabc3609841d3e3b01974a6e663ca52e6"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0019_get_income_statement.txt",
+      "size": 2827,
+      "sha256": "20aae713ca3a1f8c3c30a4e5a0d67d204ae74a2e7e8fda3e94cbf94c9cfda3b4"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0025_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0029_get_prediction_markets.txt",
+      "size": 209,
+      "sha256": "c6d4b22f16651564db98807761ff8476f774c25fe0e8ecff33f554d8c7604918"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0031_get_prediction_markets.txt",
+      "size": 209,
+      "sha256": "c6d4b22f16651564db98807761ff8476f774c25fe0e8ecff33f554d8c7604918"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0032_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0033_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0034_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0035_get_cashflow.txt",
+      "size": 2276,
+      "sha256": "279ca6c1eb59eee64c38b0d243e54d41765bb8272b3e249e2a06200625ba9016"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0036_get_balance_sheet.txt",
+      "size": 3279,
+      "sha256": "f992674550c20e4ef889893400b2136622f84aa81c6440bc23b1e06a85968dd4"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0038_get_global_news.txt",
+      "size": 4732,
+      "sha256": "f854f102528e23ca341aa481066261c44a147a8ff08e896dbb466907b15e1ba5"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0039_get_news.txt",
+      "size": 169,
+      "sha256": "7c439c914b0c56ce304778577a60362ef85189552b04a2d65277dfe2d9b623bf"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0045_get_income_statement.txt",
+      "size": 1043,
+      "sha256": "967e9d4fbaafeed48c55dd8b4e14c853911b32d439f4ffb69ad77499e11adaee"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0046_get_balance_sheet.txt",
+      "size": 1049,
+      "sha256": "5eb22d03e7651874a467ed772cb3e9cfea8631e01db74e3b2e5dbb8b476a2c03"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0047_get_cashflow.txt",
+      "size": 793,
+      "sha256": "19258c0d85b53873c8a886f6183c6b3d69d6cf9f03df8bf3d44ebc8ca5667259"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0058_get_indicators.txt",
+      "size": 1436,
+      "sha256": "835b513c1f31cbdcb6adb980303a0733c040dfcccb8129eaaf8c4ad9427850b9"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0059_get_indicators.txt",
+      "size": 1481,
+      "sha256": "75dd464a7b9e9b0420256d5ff31ea522353d265faffd2e910612d6647a70a317"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0060_get_indicators.txt",
+      "size": 1472,
+      "sha256": "522c6427060d6beb38a2e8088c12bc9e8a631aa5771ab3a7ec7093aaac7631a6"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0061_get_indicators.txt",
+      "size": 1450,
+      "sha256": "d47c254372f8deb8a73b412503413e140df880dfa004ee6e90461167b8f98c11"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0062_get_indicators.txt",
+      "size": 1481,
+      "sha256": "8ed136a2175bd31b230ebbe426e6fd1562dc1ebf77599c85ba0c53e06a380ddb"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0063_get_indicators.txt",
+      "size": 1468,
+      "sha256": "65f494de739075e4aa6e0fe8fdfc215a4393766cb79ef45e84bc5e50a842b239"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0064_get_indicators.txt",
+      "size": 1440,
+      "sha256": "fa45cff05303b54eeb56039f574811f774bd688ccd2d5f3432fc763637770c71"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0065_get_indicators.txt",
+      "size": 1466,
+      "sha256": "a72df99e6df3ac14cf8339d344ef91a3aaa2b9fe19a9a89e18cfa629f122fda1"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0071_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0073_get_macro_indicators.txt",
+      "size": 223,
+      "sha256": "ce0ec136df75b42f29cf256dc57162bd104bd60dd5fa6b40529013878c86df5c"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0074_get_global_news.txt",
+      "size": 7031,
+      "sha256": "59eaba57056bd3d42e834f4fb9c859ff210abfb2aeed1422f1a39ce9bd98a5f6"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0075_get_news.txt",
+      "size": 169,
+      "sha256": "7c439c914b0c56ce304778577a60362ef85189552b04a2d65277dfe2d9b623bf"
+    },
+    {
+      "path": "transcripts/tool-outputs-clean/0080_get_global_news.txt",
+      "size": 3690,
+      "sha256": "f777c08ef1315861c639a4f6697717c4310a2bcae7d0d90a00e8bd5531708b25"
+    }
+  ],
+  "evidence_rebuild": {
+    "generated_at": "2026-10-20T19:33:15+08:00",
+    "method": "extracted content from ToolMessage repr; counts recomputed from clean content",
+    "clean_event_log": "transcripts/tool-events-clean.jsonl",
+    "provenance": "transcripts/evidence-provenance.json"
+  },
+  "git_commit": "cea61c5452b1f9b988e490b8de347aaba4874f36",
+  "git_commit_short": "cea61c5452b1",
+  "invocation": "zsh -c 'source ~/.zshrc && use_ta_cityu && cd /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD\" /opt/miniconda3/envs/tradingagents/bin/python -B ../scripts/run_baseline.py --run-id baseline-20261020-01 --ticker NVDA --date 2026-10-19 --analysts market,social,news,fundamentals --language English --debate-rounds 1 --risk-rounds 1'",
+  "reproduce_script": "reproduce.sh",
+  "preflight_authoritative": "baseline/preflight/preflight-20261020-02",
+  "preflight_superseded": "baseline/preflight/preflight-20261020-01",
+  "opencode_session_export": "baseline/runs/baseline-20261020-01/transcripts/opencode-session.json",
+  "stdout_stderr_mode": "separate: logs/stdout.log and logs/stderr.log",
+  "latest_market_bar": {
+    "date": "2026-10-19",
+    "close": "217.08999633789062",
+    "open": "218.10000610351562",
+    "high": "219.6199951171875",
+    "low": "214.6999969482422",
+    "volume": "98403300"
+  },
+  "finalized_at": "2026-10-20T19:33:59+08:00"
+}

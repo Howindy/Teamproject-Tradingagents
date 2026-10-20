@@ -1,0 +1,119 @@
+{
+  "run_id": "baseline-20261020-01",
+  "measurement_scope": "inner: run_analysis wall-clock, monotonic; total: child process wall-clock, monotonic",
+  "exit_code": 0,
+  "inner": {
+    "run_id": "baseline-20261020-01",
+    "started_at": "2026-10-20T19:28:54+08:00",
+    "finished_at": "2026-10-20T19:32:09+08:00",
+    "elapsed_monotonic_seconds": 194.41,
+    "exit_code": 0,
+    "error": null,
+    "llm_calls": 19,
+    "tool_calls": 31,
+    "tokens_in": 156541,
+    "tokens_out": 27639,
+    "llm_usage_missing": 0,
+    "retry_events": 0,
+    "llm_error_events": 0,
+    "tool_error_events": 0,
+    "tool_event_count": 31,
+    "prefetch_event_count": 3,
+    "final_state_captured": true,
+    "final_rating": "Hold",
+    "final_decision_preview": "**Rating**: Hold **Executive Summary**: Maintain the current NVDA position at a standard allocation without adding or trimming at current levels (~$217). The near-term risk/reward is skewed (~5% upside to the $223 confluence versus ~7% downside to the 200-day SMA at $202.81 and …",
+    "module_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/__init__.py",
+    "module_version": "0.7.0"
+  },
+  "total_elapsed_monotonic_seconds": 195.383,
+  "llm_calls": 19,
+  "tool_calls": 31,
+  "tokens_in": 156541,
+  "tokens_out": 27639,
+  "llm_usage_missing": 0,
+  "retry_events": 0,
+  "llm_error_events": 0,
+  "tool_error_events": 0,
+  "structured_fallback_warnings": 0,
+  "message_tool_log_lines": 80,
+  "monetary_cost": null,
+  "monetary_cost_reason": "no CityU per-token price was provided; token counts are the available cost proxy",
+  "ui_rounded_estimate": null,
+  "stdout_bytes": 2566,
+  "stderr_bytes": 0,
+  "source_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 213,
+        "dirs": 23,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "after": {
+        "files": 213,
+        "dirs": 23,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "outside_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 213,
+        "dirs": 24,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "after": {
+        "files": 213,
+        "dirs": 24,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "home_tradingagents_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 45,
+        "dirs": 22,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "after": {
+        "files": 45,
+        "dirs": 22,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  }
+}

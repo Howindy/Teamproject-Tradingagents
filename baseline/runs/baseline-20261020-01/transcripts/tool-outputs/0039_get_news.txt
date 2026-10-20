@@ -1,0 +1,1 @@
+content='<Yahoo Finance news unavailable for 2026-10-12..2026-10-19: Yahoo search returns only a sample of recent articles about NVDA, so this is not an absence of news for NVDA>' name='get_news' tool_call_id='call_a813b0c7380f46598e8ce197'

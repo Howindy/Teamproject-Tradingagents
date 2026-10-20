@@ -1,0 +1,506 @@
+{
+  "root": "/Users/ichihann/.tradingagents",
+  "exists": true,
+  "generated_at": "2026-10-20T19:26:11+08:00",
+  "entries": [
+    {
+      "path": "cache",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "cache/0700.HK-YFin-data-2021-09-14-2026-09-15.csv",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 112786,
+      "sha256": "777f592ec525631951cb933181fe6129e5e390c20958d1b50df1e3c98fba7a38"
+    },
+    {
+      "path": "cache/AAPL-YFin-data-2021-09-14-2026-09-15.csv",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 118450,
+      "sha256": "e4c1a64c68fad04187367de74cd8277e54fc14c5428adf64afb92bbb59c0a7a7"
+    },
+    {
+      "path": "cache/AAPL-YFin-data-2021-09-29-2026-09-30.csv",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 118282,
+      "sha256": "b5e3bf35dcb5760a5796f2e1b8e055ba6755014f8ac334e39891074e598d9f22"
+    },
+    {
+      "path": "cache/SPY-YFin-data-2021-10-19-2026-10-20.csv",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 115620,
+      "sha256": "9eedfdd2e418eb6ca0cf41f6b7dddaf5ab00822154d33f2f2fd215126efd8e7c"
+    },
+    {
+      "path": "cli_prefs.json",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 324,
+      "sha256": "c82df3f95eda22aaade53348dc97e830bf12803bcdebd40f05bbf8ecb383a0e5"
+    },
+    {
+      "path": "logs",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12931,
+      "sha256": "cfe78d7e73382e73c0adec9ee4ca1d70bb9d9b4fc5229118988b888c4cd0d763"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/reports/final_trade_decision.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4925,
+      "sha256": "3bb619f981796aafe11c672cfe8228c92f9a93ec5859d53bd355fbffda090f10"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8243,
+      "sha256": "d18129316b2382c48e225778b3447d08061792203d15270491a8df85e228f0ee"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6370,
+      "sha256": "1a6e9bd87e53fd9ae169aa67c57d69e00542cd58901c4a9e45b2644c1ba3ec97"
+    },
+    {
+      "path": "logs/0700.HK/2025-09-14/reports/trader_investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 844,
+      "sha256": "87aabb3fc491544d27056f0cadbebc766c71cc3fd46966d46c28ba86bc7b8472"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11159,
+      "sha256": "3257f16aaffc4cbae207c8b4bd1c74caa7d2595f9e101283c05abf1868574ecc"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/reports/final_trade_decision.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3505,
+      "sha256": "e37de6b92d7270234c942d70dbd2a409237cdc99fa112921dcc06a604b4ebf56"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6315,
+      "sha256": "8b03d24ecbb5df86821c07eea220cb94a5c2b26d5163acdf0445cd556f6ee242"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5168,
+      "sha256": "34b7bd8ac0fa614ece7fea80e94ee7d245731e47c6f0b0c3c7a622785d792181"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-10/reports/trader_investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1053,
+      "sha256": "f059b0533ce56a83857229287908310113712cad49556027ec33256bf8d52f7c"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 97560,
+      "sha256": "76b770f1e8d7503dc9fe2e27955e2b69a37c8343707b922d49b71c837900a15c"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/final_trade_decision.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3488,
+      "sha256": "01423c323af4a332bc40ea238c83f111f0c65b6704c61b79d02335e0c9f54d6f"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3287,
+      "sha256": "9981606d40706dab7a6974624ce9772e7aa7482279755a378088755b967c2743"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3397,
+      "sha256": "0904af99e4c04141ddbd7637f7a75a53587bc9a08b5a61bb0f4db11a4ef71d0c"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/market_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7467,
+      "sha256": "0a296a2865152c7f56299ac555005399e6209a394237e02faf95576689b921bd"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/news_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8395,
+      "sha256": "d8e1e3294b8d97ffa172cb68abf02495d567cdfd9dfe03ac8d4d994727b9ebdc"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/sentiment_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 4657,
+      "sha256": "9212763b73cfb3fba31812833ccfd026cd2e1b263ce285a04f01cae984413445"
+    },
+    {
+      "path": "logs/0700.HK/2026-09-14/reports/trader_investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1008,
+      "sha256": "1e212649b5e84214ac6e5d7b21b4233027388dd89882e0adca511c2ab41c2f5e"
+    },
+    {
+      "path": "logs/AAPL",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 132012,
+      "sha256": "84dd020ee9ed0fb0ccad5a64f0b87636eb1dd9969e75aab62dfecf655b2a70b4"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/final_trade_decision.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3521,
+      "sha256": "4d850ff91fb1d4dfb2963f86cf17abd0b37104820ca23d2a586c022d957bb9d7"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 12296,
+      "sha256": "84fbfd7d334ab3360dbe354a28c6eb5dd082f1647127d289ac23e0e438be6b1c"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3542,
+      "sha256": "23a5b681cc5d4d4d220c92b2fcabe7b787a3627e67cc44c21f8e8af3616254fd"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/market_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7633,
+      "sha256": "b2c9242be53ad90814eeb6b389c96c968fa6799fc063272b58e55ce83b7b3464"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/news_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 9779,
+      "sha256": "ab8d9ac0c7312a43c8a2eecd22c3a879fcc02cb9aa660a37b485de2e4442c140"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/sentiment_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8740,
+      "sha256": "1d5fe27ac377374f7f31db35f4038d8130d3dbcb2407039e68b9d0fdaa277ff4"
+    },
+    {
+      "path": "logs/AAPL/2026-09-14/reports/trader_investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 853,
+      "sha256": "e1b9d0edb0e43e02648ca28f20e0d0b7e757b597a45f96693c578fb210de3e13"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 118148,
+      "sha256": "f7b4b926e2ef642f0ce43b2a3cf612c8407bb1d0757cb8fc47a7ab7e0e052c2e"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/final_trade_decision.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3310,
+      "sha256": "de3d893d5a6ff71768c7e967eab4a8b342b52fb06c1ac7bdb64f1e1cefa1b861"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 10305,
+      "sha256": "3817e0b856e70f08d6c06b141f046835f733544d615dcd3438a950d7ff978283"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 5462,
+      "sha256": "9904cecc4a17b72a34e1080fe47ec987c7d9e050bea9347ea23bc5a1df9adfd5"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/market_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7631,
+      "sha256": "08db62823085faa74d4efde8b00c9fee3c98f870f4496ea49f264fda8d072719"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/news_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 6679,
+      "sha256": "5b805dcb5d60626a18dca0186f2700a99b9a7887540d333bb30325e00eba2773"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/sentiment_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 10958,
+      "sha256": "d9e55a9cecf272abbc4ad04d1974f57fadf4363360517dd942ee2ed7a9c030fc"
+    },
+    {
+      "path": "logs/AAPL/2026-09-29/reports/trader_investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 1190,
+      "sha256": "b63a8c7bd8bd3e6cf9a00f9ec7ae1fc7bc5ca9a949c3178a85187d3135a477c4"
+    },
+    {
+      "path": "logs/SPY",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-09-10",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-09-10/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 462,
+      "sha256": "de3b40887a8dd8487ab54d5a253d8af24c526e2a6300a155e3357b05eadf3103"
+    },
+    {
+      "path": "logs/SPY/2026-09-10/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-09-14",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-09-14/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 7899,
+      "sha256": "fbb3a5efb8b4ccdba1178c3e5c3a241fac6374e4a41ab1a4d56d001867389daf"
+    },
+    {
+      "path": "logs/SPY/2026-09-14/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-09-14/reports/fundamentals_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 3644,
+      "sha256": "ccf09f11069bb43abaa46c176fe00cdfeaf01f52a0d99f1d4949c9814d12d9ad"
+    },
+    {
+      "path": "logs/SPY/2026-09-14/reports/investment_plan.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 8555,
+      "sha256": "76fb8acb5977fc92bd8916225d29f40f8c71a5735bd38d54f12d13a7f6cbb2f3"
+    },
+    {
+      "path": "logs/SPY/2026-10-19",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-10-19/message_tool.log",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 36363,
+      "sha256": "c902d9bb3e1c41f2a4b6abb363f6ac6d7d1dd2a5bc6355f6e00717ea4f684f63"
+    },
+    {
+      "path": "logs/SPY/2026-10-19/reports",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    },
+    {
+      "path": "logs/SPY/2026-10-19/reports/market_report.md",
+      "mode": "0644",
+      "executable": false,
+      "type": "file",
+      "size": 11944,
+      "sha256": "c7517052d3e78a709a132838c6b1078355358765c5989021e7900cc2cc52c635"
+    },
+    {
+      "path": "memory",
+      "mode": "0755",
+      "executable": true,
+      "type": "dir"
+    }
+  ],
+  "summary": {
+    "files": 0,
+    "dirs": 0,
+    "symlinks": 0,
+    "other": 0,
+    "total": 67
+  }
+}

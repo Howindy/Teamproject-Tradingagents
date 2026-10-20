@@ -1,0 +1,13 @@
+2026-10-20 19:29:00,042 WARNING tradingagents.dataflows.vendors.stocktwits: StockTwits fetch failed for NVDA: HTTP Error 403: Forbidden
+2026-10-20 19:29:07,531 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:07,532 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+2026-10-20 19:29:07,532 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:07,532 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:07,533 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:07,533 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+2026-10-20 19:29:07,533 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+2026-10-20 19:29:07,533 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+2026-10-20 19:29:16,363 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:16,363 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+2026-10-20 19:29:16,365 WARNING tradingagents.dataflows.router: Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+2026-10-20 19:29:16,365 WARNING tradingagents.dataflows.router: Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.

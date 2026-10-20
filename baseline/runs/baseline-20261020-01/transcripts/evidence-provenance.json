@@ -1,0 +1,223 @@
+{
+  "generated_at": "2026-10-20T19:33:15+08:00",
+  "note": "Raw callback payloads are retained; clean content is extracted for counts and evidence paths.",
+  "items": [
+    {
+      "seq": 7,
+      "tool": "get_stock_data",
+      "raw_output_path": "transcripts/tool-outputs/0007_get_stock_data.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0007_get_stock_data.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 8,
+      "tool": "get_verified_market_snapshot",
+      "raw_output_path": "transcripts/tool-outputs/0008_get_verified_market_snapshot.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0008_get_verified_market_snapshot.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 13,
+      "tool": "get_fundamentals",
+      "raw_output_path": "transcripts/tool-outputs/0013_get_fundamentals.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0013_get_fundamentals.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 18,
+      "tool": "get_insider_transactions",
+      "raw_output_path": "transcripts/tool-outputs/0018_get_insider_transactions.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0018_get_insider_transactions.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 19,
+      "tool": "get_income_statement",
+      "raw_output_path": "transcripts/tool-outputs/0019_get_income_statement.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0019_get_income_statement.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 25,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0025_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0025_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 29,
+      "tool": "get_prediction_markets",
+      "raw_output_path": "transcripts/tool-outputs/0029_get_prediction_markets.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0029_get_prediction_markets.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 31,
+      "tool": "get_prediction_markets",
+      "raw_output_path": "transcripts/tool-outputs/0031_get_prediction_markets.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0031_get_prediction_markets.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 32,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0032_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0032_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 33,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0033_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0033_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 34,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0034_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0034_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 35,
+      "tool": "get_cashflow",
+      "raw_output_path": "transcripts/tool-outputs/0035_get_cashflow.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0035_get_cashflow.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 36,
+      "tool": "get_balance_sheet",
+      "raw_output_path": "transcripts/tool-outputs/0036_get_balance_sheet.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0036_get_balance_sheet.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 38,
+      "tool": "get_global_news",
+      "raw_output_path": "transcripts/tool-outputs/0038_get_global_news.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0038_get_global_news.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 39,
+      "tool": "get_news",
+      "raw_output_path": "transcripts/tool-outputs/0039_get_news.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0039_get_news.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 45,
+      "tool": "get_income_statement",
+      "raw_output_path": "transcripts/tool-outputs/0045_get_income_statement.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0045_get_income_statement.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 46,
+      "tool": "get_balance_sheet",
+      "raw_output_path": "transcripts/tool-outputs/0046_get_balance_sheet.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0046_get_balance_sheet.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 47,
+      "tool": "get_cashflow",
+      "raw_output_path": "transcripts/tool-outputs/0047_get_cashflow.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0047_get_cashflow.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 58,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0058_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0058_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 59,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0059_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0059_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 60,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0060_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0060_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 61,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0061_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0061_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 62,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0062_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0062_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 63,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0063_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0063_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 64,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0064_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0064_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 65,
+      "tool": "get_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0065_get_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0065_get_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 71,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0071_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0071_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 73,
+      "tool": "get_macro_indicators",
+      "raw_output_path": "transcripts/tool-outputs/0073_get_macro_indicators.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0073_get_macro_indicators.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 74,
+      "tool": "get_global_news",
+      "raw_output_path": "transcripts/tool-outputs/0074_get_global_news.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0074_get_global_news.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 75,
+      "tool": "get_news",
+      "raw_output_path": "transcripts/tool-outputs/0075_get_news.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0075_get_news.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    },
+    {
+      "seq": 80,
+      "tool": "get_global_news",
+      "raw_output_path": "transcripts/tool-outputs/0080_get_global_news.txt",
+      "clean_output_path": "transcripts/tool-outputs-clean/0080_get_global_news.txt",
+      "method": "extracted content field from captured ToolMessage repr"
+    }
+  ]
+}

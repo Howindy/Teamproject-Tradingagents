@@ -1,0 +1,25 @@
+{
+  "identical": true,
+  "added": [],
+  "removed": [],
+  "changed": [],
+  "counts": {
+    "before": {
+      "files": 45,
+      "dirs": 22,
+      "symlinks": 0,
+      "other": 0,
+      "total": 67
+    },
+    "after": {
+      "files": 45,
+      "dirs": 22,
+      "symlinks": 0,
+      "other": 0,
+      "total": 67
+    },
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  }
+}

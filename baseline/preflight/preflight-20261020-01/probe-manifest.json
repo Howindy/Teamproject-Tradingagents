@@ -1,0 +1,148 @@
+{
+  "check_id": "preflight-20261020-01",
+  "ticker": "NVDA",
+  "analysis_date": "2026-10-19",
+  "started_at": "2026-10-20T19:26:02+08:00",
+  "finished_at": "2026-10-20T19:26:11+08:00",
+  "elapsed_monotonic_seconds": 9.259,
+  "exit_code": 0,
+  "errors": [],
+  "module_paths": {
+    "tradingagents_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/__init__.py",
+    "tradingagents_version": "0.7.0",
+    "cli_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/__init__.py",
+    "cli_main_file": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/main.py",
+    "expected_repo": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents"
+  },
+  "environment": {
+    "generated_at": "2026-10-20T19:26:11+08:00",
+    "python_executable": "/opt/miniconda3/envs/tradingagents/bin/python",
+    "provider": "openai_compatible",
+    "endpoint": "https://llm.cs.cityu.edu.hk/v1",
+    "quick_model": "CS5351/DeepSeek-V4-Flash",
+    "deep_model": "CS5351/DeepSeek-V4-Flash",
+    "output_language": null,
+    "max_debate_rounds": null,
+    "max_risk_rounds": null,
+    "checkpoint_enabled": "false",
+    "timezone": "CST",
+    "timezone_offset": "+0800",
+    "keys": {
+      "OPENAI_COMPATIBLE_API_KEY": true,
+      "OPENAI_API_KEY": false,
+      "DEEPSEEK_API_KEY": true,
+      "ANTHROPIC_API_KEY": false,
+      "GOOGLE_API_KEY": false,
+      "ALPHA_VANTAGE_API_KEY": false,
+      "FRED_API_KEY": false,
+      "TYPESAFE_API_KEY": false,
+      "SEC_EDGAR_USER_AGENT": false
+    },
+    "paths": {
+      "TRADINGAGENTS_RESULTS_DIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/results",
+      "TRADINGAGENTS_CACHE_DIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/cache",
+      "TRADINGAGENTS_MEMORY_LOG_PATH": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/memory/trading_memory.md",
+      "TRADINGAGENTS_LLM_BACKEND_URL": "https://llm.cs.cityu.edu.hk/v1",
+      "TRADINGAGENTS_LLM_PROVIDER": "openai_compatible",
+      "TRADINGAGENTS_QUICK_THINK_LLM": "CS5351/DeepSeek-V4-Flash",
+      "TRADINGAGENTS_DEEP_THINK_LLM": "CS5351/DeepSeek-V4-Flash",
+      "TRADINGAGENTS_OUTPUT_LANGUAGE": null,
+      "TRADINGAGENTS_MAX_DEBATE_ROUNDS": null,
+      "TRADINGAGENTS_MAX_RISK_ROUNDS": null,
+      "TRADINGAGENTS_CHECKPOINT_ENABLED": "false",
+      "TMPDIR": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/tmp",
+      "HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/home",
+      "XDG_CACHE_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/tmp/xdg-cache",
+      "XDG_CONFIG_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/tmp/xdg-config",
+      "XDG_DATA_HOME": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/tmp/xdg-data"
+    }
+  },
+  "status_counts": {
+    "success": 7,
+    "unavailable": 2,
+    "withheld": 2,
+    "not_configured": 1
+  },
+  "source_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "after": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 236
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "outside_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "after": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 237
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "home_tradingagents_integrity": {
+    "identical": true,
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "counts": {
+      "before": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "after": {
+        "files": 0,
+        "dirs": 0,
+        "symlinks": 0,
+        "other": 0,
+        "total": 67
+      },
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    }
+  },
+  "paths": {
+    "cache": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/cache",
+    "results": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/results",
+    "memory": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/memory",
+    "home": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/home",
+    "tmp": "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/preflight/preflight-20261020-01/tmp"
+  }
+}
