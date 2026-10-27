@@ -1,0 +1,613 @@
+schema_version: '1.0'
+document:
+  id: D1-ARCHIVE
+  title: Report Archiving, Retrieval and Recoverability
+  version: 1.0.0
+  status: draft
+  date: '2026-10-27'
+  language: en
+  baseline_commit: 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+product:
+  objective: Retain an independent report for every completed analysis and recover interrupted report saves without
+    repeating the analysis.
+  users:
+  - Research analysts retrieving earlier reports.
+  - Local operators diagnosing and recovering interrupted saves.
+  workflow:
+  - Complete analysis.
+  - Automatically snapshot and commit reports.
+  - List/filter history and retrieve by run ID.
+  - Recover saved pending snapshots at the next archive-service startup.
+scope:
+  requirement_ids:
+  - FR-03
+  - QR-02
+  - INV-03
+  - INV-04
+  - INV-05
+  - INV-06
+  in_scope:
+  - Automatic CLI/API report archiving, history filtering, complete report retrieval, immutable per-run storage
+    and interrupted-save recovery.
+  out_of_scope:
+  - Trading decision changes, data-vendor caching, coverage-based gates, trading-memory policy changes, reflection
+    and graph checkpoint redesign.
+  - Legacy report migration, full-text indexing, automatic retention cleanup, GUI, multi-host/network/cloud-sync
+    storage and power-loss guarantees.
+stakeholders:
+- id: analyst
+  name: Research analyst
+  interest: Needs to distinguish historical analyses and retrieve their complete reports.
+- id: operator
+  name: Local operator
+  interest: Needs explicit archive status and deterministic recovery without additional model calls.
+definitions:
+  run_id: Canonical UUIDv4 identifying one new analysis; reused by its save retries and recovery.
+  analysis_date: Business date in YYYY-MM-DD form, mapped from the existing trade_date field.
+  snapshot_ready: The complete validated snapshot has been atomically saved and read-back verified; recovery guarantee
+    begins here.
+  committed: The final directory, marker, manifest and all required file hashes validate.
+  complete_report: The combined Markdown report plus all applicable non-empty sections from the fixed baseline report
+    map.
+baseline_observations:
+- id: BO-ARCH-01
+  statement: CLI report output is keyed by ticker and analysis date.
+  measured: false
+  source:
+    path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+    source_type: code
+- id: BO-ARCH-02
+  statement: Default API export paths use a timestamp at second precision.
+  measured: false
+  source:
+    path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+    source_type: code
+- id: BO-ARCH-03
+  statement: The report writer writes into existing directories without a complete archive transaction.
+  measured: false
+  source:
+    path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+    source_type: code
+requirements:
+- id: FR-03
+  type: functional
+  title: Traceable report archiving and retrieval
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: Reports can reuse a ticker/date or second-resolution path; direct per-file writes lack a searchable immutable
+    archive and a saved input for interrupted-write recovery.
+  statement: After a CLI or Python API analysis completes, the application MUST automatically save an allowlisted
+    report recovery snapshot and publish an immutable archive with a unique run ID. Users MUST be able to list by
+    ticker and analysis date and retrieve a verified complete report and section manifest. Startup recovery MUST
+    reconstruct interrupted saves from complete snapshots without re-running model analysis.
+  acceptance_criteria:
+  - id: FR-03-AC1
+    input: One completed CLI analysis and one completed Python API analysis, with synthetic model output.
+    expected_result: Both paths automatically save separately retrievable committed archives under the same configured
+      root, without requiring a later optional export. The existing propagate return shape remains (final_state,
+      signal).
+    verification: 'T-RAR-01 and T-RAR-12: offline entry-point fixtures; assert public retrieval, shared root resolution,
+      archive status and API compatibility.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  - id: FR-03-AC2
+    input: Ten worker processes publish 100 distinct runs for the same ticker, date and creation second, with different
+      report sections.
+    expected_result: All 100 run IDs remain separately retrievable; overwritten committed files = 0; mixed-run or
+      stale sections = 0.
+    verification: 'T-RAR-03 and T-RAR-04: concurrent publication, forced ID collision and disjoint section fixtures;
+      compare every report to its source snapshot.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  - id: FR-03-AC3
+    input: Valid committed runs with different tickers/dates, combined filters, no matches, an unknown ID and a
+      damaged archive.
+    expected_result: Listing returns exactly matching valid committed runs; filters use intersection; no match returns
+      an empty list. get_run returns the verified complete report and section manifest, or NOT_FOUND / CORRUPT_ARCHIVE
+      without successful partial content.
+    verification: 'T-RAR-02 and T-RAR-14: exact-set filter assertions and manifest/file tampering.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  - id: FR-03-AC4
+    input: Writer termination after complete snapshot confirmation, during rendering, before commit and after commit
+      before cleanup; missing/corrupt snapshots and disk errors.
+    expected_result: At service startup, valid saved snapshots recover once without model calls. Incomplete data
+      is not reported successful; persistent faults retain valid snapshots. Cleanup failure after commit returns
+      COMMITTED plus a warning.
+    verification: 'T-RAR-05, T-RAR-06, T-RAR-07 and T-RAR-13: actual subprocess termination, storage fault injection
+      and restart checks.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  - id: FR-03-AC5
+    input: Synthetic credentials in configuration/environment/report text; path traversal and link escapes; existing
+      legacy reports; non-empty extra-export destination.
+    expected_result: Disallowed fields and credential sentinels in persisted archive/diagnostics = 0; out-of-root
+      writes = 0. Legacy files remain byte-identical and are not automatically indexed. Non-empty extra export returns
+      EXPORT_CONFLICT without overwriting.
+    verification: 'T-RAR-09, T-RAR-10, T-RAR-11 and T-RAR-12: boundary scans, path fixtures and before/after byte
+      comparison.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  - id: FR-03-AC6
+    input: Completed analysis with an archive write failure; two new runs for the same ticker/date; repeated save/export
+      for one completed run.
+    expected_result: Analysis completion and archive status are reported separately. Each new analysis receives
+      a new ID; repeated archive submission for the same context/hash is a no-op. Archive commit does not depend
+      on trading-memory append or settlement.
+    verification: 'T-RAR-01, T-RAR-07 and T-RAR-12: assert status separation, same-context idempotence and independent
+      archive/legacy-memory behavior.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  metric: null
+  dependencies:
+  - INV-03
+  - INV-04
+  - INV-05
+  - INV-06
+  conflicts:
+  - Additional snapshot storage and integrity checks add I/O; retain complete inputs and validate before commit.
+  - Legacy memory may suppress same-day duplicate decisions; archive identity is independent of memory identity
+    and does not require changing that policy.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+- id: QR-02
+  type: quality
+  title: Bounded recovery of interrupted report archives
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: An interrupted report save should not require repeating expensive analysis, and recovery duration needs
+    an explicit workload and measurable acceptance target.
+  statement: On one Windows host using local NTFS, with 100 committed archives and 10 pending valid snapshots each
+    no larger than 1,048,576 bytes, recovery MUST restore and retrieve all 10 runs without LLM calls. Across 30
+    independently reset trials the nearest-rank p95 batch duration MUST be at most 2 seconds. Every trial MUST be
+    correct; failures and timeouts MUST NOT be discarded.
+  acceptance_criteria:
+  - id: QR-02-AC1
+    input: Thirty reset trials containing the same 100 committed archives and 10 pending runs, each snapshot <=
+      1 MiB; storage healthy and no competing writer.
+    expected_result: All 300 run recoveries pass normal get_run validation; forbidden model/provider calls = 0;
+      the 29th sorted batch duration <= 2.000 seconds. Any incorrect, failed or timed-out trial fails acceptance.
+    verification: 'T-RAR-08: monotonic timer immediately before recover_pending through final query validation,
+      including lock acquisition, scans, rendering, publication and cleanup attempts. Record every sample and host/fixture
+      metadata.'
+    zero_tolerance: false
+    measurement_status: not_measured
+  metric:
+    name: archive_batch_recovery_duration_seconds
+    unit: seconds
+    threshold: 2.0
+    comparison: <=
+    percentile: 95
+    trials: 30
+    rank: 29
+    committed_runs: 100
+    pending_runs: 10
+    max_snapshot_bytes: 1048576
+    threshold_status: design_target
+  dependencies:
+  - FR-03
+  - INV-03
+  - INV-04
+  - INV-05
+  - INV-06
+  conflicts:
+  - Correctness and hashing may increase latency; retain them even if the time target fails.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+- id: INV-03
+  type: invariant
+  title: Immutable archive identity
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: Path reuse can replace the result of a previous completed analysis.
+  statement: A committed archive MUST never be overwritten. One run ID maps to one immutable snapshot hash; repeated
+    submission with the same ID/hash is a no-op and different content for an existing ID is RUN_ID_CONFLICT.
+  acceptance_criteria:
+  - id: INV-03-AC1
+    input: Existing committed ID with same-content and changed-content requests.
+    expected_result: Changed committed bytes = 0; duplicate commits = 0; changed content returns RUN_ID_CONFLICT.
+    verification: 'T-RAR-03 and T-RAR-07: forced collision and repeated recovery; compare complete directory digests.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  metric: null
+  dependencies: []
+  conflicts:
+  - Exclusive publication and validation consume I/O; zero violations takes precedence over throughput.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+- id: INV-04
+  type: invariant
+  title: Single-run report section isolation
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: Files left in a reused report directory can appear to belong to a newer analysis.
+  statement: Every archived section MUST derive from the same recovery snapshot and fixed section mapping. Every
+    applicable non-empty section MUST be present with the declared byte size and digest, and files from another
+    run MUST NOT be implicitly retained.
+  acceptance_criteria:
+  - id: INV-04-AC1
+    input: Runs with disjoint report fields and planted stale section content.
+    expected_result: Foreign/stale sections = 0; missing declared sections = 0; size/digest mismatches in successful
+      retrieval = 0.
+    verification: 'T-RAR-04 and T-RAR-14: exact section and complete-report assertions plus corrupted file fixtures.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  metric: null
+  dependencies: []
+  conflicts:
+  - Exclusive publication and validation consume I/O; zero violations takes precedence over throughput.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+- id: INV-05
+  type: invariant
+  title: Truthful archive completion status
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: Partial writes may otherwise be returned as a complete report after a save failure.
+  statement: COMMITTED MUST require a final run directory containing a valid commit marker, matching manifest and
+    snapshot identity, and every required report file with valid bytes and hashes. Incomplete, corrupt or unsupported
+    archives MUST NOT be returned as successful complete reports.
+  acceptance_criteria:
+  - id: INV-05-AC1
+    input: Missing marker, missing section, corrupt manifest and interruption at every commit boundary.
+    expected_result: False COMMITTED results = 0; successful complete-report responses for incomplete/corrupt data
+      = 0.
+    verification: 'T-RAR-05, T-RAR-06 and T-RAR-14: fault injection and typed result assertions.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  metric: null
+  dependencies: []
+  conflicts:
+  - Exclusive publication and validation consume I/O; zero violations takes precedence over throughput.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+- id: INV-06
+  type: invariant
+  title: Model-free idempotent archive recovery
+  priority: must
+  status: draft
+  stakeholders:
+  - analyst
+  - operator
+  source:
+    origin: Static inspection of main at 2c8996e0e7aec5d6550a52d386cccba32f86ac94
+    evidence:
+    - path: TradingAgents/cli/run.py
+      locator: _run_directory; save_report_section_decorator; run_analysis
+      description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+        final state.
+      source_type: code
+    - path: TradingAgents/tradingagents/graph/trading_graph.py
+      locator: default_report_path; record_decision; save_reports
+      description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+        archiving is not automatic there.
+      source_type: code
+    - path: TradingAgents/tradingagents/reporting.py
+      locator: _SECTIONS; _report_parts; _header; write_report_tree
+      description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+        snapshot; headers use the current clock.
+      source_type: code
+  problem: Re-running analysis during recovery repeats costs and can produce a different report.
+  statement: Recovery MUST use the saved report snapshot without invoking an LLM, external data provider, analysis
+    graph, trading-memory write, settlement or reflection. It MUST retain the original run ID and snapshot hash
+    and create at most one committed archive for that identity.
+  acceptance_criteria:
+  - id: INV-06-AC1
+    input: Repeated recovery of a valid snapshot, including a crash immediately after directory commit.
+    expected_result: Forbidden calls = 0; committed directories per run ID <= 1; snapshot identity unchanged.
+    verification: 'T-RAR-05, T-RAR-07 and T-RAR-13: forbidden-call spies, actual process termination and repeated
+      startup.'
+    zero_tolerance: true
+    measurement_status: not_measured
+  metric: null
+  dependencies: []
+  conflicts:
+  - Exclusive publication and validation consume I/O; zero violations takes precedence over throughput.
+  assumptions:
+  - One Windows host and an ordinary local NTFS archive root; no cloud synchronization or network share.
+  - The source is a completed analysis result; report prose is untrusted data and never controls paths or commit
+    state.
+  notes: Specified behavior and acceptance targets; application implementation and benchmark results are not claimed.
+moscow:
+  must:
+  - FR-03
+  - QR-02
+  - INV-03
+  - INV-04
+  - INV-05
+  - INV-06
+  should: []
+  could: []
+  wont:
+  - Full-text indexing
+  - Automatic pruning
+  - Legacy migration
+  - Multi-host storage
+  tradeoff: Accept snapshot storage, serialized writes and integrity-check cost to obtain recoverability and immutable
+    reports at the specified local workload.
+conflict_resolutions:
+- id: C-ARCH-01
+  requirements:
+  - FR-03
+  - INV-03
+  description: Repeated same-day reports need separate identity despite shared legacy paths.
+  resolution: Use run IDs for canonical archive paths; retain ticker/date only as filterable metadata.
+- id: C-ARCH-02
+  requirements:
+  - QR-02
+  - INV-05
+  description: Validation and lock acquisition consume recovery time.
+  resolution: Include validation and locks in the timed workload; never drop correctness checks or failed samples
+    to meet the target.
+traceability:
+- req_id: FR-03
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+- req_id: QR-02
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+- req_id: INV-03
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+- req_id: INV-04
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+- req_id: INV-05
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+- req_id: INV-06
+  code_refs:
+  - path: TradingAgents/cli/run.py
+    locator: _run_directory; save_report_section_decorator; run_analysis
+    description: The CLI writes report sections into a ticker/date directory and calls record_decision with collected
+      final state.
+  - path: TradingAgents/tradingagents/graph/trading_graph.py
+    locator: default_report_path; record_decision; save_reports
+    description: API report export uses a second-resolution path. CLI/API final results pass through record_decision;
+      archiving is not automatic there.
+  - path: TradingAgents/tradingagents/reporting.py
+    locator: _SECTIONS; _report_parts; _header; write_report_tree
+    description: A fixed section map renders into existing directories without a complete-bundle commit or recovery
+      snapshot; headers use the current clock.
+  notes: Static source inspection at the stated main revision; no new runtime measurements.
+validation:
+  status: passed
+  schema: docs/req/req-schema.json
+  checks:
+  - id: schema_validation
+    result: pass
+    details: YAML converted to JSON and validated by PowerShell Test-Json using JSON Schema draft 2020-12.
+  - id: personal_scope
+    result: pass
+    details: Only the archive functional requirement, recovery quality requirement and four supporting invariants
+      are present.
+  - id: baseline_revision
+    result: pass
+    details: Source revision is the inspected main commit.
+  - id: scope_and_priority
+    result: pass
+    details: Scope and MoSCoW cover every personal requirement once.
+  - id: unique_ids
+    result: pass
+    details: All eleven acceptance IDs are unique.
+  - id: references_and_measurement
+    result: pass
+    details: Requirement/stakeholder references resolve; invariants have zero tolerance and new fit criteria are
+      not marked measured.
+  - id: conflict_references
+    result: pass
+    details: Conflict-resolution references are restricted to personal requirements.
+  - id: source_traceability
+    result: pass
+    details: Every requirement traces to source files present in the pinned main tree.
+  - id: fit_criterion_trace
+    result: pass
+    details: All eleven acceptance criteria map to components, tests and runtime observations.
+  - id: test_inventory
+    result: pass
+    details: Fourteen archive test specifications have distinct IDs and pass oracles.
+  - id: test_reference_resolution
+    result: pass
+    details: All fully spelled test IDs resolve to the archive test inventory.
+  - id: language_scope_and_links
+    result: pass
+    details: Documents use English, contain no other-branch requirement/architecture identifiers or collaboration
+      instructions, and local links/fences are valid.
+  - id: artifact_layout
+    result: pass
+    details: Exactly two D1 files and eight D2 Markdown artifact files; no implementation, D4 or upload instructions.
+  - id: renderer_field_mapping
+    result: pass
+    details: All twelve baseline report section paths and state fields match reporting._SECTIONS at the main revision.
+  - id: benchmark_contract
+    result: pass
+    details: Recovery target retains the specified workload, one-MiB limit, 30 trials and nearest-rank p95 definition.
