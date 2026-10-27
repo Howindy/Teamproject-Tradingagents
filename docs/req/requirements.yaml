@@ -1,0 +1,877 @@
+schema_version: "1.0"
+
+document:
+  id: "D1-REQ"
+  title: "D1 Requirements: Data Availability, Reuse, Safety Gate, and Audit Records"
+  version: "1.0.0"
+  status: "approved"
+  date: "2026-10-27"
+  language: "en"
+  description: >
+    This document defines the approved D1 requirements for the TradingAgents
+    baseline. It records the product narrative, the unified requirement
+    registry, traceability to the repository and baseline, MoSCoW decisions,
+    conflict resolutions, assumptions, open questions, and validation state.
+    Only the six requirements in scope.approved_ids are part of D1.
+  baseline_ref: "baseline/runs/baseline-20261020-01"
+
+scope:
+  approved_ids:
+    - PR-01
+    - QR-01
+    - FR-02
+    - SB-01
+    - INV-02
+    - SR-02
+  in_scope:
+    - "Run-scoped reuse of identical data queries and suppression of duplicate external requests."
+    - "A lean run manifest with run identity, sanitized configuration, data-source status, call counts, token usage, duration, and safety-gate results."
+    - "One run-scoped data-availability state and user-visible reporting of critical gaps."
+    - "A deterministic pre-persistence safety gate that returns REVIEW when a configured critical gap exists."
+    - "Consistent source status, fallback provenance, final rating, and final decision across reports, manifest, persisted state, and memory."
+    - "No credentials or sensitive URL parameters in run records."
+  out_of_scope:
+    - "Replacing StockTwits with another social vendor; the 403 root cause is not yet established."
+    - "A point-in-time company profile sourced from SEC filings; the current filing fields are not proven to be historical vintages."
+    - "Parallel Bull/Bear or risk-analyst execution; it changes debate semantics and requires a separate A/B evaluation."
+    - "A full exchange calendar; the approved D1 scope does not include a new calendar dependency."
+    - "Multi-user authentication, encryption at rest, and access control."
+    - "Portfolio simulation, order execution, and position accounting."
+    - "Enabling TypeSafe Jev screening by default."
+    - "A production LLM response cache; replay caching remains outside D1."
+  assumptions:
+    - "The system remains a single-user local tool for D1."
+    - "The critical-source set is configuration, not a hard-coded vendor list."
+    - "REVIEW is an acceptable terminal state for a run with critical data gaps."
+    - "The per-run cache is isolated between concurrent runs."
+    - "The manifest is written after the analysis completes and does not block the model calls."
+    - "The repository analysis and the baseline artifacts are the authoritative source for this document."
+
+stakeholders:
+  - id: analyst
+    name: "Research analyst"
+    interest: "Needs reports that distinguish retrieved evidence from missing or fallback evidence."
+  - id: trader
+    name: "Trader"
+    interest: "Needs a final decision that is safe when critical data is absent."
+  - id: reviewer
+    name: "Reviewer"
+    interest: "Needs reproducible records that connect a decision to its sources and configuration."
+  - id: operator
+    name: "Operator"
+    interest: "Needs bounded duplicate requests, clear run records, and no credential leakage."
+  - id: security_reviewer
+    name: "Security reviewer"
+    interest: "Needs deterministic output checks and safe handling of external text and secrets."
+
+definitions:
+  data_query_key: >
+    A stable tuple of the vendor method, normalized arguments, analysis date,
+    and requested data window. Two requests with the same key are considered the
+    same query within one run.
+  critical_gap: >
+    A configured critical source whose status is unavailable, not_configured, or
+    withheld for the current run, or whose fallback is also unavailable.
+  coverage_status: >
+    Either complete or partial. complete means every configured critical source
+    has status success. partial means at least one configured critical source has
+    a critical gap.
+  safety_gate: >
+    Deterministic code that validates the final rating, the coverage status, and
+    the critical-gap list before the final decision is persisted, displayed, or
+    written to memory. The model cannot override the gate result.
+  zero_tolerance: >
+    A pass requires exactly zero violations. A single violation fails the
+    acceptance criterion; there is no percentage allowance.
+  run_manifest: >
+    A machine-readable JSON record for one run, containing run identity,
+    sanitized configuration, source status, call counts, token usage, duration,
+    safety-gate result, and provenance references.
+  sensitive_url_parameter: >
+    A URL userinfo component, query parameter, or fragment that can carry a
+    credential, token, password, or API key. Sensitive parameters are excluded
+    from all records.
+
+baseline_observations:
+  - id: BO-01
+    statement: "Measured end-to-end duration of the baseline run."
+    value: 195.383
+    unit: "seconds"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "Inner run_analysis duration was 194.41 seconds; child-process duration was 195.383 seconds."
+  - id: BO-02
+    statement: "Measured number of LLM calls in the baseline run."
+    value: 19
+    unit: "calls"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "Observed through the recording stats callback."
+  - id: BO-03
+    statement: "Measured number of tool calls in the baseline run."
+    value: 31
+    unit: "calls"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "Observed through the recording stats callback."
+  - id: BO-04
+    statement: "Measured input token usage in the baseline run."
+    value: 156541
+    unit: "tokens"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "Provider usage was present for all 19 calls according to the callback."
+  - id: BO-05
+    statement: "Measured output token usage in the baseline run."
+    value: 27639
+    unit: "tokens"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "Provider usage was present for all 19 calls according to the callback."
+  - id: BO-06
+    statement: "Measured data-source status counts in the baseline run."
+    value: "success=20, withheld=4, not_configured=6, unavailable=4"
+    unit: "rows"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/data-availability.csv"
+    notes: "Counts are per availability row, including tool calls and three sentiment prefetch rows."
+  - id: BO-07
+    statement: "Measured duplicate failed calls in the baseline run."
+    value: "FRED=6, ticker news=2, prediction markets=2"
+    unit: "calls"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/data-availability.csv"
+    notes: "These are observed repeated calls with no new data."
+  - id: BO-08
+    statement: "Measured structured-output fallback count in the baseline run."
+    value: 0
+    unit: "warnings"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "No structured-output fallback warning was found in the captured logs."
+  - id: BO-09
+    statement: "Measured source-tree integrity before and after the baseline run."
+    value: true
+    unit: null
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/source-integrity.json"
+    notes: "213 files and 23 directories were identical before and after; no additions, removals, or changes."
+  - id: BO-10
+    statement: "Measured consistency of final decision, complete report, and full-state log."
+    value: true
+    unit: null
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/report-consistency.json"
+    notes: "Decision, rating, and full report checks passed for the baseline; source-status consistency across all artifacts was not measured."
+  - id: BO-11
+    statement: "Provisional D1 latency target for the same one-ticker, one-round scenario."
+    value: null
+    unit: "seconds"
+    measured: false
+    measurement_status: "not_measured"
+    source: "D1 planning target; no baseline experiment for this target"
+    notes: "This is a proposal, not a measured result."
+    target: 180
+    target_status: "provisional"
+  - id: BO-12
+    statement: "Provisional D1 input-token target for the same one-ticker, one-round scenario."
+    value: null
+    unit: "tokens"
+    measured: false
+    measurement_status: "not_measured"
+    source: "D1 planning target; no baseline experiment for this target"
+    notes: "This is a proposal, not a measured result."
+    target: 140000
+    target_status: "provisional"
+  - id: BO-13
+    statement: "Full secret scan of all historical run records and preferences."
+    value: null
+    unit: null
+    measured: false
+    measurement_status: "not_measured"
+    source: "No complete secret scan has been executed"
+    notes: "The baseline review did not establish a clean result for every record and preference file."
+
+requirements:
+  - id: PR-01
+    type: "performance"
+    title: "Reuse identical data queries within one run"
+    priority: "must"
+    status: "approved"
+    stakeholders: [analyst, trader, operator]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/tradingagents/dataflows/router.py"
+          locator: "L200 route_to_vendor"
+          description: "Central data-tool dispatcher; no run-scoped result cache is present."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+          locator: "L69 ticker-news prefetch"
+          description: "Sentiment prefetch invokes data functions directly and can repeat work."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
+          locator: "FRED, ticker-news, and prediction-market rows"
+          description: "Measured repeated failed calls: 6 FRED, 2 ticker news, 2 prediction markets."
+          source_type: "measured_baseline"
+    problem: >
+      The baseline performed identical data queries more than once in the same
+      run. Repeated failures consumed tool rounds and provider context without
+      returning new data.
+    statement: >
+      Within one analysis run, the system MUST execute at most one external data
+      query per data_query_key. It MUST reuse the first result, including a
+      failure or withheld status, for the remainder of that run. It MUST NOT
+      reuse results across runs.
+    acceptance_criteria:
+      - id: PR-01-AC1
+        input: "A test run requests the same data_query_key three times; the mock vendor returns success on the first call."
+        expected_result: "The mock vendor is called exactly once; the second and third requests return the same payload; duplicate external executions = 0."
+        verification: "Unit test with a mock vendor call counter; assert call count and payload equality."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: PR-01-AC2
+        input: "A test run requests the same data_query_key twice; the first result is unavailable, withheld, or not_configured."
+        expected_result: "The first status and reason are cached; no additional vendor call is made; the same status and reason are returned; duplicate external executions = 0."
+        verification: "Unit test with a mock vendor that returns a status sentinel; assert call count and status equality."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: PR-01-AC3
+        input: "Two consecutive runs use the same data_query_key and start with empty per-run caches."
+        expected_result: "Each run performs its own external execution; cross-run reuse count = 0."
+        verification: "Integration test with two isolated run contexts; assert two vendor calls and no shared cache state."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: PR-01-AC4
+        input: "A fixture is executed with PR-01 enabled and disabled; the same vendor responses are injected."
+        expected_result: "Report text, manifest statuses, final rating, and final decision are identical except for cache metadata; semantic diff = 0."
+        verification: "Integration test; canonicalize cache metadata and compare report, manifest, and final-state payloads."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: [INV-02]
+    conflicts:
+      - "Data freshness: a cached success could hide an intra-run update. Resolution: the cache is scoped to one run and the key includes the requested window and analysis date."
+      - "Cache metadata could change report output. Resolution: cache metadata is recorded only in the manifest, not in the user-facing decision text."
+    assumptions:
+      - "A normalization function produces a stable key for ticker, dates, lookback, indicator, and vendor method."
+      - "Concurrent runs do not share in-memory caches."
+    notes: >
+      The baseline establishes the duplicate-call problem. The latency and token
+      savings of PR-01 have not yet been measured.
+
+  - id: QR-01
+    type: "quality"
+    title: "Emit a lean run manifest"
+    priority: "must"
+    status: "approved"
+    stakeholders: [reviewer, operator, analyst]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/cli/stats_handler.py"
+          locator: "L10 StatsCallbackHandler"
+          description: "The callback counts LLM calls, tool calls, and token usage but does not persist them."
+          source_type: "code"
+        - path: "TradingAgents/cli/run.py"
+          locator: "L135 results directory and L139 message_tool.log"
+          description: "The CLI writes reports and a tool-call log but no machine-readable run manifest."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L255 run_settings"
+          description: "An allowlisted settings view exists and excludes keys and endpoints."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
+          locator: "file size"
+          description: "The baseline stderr log is empty; vendor warnings were not visible without an external logging wrapper."
+          source_type: "measured_baseline"
+    problem: >
+      The baseline produced reports and a tool-call log but no native,
+      machine-readable run record. The run metrics were collected by an external
+      wrapper, and default vendor warnings were not visible in stderr.
+    statement: >
+      Every analysis run MUST write one run_manifest JSON file containing run
+      identity, sanitized configuration, data-source status, LLM and tool call
+      counts, input and output token usage, duration, and the safety-gate
+      result. The manifest MUST be valid against the documented manifest schema.
+    acceptance_criteria:
+      - id: QR-01-AC1
+        input: "A complete analysis run using the approved D1 configuration."
+        expected_result: "Exactly one run_manifest file is written; it validates against the manifest schema; manifest count = 1 per run."
+        verification: "Integration test; check file existence and validate the JSON against the manifest schema."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: QR-01-AC2
+        input: "A completed run manifest."
+        expected_result: "The manifest contains run_id, sanitized config, data_source_status, llm_call_count, tool_call_count, tokens_in, tokens_out, duration_seconds, and safety_gate_result; missing required fields = 0."
+        verification: "Schema validation and field-presence assertions."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: QR-01-AC3
+        input: "A completed run with callback counts and a final report."
+        expected_result: "Manifest call counts and token totals match the callback totals; source-status entries match data-availability rows; mismatches = 0."
+        verification: "Integration test; reconcile manifest values against callback counters and availability records."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: QR-01-AC4
+        input: "Five runs in the same environment, each writing a manifest."
+        expected_result: "Manifest-writing overhead is at most 1 second per run; measured overhead is recorded in the validation report."
+        verification: "Benchmark with monotonic timing around the manifest write; report median and maximum."
+        zero_tolerance: false
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+    dependencies: [PR-01, FR-02, SB-01, SR-02]
+    conflicts:
+      - "A detailed manifest conflicts with the lean D1 scope. Resolution: record counts and statuses, not full prompts or raw tool bodies."
+      - "Manifest overhead could increase latency. Resolution: write the manifest after the analysis and keep the payload bounded."
+    assumptions:
+      - "A manifest JSON schema will be versioned with the requirements registry."
+      - "Manifest retention is outside D1; the manifest is written to the run's results directory."
+    notes: >
+      QR-01 is the lean D1 version. It does not require raw tool-output retention
+      or per-agent token attribution.
+
+  - id: FR-02
+    type: "functional"
+    title: "Maintain one data-availability state and show critical gaps"
+    priority: "must"
+    status: "approved"
+    stakeholders: [analyst, trader, reviewer]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/tradingagents/agents/state.py"
+          locator: "AgentState"
+          description: "The graph state has report fields and debate state but no unified data-availability field."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/router.py"
+          locator: "L200 route_to_vendor"
+          description: "The router produces success, unavailable, not-configured, and no-data outcomes that are not accumulated into one state."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
+          locator: "all rows"
+          description: "The baseline has 20 success, 4 withheld, 6 not_configured, and 4 unavailable rows."
+          source_type: "measured_baseline"
+    problem: >
+      The baseline did not maintain one shared view of source availability.
+      Different agents rediscovered the same gaps, and the final decision did not
+      receive a single canonical list of missing critical sources.
+    statement: >
+      Each run MUST maintain one run-scoped data_availability state. For every
+      data source, the state MUST record source name, status, reason, requested
+      window, and record count. The user-facing report MUST show every configured
+      critical gap. The final decision MUST consume the same state.
+    acceptance_criteria:
+      - id: FR-02-AC1
+        input: "A fixture in which one configured critical source returns unavailable and the remaining critical sources return success."
+        expected_result: "data_availability contains the failed source with status unavailable and a non-empty reason; report contains the same source and reason; mismatches = 0."
+        verification: "Integration test; assert the state, report, and availability record."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC2
+        input: "A fixture with one critical gap and two non-critical successes."
+        expected_result: "coverage_status = partial; critical_gaps contains exactly one entry; report contains a Data availability section; missing critical-gap entries = 0."
+        verification: "Integration test; assert coverage status, list length, and report section."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC3
+        input: "A fixture in which all configured critical sources return success."
+        expected_result: "coverage_status = complete; critical_gaps length = 0; report does not claim a gap."
+        verification: "Integration test; assert coverage status and empty gap list."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC4
+        input: "A run with a custom critical-source configuration that excludes the failing source."
+        expected_result: "The excluded source is recorded with its status but is not listed in critical_gaps; coverage_status follows the configured set; configuration mismatch = 0."
+        verification: "Unit test with two configurations; assert gap membership."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: [INV-02]
+    conflicts:
+      - "Showing every gap makes reports longer. Resolution: report summary plus manifest detail."
+      - "A configurable critical set can change the decision gate. Resolution: the active critical set is recorded in the manifest."
+    assumptions:
+      - "The critical-source set is provided by configuration."
+      - "The default critical-source set will be confirmed before implementation."
+    notes: >
+      FR-02 defines the state and user-visible reporting. SB-01 defines the
+      deterministic consequence for the final rating.
+
+  - id: SB-01
+    type: "safety"
+    title: "Deterministic final-output gate with REVIEW on critical gaps"
+    priority: "must"
+    status: "approved"
+    stakeholders: [trader, reviewer, security_reviewer]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/tradingagents/agents/rating.py"
+          locator: "L106 run_rating"
+          description: "The current rating path parses a rating and returns REVIEW only when no rating can be read."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+          locator: "L80 invoke_structured"
+          description: "The Portfolio Manager produces the final structured decision; no data-coverage gate is applied after it."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L358 record_decision"
+          description: "The decision is persisted before any coverage-aware code gate exists."
+          source_type: "code"
+    problem: >
+      The baseline could persist a tradeable rating even when critical sources
+      were unavailable. The model output was not subject to a deterministic
+      coverage gate.
+    statement: >
+      Before a final decision is persisted, displayed, or written to memory,
+      deterministic code MUST validate the final rating, coverage status, and
+      critical-gap list. If a configured critical gap exists, the final rating
+      MUST be REVIEW. The model cannot override the gate result.
+    acceptance_criteria:
+      - id: SB-01-AC1
+        input: "A completed run with at least one configured critical gap and a model-produced Buy rating."
+        expected_result: "Persisted final_rating = REVIEW; report rating = REVIEW; memory tag = REVIEW; non-REVIEW final ratings = 0."
+        verification: "Integration test; assert rating in report, final-state, manifest, and memory."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC2
+        input: "A completed run with no critical gaps and a valid model-produced Overweight rating."
+        expected_result: "Final rating remains Overweight; gate result = passed; rating changes = 0."
+        verification: "Integration test; assert rating and gate result."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC3
+        input: "A completed run with a missing or invalid final rating, or a missing coverage_status."
+        expected_result: "Final rating = REVIEW; gate result = blocked; tradeable ratings = 0."
+        verification: "Unit test with malformed final-state fixtures; assert gate result and persisted rating."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC4
+        input: "Any completed run that reaches the persistence step."
+        expected_result: "The manifest contains a safety_gate_result value; missing gate results = 0."
+        verification: "Integration test; assert manifest field presence and schema validity."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: [FR-02, INV-02]
+    conflicts:
+      - "REVIEW reduces actionable output. Resolution: REVIEW is an explicit safe state, not a hidden Hold."
+      - "A model may dispute the gate. Resolution: the gate is code, not prompt text."
+    assumptions:
+      - "REVIEW is the approved non-tradeable state."
+      - "The critical-gap definition is the same one used by FR-02."
+    notes: >
+      The existing rating parser and structured-output validation are reused;
+      D1 adds the coverage-aware pre-persistence gate.
+
+  - id: INV-02
+    type: "invariant"
+    title: "Consistent provenance and final decision across artifacts"
+    priority: "must"
+    status: "approved"
+    stakeholders: [reviewer, trader, analyst]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/tradingagents/reporting.py"
+          locator: "L92 write_report_tree"
+          description: "Reports are written to a report tree, independent of the state log and memory log."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L437 _log_state"
+          description: "The full-state log is written separately from reports and memory."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/memory/log.py"
+          locator: "L32 store_decision"
+          description: "The memory log stores the final decision and rating in a fourth location."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/report-consistency.json"
+          locator: "all fields"
+          description: "The baseline measured decision, report, and full-state consistency, but did not measure source-status consistency across every artifact."
+          source_type: "measured_baseline"
+    problem: >
+      The baseline wrote decision data to reports, a full-state log, and memory,
+      but no invariant tied source status and final decision together across all
+      artifacts.
+    statement: >
+      For every run, the user-facing report, run manifest, persisted final state,
+      and memory log MUST agree on source status, fallback provenance, final
+      rating, and final decision. Silent substitution is forbidden.
+    acceptance_criteria:
+      - id: INV-02-AC1
+        input: "A fixture with success, unavailable, withheld, and fallback-used sources in one run."
+        expected_result: "Source-status and provenance mismatches across report, manifest, final-state, and memory = 0."
+        verification: "Cross-artifact diff test; canonicalize fields and compare all four artifacts."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-02-AC2
+        input: "A fixture in which a primary source fails and a fallback source succeeds."
+        expected_result: "All four artifacts contain the fallback source and the primary failure; silent substitutions = 0."
+        verification: "Integration test; assert fallback marker and primary status in every artifact."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-02-AC3
+        input: "A completed run with a valid final decision."
+        expected_result: "Final rating and final decision mismatches across report, manifest, final-state, and memory = 0."
+        verification: "Integration test; assert exact string equality after whitespace canonicalization."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-02-AC4
+        input: "A completed run in which one required artifact is missing."
+        expected_result: "The run fails the invariant check; missing artifacts = 0 after the fix, and any missing artifact is reported as a failure before the fix."
+        verification: "Negative test with a deleted artifact; assert non-zero failure."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: []
+    conflicts:
+      - "A short report conflicts with full provenance. Resolution: report summary plus canonical manifest detail."
+      - "The memory log stores prose, not a manifest. Resolution: the gate writes the rating and decision before all artifact writers."
+    assumptions:
+      - "The canonical artifact set is report, manifest, final-state, and memory."
+      - "Whitespace normalization is permitted; semantic rewrites are not."
+    notes: >
+      INV-02 is the consistency invariant that binds FR-02, SB-01, QR-01, and
+      PR-01 together.
+
+  - id: SR-02
+    type: "security"
+    title: "No credentials or sensitive URL parameters in run records"
+    priority: "must"
+    status: "approved"
+    stakeholders: [security_reviewer, operator, reviewer]
+    source:
+      origin: "Repository analysis and measured baseline"
+      evidence:
+        - path: "TradingAgents/tradingagents/dataflows/net.py"
+          locator: "L6 get_scrubbed"
+          description: "FRED and Alpha Vantage query keys are scrubbed from request errors."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/vendors/alpha_vantage/common.py"
+          locator: "L96 get_scrubbed call"
+          description: "Alpha Vantage passes its API key as a scrub secret."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L255 run_settings"
+          description: "The report settings are an allowlist and exclude keys and endpoints."
+          source_type: "code"
+        - path: "TradingAgents/cli/prefs.py"
+          locator: "L49 save_last_run"
+          description: "The preferences file stores backend_url, which can contain sensitive URL parameters if the user supplies them."
+          source_type: "code"
+    problem: >
+      Some provider errors already scrub API keys and the report settings are
+      allowlisted, but the preferences file can store a full backend URL and no
+      complete secret scan exists for all run records.
+    statement: >
+      Run records MUST NOT contain credentials or sensitive URL parameters. This
+      applies to the run manifest, logs, preferences, final state, memory, and
+      report metadata. Endpoint records MUST contain only scheme, host, and path.
+    acceptance_criteria:
+      - id: SR-02-AC1
+        input: "A run with a configured API key and an endpoint containing userinfo, a query token, and a fragment."
+        expected_result: "Secret matches in manifest, logs, and preferences = 0; recorded endpoint contains scheme, host, and path only."
+        verification: "Integration test with a secret-pattern scanner and endpoint assertion."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SR-02-AC2
+        input: "A preference file written after a run that uses a backend URL with sensitive parameters."
+        expected_result: "Preferences contain no userinfo, query, or fragment; forbidden URL components = 0."
+        verification: "Unit test; parse the preference JSON and scan URL fields."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SR-02-AC3
+        input: "A fresh interactive key setup that creates a .env file."
+        expected_result: "The .env file mode is 0600."
+        verification: "Filesystem mode assertion."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SR-02-AC4
+        input: "A fixture containing known key, token, password, userinfo, query, and fragment patterns in environment and tool errors."
+        expected_result: "Secret-pattern matches in run records = 0; every sensitive value is redacted."
+        verification: "Secret-scan fixture with a documented pattern list."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: []
+    conflicts:
+      - "Redaction reduces debugging detail. Resolution: record hashes and allowlisted metadata, not secret values."
+      - "The manifest must record configuration while excluding sensitive parameters. Resolution: sanitize configuration before serialization."
+    assumptions:
+      - "The secret-pattern list is configurable and includes key, token, password, userinfo, query, and fragment patterns."
+      - "The .env file is in scope for mode checks."
+    notes: >
+      The existing scrubbers and allowlist are reused; D1 extends the boundary to
+      the manifest, preferences, logs, and final-state records.
+
+conflict_resolutions:
+  - id: C-01
+    requirements: [QR-01, SR-02]
+    description: "QR-01 needs a configuration record; SR-02 forbids sensitive URL parameters."
+    resolution: "QR-01 records a sanitized configuration allowlist; SR-02 defines the sanitizer and the zero-match acceptance check."
+  - id: C-02
+    requirements: [PR-01, INV-02]
+    description: "Caching can hide whether a value was reused, which can break provenance consistency."
+    resolution: "The cache stores status, reason, and source metadata; INV-02 requires the same metadata in every artifact."
+  - id: C-03
+    requirements: [FR-02, INV-02]
+    description: "A user-facing gap summary can omit detail that another artifact retains."
+    resolution: "The report contains a summary; the manifest and final state contain the canonical full list; INV-02 checks the canonical fields."
+  - id: C-04
+    requirements: [FR-02, SB-01]
+    description: "FR-02 exposes gaps; SB-01 converts a critical gap into REVIEW, which reduces actionable output."
+    resolution: "SB-01 uses the same critical-gap definition as FR-02 and records the gate result; REVIEW is the explicit safe state."
+  - id: C-05
+    requirements: [QR-01, INV-02]
+    description: "A lean manifest may not carry enough detail for the consistency invariant."
+    resolution: "The manifest is the canonical machine-readable record; the report and memory carry the same canonical identity and decision fields."
+  - id: C-06
+    requirements: [PR-01, QR-01]
+    description: "Cache reuse reduces calls, while the manifest must still explain what was served."
+    resolution: "The manifest records cache hits and source status; reused values keep their original provenance."
+  - id: C-07
+    requirements: [QR-01, PR-01, SB-01]
+    description: "Recording and gating add work to a latency-sensitive run."
+    resolution: "The manifest is written after model execution; the safety gate is deterministic and does not call a model."
+  - id: C-08
+    requirements: [SR-02, INV-02]
+    description: "Redaction can change the exact strings compared across artifacts."
+    resolution: "All artifacts use the same sanitizer; consistency checks compare sanitized values."
+
+moscow:
+  must:
+    - PR-01
+    - QR-01
+    - FR-02
+    - SB-01
+    - INV-02
+    - SR-02
+  should: []
+  could: []
+  wont:
+    - id: "StockTwits-alternative"
+      reason: "The 403 root cause is unknown and no keyless replacement has been validated."
+    - id: "SEC-point-in-time-profile"
+      reason: "Current SEC classification fields are not proven to be historical vintages and could leak later information."
+    - id: "parallel-risk-perspectives"
+      reason: "It changes debate semantics and requires a separate quality A/B before adoption."
+    - id: "LLM-replay-cache"
+      reason: "It can mask data or model changes and is outside the approved D1 scope."
+    - id: "full-exchange-calendar"
+      reason: "It adds a new dependency; D1 does not require a calendar service."
+    - id: "multi-user-encryption"
+      reason: "The D1 deployment is a single-user local tool; the threat model is not approved."
+  rationale: >
+    All six approved requirements are Must for D1. The deferred items are
+    excluded because they require new vendors, new historical-vintage work, a
+    quality A/B, a new dependency, or a deployment model that D1 does not cover.
+
+traceability:
+  - req_id: PR-01
+    code_refs:
+      - path: "TradingAgents/tradingagents/dataflows/router.py"
+        locator: "L200 route_to_vendor"
+        description: "Dispatcher where a run-scoped cache and status recorder can be inserted."
+      - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+        locator: "L69 ticker-news prefetch"
+        description: "Direct prefetch path that must use the same cache and provenance."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
+        locator: "FRED, ticker-news, prediction-market rows"
+        description: "Measured duplicate failed calls."
+      - path: "baseline/runs/baseline-20261020-01/metrics.json"
+        locator: "tool_calls"
+        description: "Measured 31 tool calls."
+    notes: "The cache is a new behavior; the baseline only establishes the problem."
+  - req_id: QR-01
+    code_refs:
+      - path: "TradingAgents/cli/stats_handler.py"
+        locator: "L10 StatsCallbackHandler"
+        description: "Existing LLM/tool/token counters."
+      - path: "TradingAgents/cli/run.py"
+        locator: "L135 results directory"
+        description: "Run-scoped output location for the manifest."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L255 run_settings"
+        description: "Allowlisted settings view."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/metrics.json"
+        locator: "all fields"
+        description: "External metrics prototype."
+      - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
+        locator: "file size"
+        description: "Empty default stderr in the baseline."
+    notes: "The manifest schema is a new artifact; no native manifest exists in the baseline."
+  - req_id: FR-02
+    code_refs:
+      - path: "TradingAgents/tradingagents/agents/state.py"
+        locator: "AgentState"
+        description: "State definition to extend with data_availability."
+      - path: "TradingAgents/tradingagents/dataflows/router.py"
+        locator: "L200 route_to_vendor"
+        description: "Source of status outcomes."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
+        locator: "all rows"
+        description: "Measured status mix."
+    notes: "No unified availability state exists in the baseline."
+  - req_id: SB-01
+    code_refs:
+      - path: "TradingAgents/tradingagents/agents/rating.py"
+        locator: "L106 run_rating"
+        description: "Existing rating parser and REVIEW sentinel."
+      - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+        locator: "L80 structured decision"
+        description: "Where the final model output is produced."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L358 record_decision"
+        description: "Persistence point where the deterministic gate must run."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/transcripts/final-status.json"
+        locator: "final_rating"
+        description: "Baseline final rating, produced without a coverage gate."
+    notes: "The REVIEW sentinel exists; the critical-gap gate does not."
+  - req_id: INV-02
+    code_refs:
+      - path: "TradingAgents/tradingagents/reporting.py"
+        locator: "L92 write_report_tree"
+        description: "Report writer."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L437 _log_state"
+        description: "Full-state writer."
+      - path: "TradingAgents/tradingagents/memory/log.py"
+        locator: "L32 store_decision"
+        description: "Memory writer."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/report-consistency.json"
+        locator: "all fields"
+        description: "Measured decision/report/full-state consistency; source-status consistency was not fully measured."
+    notes: "The invariant extends consistency from decision text to source status and fallback provenance."
+  - req_id: SR-02
+    code_refs:
+      - path: "TradingAgents/tradingagents/dataflows/net.py"
+        locator: "L6 get_scrubbed"
+        description: "Existing secret scrubber."
+      - path: "TradingAgents/tradingagents/dataflows/vendors/alpha_vantage/common.py"
+        locator: "L96 get_scrubbed call"
+        description: "Existing API-key scrub path."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L255 run_settings"
+        description: "Existing allowlist."
+      - path: "TradingAgents/cli/prefs.py"
+        locator: "L49 save_last_run"
+        description: "Preference writer that needs URL sanitization."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/logs/stdout.log"
+        locator: "entire file"
+        description: "Reviewed baseline stdout; no API key value was observed."
+      - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
+        locator: "file size"
+        description: "Empty stderr; this is not a complete secret scan."
+    notes: "No complete historical secret scan exists; SR-02 introduces the zero-match check."
+
+validation:
+  status: "passed"
+  schema: "docs/req/req-schema.json"
+  tool: "AJV CLI 5.x (JSON Schema draft 2020-12) and custom Python checks"
+  checks:
+    - id: "schema_compile"
+      result: "pass"
+      details: "AJV compiled req-schema.json with --spec=draft2020 --strict=false; the date field is enforced by an ISO-date pattern."
+    - id: "schema_validation"
+      result: "pass"
+      details: "requirements.yaml was converted to JSON and validated against req-schema.json; result: valid."
+    - id: "duplicate_ids"
+      result: "pass"
+      details: "No duplicate IDs across requirements, acceptance criteria, stakeholders, baseline observations, conflict resolutions, or open questions."
+    - id: "missing_references"
+      result: "pass"
+      details: "All dependencies, scope IDs, MoSCoW IDs, conflict-resolution IDs, and traceability entries resolve to known requirements."
+    - id: "conflicts"
+      result: "pass"
+      details: "Every requirement has at least one conflict statement; every conflict resolution references at least two known requirements."
+    - id: "vague_wording"
+      result: "pass"
+      details: "No banned vague terms found in requirement problems, statements, acceptance inputs, expected results, or verification methods."
+    - id: "unverifiable_acceptance"
+      result: "pass"
+      details: "All 24 acceptance criteria specify input, a measurable expected result, and a verification method."
+    - id: "zero_tolerance_invariants"
+      result: "pass"
+      details: "All INV-02 and SB-01 acceptance criteria set zero_tolerance=true."
+    - id: "measurement_honesty"
+      result: "pass"
+      details: "No provisional target is marked as measured; all unmeasured values are marked measured=false."
+    - id: "source_evidence"
+      result: "pass"
+      details: "Every requirement has at least one code or measured-baseline evidence entry."
+    - id: "moscow_coverage"
+      result: "pass"
+      details: "Every requirement appears exactly once in must, should, or could."
+    - id: "traceability_paths"
+      result: "pass"
+      details: "All traceability code and baseline paths exist in the repository or baseline artifacts."
+  notes: "Schema validation and all custom checks passed. document.date is enforced by an ISO-date pattern."
+
+open_questions:
+  - id: OQ-01
+    question: "Which data sources are in the configured critical-source set for D1?"
+    impact: "FR-02 and SB-01 depend on the critical-gap definition."
+    blocking: true
+  - id: OQ-02
+    question: "Where should the run manifest be stored and how long should it be retained?"
+    impact: "QR-01 storage location and retention policy."
+    blocking: false
+  - id: OQ-03
+    question: "Which secret-pattern list is authoritative for SR-02, and does it include provider-specific key formats?"
+    impact: "SR-02 scanner coverage."
+    blocking: true
+  - id: OQ-04
+    question: "What normalization rules define a stable data_query_key for dates, windows, indicators, and vendor methods?"
+    impact: "PR-01 cache correctness."
+    blocking: true
+  - id: OQ-05
+    question: "Is the provisional 1-second manifest-overhead target accepted for QR-01?"
+    impact: "QR-01 acceptance threshold."
+    blocking: false
+  - id: OQ-06
+    question: "Is REVIEW acceptable as the terminal output when a critical gap exists, without a user override?"
+    impact: "SB-01 behavior and user experience."
+    blocking: true
+  - id: OQ-07
+    question: "Does SR-02 cover only .env files and run records, or also the host shell history and external provider logs?"
+    impact: "Security scope and verification boundary."
+    blocking: false
+  - id: OQ-08
+    question: "Can concurrent runs share a manifest or preference directory without a locking policy?"
+    impact: "PR-01 cache isolation and QR-01 manifest writes."
+    blocking: false
