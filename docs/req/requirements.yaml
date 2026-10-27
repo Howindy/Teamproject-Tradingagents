@@ -1,0 +1,330 @@
+schema_version: "1.0"
+
+document:
+  id: "D1-FR04"
+  title: "D1 Personal Draft: Deterministic Portfolio Risk Guardrail"
+  version: "0.1.0"
+  status: "draft"
+  date: "2026-10-27"
+  language: "en"
+  description: >
+    This standalone personal D1 draft contains Jiang Yiyang's proposed FR-04
+    functional requirement and INV-07 non-functional invariant for team review.
+    It uses the team's registry structure but does not claim team approval,
+    implementation, test completion, or measured benefit.
+  baseline_ref: "TradingAgents v0.7.0 repository inspection; no FR-04 runtime baseline measured"
+
+scope:
+  # req-schema.json requires approved_ids. Here the list means this personal
+  # draft's selected IDs; both requirements remain status=draft pending team approval.
+  approved_ids: [FR-04, INV-07]
+  in_scope:
+    - "Deterministic validation of projected single-asset concentration and long stop distance before formal finalization."
+    - "Zero unsafe approvals, deterministic results, model-authority separation, and consistent finalized evidence."
+  out_of_scope:
+    - "Brokerage execution, persistent position accounting, portfolio-return simulation, slippage, and guaranteed realized-loss limits."
+    - "Short, derivative, leveraged, multiple-order, and non-stock policies in the first version."
+  assumptions:
+    - "FR-04 integrates as a pure policy service inside the team's shared SafetyGate rather than creating a second final authority."
+    - "The caller supplies validated numeric portfolio and candidate-trade inputs with provenance and freshness metadata."
+    - "The 30% concentration and 5% stop-distance values are provisional classroom defaults pending team approval."
+    - "The projected-weight formula assumes that the proposed purchase is funded from cash already included in portfolio_value, so the total portfolio denominator remains unchanged; external cash flows require a separately defined denominator policy."
+    - "Implementation preserves typed TraderProposal and portfolio/risk values through finalization; rendered Markdown is display-only and is never parsed as authoritative numeric input."
+
+stakeholders:
+  - id: trader
+    name: "Trader"
+    interest: "Needs a non-tradeable final result when an advisory proposal violates approved risk limits."
+  - id: reviewer
+    name: "Reviewer"
+    interest: "Needs deterministic evidence, stable reason codes, and traceability from requirement to test."
+  - id: operator
+    name: "Operator"
+    interest: "Needs explicit invalid-input handling and versioned policy behavior without hidden model authority."
+  - id: security_reviewer
+    name: "Security reviewer"
+    interest: "Needs a pure evaluator with no model, network, vendor, persistence, UI, or secret dependency."
+
+definitions:
+  data_query_key: >
+    The team's stable identifier for a normalized external data request. FR-04
+    does not create or alter data-query caching behavior.
+  critical_gap: >
+    A team-configured critical evidence source that is unavailable or otherwise
+    unusable for the current run; handled by the shared SafetyGate before output.
+  coverage_status: >
+    The team's complete or partial evidence-coverage result consumed by the
+    shared SafetyGate alongside the separate FR-04 portfolio-risk result.
+  safety_gate: >
+    Deterministic code that is the sole producer of the effective final result.
+    It invokes PortfolioRiskEvaluator and cannot be overridden by model text.
+  zero_tolerance: >
+    A pass requires exactly zero unsafe approvals, bypasses, forbidden calls,
+    or cross-artifact mismatches; one violation fails the criterion.
+  run_manifest: >
+    The team's machine-readable run record that may later include the versioned
+    FR-04 policy, calculated metrics, status, and violation codes.
+  sensitive_url_parameter: >
+    URL user information, query, or fragment data that may contain credentials;
+    FR-04 records and tests must never contain such values.
+
+baseline_observations:
+  - id: BO-01
+    statement: "Repository inspection found no deterministic portfolio concentration and stop-distance evaluator after the Portfolio Manager."
+    value: "not_present"
+    unit: null
+    measured: false
+    measurement_status: "not_measured"
+    source: "TradingAgents/tradingagents/graph/setup.py and agents/schemas.py"
+    notes: "This is code-inspection evidence, not a runtime benchmark."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-02
+    statement: "The proposed maximum projected single-asset weight has not been empirically calibrated or approved by the team."
+    value: null
+    unit: "ratio"
+    measured: false
+    measurement_status: "not_measured"
+    source: "Personal FR-04 design assumption"
+    notes: "30% is a provisional classroom default only."
+    target: 0.30
+    target_status: "provisional"
+  - id: BO-03
+    statement: "The proposed maximum long stop distance has not been empirically calibrated or approved by the team."
+    value: null
+    unit: "ratio"
+    measured: false
+    measurement_status: "not_measured"
+    source: "Personal FR-04 design assumption"
+    notes: "5% is a provisional classroom default only."
+    target: 0.05
+    target_status: "provisional"
+
+requirements:
+  - id: FR-04
+    type: "functional"
+    title: "Deterministic portfolio-risk evaluation before finalization"
+    priority: "must"
+    status: "draft"
+    stakeholders: [trader, reviewer, operator]
+    source:
+      origin: "TradingAgents v0.7.0 repository analysis and proposed classroom safety boundary"
+      evidence:
+        - path: "TradingAgents/tradingagents/agents/schemas.py"
+          locator: "TraderProposal and PortfolioDecision"
+          description: "Trader fields include optional entry, stop-loss, and textual sizing while the final Portfolio Manager rating has no deterministic exposure validation."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/state.py"
+          locator: "AgentState.portfolio_context"
+          description: "Portfolio context is currently rendered text rather than an authoritative validated numeric RiskContext."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/setup.py"
+          locator: "Portfolio Manager edge to END"
+          description: "The graph ends after the Portfolio Manager without a deterministic portfolio-risk evaluator."
+          source_type: "code"
+    problem: >
+      A Buy or Overweight proposal can become formal advisory output without
+      deterministic validation of projected single-asset concentration or the
+      proposed long stop distance.
+    statement: >
+      Before a Buy or Overweight advisory result is finalized, deterministic
+      code MUST evaluate validated caller-supplied portfolio and candidate-trade
+      inputs. It MUST calculate projected single-asset weight as
+      (current_asset_value + proposed_order_value) / portfolio_value and long
+      stop distance as (entry_price - stop_loss_price) / entry_price. It MUST
+      compare both values with versioned policy limits, preserve the model
+      proposal separately, and produce a non-tradeable REVIEW result when a
+      limit is exceeded or a required value is invalid or unsupported. The
+      evaluator MUST run inside the shared SafetyGate and MUST NOT execute orders
+      or maintain a brokerage portfolio.
+    acceptance_criteria:
+      - id: FR-04-AC1
+        input: "A new-long proposal with portfolio 100000, current asset 20000, proposed order 10000, entry 100, stop 95, and provisional limits 30% and 5%."
+        expected_result: "Projected weight = 30% and stop distance = 5%; the check passes, valid rating stays unchanged, and metrics plus policy version are recorded."
+        verification: "Deterministic exact-boundary unit test and finalized-record integration assertion."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: FR-04-AC2
+        input: "A new-long stock proposal with validated projected single-asset weight greater than the configured maximum."
+        expected_result: "Gate status is blocked, final rating is REVIEW, effective proposed order value is zero, code is POSITION_LIMIT_EXCEEDED, and escaped tradeable results = 0."
+        verification: "Exact and immediately-over-boundary unit tests plus formal-artifact integration test."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: FR-04-AC3
+        input: "A new-long stock proposal with validated stop distance greater than the configured maximum."
+        expected_result: "Gate status is blocked, final rating is REVIEW, effective proposed order value is zero, code is STOP_DISTANCE_EXCEEDED, and escaped tradeable results = 0."
+        verification: "Exact and immediately-over-boundary unit tests plus formal-artifact integration test."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: FR-04-AC4
+        input: "A Buy or Overweight proposal with missing, boolean, negative, NaN, infinite, zero-denominator, inconsistent, stale, or unsupported required risk input."
+        expected_result: "The gate fails closed to REVIEW with zero effective proposed value and a stable validation or unsupported code; default approvals = 0."
+        verification: "Parameterized malformed-input tests and finalized-record schema assertions."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: [INV-07]
+    conflicts:
+      - "Actionable output conflicts with fail-closed handling. Safety takes priority and invalid required input produces non-tradeable REVIEW."
+      - "A second independent gate conflicts with team architecture. PortfolioRiskEvaluator is a pure service inside the shared SafetyGate."
+    assumptions:
+      - "Caller/application code supplies validated numeric values; model prose is never authoritative portfolio state."
+      - "First version covers unleveraged new-long stock Buy or Overweight proposals only."
+      - "The 30% and 5% values are provisional configurable defaults, not universal financial advice."
+    notes: >
+      Input ownership, thresholds, final state vocabulary, and trade scope
+      require team approval before implementation. Tradeoff: deterministic
+      fail-closed validation improves safety and reproducibility but may convert
+      otherwise useful recommendations to REVIEW when trustworthy numeric inputs
+      are unavailable.
+
+  - id: INV-07
+    type: "invariant"
+    title: "Zero unsafe approval and deterministic portfolio-risk authority"
+    priority: "must"
+    status: "draft"
+    stakeholders: [trader, reviewer, security_reviewer]
+    source:
+      origin: "FR-04 safety and determinism requirement"
+      evidence:
+        - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+          locator: "portfolio_manager_node final rating"
+          description: "The final proposal is model-produced and cannot itself be deterministic authority for numeric portfolio boundaries."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "record_decision"
+          description: "The persistence path requires a shared deterministic finalization boundary to prevent unsafe formal output."
+          source_type: "code"
+    problem: >
+      A risk rule is not a safety boundary if model wording, invalid input,
+      external dependencies, or an alternate writer can approve a proposal that
+      violates the active policy.
+    statement: >
+      Every applicable effective Buy or Overweight result MUST pass the same
+      pure deterministic PortfolioRiskEvaluator through the shared SafetyGate.
+      Model text MUST NOT alter the result, invalid required input MUST NOT
+      default to approval, and original proposal and effective result MUST remain
+      distinguishable. The evaluator MUST make no LLM, network, vendor,
+      persistence, or UI call. Unsafe approval count MUST equal zero.
+    acceptance_criteria:
+      - id: INV-07-AC1
+        input: "A fixed-seed set of at least 1000 valid, boundary, over-limit, malformed, and unsupported new-long fixtures."
+        expected_result: "Every violating fixture is non-tradeable and unsafe approved count = 0."
+        verification: "Generated offline test with recorded seed and failure corpus."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-07-AC2
+        input: "Representative approved, blocked, invalid, and unsupported fixtures evaluated 100 times each under one policy version."
+        expected_result: "Canonical results, metrics, codes, and final ratings are identical for identical input; mismatches = 0."
+        verification: "Repeated deterministic unit test with canonical result serialization."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-07-AC3
+        input: "Narrative fields claiming approval and sentinels that fail on any LLM, network, vendor, persistence, or UI call."
+        expected_result: "Narrative does not change the result and forbidden dependency calls = 0."
+        verification: "Narrative-injection fixtures, import audit, and dependency sentinels."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-07-AC4
+        input: "A blocked proposal sent through CLI, report, manifest, final-state, and memory writers."
+        expected_result: "Proposal remains audit-only, every formal consumer uses the same REVIEW result, and mismatches = 0."
+        verification: "Writer-bypass and cross-artifact integration test using one finalized-record identity."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: [FR-04]
+    conflicts:
+      - "Preserving a proposal can be mistaken for preserving its authority; all formal consumers use only the finalized result."
+      - "Fail-closed validation reduces actionable output but prevents unsafe default approval."
+    assumptions:
+      - "The shared SafetyGate is the only formal finalization authority."
+      - "Offline fixtures require no provider credentials, live data, or model calls."
+    notes: >
+      INV-07 is the non-functional safety and determinism requirement paired
+      with FR-04. Its explicit metrics are unsafe_approval_count == 0,
+      deterministic_result_mismatch_count == 0,
+      forbidden_dependency_call_count == 0, and
+      cross_artifact_mismatch_count == 0. Tradeoff: zero-tolerance validation
+      reduces autonomous flexibility and may require human review more often.
+
+conflict_resolutions:
+  - id: C-01
+    requirements: [FR-04, INV-07]
+    description: "Actionable model output conflicts with deterministic fail-closed safety behavior."
+    resolution: "Safety takes priority; the shared gate produces non-tradeable REVIEW with stable reason codes while preserving the proposal for audit only."
+
+moscow:
+  must: [FR-04, INV-07]
+  should: []
+  could: []
+  wont:
+    - id: "live-order-execution"
+      reason: "The personal D1/D2 scope is advisory validation only and does not connect to a broker or execute trades."
+    - id: "advanced-trade-types"
+      reason: "Short, derivative, leveraged, and multi-order policies require separate formulas, requirements, and evidence."
+  rationale: "FR-04 and INV-07 are proposed Must requirements within this personal draft but remain pending team approval."
+
+traceability:
+  - req_id: FR-04
+    code_refs:
+      - path: "TradingAgents/tradingagents/agents/schemas.py"
+        locator: "TraderProposal and PortfolioDecision"
+        description: "Existing proposal and decision contracts requiring a deterministic risk adapter."
+      - path: "TradingAgents/tradingagents/agents/state.py"
+        locator: "AgentState.portfolio_context"
+        description: "Current textual context to complement with validated numeric risk fields."
+      - path: "TradingAgents/tradingagents/graph/setup.py"
+        locator: "Portfolio Manager edge to END"
+        description: "Final path where the shared SafetyGate integration must be non-bypassable."
+    baseline_refs: []
+    notes: "No FR-04 runtime implementation, benefit, or policy threshold has been measured."
+  - req_id: INV-07
+    code_refs:
+      - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+        locator: "portfolio_manager_node"
+        description: "LLM proposal that remains audit evidence rather than numeric risk authority."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "record_decision"
+        description: "Formal writer path that must consume a deterministic finalized result."
+    baseline_refs: []
+    notes: "Zero-escape, determinism, dependency, and writer tests are planned only."
+
+validation:
+  status: "passed"
+  schema: "docs/req/req-schema.json"
+  tool: "Python jsonschema Draft 2020-12 and custom consistency checks"
+  checks:
+    - id: "schema_validation"
+      result: "pass"
+      details: "Validated against the copied team schema with Python jsonschema Draft 2020-12 on 2026-10-27."
+    - id: "reference_consistency"
+      result: "pass"
+      details: "Requirement IDs, eight acceptance-criterion IDs, dependencies, MoSCoW entries, trace entries, and five referenced repository paths were checked on 2026-10-27."
+    - id: "measurement_honesty"
+      result: "pass"
+      details: "The draft labels 30% and 5% as provisional policy values and does not report implementation, runtime tests, or measured benefit as completed."
+  notes: "These checks validate document structure and internal consistency only; they do not prove implementation or team approval."
+
+open_questions:
+  - id: OQ-01
+    question: "Are 30% concentration and 5% long stop distance approved as configurable classroom defaults?"
+    impact: "Policy values, tests, and user-visible explanations."
+    blocking: true
+  - id: OQ-02
+    question: "Which deterministic component owns and validates every numeric risk input and its freshness?"
+    impact: "Interface, state, provenance, checkpoint, and fail-closed behavior."
+    blocking: true
+  - id: OQ-03
+    question: "Should a risk breach or invalid input produce REVIEW, HOLD, or a distinct BLOCKED state?"
+    impact: "SafetyGate, report, memory, backtest, and tests."
+    blocking: true
+  - id: OQ-04
+    question: "Is first-version scope limited to unleveraged new-long stock Buy and Overweight proposals?"
+    impact: "Formulas, unsupported behavior, and verification scope."
+    blocking: true

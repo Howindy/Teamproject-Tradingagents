@@ -1,0 +1,50 @@
+schema_version: "1.0"
+
+entries:
+  - id: "AI-FR04-D1D2-20261028-01"
+    date: "2026-10-28"
+    owner: "Jiang Yiyang"
+    phase: "D1 and D2 personal contribution"
+    tool: "Codex"
+    purpose: >
+      Inspect TradingAgents v0.7.0, compare the team leader's D1/D2 draft, and
+      draft and review the personal FR-04 and INV-07 deterministic portfolio-risk
+      contribution without changing product code.
+    human_supervision:
+      - "Selected deterministic portfolio-risk validation as the proposed feature scope."
+      - "Requested a source-based audit of the full TradingAgents package and the team leader's branch."
+      - "Required thresholds, architecture, implementation, and test claims to remain draft until team review or measurement."
+    inputs_reviewed:
+      - "Teamproject-Tradingagents main archive"
+      - "Yifan_docs/d1-d2-initial-draft archive"
+      - "CS5351 project requirement sheet"
+    files_affected:
+      - "architecture-blueprint.md"
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/architecture/adr/002-deterministic-portfolio-risk.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/open-decisions.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/ai-use-log.yaml"
+    decisions:
+      accepted:
+        - "Use a pure deterministic evaluator inside the team's proposed shared SafetyGate."
+        - "Require typed portfolio and candidate-order inputs rather than parsing model prose."
+        - "Keep 30% projected weight and 5% stop distance as provisional configurable classroom defaults."
+        - "Use the existing REVIEW vocabulary as a draft fail-closed result pending team approval."
+      rejected:
+        - "Prompt-only enforcement as the final authority."
+        - "A second LLM as the final risk judge."
+        - "Regular-expression extraction of authoritative numeric values from rendered prose."
+        - "A second independent final gate outside the team's shared SafetyGate."
+    verification:
+      - "Requirements registry validated against the team leader's JSON Schema."
+      - "Referenced baseline source paths checked against TradingAgents v0.7.0."
+      - "Document identifiers, dependencies, acceptance criteria, and trace entries checked for internal consistency."
+      - "No application source, test, baseline evidence, credential, or runtime state was modified."
+    status: "Draft prepared for human and team review"
