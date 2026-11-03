@@ -1,0 +1,501 @@
+schema_version: "1.0"
+
+document:
+  id: "D1-FR01-CR01"
+  title: "D1 Personal Draft: Deterministic Derived Financial Metrics and Downstream Context Cost"
+  version: "0.1.0"
+  status: "draft"
+  date: "2026-11-03"
+  language: "en"
+  description: >
+    This standalone personal D1 draft proposes one functional requirement
+    (FR-01, deterministic derived financial metrics) and one non-functional
+    requirement (CR-01, downstream context token cost) for team review. It uses
+    the team registry schema. It does not claim team approval, implementation,
+    test completion, or measured benefit. FR-01 and CR-01 identifiers are
+    provisional until the team confirms numbering.
+  baseline_ref: "baseline/runs/baseline-20261020-01"
+
+scope:
+  # req-schema.json requires approved_ids. Here the list means this personal
+  # draft's selected IDs; both requirements remain status=draft pending team approval.
+  approved_ids: [FR-01, CR-01]
+  in_scope:
+    - "Deterministic calculation of growth, margin, trailing-twelve-month, valuation, liquidity, and free-cash-flow metrics from SEC EDGAR statements filed on or before the analysis date."
+    - "A new analyst tool exposing those metrics with period labels, inputs, and formulas, plus a code-appended verified-metrics block at the end of the fundamentals report."
+    - "Prompt instructions telling the fundamentals analyst, the two researchers, and the three risk debaters to quote verified metrics instead of recomputing them."
+    - "A bounded downstream brief of each analyst report for the five downstream debate agents, with deterministic extraction and fallback condensation."
+    - "Per-call token attribution in a new measurement script and a documented A/B protocol against the recorded baseline configuration."
+  out_of_scope:
+    - "Fundamentals vendors other than SEC EDGAR (yfinance, Alpha Vantage); unsupported instruments receive an explicit not-supported message."
+    - "Deriving a fourth-quarter figure by subtracting filed quarters from an annual total, or deriving a single quarter by subtracting year-to-date filings."
+    - "Industry comparison, discounted-cash-flow valuation, forecasts, or price targets."
+    - "Changes to graph topology, AgentState fields, report rendering, memory, the CLI, the router, or the Portfolio Manager."
+    - "Generic token-budget, overflow, and re-injection behavior described in the team ContextAssembler design; CR-01 covers only always-on condensation of analyst reports for downstream agents."
+    - "Changes to the sentiment analyst prompt; its report is condensed only by the deterministic fallback."
+  assumptions:
+    - "Implementation and experiments run on a team member machine with package-index access and the course LLM endpoint; offline unit tests need neither."
+    - "SEC EDGAR statement output keeps its current CSV text format: comment header lines starting with '#', then one header row of period-end dates and one row per line item."
+    - "All five downstream consumers read analyst reports through context.report_or_absent, so the brief can be applied without new state fields."
+    - "The course LLM endpoint allows roughly 25 full runs of about 184k tokens each for CR-01 experiments; this is unconfirmed."
+    - "CR-01 is coordinated with the owner of the team ContextAssembler design and BO-12 token target before implementation."
+
+stakeholders:
+  - id: analyst
+    name: "Research analyst"
+    interest: "Needs growth and valuation figures that are computed correctly, with the compared periods stated."
+  - id: trader
+    name: "Trader"
+    interest: "Needs debate and final decisions that do not rest on mis-aligned growth rates or ambiguous valuation multiples."
+  - id: reviewer
+    name: "Reviewer"
+    interest: "Needs every derived figure traceable to filed inputs and a formula, and token savings measured with a repeatable protocol."
+  - id: operator
+    name: "Operator"
+    interest: "Needs lower per-run token cost without losing data-gap visibility or decision quality."
+
+definitions:
+  data_query_key: >
+    The team's stable identifier for a normalized external data request. FR-01
+    reads statements through existing vendor functions and does not create or
+    alter data-query caching behavior.
+  critical_gap: >
+    A team-configured critical evidence source that is unavailable for the
+    current run. CR-01 briefs must keep any data gap stated in the full report;
+    they do not decide which gaps are critical.
+  coverage_status: >
+    The team's complete or partial evidence-coverage result. FR-01 and CR-01 do
+    not compute or change it.
+  safety_gate: >
+    The team's deterministic finalization authority. FR-01 and CR-01 run before
+    it, do not change final ratings, and add no second gate.
+  zero_tolerance: >
+    A pass requires exactly zero violations of the stated condition; one
+    violation fails the acceptance criterion.
+  run_manifest: >
+    The team's machine-readable run record. CR-01 measurements are written by a
+    separate measurement script and may later be copied into the manifest.
+  sensitive_url_parameter: >
+    URL user information, query, or fragment data that may contain credentials.
+    FR-01 and CR-01 records must never contain such values.
+
+baseline_observations:
+  - id: BO-01
+    statement: "The baseline fundamentals report stated Q2 FY2027 revenue growth of about +68.6% year over year; the filed figures give +105.9%."
+    value: 68.6
+    unit: "percent"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/transcripts/final_state.json (fundamentals_report) and transcripts/tool-outputs-clean/0019_get_income_statement.txt"
+    notes: "96,221 / 46,743 - 1 = +105.9% against 2025-07-27. The stated +68.6% equals 96,221 / 57,006 - 1, the 2025-10-26 quarter mislabeled as Q2 FY2026. The value was repeated by both researchers and the final decision."
+    target: 105.9
+    target_status: "approved"
+  - id: BO-02
+    statement: "Of 48 percentages in the baseline fundamentals report, 41 do not appear in any tool output and were computed or estimated by the model."
+    value: 0.85
+    unit: "ratio"
+    measured: true
+    measurement_status: "measured"
+    source: "Literal-match prototype over baseline-20261020-01 final_state.json and transcripts/tool-outputs-clean"
+    notes: "Final decision: 6 of 13. Whole run: 78 of 155. Literal matching falsely matched 61 of 1000 random values (6.1%). Not every model-computed figure is wrong; of 7 checked growth figures, 1 was wrong."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-03
+    statement: "Two definitions of trailing P/E give materially different values for the same baseline inputs."
+    value: "44.3x on fiscal-year EPS; 27.4x on trailing-twelve-month EPS"
+    unit: null
+    measured: true
+    measurement_status: "measured"
+    source: "Close 217.09 on 2026-10-19 with diluted EPS from transcripts/tool-outputs-clean/0019 and 0045"
+    notes: "217.09 / 4.90 = 44.3x; 217.09 / 7.91 = 27.4x where 7.91 = FY EPS + current YTD quarterly EPS - prior-year YTD quarterly EPS (approximate). The bear researcher cited 44x without stating the definition."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-04
+    statement: "The quarterly income statement has no fourth-quarter columns, and some quarters appear under two end dates."
+    value: "Q4 absent; 2010-07-31 and 2010-08-01 both report revenue 811"
+    unit: null
+    measured: true
+    measurement_status: "measured"
+    source: "transcripts/tool-outputs-clean/0019_get_income_statement.txt"
+    notes: "Counting columns back to find the year-ago quarter is therefore wrong; periods must be matched by end date."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-05
+    statement: "The quarterly cash-flow statement reports many periods only year to date."
+    value: 37
+    unit: "columns"
+    measured: true
+    measurement_status: "measured"
+    source: "transcripts/tool-outputs-clean/0035_get_cashflow.txt"
+    notes: "Columns are labeled '(6 months)' or '(9 months)'. FR-01 computes cash-flow metrics on the reported span and never subtracts one filing from another."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-06
+    statement: "Measured input and output token usage of the baseline run."
+    value: "156541 input / 27639 output"
+    unit: "tokens"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/metrics.json"
+    notes: "One run: NVDA, 2026-10-19, four analysts, one debate round, one risk round, 19 LLM calls."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-07
+    statement: "The four analyst reports are passed in full to five downstream agents in the baseline run."
+    value: 45219
+    unit: "characters per consumer"
+    measured: true
+    measurement_status: "partially_measured"
+    source: "transcripts/final_state.json report fields and the prompt assembly in researchers/*.py and risk_mgmt/*_debator.py"
+    notes: "5 x 45,219 = 226,095 characters, estimated at 56.5k-64.6k tokens (3.5-4 characters per token), or 36-41% of baseline input. Character counts are measured; the token share is an estimate."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-08
+    statement: "The baseline does not persist per-call token usage, so token use cannot be attributed to individual agents."
+    value: "not_present"
+    unit: null
+    measured: false
+    measurement_status: "not_applicable"
+    source: "scripts/run_baseline.py RecordingStatsHandler"
+    notes: "Per-call usage is collected in memory and only totals are written. CR-01 needs attribution by graph node."
+    target: null
+    target_status: "not_applicable"
+  - id: BO-09
+    statement: "Run-to-run variation of the final rating and of token usage has not been measured."
+    value: null
+    unit: null
+    measured: false
+    measurement_status: "not_measured"
+    source: "Only one baseline run exists"
+    notes: "Default temperature is provider-defined (default_config.py temperature None). CR-01 measures baseline variation before comparing."
+    target: null
+    target_status: "not_applicable"
+
+requirements:
+  - id: FR-01
+    type: "functional"
+    title: "Deterministic derived financial metrics for analysts"
+    priority: "must"
+    status: "draft"
+    stakeholders: [analyst, trader, reviewer]
+    source:
+      origin: "Baseline run evidence and SEC EDGAR statement format inspection"
+      evidence:
+        - path: "baseline/runs/baseline-20261020-01/transcripts/final_state.json"
+          locator: "fundamentals_report; final_trade_decision"
+          description: "Model-computed Q2 FY2027 growth of +68.6% (filed figures give +105.9%) reached the final decision."
+          source_type: "measured_baseline"
+        - path: "TradingAgents/tradingagents/dataflows/vendors/sec_edgar.py"
+          locator: "L245 get_income_statement docstring; L83 _YEAR_TO_DATE"
+          description: "Fourth quarters are never derived and cash flows may be year to date, so quarterly columns are irregular."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/analysts/fundamentals_analyst.py"
+          locator: "L14 TOOLS; L28 system_message"
+          description: "The analyst receives raw statements only and has no tool that computes growth, margins, or multiples."
+          source_type: "code"
+    problem: >
+      Growth rates, margins, and valuation multiples are computed by the model
+      from irregular statement tables. Quarterly tables omit fourth quarters and
+      contain duplicate end dates, so counting columns picks the wrong
+      comparison period. In the baseline a wrong year-over-year growth rate
+      (+68.6% instead of +105.9%) turned an accelerating trend into a stated
+      deceleration and reached the final decision. "Trailing P/E" was also
+      cited without a definition although the two common definitions give
+      44.3x and 27.4x.
+    statement: >
+      The system MUST provide a get_derived_metrics analyst tool and a
+      deterministic module that compute, from SEC EDGAR statements filed on or
+      before the analysis date, the following metrics for the latest four
+      periods: revenue and net-income year-over-year growth, revenue
+      quarter-over-quarter growth, gross, operating, and net margin, annual
+      revenue growth, trailing-twelve-month revenue and diluted EPS, P/E on
+      trailing-twelve-month EPS and P/E on fiscal-year EPS reported separately,
+      current ratio, liabilities-to-assets, and free cash flow
+      (operating cash flow minus capital expenditure) on its reported span.
+      Comparison periods MUST be matched by period-end date (year ago: 355-380
+      days earlier; prior quarter: 80-100 days earlier) and never by column
+      position. A metric without a single unambiguous comparison period MUST be
+      reported as n/a with a reason. The module MUST NOT derive a quarter by
+      subtraction. Every value MUST state its period end, inputs, and formula.
+      The fundamentals analyst MUST be offered the tool, and code MUST append
+      the computed table to the end of the fundamentals report as a
+      verified-metrics block. Prompts of the fundamentals analyst, both
+      researchers, and the three risk debaters MUST instruct the model to quote
+      these values instead of recomputing them.
+    acceptance_criteria:
+      - id: FR-01-AC1
+        input: "Baseline NVDA quarterly and annual income statements (tool-outputs-clean 0019 and 0045) with analysis date 2026-10-19."
+        expected_result: "revenue_yoy for 2026-07-26 = +105.9% against 2025-07-27; revenue_yoy for 2026-04-26 = +85.2%; revenue_qoq = +17.9%; gross, operating, and net margins = 75.0%, 66.2%, 62.0%; each row lists inputs and formula."
+        verification: "Offline unit test on the recorded baseline fixture; expected values computed by hand from the filed figures."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC2
+        input: "The AC1 fixture with the 2025-07-27 column removed, and a fourth-quarter period whose year-ago quarter is absent."
+        expected_result: "Both metrics are n/a with a stated reason; neighboring-column substitutions = 0; no value equal to a ratio against any other period is emitted."
+        verification: "Offline unit tests with modified fixtures; assert n/a and reason text."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC3
+        input: "Fixtures with two end dates within 7 days carrying equal values, and two carrying different values."
+        expected_result: "Equal values are merged and computed once; different values give n/a marked ambiguous; silent choice between candidates = 0."
+        verification: "Offline unit tests including the 2010-07-31 / 2010-08-01 pair from the baseline fixture."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC4
+        input: "The AC1 fixture plus close price 217.09 on 2026-10-19."
+        expected_result: "ttm_revenue = 302,969; ttm_eps = 7.91 marked approximate; pe_ttm = 27.4x and pe_fy = 44.3x shown as separate labeled rows."
+        verification: "Offline unit test with the price source mocked."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC5
+        input: "The same statements evaluated with analysis dates 2026-10-19 and 2026-06-01, and a cash-flow fixture with year-to-date columns."
+        expected_result: "For 2026-06-01 the latest period is 2026-04-26 and no later filing or price is used; free cash flow is reported on the labeled 6- or 9-month span against the same span a year earlier; look-ahead uses = 0; cross-filing subtractions = 0."
+        verification: "Offline unit tests with fixtures generated through the existing SEC vendor as-of filter and mocked price rows."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC6
+        input: "Three reference companies with different fiscal calendars (NVDA plus two chosen at implementation), using values published independently of the implementation such as company earnings releases or hand calculation by a team member."
+        expected_result: "All covered metrics match the independent references within 0.1 percentage point (ratios) or 1 unit of the source precision; mismatches = 0; repeated evaluation of identical input gives identical output."
+        verification: "Offline fixture tests; the reference values and their sources are recorded with the tests and are not generated by the code under test."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: FR-01-AC7
+        input: "A ticker absent from SEC EDGAR, a crypto instrument, and a vendor error during statement retrieval."
+        expected_result: "The tool returns an explicit not-supported or unavailable message, no exception escapes, and the analyst flow continues; crashes = 0."
+        verification: "Offline unit tests with the vendor functions mocked to raise NoMarketDataError and VendorUnavailableError."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC8
+        input: "The fundamentals analyst node run offline with a fake LLM, and the five downstream prompt builders."
+        expected_result: "get_derived_metrics is in the analyst TOOLS; the returned fundamentals_report ends with the code-generated verified-metrics block identical to the tool output; all six prompts contain the quote-not-recompute instruction."
+        verification: "Offline node tests in the style of the existing analyst and prompt-integrity tests."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    dependencies: []
+    conflicts:
+      - "Upstream refuses to derive fourth quarters. Resolution: FR-01 never derives a quarter and reports those comparisons as n/a; TTM uses only filed annual and quarterly figures."
+      - "Summing quarterly diluted EPS ignores share-count changes. Resolution: ttm_eps is labeled approximate and pe_fy is always reported beside pe_ttm."
+      - "The appended block lengthens the fundamentals report. Resolution: the block is compact and is counted in CR-01 measurements."
+    assumptions:
+      - "Instruments covered are US SEC filers with us-gaap facts; others receive not-supported."
+      - "The model may still recompute values despite instructions; FR-01 acceptance tests the tool and the appended block, not model compliance."
+      - "Price comes from the existing verified market snapshot and only rows on or before the analysis date are used."
+    notes: >
+      New files: tradingagents/dataflows/derived_metrics.py, a tool module, and
+      tests. Existing files changed: fundamentals_analyst.py and the prompts of
+      bull_researcher.py, bear_researcher.py, and the three *_debator.py files.
+      None of these are in other members' planned change sets, which keeps the
+      merge small. Tradeoff: deterministic metrics are reliable but narrower
+      than free-form model analysis.
+
+  - id: CR-01
+    type: "cost"
+    title: "Bounded analyst-report context for downstream agents"
+    priority: "must"
+    status: "draft"
+    stakeholders: [operator, reviewer, trader]
+    source:
+      origin: "Baseline token measurement and downstream prompt assembly inspection"
+      evidence:
+        - path: "baseline/runs/baseline-20261020-01/metrics.json"
+          locator: "tokens_in; tokens_out; llm_calls"
+          description: "Baseline used 156,541 input and 27,639 output tokens in 19 LLM calls."
+          source_type: "measured_baseline"
+        - path: "TradingAgents/tradingagents/agents/context.py"
+          locator: "L190 report_or_absent"
+          description: "The single function through which all five downstream agents read full analyst reports."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/researchers/bull_researcher.py"
+          locator: "L18-21 report_or_absent calls and prompt f-string"
+          description: "Each downstream prompt interpolates all four full reports; the same pattern is in bear_researcher.py L18 and each *_debator.py L23."
+          source_type: "code"
+    problem: >
+      Five downstream agents each receive the four full analyst reports
+      (45,219 characters in the baseline). This repeated evidence is an
+      estimated 36-41% of the run's input tokens. It is sent on every run,
+      well below any context-overflow threshold, so limit-triggered
+      compression would not reduce it.
+    statement: >
+      For the Bull Researcher, Bear Researcher, and the three risk debaters, the
+      system MUST replace each full analyst report with a downstream brief of
+      at most a configured size (provisional 2,000 characters per report). The
+      market, news, and fundamentals analysts MUST emit the brief in a marked
+      block containing stance, key figures, key levels or triggers, and data
+      gaps. A deterministic extractor MUST use that block, or fall back to
+      deterministic condensation that keeps headings, conclusion paragraphs,
+      and any paragraph stating unavailable or withheld data. Reports already
+      within the size limit MUST pass unchanged. The FR-01 verified-metrics
+      block MUST be kept verbatim. Full reports shown to users MUST be
+      unchanged. A switch MUST allow the baseline behavior for A/B runs.
+      Against the baseline configuration, the median input tokens of the five
+      downstream calls MUST fall by at least 40% and the median total run input
+      tokens by at least 20%, with decision quality not worse than the measured
+      baseline variation.
+    acceptance_criteria:
+      - id: CR-01-AC1
+        input: "Reports with a valid brief block, without one, with an oversized block, and shorter than the limit."
+        expected_result: "Valid blocks are extracted; missing or oversized blocks use the fallback within the limit; short reports pass byte-identical; output never exceeds the limit."
+        verification: "Offline unit tests of the extractor and fallback."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: CR-01-AC2
+        input: "Baseline reports from final_state.json, including the news and fundamentals reports that state unavailable or withheld data (5 and 7 mentions), with an FR-01 block appended to the fundamentals report."
+        expected_result: "Every paragraph stating unavailable, withheld, or not-configured data is present in the brief or fallback output; the verified-metrics block is byte-identical; dropped gap statements = 0."
+        verification: "Offline tests on the recorded baseline text."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: CR-01-AC3
+        input: "Downstream prompt builders called with the switch off and on, using fixed state fixtures."
+        expected_result: "Switch off: prompts are identical to the baseline prompts. Switch on: only report sections change; user-facing report fields in the returned state are unchanged."
+        verification: "Offline prompt comparison tests."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: CR-01-AC4
+        input: "Three tickers (NVDA plus two), the baseline configuration (analysis date fixed, four analysts, one debate round, one risk round), three runs each with the switch off and three with it on."
+        expected_result: "Median input tokens of the five downstream calls fall by at least 40%; median total input tokens fall by at least 20%; median total output tokens rise by at most 5%; every per-call record carries a graph-node label and usage-missing count = 0."
+        verification: "New scripts/run_ab.py based on run_baseline.py that persists per-call usage with the LangGraph node name; report every run, medians, and ranges."
+        zero_tolerance: false
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: CR-01-AC5
+        input: "Final ratings from the AC4 runs."
+        expected_result: "Per ticker, the share of switch-on runs agreeing with switch-off runs is not lower than the agreement among switch-off runs by more than 0.15; results are reported as a small-sample observation."
+        verification: "Pairwise agreement computed by the A/B script; all runs kept, including failures."
+        zero_tolerance: false
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+      - id: CR-01-AC6
+        input: "Investment debate, risk debate, and final decision text from the AC4 runs."
+        expected_result: "The share of percentages not literally present in tool outputs or the verified-metrics block does not rise by more than 10 percentage points against switch-off runs."
+        verification: "Literal-match script over saved final states, with its measured false-match rate reported."
+        zero_tolerance: false
+        measurement_status: "not_measured"
+        threshold_status: "provisional"
+    dependencies: [FR-01]
+    conflicts:
+      - "Shorter context can weaken debate detail. Resolution: brief size is configurable, data gaps and verified metrics are never dropped, and AC5-AC6 guard quality."
+      - "Briefs add analyst output tokens. Resolution: output growth is measured and capped in AC4."
+      - "The team ContextAssembler design also compresses evidence. Resolution: CR-01 is the always-on report policy for downstream agents within that design, not a second assembler; the limit-triggered behavior stays with its owner."
+    assumptions:
+      - "The model mostly follows the brief format; the deterministic fallback keeps the requirement met when it does not."
+      - "Token usage reported by the course endpoint is consistent across runs."
+      - "Three runs per variant per ticker give an indicative, not statistically strong, quality comparison."
+    notes: >
+      Files changed: context.py, market_analyst.py, news_analyst.py,
+      fundamentals_analyst.py, and the five downstream agent files already
+      touched by FR-01; new scripts/run_ab.py. sentiment_analyst.py and
+      default_config.py are not changed because other members plan to change
+      them. CR-01 would meet the provisional team input-token target of 140,000
+      if its total-input target is reached. Tradeoff: lower cost against some
+      loss of report detail in debate.
+
+conflict_resolutions:
+  - id: C-01
+    requirements: [FR-01, CR-01]
+    description: "Condensing reports could drop verified metrics, which would push downstream agents back to model arithmetic."
+    resolution: "The FR-01 verified-metrics block is excluded from condensation and copied verbatim into the fundamentals brief."
+  - id: C-02
+    requirements: [FR-01, CR-01]
+    description: "The FR-01 block and new prompt instructions add tokens that CR-01 is trying to reduce."
+    resolution: "CR-01 is measured with FR-01 enabled in both variants, so its savings are net of FR-01 additions."
+
+moscow:
+  must: [FR-01, CR-01]
+  should: []
+  could: []
+  wont:
+    - id: "derived-quarter-arithmetic"
+      reason: "Subtracting filed periods creates figures no filing states; upstream rejects this and FR-01 keeps that rule."
+    - id: "non-sec-fundamentals"
+      reason: "yfinance and Alpha Vantage use different formats and lack filing-date vintages; supporting them needs separate validation."
+    - id: "llm-summarization-call"
+      reason: "A separate summarization call adds cost, latency, and another model failure path; briefs are written by the analysts and extracted by code."
+    - id: "citation-enforcement"
+      reason: "Checking that every quoted figure carries a metric citation depends on model compliance and is deferred as a later extension."
+  rationale: "Both requirements are proposed as Must within this personal draft and remain pending team approval."
+
+traceability:
+  - req_id: FR-01
+    code_refs:
+      - path: "TradingAgents/tradingagents/dataflows/vendors/sec_edgar.py"
+        locator: "L245 get_income_statement; L255 get_cashflow; L83 _YEAR_TO_DATE"
+        description: "Statement sources and the no-derived-quarter and year-to-date rules FR-01 follows."
+      - path: "TradingAgents/tradingagents/agents/tools.py"
+        locator: "L115 get_balance_sheet; L134 get_cashflow; L153 get_income_statement"
+        description: "Existing tool pattern with InjectedState ticker and trade date to copy for the new tool."
+      - path: "TradingAgents/tradingagents/agents/analysts/fundamentals_analyst.py"
+        locator: "L14 TOOLS; L28 system_message"
+        description: "Where the new tool is offered and the verified-metrics block is appended."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/transcripts/tool-outputs-clean/0019_get_income_statement.txt"
+        locator: "Revenue row"
+        description: "Recorded quarterly revenue used for the AC1 to AC4 fixtures."
+      - path: "baseline/runs/baseline-20261020-01/transcripts/final_state.json"
+        locator: "fundamentals_report; final_trade_decision"
+        description: "Location of the mis-aligned +68.6% growth figure."
+    notes: "Design only. Reference values in AC1 and AC4 were computed from recorded figures; nothing is implemented."
+  - req_id: CR-01
+    code_refs:
+      - path: "TradingAgents/tradingagents/agents/context.py"
+        locator: "L190 report_or_absent"
+        description: "Insertion point for the brief extractor used by all downstream agents."
+      - path: "TradingAgents/tradingagents/agents/researchers/bull_researcher.py"
+        locator: "L18 report_or_absent calls"
+        description: "Representative downstream consumer; same pattern in bear_researcher.py and the three debaters."
+      - path: "scripts/run_baseline.py"
+        locator: "L732 RecordingStatsHandler; L773 on_llm_end"
+        description: "Existing usage collection to extend with persisted per-call, per-node records."
+    baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/metrics.json"
+        locator: "tokens_in; tokens_out"
+        description: "Single-run token baseline that the A/B protocol will extend to three runs per ticker."
+    notes: "Token share of repeated reports is estimated from characters; per-call attribution is planned in CR-01-AC4."
+
+validation:
+  status: "passed"
+  schema: "docs/req/req-schema.json"
+  tool: "Python jsonschema Draft 2020-12 and custom consistency checks"
+  checks:
+    - id: "schema_validation"
+      result: "pass"
+      details: "Validated against the team schema (same file in the Yifan and Jiang branches) with Python jsonschema Draft 2020-12 on 2026-11-03."
+    - id: "reference_consistency"
+      result: "pass"
+      details: "Requirement and acceptance IDs are unique, dependencies and MoSCoW entries name defined requirements, and every referenced repository path exists at main 2c8996e."
+    - id: "measurement_honesty"
+      result: "pass"
+      details: "Measured baseline values are labeled measured; token shares are labeled estimates; all targets are provisional and no implementation or benefit is claimed."
+  notes: "These checks validate document structure and internal consistency only; they do not prove implementation or team approval."
+
+open_questions:
+  - id: OQ-01
+    question: "Does the team confirm FR-01 and CR-01 as this member's identifiers, and which ADR number should the design use?"
+    impact: "Requirement IDs, trace matrix, and ADR file name."
+    blocking: true
+  - id: OQ-02
+    question: "Does the owner of the ContextAssembler design and the BO-12 token target agree that CR-01 implements the always-on report policy within that design?"
+    impact: "Whether CR-01 proceeds or this member falls back to a different non-functional requirement."
+    blocking: true
+  - id: OQ-03
+    question: "Does the course LLM endpoint quota allow about 25 full runs for the CR-01 A/B protocol?"
+    impact: "Number of tickers and runs in CR-01-AC4 and the strength of its conclusions."
+    blocking: true
+  - id: OQ-04
+    question: "Is an approximate TTM EPS from summed quarterly EPS acceptable, or should the first version report only fiscal-year P/E?"
+    impact: "FR-01 metric list and AC4."
+    blocking: false
+  - id: OQ-05
+    question: "Are 2,000 characters per brief and the 40% / 20% token targets acceptable starting values?"
+    impact: "CR-01 statement, AC4 thresholds, and the quality tradeoff."
+    blocking: false
