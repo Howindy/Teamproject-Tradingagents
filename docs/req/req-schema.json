@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradingagents.local/schemas/req-schema.json",
+  "title": "D1 Requirements Registry",
+  "description": "Schema for the D1 requirements registry and product narrative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "document",
+    "scope",
+    "stakeholders",
+    "definitions",
+    "baseline_observations",
+    "requirements",
+    "conflict_resolutions",
+    "moscow",
+    "traceability",
+    "validation",
+    "open_questions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "version",
+        "status",
+        "date",
+        "language",
+        "description",
+        "baseline_ref"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Z0-9-]+$" },
+        "title": { "type": "string", "minLength": 10 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "status": { "enum": ["approved", "draft"] },
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "language": { "const": "en" },
+        "description": { "type": "string", "minLength": 50 },
+        "baseline_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approved_ids", "in_scope", "out_of_scope", "assumptions"],
+      "properties": {
+        "approved_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/requirement_id" }
+        },
+        "in_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 10 }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 10 }
+        },
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 10 }
+        }
+      }
+    },
+    "stakeholders": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "interest"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "name": { "type": "string", "minLength": 3 },
+          "interest": { "type": "string", "minLength": 10 }
+        }
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_query_key",
+        "critical_gap",
+        "coverage_status",
+        "safety_gate",
+        "zero_tolerance",
+        "run_manifest",
+        "sensitive_url_parameter"
+      ],
+      "properties": {
+        "data_query_key": { "type": "string", "minLength": 20 },
+        "critical_gap": { "type": "string", "minLength": 20 },
+        "coverage_status": { "type": "string", "minLength": 20 },
+        "safety_gate": { "type": "string", "minLength": 20 },
+        "zero_tolerance": { "type": "string", "minLength": 20 },
+        "run_manifest": { "type": "string", "minLength": 20 },
+        "sensitive_url_parameter": { "type": "string", "minLength": 20 }
+      }
+    },
+    "baseline_observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "value",
+          "unit",
+          "measured",
+          "measurement_status",
+          "source",
+          "notes"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^BO-[0-9]{2}$" },
+          "statement": { "type": "string", "minLength": 20 },
+          "value": { "type": ["string", "number", "integer", "boolean", "null"] },
+          "unit": { "type": ["string", "null"] },
+          "measured": { "type": "boolean" },
+          "measurement_status": {
+            "enum": ["measured", "not_measured", "partially_measured", "not_applicable"]
+          },
+          "source": { "type": "string", "minLength": 1 },
+          "notes": { "type": "string", "minLength": 1 },
+          "target": { "type": ["number", "null"] },
+          "target_status": {
+            "enum": ["approved", "provisional", "not_applicable", null]
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/requirement" }
+    },
+    "conflict_resolutions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "requirements", "description", "resolution"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^C-[0-9]{2}$" },
+          "requirements": {
+            "type": "array",
+            "minItems": 2,
+            "items": { "$ref": "#/$defs/requirement_id" }
+          },
+          "description": { "type": "string", "minLength": 20 },
+          "resolution": { "type": "string", "minLength": 20 }
+        }
+      }
+    },
+    "moscow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["must", "should", "could", "wont", "rationale"],
+      "properties": {
+        "must": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement_id" }
+        },
+        "should": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement_id" }
+        },
+        "could": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement_id" }
+        },
+        "wont": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "reason"],
+            "properties": {
+              "id": { "type": "string", "minLength": 3 },
+              "reason": { "type": "string", "minLength": 20 }
+            }
+          }
+        },
+        "rationale": { "type": "string", "minLength": 20 }
+      }
+    },
+    "traceability": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["req_id", "code_refs", "baseline_refs", "notes"],
+        "properties": {
+          "req_id": { "$ref": "#/$defs/requirement_id" },
+          "code_refs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/ref" }
+          },
+          "baseline_refs": {
+            "type": "array",
+            "minItems": 0,
+            "items": { "$ref": "#/$defs/ref" }
+          },
+          "notes": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "schema", "tool", "checks", "notes"],
+      "properties": {
+        "status": { "enum": ["pending", "passed", "failed"] },
+        "schema": { "type": "string", "minLength": 1 },
+        "tool": { "type": "string", "minLength": 1 },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "result", "details"],
+            "properties": {
+              "id": { "type": "string", "minLength": 3 },
+              "result": { "enum": ["pass", "fail", "pending"] },
+              "details": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "impact", "blocking"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^OQ-[0-9]{2}$" },
+          "question": { "type": "string", "minLength": 20 },
+          "impact": { "type": "string", "minLength": 10 },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "requirement_id": {
+      "type": "string",
+      "pattern": "^(FR|INV|QR|PR|CR|GR|SR|SB)-[0-9]{2}$"
+    },
+    "acceptance_id": {
+      "type": "string",
+      "pattern": "^(FR|INV|QR|PR|CR|GR|SR|SB)-[0-9]{2}-AC[0-9]+$"
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "locator", "description"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 10 }
+      }
+    },
+    "source_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "locator", "description", "source_type"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 10 },
+        "source_type": {
+          "enum": ["code", "measured_baseline", "document", "inference", "open_question"]
+        }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "input",
+        "expected_result",
+        "verification",
+        "zero_tolerance",
+        "measurement_status",
+        "threshold_status"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/acceptance_id" },
+        "input": { "type": "string", "minLength": 15 },
+        "expected_result": { "type": "string", "minLength": 15 },
+        "verification": { "type": "string", "minLength": 15 },
+        "zero_tolerance": { "type": "boolean" },
+        "measurement_status": {
+          "enum": ["measured", "not_measured", "partially_measured", "not_applicable"]
+        },
+        "threshold_status": {
+          "enum": ["approved", "provisional", "not_applicable"]
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "title",
+        "priority",
+        "status",
+        "stakeholders",
+        "source",
+        "problem",
+        "statement",
+        "acceptance_criteria",
+        "dependencies",
+        "conflicts",
+        "assumptions",
+        "notes"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/requirement_id" },
+        "type": {
+          "enum": ["functional", "invariant", "quality", "performance", "cost", "governance", "security", "safety"]
+        },
+        "title": { "type": "string", "minLength": 8 },
+        "priority": { "enum": ["must", "should", "could", "wont"] },
+        "status": { "enum": ["approved", "draft", "deferred"] },
+        "stakeholders": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "evidence"],
+          "properties": {
+            "origin": { "type": "string", "minLength": 5 },
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/source_evidence" }
+            }
+          }
+        },
+        "problem": { "type": "string", "minLength": 30 },
+        "statement": { "type": "string", "minLength": 50 },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/acceptance" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement_id" }
+        },
+        "conflicts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 15 }
+        },
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 15 }
+        },
+        "notes": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
