@@ -1,0 +1,22 @@
+{
+  "config_version": "d1-eval-config-v1",
+  "status": "fixed",
+  "provider": "openai_compatible",
+  "model": "CS5351/DeepSeek-V4-Flash",
+  "quick_model": "CS5351/DeepSeek-V4-Flash",
+  "deep_model": "CS5351/DeepSeek-V4-Flash",
+  "temperature": null,
+  "analysts": ["market", "social", "news", "fundamentals"],
+  "research_depth": 1,
+  "max_debate_rounds": 1,
+  "max_risk_discuss_rounds": 1,
+  "output_language": "English",
+  "data_vendors": {
+    "core_stock_apis": "yfinance",
+    "technical_indicators": "yfinance",
+    "fundamental_data": "sec_edgar,yfinance",
+    "news_data": "yfinance",
+    "macro_data": "fred",
+    "prediction_markets": "polymarket"
+  }
+}

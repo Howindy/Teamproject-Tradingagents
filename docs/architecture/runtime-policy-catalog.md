@@ -2,7 +2,7 @@
 
 Status: **v0.1 — draft / pending human review**  
 Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` (working baseline; not finally approved)  
+D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
 Implementation status: **design only; no application code changed**
 
 ---
@@ -24,19 +24,23 @@ Status values:
 
 | Policy ID | Name | Status | Related requirements |
 |---|---|---|---|
-| `POL-COV-01` | Critical-source set | pending_decision | FR-02, SB-01 |
-| `POL-COV-02` | Fallback coverage contract | pending_decision | FR-02, SB-01 |
-| `POL-CACHE-01` | Query-key normalization | pending_decision | PR-01 |
-| `POL-CACHE-02` | Run cache / negative cache / retry | work_assumption | PR-01 |
-| `POL-CACHE-03` | Single-flight and run isolation | work_assumption | PR-01 |
-| `POL-GATE-01` | Safety gate and REVIEW | pending_decision | SB-01, INV-02 |
-| `POL-PUB-01` | Publish protocol and retries | work_assumption | QR-01, INV-02 |
-| `POL-MEM-01` | Memory idempotency | work_assumption | INV-02 |
-| `POL-CTX-01` | AI context layers | work_assumption | QR-01, FR-02, SB-01 |
-| `POL-CTX-02` | Token limits and compression thresholds | work_assumption | QR-01 |
-| `POL-RED-01` | Redaction boundaries | pending_decision | SR-02 |
+| `POL-COV-01` | Critical-source set | D1-required; D2 proposal pending human review | FR-03, SB-01 |
+| `POL-COV-02` | Fallback coverage contract | D1-required; D2 proposal pending human review | FR-03, SB-01 |
+| `POL-CACHE-01` | Query-key normalization | D1-required; D2 proposal pending human review | FR-01 |
+| `POL-CACHE-02` | Run cache / negative cache / retry | D1-required; D2 proposal pending human review | FR-01 |
+| `POL-CACHE-03` | Single-flight and run isolation | D1-required; D2 proposal pending human review | FR-01 |
+| `POL-COV-03` | Critical profile, run clock, and coverage snapshot | D1-required; D2 proposal pending human review | FR-03, SB-01 |
+| `POL-PRE-01` | Mandatory data preflight | D2 architecture proposal; pending human review | FR-03, SB-01 |
+| `POL-EVD-01` | Evidence supports links and HTTP request counting | D1-required; D2 proposal pending human review | FR-01, FR-03 |
+| `POL-CLOCK-01` | Fixed run clock and mode inheritance | D2 architecture proposal; pending human review | FR-03 |
+| `POL-GATE-01` | Safety gate and REVIEW | D1-required; D2 proposal pending human review | SB-01, INV-01 |
+| `POL-PUB-01` | Publish protocol and retries | D1-required; D2 proposal pending human review | FR-02, INV-01 |
+| `POL-MEM-01` | Memory idempotency | D1-required; D2 proposal pending human review | INV-01 |
+| `POL-CTX-01` | AI context layers | work_assumption | FR-02, FR-03, SB-01 |
+| `POL-CTX-02` | Token limits and compression thresholds | work_assumption | FR-02 |
+| `POL-RED-01` | Redaction boundaries | D1-required; D2 proposal pending human review | SR-01 |
 | `POL-CHK-01` | Checkpoint resume matrix | work_assumption | D2 design |
-| `POL-PERM-01` | Runtime AI permissions | design_only | SR-02 |
+| `POL-PERM-01` | Runtime AI permissions | design_only | SR-01 |
 | `POL-PERM-02` | Coding-agent permissions | design_only | D2 governance |
 
 ---
@@ -45,118 +49,140 @@ Status values:
 
 ### POL-COV-01 — Critical-source set
 
-- **Status**: pending_decision.
-- **Question**: which sources are critical?
-- **Candidate work assumptions**:
-  - ticker news;
-  - social sentiment;
-  - fundamentals statements;
-  - FRED macro;
-  - prediction markets.
-- **Proposed default** (not approved): ticker news, fundamentals statements, and social sentiment are critical; FRED and prediction markets are optional enrichment.
-- **Inputs**: source category, source id, configuration.
-- **Outputs**: `critical_sources`, `critical_gaps`.
+- **Status**: D1-required; D2 proposal pending human review.
+- **Default profile**:
+  - `market_price` is mandatory and cannot be removed; it is fetched by the deterministic preflight;
+  - stock `financial_statements` is mandatory in every mode, independent of fundamentals-analyst selection, and is fetched by the deterministic preflight. Each of income, balance, and cashflow requires at least one annual and the latest quarterly period known by as_of, with filing date on or before as_of, as-filed point-in-time, and at least one record. Crypto has no financial_statements requirement;
+  - current-date runs add `ticker_news` when the news analyst is enabled;
+  - current-date runs add `social_sentiment` when the social analyst is enabled; its critical components are `sentiment_stocktwits` and `sentiment_reddit`, with at least one successful; `sentiment_news` is optional context;
+  - historical mode excludes live-only `social_sentiment`, `prediction_markets`, `company_profile`, and `insider_transactions` from the critical set;
+  - `macro_indicators`, `technical_indicators`, `global_news`, `company_profile`, `insider_transactions`, and `prediction_markets` are non-critical by default;
+  - explicit overrides are recorded with `profile_source=override`.
+- **Inputs**: asset type, analysis mode, enabled capabilities, explicit override.
+- **Outputs**: `effective_critical_profile`, `critical_gaps`, `coverage_status`.
 - **Change impact**: `AvailabilityIndex`, `SafetyGate`, report generation, trace matrix, tests.
-- **Related open decision**: OQ-01.
+- **Related open decision**: OQ-01 (resolved).
 
 ### POL-COV-02 — Fallback coverage contract
 
-- **Status**: pending_decision.
+- **Status**: D1-required; D2 proposal pending human review.
 - **Required contract fields**:
-  - same category;
-  - same instrument;
-  - same window and as-of date;
+  - same capability and component;
+  - same instrument or topic;
+  - same requested window and as-of date;
   - point-in-time rule;
   - minimum record count;
-  - provenance fields;
+  - provenance and attempted/serving sources;
   - allowed fallback class.
-- **Work assumption**: a fallback that does not satisfy the contract produces `fallback_partial`; the gap remains.
-- **Proposed default** (not approved): global macro news is not a substitute for ticker news unless explicitly configured.
+- **Default**: a fallback clears a gap only when it satisfies the full contract. Global news does not clear ticker news; undated Yahoo statements do not clear SEC financial statements; partial fallback produces `fallback_partial` or `insufficient_evidence` and the gap remains.
 - **Change impact**: `DataAccessService`, `AvailabilityIndex`, `SafetyGate`, tests, report labels.
-- **Related open decision**: D2-OD-04.
+- **Related open decision**: D2-OD-04 (resolved).
 
 ### POL-CACHE-01 — Query-key normalization
 
-- **Status**: pending_decision.
-- **Proposed key fields** (not approved):
+- **Status**: D1-required; D2 proposal pending human review.
+- **Key fields**:
   - vendor method;
-  - normalized ticker;
-  - analysis date;
-  - requested start/end;
-  - indicator/lookback;
   - asset type;
-  - policy/cache-key version.
-- **Open question**: include vendor chain/config digest or not.
-- **Change impact**: `DataAccessService`, cache hit rate, PR-01 tests, traceability.
-- **Related open decision**: OQ-04.
+  - normalized instrument or topic;
+  - analysis date;
+  - requested start/end or lookback;
+  - method-specific parameters such as indicator, series, frequency, or limit;
+  - vendor selector digest;
+  - cache-key version.
+- **Excluded from the key**: retries, fallback attempts, call site, and timing.
+- **Change impact**: `DataAccessService`, cache hit rate, FR-01 tests, traceability.
+- **Related open decision**: OQ-04 (vendor-cache retention only).
 
 ### POL-CACHE-02 — Run cache / negative cache / retry
 
-- **Status**: work_assumption.
+- **Status**: D1-required; D2 proposal pending human review.
 - **Assumptions**:
   - cache scope is one run;
   - success and terminal failure/withheld/not_configured statuses are cached;
   - retries happen before caching the final status;
   - negative cache stores the final status/reason;
   - no cross-run run-cache reuse.
-- **Retry**: vendor-specific retry policy remains as existing; cache is written after retries are exhausted.
-- **Change impact**: external request counts, tool rounds, token usage, PR-01 acceptance, tests.
+- **Retry**: vendor-specific retry policy remains as existing; the outcome is cached when the execution policy reaches a terminal state. Success, no_data, withheld, and not_configured may be terminal without retry; unavailable/error is terminal after retries and fallback budgets allow no further attempt.
+- **Failure**: a cache/counting inconsistency or invariant violation terminates the current run; it does not clear and re-execute the same query inside the same run. Diagnosis uses a new run_id.
+- **Change impact**: query-execution, HTTP-request, and vendor-cache-hit counts; tool rounds; token usage; FR-01 acceptance; tests.
 - **Related open decision**: OQ-04.
 
 ### POL-CACHE-03 — Single-flight and run isolation
 
-- **Status**: work_assumption.
+- **Status**: D1-required; D2 proposal pending human review.
 - **Assumptions**:
-  - same query key has one in-flight physical request;
+  - same `data_query_key` has one in-flight `query_execution`;
   - concurrent callers wait for the same result;
-  - each run has its own cache;
-  - existing vendor caches are recorded separately.
+  - each run has its own run cache;
+  - existing vendor caches are recorded separately and may serve an execution without an external request.
+- **Failure**: single-flight/counting inconsistency terminates the current run; a new run_id is used for diagnosis; the same query is never re-executed in the same run.
 - **Change impact**: `DataAccessService`, concurrency tests, evidence counters.
 - **Related open decision**: OQ-08.
 
 ### POL-GATE-01 — Safety gate and REVIEW
 
-- **Status**: pending_decision.
-- **Proposed default** (not approved):
-  - gate runs before formal persistence/display;
-  - critical gap forces `REVIEW`;
-  - model cannot override;
-  - REVIEW is persisted to memory but not scored as a tradeable position;
-  - operator override is out of D1.
+- **Status**: D1-required; D2 proposal pending human review.
+- **Input**: one immutable program-produced `coverage_snapshot` and one `model_proposal`; the model cannot supply or mutate coverage or gaps.
+- **Status set**: gate status `passed`, `blocked`, `error`; formal decision status `approved`, `blocked_for_review`; REVIEW is a terminal sentinel outside the five-tier set.
+- **Blocking rules**:
+  - critical gap, coverage/gap contradiction, invalid or missing input, missing availability record, invalid critical profile, invalid model rating, model REVIEW, stale or hash-mismatched snapshot -> blocked;
+  - gate exception, timeout, or internal error -> error and fail closed.
+- **Formal body**: blocked decisions use the review_class matched to the primary reason code (data insufficient, model-rating invalid, model REVIEW, gate/system error, invalid input, or coverage inconsistency); when multiple reasons occur, primary_reason_code is the first in the fixed priority list and all reason_codes are retained; the model proposal is retained separately as unapproved.
+- **Boundaries**: gate runs before the terminal manifest and every formal output containing a formal decision; the running startup manifest may precede the gate with gate status not_run. Intermediate streaming/staging may show the proposal only when marked intermediate/unapproved.
+- **Entry points**: CLI, programmatic propagate, backtest cell, checkpoint resume, and headless/API use the same gate.
+- **Inputs and hashes**: coverage_snapshot, provenance_digest, and gate input_hash are recorded; gate failure uses error.stage = gate.
 - **Change impact**: `SafetyGate`, entry points, publisher, memory, report, backtest, tests.
-- **Related open decision**: OQ-06.
+- **Related open decision**: OQ-06 (resolved).
 
 ### POL-PUB-01 — Publish protocol and retries
 
-- **Status**: work_assumption.
+- **Status**: D1-required; D2 proposal pending human review.
 - **Assumptions**:
-  - staged publish;
-  - atomic per-file writes;
-  - commit order: record → report → final-state → memory → manifest → complete marker;
+  - a running manifest is written before model calls;
+  - staged publish with atomic per-file writes;
+  - commit order: running manifest → record → report → final-state → memory pending → terminal manifest candidate + INV-01 check → atomic terminal manifest commit → read-back verification;
+  - the terminal manifest `run_status=completed` is the unique commit point; a complete marker is non-authoritative;
+  - INV-01 must pass on the terminal candidate before commit and on read-back after commit;
+  - memory remains pending/unreadable until the terminal manifest commits;
+  - a handled failure before a normal FinalizedRunRecord uses FailureFinalizer/RunFailureRecord and replaces the running manifest with a failed terminal manifest;
+  - a handled failure after finalization replaces the terminal manifest with failed if read-back verification fails;
+  - forced termination is guaranteed only to preserve the last running manifest;
   - 3 publish attempts with bounded backoff;
   - no model calls during publish retry;
-  - same record hash across retries.
-- **Change impact**: `ArtifactPublisher`, memory, tests, run status.
+  - same run_id, record_version, and record_hash across retries;
+  - retry does not duplicate the memory decision entry.
+- **Change impact**: `ArtifactPublisher`, memory, tests, run status, manifest integrity.
 - **Related open decision**: D2-OD-02, OQ-02.
 
-### POL-MEM-01 — Memory idempotency
+### POL-MEM-01 — Memory idempotency and lifecycle
 
-- **Status**: work_assumption.
+- **Status**: D1-required; D2 proposal pending human review.
 - **Assumptions**:
-  - key = `(run_id, record_hash)` plus `(trade_date, ticker)`;
+  - key = `(decision_id, entry_digest)` plus `(trade_date, ticker)`;
   - same key/hash = no-op;
-  - different hash for same ticker/date = conflict;
+  - same decision_id with different entry_digest = conflict/tamper; different decision_id for same ticker/date creates a new committed version;
   - memory append is atomic under lock;
-  - memory uses finalized decision only.
-- **Change impact**: `MemoryService`, `TradingMemoryLog`, publish retry, tests.
-- **Related open decision**: D2-OD-06.
+  - memory uses the finalized decision only;
+  - entries are physically written with settlement_status=pending; commit_status is derived from the completed terminal manifest, not written into the entry; no separate mark-committed write;
+  - reads include only committed entries from completed runs; reused historical entries carry reused_decision_ref and keep the current artifact run_id;
+  - the decision portion is immutable after write;
+  - settlement/reflection is append-only and cannot change the binding or formal decision fields;
+  - same-day same-binding reruns reuse the entry; a different decision_id reserves a pre-commit entry_version and supersedes; effective version is derived from committed manifests; only same decision_id with a different entry_digest conflicts;
+  - entry_version is reserved under the memory lock before commit and recorded in the terminal manifest; failed publication leaves a gap but no effective change; no post-commit old-entry write;
+  - for each ticker/date, only the highest committed version contributes lessons/statistics; superseded versions are retained for audit;
+  - memory-disabled runs require no memory artifact;
+  - current decision commit and historical settlement/reflection are separate protocols: settlement appends only outcome/reflection to committed history and cannot change decision binding;
+  - retention/rotation absence is recorded as memory not_available, not a binding mismatch.
+- **Change impact**: `MemoryService`, `TradingMemoryLog`, publish retry, INV-01 tests.
+- **Related open decision**: D2-OD-06 (storage shape only).
 
 ### POL-CTX-01 — AI context layers
 
-- **Status**: work_assumption.
+- **Status**: D2 architecture proposal; work assumption pending human review.
 - **Layers**:
   - L0 safety/policy — never compressed;
-  - L1 run identity/coverage/gaps — never compressed;
+  - L1 run identity plus the current provisional coverage view — never compressed; the final immutable coverage snapshot is used by the gate and formal report, not injected as a final result into the running context;
   - L2 role/output — never compressed;
   - L3 evidence — compressible;
   - L4 history — compressible;
@@ -166,38 +192,50 @@ Status values:
 
 ### POL-CTX-02 — Token limits and compression thresholds
 
-- **Status**: work_assumption; all values are **provisional, pending approval**.
+- **Status**: D2 proposal with provisional parameters; pending human review.
 - **Assumptions**:
   - provider context window: 128k;
-  - soft limit: 75%;
-  - hard limit: 90%;
   - per-call input cap: 24k;
+  - reserved output/tool-definition/constraint space: 9k;
+  - effective input budget: min(per-call cap, window minus reserves) = 24k;
+  - soft trigger: 80% of effective budget = 19.2k;
+  - hard limit: 95% of effective budget = 22.8k;
   - evidence block cap: 4k;
   - history cap: 8k;
   - compression summary cap: 2k;
   - deterministic truncation first; optional LLM summarization only if enabled.
+- **Before compression phase is enabled**: over-budget context raises `ContextBudgetError` and the run fails closed; no oversized prompt or silent constraint truncation.
 - **Change impact**: `ContextAssembler`, prompt sizes, token cost, compression tests.
 - **Related open decision**: D2-OD-05.
 
 ### POL-RED-01 — Redaction boundaries
 
-- **Status**: pending_decision.
-- **Boundaries**: CLI/logs/errors/manifest/final-state/report/memory/prefs/journal/checkpoint/staging/telemetry/coding-agent transcripts.
-- **Rules**:
-  - endpoint scheme + host + path only;
-  - remove userinfo/query/fragment;
-  - no keys/tokens/passwords;
-  - allowlist config;
-  - hash metadata where possible.
+- **Status**: D1-required; D2 proposal pending human review.
+- **In-scope boundaries**: manifest, final-state, memory decision entry, report metadata/content, logs, preferences, error/gate/availability records, formal API return.
+- **Out of scope**: vendor/provider logs, shell history, OS/network captures, external service logs.
+- **Checks**:
+  - known-secret exact match against values configured or used in the run;
+  - versioned pattern rules with fixed minimum categories and secret_rule_version/source/effective_at;
+  - per-write write_scan_status and final run_scan_status are recorded separately;
+  - separate counters and scan scope recorded in the manifest security object.
+- **URL rules**:
+  - audit endpoint = scheme + host + path only;
+  - restore endpoint = scheme + host + path + allowlisted non-sensitive query params + secret_ref names;
+  - no inline userinfo, sensitive query value, or fragment.
+- **Redaction**: replace only secret values with a stable marker; preserve structure, status/reason codes, counts, timings, source/vendor names, tickers, dates, model ids, relative paths; over-redaction forbidden.
+- **Failure**: scanner/sanitizer/rule-version failure or unredactable secret fails closed; dangerous content and affected formal output are blocked; a separate minimal secret-free security incident record is allowed; run failed at security stage.
+- **Claim limit**: a clean scan proves only the defined scope, rules, and fixtures, not universal secret absence.
 - **Change impact**: `SecretRedactor`, all writers, tests, permission model.
-- **Related open decision**: OQ-03, OQ-07.
+- **Related open decision**: OQ-03 and OQ-07 (resolved).
 
 ### POL-CHK-01 — Checkpoint resume matrix
 
 - **Status**: work_assumption.
-- **Supported**: graph checkpoint, messages, reports, debate state, evidence journal, rebuildable cache/metrics/availability.
-- **Not supported**: in-flight requests/LLM, cache without journal, finalized/published record, schema/policy/cache-key/context version mismatch, missing journal in strict mode.
-- **Degraded mode**: explicit opt-in; coverage partial/unknown; gate likely REVIEW.
+- **Supported**: graph checkpoint, messages, reports, debate state, evidence journal, rebuildable cache/metrics/availability. Resume creates a new run_id.
+- **Inherited evidence**: tagged with origin_run_id, inherited=true, and separate inherited counters; coverage snapshot is recomputed and rebound to the new run_id.
+- **Not supported**: in-flight requests/LLM, cache without journal, finalized/published record, schema/policy/cache-key/context/clock mismatch, missing journal in strict mode.
+- **Degraded mode**: explicit opt-in; coverage_status=partial only (`unknown` is not a D1 state); missing critical evidence becomes a gap and the gate deterministically blocks with REVIEW.
+- **Before recovery phase is enabled**: `ResumeRejected(unsupported_phase)`; start a new run; no journal inheritance.
 - **Change impact**: `CheckpointCoordinator`, graph, evidence store, tests.
 - **Related open decision**: D2-OD-03.
 
@@ -219,6 +257,38 @@ Status values:
 
 ---
 
+### POL-COV-03 — Critical profile, run clock, and coverage snapshot
+
+- **Status**: D1-required; D2 proposal pending human review.
+- **Critical profile**: `profile_version`, `profile_source`, `contract_version`, `analysis_mode`, `asset_type`, per-requirement/component evidence contracts, and `profile_hash`.
+- **Run clock**: `as_of_date`, `now_utc`, `timezone`, `clock_source`, `analysis_mode`, `mode_source`; fixed at run start and inherited on resume/replay unless an override is recorded.
+- **Coverage snapshot**: `critical_profile_hash`, `snapshot_hash`, `critical_gap_ids`, structured `critical_gaps`, `provenance_digest`, `computed_by=program`.
+- **Rule**: `coverage_snapshot.critical_profile_hash` must equal `critical_profile.profile_hash`; the gate rejects a mismatch.
+- **Change impact**: `AvailabilityIndex`, `SafetyGate`, manifest, trace tests.
+
+### POL-PRE-01 — Mandatory data preflight
+
+- **Status**: D2 architecture proposal; pending human review.
+- **Timing**: after the running manifest and critical profile, before any analyst/model node.
+- **Owner**: `PreflightCoordinator` calls `DataAccessService`.
+- **Mandatory scope**: `market_price` for every run; stock `financial_statements` components income/balance/cashflow.
+- **Shared cache**: preflight and analyst calls use the same run-scoped `DataAccessService` cache and `data_query_key`; a preflight result is not re-fetched by an analyst.
+- **Failure**: a failed mandatory preflight is recorded as availability evidence and a critical gap; analysis may continue only to a deterministic gate block, not a tradeable decision.
+- **Change impact**: `PreflightCoordinator`, `DataAccessService`, `AvailabilityIndex`, graph entry, tests.
+
+### POL-EVD-01 — Evidence supports links and HTTP request counting
+
+- **Status**: D1-required; D2 proposal pending human review.
+- **Rule**: one executed availability record may carry multiple `supports` links; a component_missing record carries exactly one.
+- **Counting**: `http_request_count` counts actual outbound HTTP requests per attempt, including retries and redirects; cache hits and local not_configured/withheld count 0; `external_requests` is the sum.
+- **Change impact**: `DataAccessService`, `RunEvidenceStore`, manifest, INV-01 tests.
+
+### POL-CLOCK-01 — Fixed run clock and mode inheritance
+
+- **Status**: D2 architecture proposal; pending human review.
+- **Rule**: historical/current mode is derived once from the fixed run clock, not from a later call to today. Resume/replay inherits the original clock unless a `clock_override` is recorded.
+- **Change impact**: `RunContext`, `AvailabilityIndex`, `CheckpointCoordinator`, report, tests.
+
 ## 4. Work-assumption change impact
 
 If a work assumption changes, the following must be revisited:
@@ -238,7 +308,7 @@ If a work assumption changes, the following must be revisited:
 
 ## 5. Status
 
-- Policies are design-only or pending decisions.
-- No policy is implemented.
+- Policies are classified as D1-required, D2 architecture proposals, provisional parameters, or design-only; none of the D2 additions is approved.
+- No policy is implemented; human review of D2 remains pending.
 - No policy threshold has been measured unless it is a baseline observation.
-- D1 is not modified.
+- D1 v1.9.0 is the approved historical baseline; the current requirement revision and all D2 policies remain pending human review.

@@ -2,7 +2,7 @@
 
 Status: **v0.1 — draft / pending human review**  
 Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` (working baseline; not finally approved)  
+D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
 Implementation status: **design only; no application code changed**
 
 ---
@@ -37,7 +37,8 @@ Runtime AI is **default-deny** outside the registered tool boundary.
 | Modify code or configuration | Denied | No file/write tool |
 | Invoke SafetyGate or ArtifactPublisher | Denied | Deterministic code only |
 | Override gate result | Denied | Gate not model-callable |
-| Read other runs' memory/cache | Denied | Run-scoped context |
+| Read other runs' memory/cache directly | Denied | Run-scoped context; no file tool |
+| Receive historical lessons through `MemoryService` | Allowed with filtering | Authorized, ticker/date/retention-filtered, committed entries only; no raw files or cross-run secrets |
 | Write raw model output to final decision | Denied | Final decision is gate output |
 
 ### 2.2 Tool boundary
@@ -129,8 +130,8 @@ Every boundary below must use `SecretRedactor` or an equivalent allowlist.
 | Final-state JSON | Reports, debate, decision | No keys; no raw endpoint credentials |
 | Report Markdown | Reports, news links | No keys; preserve source labels |
 | Report HTML | Rendered report | Existing CSP/no-script/no-image posture; escape external text |
-| Memory log | Final decision, rating, provenance | Final record only; no raw proposal as final; no secrets |
-| Preferences | Provider, models, backend URL | Remove userinfo/query/fragment |
+| Memory log | Final decision, rating, decision_id, provenance | Final record only; immutable decision entry; no raw proposal as final; no secrets |
+| Preferences | Provider, models, audit endpoint, restore endpoint, secret refs | Audit endpoint = scheme/host/path; restore endpoint keeps only non-sensitive query parameters and secret_ref names; no inline userinfo/sensitive query/fragment |
 | Run evidence journal | Query/status/metrics | No secrets; endpoint sanitized |
 | Checkpoint SQLite | Graph state | No keys; treat as sensitive local state |
 | Publish staging/manifest | Artifact hashes/paths | No secrets; no raw env |
@@ -139,8 +140,10 @@ Every boundary below must use `SecretRedactor` or an equivalent allowlist.
 
 Rules:
 
-- endpoint record = scheme + host + path;
-- remove userinfo, query, and fragment;
+- audit endpoint record = scheme + host + path;
+- restore endpoint = scheme + host + path + allowlisted non-sensitive query parameters + secret_ref names; no inline sensitive values;
+- every write records write_scan_status; terminal manifest records final run_scan_status; completed requires both clean/redacted;
+- preferences remain the original global file; concurrent local runs use atomic replace and last-writer-wins; the next startup reads that single file;
 - never record full environment variables;
 - never record API keys, tokens, passwords, or secret-like values;
 - prefer hashes/digests and allowlisted metadata over raw values;

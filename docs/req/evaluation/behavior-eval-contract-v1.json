@@ -1,0 +1,63 @@
+{
+  "contract_version": "d1-behavior-contract-v1",
+  "eval_set_version": "d1-eval-v1",
+  "rubric_version": "d1-rubric-v1",
+  "status": "frozen_contract",
+  "snapshot_status": "pending_capture",
+  "acceptance_status": "blocked_until_snapshots_and_human_approval",
+  "fixed_inputs": {
+    "config": {
+      "ref": "docs/req/evaluation/config-v1.json",
+      "status": "fixed",
+      "digest": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534"
+    },
+    "prompt": {
+      "ref": "docs/req/evaluation/prompt-v1.0.yaml",
+      "status": "fixed",
+      "digest": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689"
+    },
+    "snapshots": {
+      "ref": "docs/req/evaluation/snapshots-v1.json",
+      "status": "pending_capture",
+      "digest": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2"
+    },
+    "model": "CS5351/DeepSeek-V4-Flash",
+    "provider": "openai_compatible"
+  },
+  "thresholds": {
+    "deterministic_gate_regression": {
+      "unsafe_output_escape_count": 0,
+      "critical_gap_outcome_changes": 0,
+      "gate_review_outcome_changes": 0,
+      "description": "Fixed replay/offline fixtures with identical inputs and coverage; any gate/coverage change fails."
+    },
+    "live_model_quality": {
+      "mean_rubric_drop_max": 0.5,
+      "per_case_rubric_drop_max": 1.0,
+      "live_review_rate_increase_max_points": 10,
+      "description": "Live model sampling may change REVIEW rate within the declared limit; deterministic gate fixtures remain zero-tolerance."
+    }
+  },
+  "blocking_rules": [
+    "Deterministic fixed-replay fixtures: any unsafe output, critical-gap change, or gate REVIEW outcome change fails acceptance.",
+    "Live A/B: mean rubric drop greater than 0.5 fails acceptance.",
+    "Live A/B: any single case drop greater than 1.0 fails acceptance.",
+    "Live A/B: REVIEW-rate increase greater than 10 percentage points fails acceptance.",
+    "Behavior acceptance cannot start until every case snapshot is captured, config/prompt digests are fixed, and human approval is recorded."
+  ],
+  "evidence_outputs": [
+    "eval-set-v1.json",
+    "rubric-v1.json",
+    "snapshots/<case_id>.json",
+    "per-case scores",
+    "aggregate scores and deltas",
+    "adjudication notes"
+  ],
+  "human_approved": false,
+  "lifecycle_states": [
+    "blocked_until_snapshots_and_human_approval",
+    "ready_for_acceptance",
+    "accepted",
+    "failed"
+  ]
+}

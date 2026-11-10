@@ -2,7 +2,7 @@
 
 Status: **v0.1 — draft / pending human review**  
 Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` (working baseline; not finally approved)  
+D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
 Implementation status: **design only; no application code changed**
 
 ---
@@ -22,12 +22,12 @@ No numeric score is assigned. No candidate has been implemented. Only baseline o
 
 | Requirement | Baseline evidence (M) | Lean A | B: Event Ledger | C: Decorator |
 |---|---|---|---|---|
-| `PR-01` | **M**: 6 FRED, 2 ticker-news, 2 prediction duplicate failed calls | Strong (D) | Strong (D) | Strong (D) |
-| `QR-01` | **M**: no native manifest; stderr 0 bytes | Strong (D) | Strong (D) | Strong (D) |
-| `FR-02` | **M**: status mix 20 success / 4 withheld / 6 not_configured / 4 unavailable; no unified state | Strong (D) | Strong (D) | Partial (D/U) |
-| `SB-01` | **M**: no coverage gate; baseline Hold | Strong (D) | Strong (D) | Partial (D/U) |
-| `INV-02` | **M**: decision/report/full-log consistent; source-status consistency not measured | Strong (D) | Strong (D) | Weak (D/U) |
-| `SR-02` | **M**: partial key scrub; no full secret scan | Strong (D) | Strong (D) | Partial (D/U) |
+| `FR-01` | **M**: 3 ticker-news logical attempts; 6 FRED indicators and 2 prediction topics were distinct local failures | Strong (D) | Strong (D) | Strong (D) |
+| `FR-02` | **M**: no native manifest; stderr 0 bytes | Strong (D) | Strong (D) | Strong (D) |
+| `FR-03` | **M**: status mix 20 success / 4 withheld / 6 not_configured / 4 unavailable; no unified state or effective critical profile | Strong (D) | Strong (D) | Partial (D/U) |
+| `SB-01` | **M**: no coverage gate; baseline persisted the model's Hold text as the formal decision while critical sources were unavailable | Strong (D) | Strong (D) | Partial (D/U) |
+| `INV-01` | **M**: decision/report/full-log consistent; no run binding, source-status, fallback, or memory consistency measured | Strong (D) | Strong (D) | Weak (D/U) |
+| `SR-01` | **M**: partial exact-value scrub in provider errors; no known-value or pattern scan across records; preferences can store full backend_url | Strong (D) | Strong (D) | Partial (D/U) |
 
 ### 2.1 Architecture attributes
 
@@ -43,12 +43,27 @@ No numeric score is assigned. No candidate has been implemented. Only baseline o
 | Checkpoint friendliness | Medium–High | High | Medium |
 | Requirement coverage confidence | High (D) | High (D) | Low–Medium (D/U) |
 
-### 2.2 Why Lean A is recommended for review
+### 2.2 ADD attribute evaluation
+
+| ADD attribute | Scenario | Lean A tactic | Evidence status |
+|---|---|---|---|
+| Correctness | Same evidence and inputs produce one formal result | Fixed run clock, critical profile, coverage snapshot, deterministic gate | Design only |
+| Auditability | Reviewer reconstructs a blocked or approved decision | decision_id, artifact_binding, provenance_digest, gate input_hash | Design only |
+| Security | Secret is blocked before any app-controlled record | known-value + versioned pattern checks, write/run scan, fail-closed | Design only |
+| Consistency | Four artifacts bind to one formal decision | artifact_binding, INV-01 checkpoint, memory entry hash scope | Design only |
+| Performance | Manifest and gate do not dominate latency | startup manifest, terminal write, external paired benchmark | Provisional threshold |
+| Testability | Zero-tolerance rules are table-driven | availability/gate decision tables, schema negative fixtures | Design only |
+
+### 2.3 Candidate validation slice
+
+Lean A, B, and C must each implement the same thin slice under identical safety requirements: mandatory preflight, coverage snapshot with a gap, gate block, failure record, terminal commit + INV-01 read-back, secret scan, and same-day memory reuse/version. Record changed files, interfaces, LOC, tests, bypass findings, and time-to-green. This slice is the required evidence before changing the Lean A recommendation.
+
+### 2.4 Why Lean A is recommended for review
 
 - It gives a non-bypassable `FinalizedRunRecord` without full event sourcing.
 - It keeps `RunContext` small; policies live in testable services.
 - It can cover CLI, programmatic, and backtest entry points.
-- It is less fragile than C for zero-tolerance `INV-02` and `SB-01`.
+- It is less fragile than C for zero-tolerance `INV-01` and `SB-01`.
 - It costs less than B in schema/replay complexity.
 
 This is a recommendation for review, not an approved decision.
@@ -59,12 +74,12 @@ This is a recommendation for review, not an approved decision.
 
 | Requirement | Lean A mechanism | Evidence status | Residual risk |
 |---|---|---|---|
-| `PR-01` | `DataAccessService` run cache, single-flight, terminal failure cache | Design only | Cache-key normalization and vendor-cache semantics are pending |
-| `QR-01` | `ArtifactPublisher` manifest from record/evidence | Design only | Manifest overhead and retention pending |
-| `FR-02` | `AvailabilityIndex` + report summary | Design only | Critical-source set and fallback contract pending |
-| `SB-01` | `SafetyGate` → `FinalizedRunRecord` | Design only | REVIEW acceptance/override pending |
-| `INV-02` | Publisher only consumes record; four artifacts projected | Design only | Old-writer migration must be complete |
-| `SR-02` | `SecretRedactor` at all boundaries | Design only | Secret-pattern list pending |
+| `FR-01` | `DataAccessService` run cache, single-flight, policy-terminal outcome cache | Design only | Vendor-cache retention policy is pending; run-cache semantics are defined in D1 v1.9.0 |
+| `FR-02` | `ArtifactPublisher` lifecycle manifest with binding, formal decision, security, and full availability records | Design only | Manifest overhead provisional; retention pending; schema synchronized in D1 v1.9.0 |
+| `FR-03` | `AvailabilityIndex` + canonical state + report summary | Design only | Effective profile, fallback contract, and component_missing records defined in D1 v1.9.0; implementation and tests pending |
+| `SB-01` | `SafetyGate` → `FinalizedRunRecord` | Design only | Gate contract and REVIEW policy defined in D1 v1.9.0; implementation and tests pending |
+| `INV-01` | Publisher only consumes record; current artifacts bound by artifact_binding plus memory reference | Design only | Binding, canonicalization, hash-input, and memory lifecycle contracts defined in D1 v1.9.0; old-writer migration and tests pending |
+| `SR-01` | `SecretRedactor` at all app-controlled boundaries | Design only | Known-value/pattern/scope/incident contract defined in D1 v1.9.0; implementation and tests pending |
 
 ---
 
@@ -75,16 +90,17 @@ This is a recommendation for review, not an approved decision.
 **Baseline measured**
 
 - 31 tool calls.
-- Duplicate failed calls: 6 FRED, 2 ticker news, 2 prediction markets.
+- Repeated logical query: 3 ticker-news attempts with the same key.
+- The 6 FRED indicators and 2 prediction-market topics are distinct logical queries; FRED was not configured and prediction markets were withheld, so neither made an external request.
 - External request count itself was not separately measured.
 
 **Design expectation**
 
-- Same-run duplicate `query_key` produces one physical request.
-- Terminal failures are cached for the run.
-- PR-01 should reduce duplicate external requests.
+- Same-run duplicate `logical_query` produces one `query_execution`.
+- Terminal failures are cached for the run after retry and fallback budgets are exhausted.
+- FR-01 should reduce duplicate logical query executions; external requests and vendor-cache hits are measured separately.
 
-**Status**: not measured. A PR-01 on/off benchmark is required.
+**Status**: not measured. A FR-01 on/off benchmark is required.
 
 ### 4.2 Tool rounds
 
@@ -95,7 +111,7 @@ This is a recommendation for review, not an approved decision.
 
 **Design expectation**
 
-- PR-01 may **not** reduce tool rounds directly: the agent can still issue the tool call and receive a cache hit.
+- FR-01 may **not** reduce tool rounds directly: the agent can still issue the tool call and receive a cache hit.
 - A faster cache hit may reduce latency, but does not guarantee fewer LLM rounds.
 
 **Status**: not measured. Do not claim tool-round reduction.
@@ -109,7 +125,7 @@ This is a recommendation for review, not an approved decision.
 
 **Design expectation**
 
-- PR-01 may **not** reduce tokens directly; the cached result can still be injected into the prompt.
+- FR-01 may **not** reduce tokens directly; the cached result can still be injected into the prompt.
 - Manifest and gate add negligible token cost because they are not model prompts.
 - Context compression may reduce tokens if enabled, but it is a separate policy.
 
@@ -127,7 +143,7 @@ This is a recommendation for review, not an approved decision.
 - Publish/manifest/gate add small overhead.
 - Net latency change is unknown.
 
-**Status**: not measured. `QR-01-AC4` overhead target is provisional.
+**Status**: not measured. `FR-02-AC8` manifest-write and end-to-end overhead targets are provisional.
 
 ### 4.5 Cost
 
@@ -137,7 +153,7 @@ This is a recommendation for review, not an approved decision.
 
 **Design expectation**
 
-- PR-01 may reduce external request volume.
+- FR-01 may reduce duplicate logical query executions; external-request volume also depends on vendor-cache hits.
 - No direct LLM token reduction is assumed.
 
 **Status**: monetary cost remains `null` until a price schedule is provided.
@@ -148,20 +164,23 @@ This is a recommendation for review, not an approved decision.
 
 | Measurement | Method | Status |
 |---|---|---|
-| Duplicate external requests | Mock vendor counter + baseline replay | not started |
-| Physical requests | Instrument vendor boundary | not started |
+| Duplicate logical query executions | Mock vendor counter + baseline replay | not started |
+| External requests | Instrument vendor boundary | not started |
 | Vendor cache hits | Instrument vendor cache reads | not started |
 | Run cache hits | Instrument run cache | not started |
 | Fallback attempts | Evidence counter | not started |
 | Retry attempts | Evidence counter | not started |
 | Tool rounds | Callback counter | not started |
 | Input/output tokens | Provider usage callback | baseline measured; new runs not measured |
-| Manifest overhead | Monotonic timer around publish | not started |
+| Manifest overhead | External paired timer around publish; nearest-rank p95 | not started |
+| Live A/B quality | Frozen `docs/req/evaluation/eval-set-v1.json`, `rubric-v1.json`, `behavior-eval-contract-v1.json`; deterministic gate regression zero-tolerance; live mean drop ≤0.5, per-case drop ≤1.0, live REVIEW-rate increase ≤10pp | blocked: snapshots pending capture; human review pending |
 | Publish failure/retry | Fault injection | not started |
 | Secret scan | Documented pattern scan | not started |
 | Context compression | Token-threshold fixtures | not started |
 
 ---
+
+Behavior acceptance is blocked until every case snapshot is captured and the behavior contract is human-approved. The contract file records `acceptance_status = blocked_until_snapshots_and_human_approval`.
 
 ## 6. Candidate re-decision triggers
 
@@ -185,4 +204,4 @@ Re-open the architecture decision if:
 - Runtime monitoring: **not implemented**.
 - Baseline evidence: **measured**.
 - Design expectations: **not measured**.
-- D1: **not modified**.
+- D1: **v1.9.0 historical baseline approved; current revision human review pending; FR-01, FR-02, FR-03, SB-01, INV-01, and SR-01 contracts synchronized**.

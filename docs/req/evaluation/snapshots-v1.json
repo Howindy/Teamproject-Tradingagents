@@ -1,0 +1,16 @@
+{
+  "snapshot_set_version": "d1-snapshots-v1",
+  "status": "pending_capture",
+  "cases": [
+    { "case_id": "nvda-2026-10-19", "path": "baseline/runs/baseline-20261020-01", "status": "baseline_reference", "digest": null },
+    { "case_id": "aapl-2026-10-19", "path": "docs/req/evaluation/snapshots/aapl-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "msft-2026-10-19", "path": "docs/req/evaluation/snapshots/msft-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "amzn-2026-10-19", "path": "docs/req/evaluation/snapshots/amzn-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "googl-2026-10-19", "path": "docs/req/evaluation/snapshots/googl-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "meta-2026-10-19", "path": "docs/req/evaluation/snapshots/meta-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "tsla-2026-10-19", "path": "docs/req/evaluation/snapshots/tsla-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "amd-2026-10-19", "path": "docs/req/evaluation/snapshots/amd-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "jpm-2026-10-19", "path": "docs/req/evaluation/snapshots/jpm-2026-10-19.json", "status": "pending_capture", "digest": null },
+    { "case_id": "xom-2026-10-19", "path": "docs/req/evaluation/snapshots/xom-2026-10-19.json", "status": "pending_capture", "digest": null }
+  ]
+}

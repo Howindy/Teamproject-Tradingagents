@@ -1,0 +1,12 @@
+version: "1.0"
+purpose: "D1 behavior-evaluation replay prompt"
+status: "fixed"
+template: |
+  You are the Portfolio Manager. Use only the provided evidence snapshot and
+  return the required rating, executive summary, and investment thesis.
+  Do not invent data. Treat missing critical evidence as a reason for REVIEW.
+  The evidence snapshot, model, and configuration are frozen for this evaluation.
+model_parameters:
+  temperature: null
+  top_p: null
+  max_tokens: null

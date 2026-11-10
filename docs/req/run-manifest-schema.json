@@ -1,0 +1,2457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradingagents.local/schemas/run-manifest-schema.json",
+  "title": "TradingAgents Run Manifest",
+  "description": "Contract for the one run-scoped manifest written by every TradingAgents run. It records lifecycle state, identity, sanitized configuration, timing, measurement counters, data-source status, safety-gate result, and artifact hashes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "parent_run_id",
+    "run_status",
+    "identity",
+    "config",
+    "timing",
+    "counts",
+    "tokens",
+    "data_source_status",
+    "safety_gate",
+    "security",
+    "artifacts",
+    "error",
+    "artifact_binding",
+    "formal_decision",
+    "run_clock",
+    "critical_profile",
+    "coverage_snapshot",
+    "provenance_digest",
+    "memory",
+    "inheritance",
+    "model_proposal"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "run_id": {
+      "$ref": "#/$defs/run_id"
+    },
+    "parent_run_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/run_id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "run_status": {
+      "enum": [
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticker",
+        "analysis_date",
+        "asset_type"
+      ],
+      "properties": {
+        "ticker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "asset_type": {
+          "enum": [
+            "stock",
+            "crypto"
+          ]
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tradingagents_version",
+        "llm_provider",
+        "deep_think_provider",
+        "quick_think_provider",
+        "deep_think_llm",
+        "quick_think_llm",
+        "analysts",
+        "max_debate_rounds",
+        "max_risk_discuss_rounds",
+        "output_language",
+        "data_vendors",
+        "tool_vendors"
+      ],
+      "properties": {
+        "tradingagents_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "llm_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deep_think_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quick_think_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deep_think_llm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quick_think_llm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "analysts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "market",
+              "social",
+              "news",
+              "fundamentals"
+            ]
+          }
+        },
+        "max_debate_rounds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_risk_discuss_rounds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "output_language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_vendors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tool_vendors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "description": "Monotonic phase timing. started_at is before the startup manifest write; analysis starts after that write; publish covers report/final-state/memory and terminal manifest serialization/validation/fsync up to the final atomic replace. manifest_write_seconds ends before the final replace so it is known before the terminal file is written. duration_seconds is the sum of startup, analysis, and publish phases; external harness measurement includes the final replace.",
+      "additionalProperties": false,
+      "required": [
+        "started_at",
+        "analysis_finished_at",
+        "finished_at",
+        "duration_seconds",
+        "analysis_seconds",
+        "publish_seconds",
+        "manifest_write_seconds",
+        "startup_manifest_write_seconds"
+      ],
+      "properties": {
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "analysis_finished_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finished_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "analysis_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publish_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "manifest_write_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startup_manifest_write_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "description": "llm_calls includes analyst, debate, trader, risk, portfolio, structured-output retry, and reflection/settlement calls observed by the run callback boundary. tool_calls counts analyst tool callbacks. prefetch_calls counts direct data calls outside tool callbacks. retry_attempts and fallback_attempts are vendor-boundary counters and are not merged into the other counters.",
+      "additionalProperties": false,
+      "required": [
+        "llm_calls",
+        "tool_calls",
+        "prefetch_calls",
+        "reflection_llm_calls",
+        "retry_attempts",
+        "fallback_attempts",
+        "query_executions",
+        "external_requests",
+        "vendor_cache_hits",
+        "run_cache_hits",
+        "llm_error_count",
+        "tool_error_count"
+      ],
+      "properties": {
+        "llm_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tool_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "prefetch_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reflection_llm_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retry_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fallback_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "query_executions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "external_requests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "vendor_cache_hits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "run_cache_hits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "llm_error_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tool_error_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "description": "Token totals over the LLM calls that reported usage. status=complete means every llm_call reported usage; partial means some did; unavailable means none did. Unknown values are null, never zero. llm_calls_with_usage plus llm_calls_without_usage equals counts.llm_calls.",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "status",
+        "llm_calls_with_usage",
+        "llm_calls_without_usage"
+      ],
+      "properties": {
+        "input_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "total_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "partial",
+            "unavailable"
+          ]
+        },
+        "llm_calls_with_usage": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "llm_calls_without_usage": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "data_source_status": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/data_source_status"
+      }
+    },
+    "safety_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason_codes",
+        "coverage_status",
+        "critical_gap_ids",
+        "profile_version",
+        "snapshot_hash",
+        "gate_version",
+        "run_id",
+        "evaluated_at",
+        "input_hash",
+        "primary_reason_code"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "blocked",
+            "error",
+            "not_run"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gate_reason_code"
+          }
+        },
+        "coverage_status": {
+          "enum": [
+            "complete",
+            "partial",
+            null
+          ]
+        },
+        "critical_gap_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "profile_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "snapshot_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gate_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/run_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evaluated_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "primary_reason_code": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/gate_reason_code"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scan_status",
+        "known_secret_match_count",
+        "pattern_match_count",
+        "redaction_count",
+        "rule_version",
+        "scope",
+        "failure_reason",
+        "write_scan_status",
+        "run_scan_status"
+      ],
+      "properties": {
+        "scan_status": {
+          "enum": [
+            "not_run",
+            "clean",
+            "redacted",
+            "blocked",
+            "failed"
+          ]
+        },
+        "known_secret_match_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern_match_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "redaction_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rule_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failure_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "write_scan_status": {
+          "enum": [
+            "not_run",
+            "clean",
+            "redacted",
+            "blocked",
+            "failed"
+          ]
+        },
+        "run_scan_status": {
+          "enum": [
+            "not_run",
+            "clean",
+            "redacted",
+            "blocked",
+            "failed"
+          ]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "error": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/error"
+        }
+      ]
+    },
+    "artifact_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "record_version",
+        "decision_digest",
+        "gate_status",
+        "formal_decision_status",
+        "final_rating",
+        "coverage_status",
+        "critical_gap_ids",
+        "coverage_snapshot_hash",
+        "record_hash",
+        "decision_id"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/run_id"
+        },
+        "record_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_digest": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gate_status": {
+          "enum": [
+            "passed",
+            "blocked",
+            "error",
+            "not_run"
+          ]
+        },
+        "formal_decision_status": {
+          "enum": [
+            "pending",
+            "approved",
+            "blocked_for_review"
+          ]
+        },
+        "final_rating": {
+          "enum": [
+            "Buy",
+            "Overweight",
+            "Hold",
+            "Underweight",
+            "Sell",
+            "REVIEW",
+            null
+          ]
+        },
+        "coverage_status": {
+          "enum": [
+            "complete",
+            "partial",
+            null
+          ]
+        },
+        "critical_gap_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "coverage_snapshot_hash": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_hash": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "formal_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "final_rating",
+        "decision_text",
+        "review_class"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "blocked_for_review"
+          ]
+        },
+        "final_rating": {
+          "enum": [
+            "Buy",
+            "Overweight",
+            "Hold",
+            "Underweight",
+            "Sell",
+            "REVIEW",
+            null
+          ]
+        },
+        "decision_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "review_class": {
+          "enum": [
+            "none",
+            "data_insufficient",
+            "model_rating_invalid",
+            "model_review",
+            "gate_system_error",
+            "input_invalid",
+            "coverage_inconsistent"
+          ]
+        }
+      }
+    },
+    "run_clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "as_of_date",
+        "now_utc",
+        "timezone",
+        "clock_source",
+        "analysis_mode",
+        "mode_source"
+      ],
+      "properties": {
+        "as_of_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "now_utc": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "clock_source": {
+          "enum": [
+            "system",
+            "fixture",
+            "resume",
+            "override"
+          ]
+        },
+        "analysis_mode": {
+          "enum": [
+            "current_date",
+            "historical"
+          ]
+        },
+        "mode_source": {
+          "enum": [
+            "default",
+            "override",
+            "resume"
+          ]
+        }
+      }
+    },
+    "critical_profile": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "profile_version",
+            "profile_source",
+            "analysis_mode",
+            "asset_type",
+            "requirements",
+            "profile_hash",
+            "contract_version"
+          ],
+          "properties": {
+            "profile_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "profile_source": {
+              "enum": [
+                "default",
+                "override",
+                "resume"
+              ]
+            },
+            "analysis_mode": {
+              "enum": [
+                "current_date",
+                "historical"
+              ]
+            },
+            "asset_type": {
+              "enum": [
+                "stock",
+                "crypto"
+              ]
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "requirement_id",
+                  "capability",
+                  "components",
+                  "query_rule",
+                  "min_successful_components",
+                  "min_record_count",
+                  "fallback_policy",
+                  "criticality"
+                ],
+                "properties": {
+                  "requirement_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "capability": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "components": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "component",
+                        "window_rule",
+                        "min_record_count",
+                        "point_in_time_rule",
+                        "required"
+                      ],
+                      "properties": {
+                        "component": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "window_rule": {
+                          "enum": [
+                            "requested_window",
+                            "as_of_date",
+                            "latest_available"
+                          ]
+                        },
+                        "min_record_count": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "point_in_time_rule": {
+                          "enum": [
+                            "strict_as_of",
+                            "as_filed",
+                            "not_applicable"
+                          ]
+                        },
+                        "required": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "query_rule": {
+                    "type": "string",
+                    "pattern": "^(all|any|min:[0-9]+)$"
+                  },
+                  "min_successful_components": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "min_record_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "fallback_policy": {
+                    "enum": [
+                      "same_capability_only",
+                      "approved_substitute"
+                    ]
+                  },
+                  "criticality": {
+                    "enum": [
+                      "critical",
+                      "non_critical",
+                      "not_required"
+                    ]
+                  }
+                }
+              }
+            },
+            "profile_hash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "contract_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "coverage_snapshot": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "snapshot_version",
+            "snapshot_hash",
+            "computed_at",
+            "computed_by",
+            "coverage_status",
+            "critical_gaps",
+            "provenance_digest",
+            "run_id",
+            "critical_profile_hash",
+            "critical_gap_ids"
+          ],
+          "properties": {
+            "snapshot_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "snapshot_hash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "computed_at": {
+              "$ref": "#/$defs/timestamp"
+            },
+            "computed_by": {
+              "const": "program"
+            },
+            "coverage_status": {
+              "enum": [
+                "complete",
+                "partial"
+              ]
+            },
+            "critical_gaps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/critical_gap"
+              }
+            },
+            "provenance_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "run_id": {
+              "$ref": "#/$defs/run_id"
+            },
+            "critical_profile_hash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "critical_gap_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "provenance_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "status",
+        "entry_binding",
+        "entry_digest",
+        "retention_status",
+        "same_day_rerun",
+        "commit_status",
+        "reused_decision_ref",
+        "entry_version",
+        "supersedes",
+        "evidence_digest"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "written",
+            "existing",
+            "disabled",
+            "rotated",
+            "not_available"
+          ]
+        },
+        "entry_binding": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "run_id",
+                "record_version",
+                "decision_digest",
+                "trade_date",
+                "ticker",
+                "decision_id"
+              ],
+              "properties": {
+                "run_id": {
+                  "$ref": "#/$defs/run_id"
+                },
+                "record_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "decision_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "trade_date": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                },
+                "ticker": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "decision_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "entry_digest": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retention_status": {
+          "enum": [
+            "retained",
+            "rotated",
+            "disabled",
+            "not_applicable",
+            "superseded"
+          ]
+        },
+        "same_day_rerun": {
+          "type": "boolean"
+        },
+        "commit_status": {
+          "enum": [
+            "pending",
+            "committed",
+            "failed",
+            "disabled",
+            "not_applicable"
+          ]
+        },
+        "reused_decision_ref": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "source_run_id",
+                "source_decision_id",
+                "source_entry_digest"
+              ],
+              "properties": {
+                "source_run_id": {
+                  "$ref": "#/$defs/run_id"
+                },
+                "source_decision_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_entry_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          ]
+        },
+        "entry_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "supersedes": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_digest": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "inheritance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inherited",
+        "origin_run_id",
+        "origin_attempt_id",
+        "inherited_counters",
+        "inherited_evidence_digest",
+        "snapshot_rebound_from"
+      ],
+      "properties": {
+        "inherited": {
+          "type": "boolean"
+        },
+        "origin_run_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/run_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin_attempt_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inherited_counters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "query_executions",
+            "http_requests",
+            "vendor_cache_hits",
+            "retry_attempts",
+            "fallback_attempts",
+            "llm_calls",
+            "tool_calls"
+          ],
+          "properties": {
+            "query_executions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "http_requests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "vendor_cache_hits": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "retry_attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fallback_attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "llm_calls": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tool_calls": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "inherited_evidence_digest": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "snapshot_rebound_from": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "model_proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rating",
+        "decision_text",
+        "proposal_status",
+        "proposal_digest"
+      ],
+      "properties": {
+        "rating": {
+          "enum": [
+            "Buy",
+            "Overweight",
+            "Hold",
+            "Underweight",
+            "Sell",
+            "REVIEW"
+          ]
+        },
+        "decision_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposal_status": {
+          "const": "unapproved"
+        },
+        "proposal_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "gate_reason_code": {
+      "enum": [
+        "critical_gap",
+        "coverage_gap_mismatch",
+        "invalid_coverage_status",
+        "missing_gap_list",
+        "invalid_gap_type",
+        "missing_availability_record",
+        "invalid_critical_profile",
+        "invalid_model_rating",
+        "model_review",
+        "missing_gate_input",
+        "stale_coverage_snapshot",
+        "snapshot_hash_mismatch",
+        "gate_internal_error"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "data_source_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "category",
+        "capability",
+        "component",
+        "requirement_id",
+        "criticality",
+        "source",
+        "serving_source",
+        "attempted_sources",
+        "requested_window",
+        "observed_window",
+        "status",
+        "reason_code",
+        "reason",
+        "record_count",
+        "vendor",
+        "fallback_used",
+        "vendor_cache_hit",
+        "run_cache_hit",
+        "record_kind",
+        "data_query_key",
+        "attempts",
+        "supports"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirement_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "criticality": {
+          "enum": [
+            "critical",
+            "non_critical",
+            "not_required"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "serving_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attempted_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requested_window": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observed_window": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "success",
+            "insufficient_evidence",
+            "no_data",
+            "unavailable",
+            "withheld",
+            "not_configured",
+            "not_attempted",
+            "error"
+          ]
+        },
+        "reason_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "record_count": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vendor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fallback_used": {
+          "type": "boolean"
+        },
+        "vendor_cache_hit": {
+          "type": "boolean"
+        },
+        "run_cache_hit": {
+          "type": "boolean"
+        },
+        "record_kind": {
+          "enum": [
+            "executed",
+            "component_missing"
+          ]
+        },
+        "data_query_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "status",
+              "reason_code",
+              "reason",
+              "record_count",
+              "cache_kind",
+              "started_at",
+              "ended_at",
+              "http_request_count"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "success",
+                  "insufficient_evidence",
+                  "no_data",
+                  "unavailable",
+                  "withheld",
+                  "not_configured",
+                  "not_attempted",
+                  "error"
+                ]
+              },
+              "reason_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "record_count": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cache_kind": {
+                "enum": [
+                  "none",
+                  "vendor",
+                  "run"
+                ]
+              },
+              "started_at": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/timestamp"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ended_at": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/timestamp"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "http_request_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "supports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "requirement_id",
+              "capability",
+              "component",
+              "criticality"
+            ],
+            "properties": {
+              "requirement_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "capability": {
+                "type": "string",
+                "minLength": 1
+              },
+              "component": {
+                "type": "string",
+                "minLength": 1
+              },
+              "criticality": {
+                "enum": [
+                  "critical",
+                  "non_critical"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "record_kind": {
+                "const": "executed"
+              }
+            },
+            "required": [
+              "record_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data_query_key": {
+                "type": "string"
+              },
+              "attempts": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "record_kind": {
+                "const": "component_missing"
+              }
+            },
+            "required": [
+              "record_kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data_query_key": {
+                "type": "null"
+              },
+              "attempts": {
+                "maxItems": 0
+              },
+              "status": {
+                "const": "not_attempted"
+              },
+              "source": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "sha256",
+        "hash_scope"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "report",
+            "final_state",
+            "memory",
+            "other"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "hash_scope": {
+          "enum": [
+            "file",
+            "memory_entry",
+            "record"
+          ]
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "type",
+        "message"
+      ],
+      "properties": {
+        "stage": {
+          "enum": [
+            "startup",
+            "analysis",
+            "persistence",
+            "manifest",
+            "unknown",
+            "security",
+            "gate"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "critical_gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "capability",
+        "requirement_status",
+        "gap_reason",
+        "missing_components",
+        "provenance"
+      ],
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirement_status": {
+          "enum": [
+            "degraded",
+            "missing"
+          ]
+        },
+        "gap_reason": {
+          "enum": [
+            "not_attempted",
+            "not_configured",
+            "error",
+            "unavailable",
+            "no_data",
+            "withheld",
+            "insufficient_evidence",
+            "fallback_partial"
+          ]
+        },
+        "missing_components": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "enum": [
+              "completed",
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "timing": {
+            "properties": {
+              "analysis_finished_at": {
+                "$ref": "#/$defs/timestamp"
+              },
+              "finished_at": {
+                "$ref": "#/$defs/timestamp"
+              },
+              "duration_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "analysis_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "publish_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "manifest_write_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "startup_manifest_write_seconds": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "running"
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "timing": {
+            "properties": {
+              "analysis_finished_at": {
+                "type": "null"
+              },
+              "finished_at": {
+                "type": "null"
+              },
+              "duration_seconds": {
+                "type": "null"
+              },
+              "analysis_seconds": {
+                "type": "null"
+              },
+              "publish_seconds": {
+                "type": "null"
+              },
+              "manifest_write_seconds": {
+                "type": "null"
+              },
+              "startup_manifest_write_seconds": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "error": {
+            "type": "null"
+          },
+          "security": {
+            "properties": {
+              "run_scan_status": {
+                "const": "not_run"
+              },
+              "write_scan_status": {
+                "enum": [
+                  "not_run",
+                  "clean",
+                  "redacted"
+                ]
+              }
+            }
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "type": "null"
+          },
+          "security": {
+            "properties": {
+              "write_scan_status": {
+                "enum": [
+                  "clean",
+                  "redacted"
+                ]
+              },
+              "run_scan_status": {
+                "enum": [
+                  "clean",
+                  "redacted"
+                ]
+              }
+            }
+          },
+          "formal_decision": {
+            "properties": {
+              "review_class": {
+                "enum": [
+                  "none",
+                  "data_insufficient",
+                  "model_rating_invalid",
+                  "model_review",
+                  "gate_system_error",
+                  "input_invalid",
+                  "coverage_inconsistent"
+                ]
+              }
+            }
+          },
+          "artifacts": {
+            "allOf": [
+              {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "report"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "final_state"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "minContains": 1
+              }
+            ]
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "$ref": "#/$defs/error"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tokens": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tokens": {
+            "properties": {
+              "input_tokens": {
+                "type": "integer"
+              },
+              "output_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tokens": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tokens": {
+            "properties": {
+              "input_tokens": {
+                "type": "null"
+              },
+              "output_tokens": {
+                "type": "null"
+              },
+              "total_tokens": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tokens": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tokens": {
+            "anyOf": [
+              {
+                "properties": {
+                  "input_tokens": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "output_tokens": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "total_tokens": {
+                    "type": "integer"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "safety_gate": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "passed",
+                  "blocked"
+                ]
+              }
+            }
+          },
+          "security": {
+            "properties": {
+              "scan_status": {
+                "enum": [
+                  "clean",
+                  "redacted"
+                ]
+              },
+              "known_secret_match_count": {
+                "const": 0
+              },
+              "pattern_match_count": {
+                "const": 0
+              },
+              "write_scan_status": {
+                "enum": [
+                  "clean",
+                  "redacted"
+                ]
+              },
+              "run_scan_status": {
+                "enum": [
+                  "clean",
+                  "redacted"
+                ]
+              }
+            }
+          },
+          "error": {
+            "type": "null"
+          },
+          "artifact_binding": {
+            "properties": {
+              "decision_digest": {
+                "type": "string"
+              },
+              "gate_status": {
+                "enum": [
+                  "passed",
+                  "blocked"
+                ]
+              },
+              "formal_decision_status": {
+                "enum": [
+                  "approved",
+                  "blocked_for_review"
+                ]
+              },
+              "final_rating": {
+                "enum": [
+                  "Buy",
+                  "Overweight",
+                  "Hold",
+                  "Underweight",
+                  "Sell",
+                  "REVIEW"
+                ]
+              },
+              "coverage_status": {
+                "enum": [
+                  "complete",
+                  "partial"
+                ]
+              },
+              "coverage_snapshot_hash": {
+                "type": "string"
+              }
+            }
+          },
+          "formal_decision": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "approved",
+                  "blocked_for_review"
+                ]
+              },
+              "decision_text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "final_rating": {
+                "enum": [
+                  "Buy",
+                  "Overweight",
+                  "Hold",
+                  "Underweight",
+                  "Sell",
+                  "REVIEW"
+                ]
+              },
+              "review_class": {
+                "enum": [
+                  "none",
+                  "data_insufficient",
+                  "model_rating_invalid",
+                  "model_review",
+                  "gate_system_error",
+                  "input_invalid",
+                  "coverage_inconsistent"
+                ]
+              }
+            }
+          },
+          "artifacts": {
+            "allOf": [
+              {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "report"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "final_state"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "minContains": 1
+              }
+            ]
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "running"
+          }
+        },
+        "required": [
+          "run_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "safety_gate": {
+            "properties": {
+              "status": {
+                "const": "not_run"
+              }
+            }
+          },
+          "security": {
+            "properties": {
+              "scan_status": {
+                "const": "not_run"
+              },
+              "run_scan_status": {
+                "const": "not_run"
+              },
+              "write_scan_status": {
+                "enum": [
+                  "not_run",
+                  "clean",
+                  "redacted"
+                ]
+              }
+            }
+          },
+          "artifact_binding": {
+            "properties": {
+              "gate_status": {
+                "const": "not_run"
+              },
+              "formal_decision_status": {
+                "const": "pending"
+              },
+              "final_rating": {
+                "type": "null"
+              },
+              "coverage_status": {
+                "type": "null"
+              },
+              "decision_digest": {
+                "type": "null"
+              },
+              "coverage_snapshot_hash": {
+                "type": "null"
+              }
+            }
+          },
+          "formal_decision": {
+            "properties": {
+              "status": {
+                "const": "pending"
+              },
+              "decision_text": {
+                "type": "null"
+              },
+              "final_rating": {
+                "type": "null"
+              }
+            }
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "completed"
+          },
+          "memory": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          }
+        },
+        "required": [
+          "run_status",
+          "memory"
+        ]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "properties": {
+                "kind": {
+                  "const": "memory"
+                },
+                "hash_scope": {
+                  "const": "memory_entry"
+                }
+              },
+              "required": [
+                "kind",
+                "hash_scope"
+              ]
+            },
+            "minContains": 1
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "run_status": {
+            "const": "completed"
+          },
+          "memory": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          }
+        },
+        "required": [
+          "run_status",
+          "memory"
+        ]
+      },
+      "then": {
+        "properties": {
+          "memory": {
+            "properties": {
+              "status": {
+                "const": "disabled"
+              }
+            }
+          },
+          "critical_profile": {
+            "type": "object"
+          },
+          "coverage_snapshot": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "eval_set_version": "d1-eval-v1",
+  "frozen_at": "2026-11-09",
+  "case_count": 10,
+  "snapshot_root": "docs/req/evaluation/snapshots",
+  "cases": [
+    {
+      "case_id": "nvda-2026-10-19",
+      "ticker": "NVDA",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "baseline_reference",
+      "data_snapshot": "baseline/runs/baseline-20261020-01"
+    },
+    {
+      "case_id": "aapl-2026-10-19",
+      "ticker": "AAPL",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/aapl-2026-10-19.json"
+    },
+    {
+      "case_id": "msft-2026-10-19",
+      "ticker": "MSFT",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/msft-2026-10-19.json"
+    },
+    {
+      "case_id": "amzn-2026-10-19",
+      "ticker": "AMZN",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/amzn-2026-10-19.json"
+    },
+    {
+      "case_id": "googl-2026-10-19",
+      "ticker": "GOOGL",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/googl-2026-10-19.json"
+    },
+    {
+      "case_id": "meta-2026-10-19",
+      "ticker": "META",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/meta-2026-10-19.json"
+    },
+    {
+      "case_id": "tsla-2026-10-19",
+      "ticker": "TSLA",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/tsla-2026-10-19.json"
+    },
+    {
+      "case_id": "amd-2026-10-19",
+      "ticker": "AMD",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/amd-2026-10-19.json"
+    },
+    {
+      "case_id": "jpm-2026-10-19",
+      "ticker": "JPM",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/jpm-2026-10-19.json"
+    },
+    {
+      "case_id": "xom-2026-10-19",
+      "ticker": "XOM",
+      "analysis_date": "2026-10-19",
+      "asset_type": "stock",
+      "snapshot_status": "pending_capture",
+      "data_snapshot": "docs/req/evaluation/snapshots/xom-2026-10-19.json"
+    }
+  ]
+}

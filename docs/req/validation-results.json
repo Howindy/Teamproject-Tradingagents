@@ -1,0 +1,91 @@
+{
+  "document": "requirements.yaml",
+  "document_version": "1.9.0",
+  "generated_at": "2026-11-10T04:12:53.310258+00:00",
+  "duration_seconds": 0.126,
+  "command": "python3 docs/req/validate_requirements.py",
+  "input_hashes": {
+    "docs/req/requirements.yaml": "94148efaa612771c80ca3e958fe3fd4dcc331e5ac871b7f8e6a23156d3e2287f",
+    "docs/req/req-schema.json": "860fd36def76c6bd3dd47fdf0635ad5f08bad21d9738e800695fda786b0dc534",
+    "docs/req/run-manifest-schema.json": "c78db33e674f6c2086da197b4c4e47272307cbee5a2bace1cf37c87ab852eb75",
+    "docs/req/validate_requirements.py": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+    "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
+    "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
+    "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
+    "docs/req/evaluation/config-v1.json": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
+    "docs/req/evaluation/prompt-v1.0.yaml": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
+    "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2"
+  },
+  "script_hash": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+  "is_current": true,
+  "machine_checks": [
+    {
+      "id": "requirements_schema",
+      "result": "pass"
+    },
+    {
+      "id": "manifest_schema_compile",
+      "result": "pass"
+    },
+    {
+      "id": "manifest_samples",
+      "result": "pass",
+      "details": {
+        "samples": 10,
+        "completed_negatives": 13,
+        "canonicalization_checks": 6
+      }
+    },
+    {
+      "id": "completed_counterexamples_cross_field",
+      "result": "pass"
+    },
+    {
+      "id": "acceptance_count",
+      "result": "pass",
+      "details": {
+        "count": 54
+      }
+    },
+    {
+      "id": "references_and_paths",
+      "result": "pass"
+    },
+    {
+      "id": "implementation_dependency_acyclic",
+      "result": "pass"
+    },
+    {
+      "id": "behavior_eval_contract",
+      "result": "pass",
+      "details": {
+        "cases": 10,
+        "dimensions": 5,
+        "acceptance_status": "blocked_until_snapshots_and_human_approval"
+      }
+    }
+  ],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": "Human approval reset to pending because validated inputs changed.",
+    "bound_input_hashes": {
+      "docs/req/requirements.yaml": "94148efaa612771c80ca3e958fe3fd4dcc331e5ac871b7f8e6a23156d3e2287f",
+      "docs/req/req-schema.json": "860fd36def76c6bd3dd47fdf0635ad5f08bad21d9738e800695fda786b0dc534",
+      "docs/req/run-manifest-schema.json": "c78db33e674f6c2086da197b4c4e47272307cbee5a2bace1cf37c87ab852eb75",
+      "docs/req/validate_requirements.py": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+      "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
+      "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
+      "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
+      "docs/req/evaluation/config-v1.json": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
+      "docs/req/evaluation/prompt-v1.0.yaml": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
+      "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2"
+    },
+    "bound_document_version": "1.9.0"
+  },
+  "limitations": [
+    "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, and dependency acyclicity.",
+    "Behavioral evaluation is blocked until snapshots and human approval are complete."
+  ]
+}

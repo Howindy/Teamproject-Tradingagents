@@ -2,7 +2,7 @@
 
 Status: **v0.1 — draft / pending human review**  
 Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` (working baseline; not finally approved)  
+D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
 Implementation status: **design only; no application code changed**
 
 ---
@@ -54,6 +54,8 @@ It consumes:
 
 - `record_hash`
 - `run_id`
+- `decision_id`
+- `run_clock`
 - `ticker`
 - `trade_date`
 - `final_rating`
@@ -66,6 +68,8 @@ It consumes:
 - `created_at`
 - `holding_days`
 - `benchmark`
+- `commit_status` as a projection of the source terminal manifest (`committed` for a completed run; not stored in the immutable entry digest)
+- `reused_decision_ref` when the current run reuses a prior committed decision entry
 
 It does not accept raw `final_state`, raw model text, environment values, endpoints with query parameters, or secrets.
 
@@ -75,7 +79,7 @@ The human-readable Markdown entry keeps the existing shape:
 
 ```text
 [<trade_date> | <ticker> | <rating> | pending]
-RUN_META: <record_hash> <run_id> <gate_result>
+RUN_META: <record_hash> <run_id> <decision_id> <entry_version> <entry_digest> <evidence_digest> <gate_result> <profile_hash>
 DECISION:
 <final_decision_text>
 <!-- ENTRY_END -->
@@ -85,7 +89,8 @@ The exact rendering is a design detail. The important fields are:
 
 - final rating, not model proposal rating;
 - final decision text, not raw proposal text;
-- record hash and run id for idempotency and traceability;
+- record hash, run id, decision id, entry_version, entry_digest, and evidence_digest for traceability; memory reuse is keyed by decision_id/entry_digest;
+- `reused_decision_ref` records the source run_id/decision_id/entry_digest when a current run reuses a historical entry; the current artifacts keep the current run_id; commit_status is not stored in the entry, only derived for display;
 - coverage/gate digest, not the full critical-gap payload unless policy allows;
 - no secrets.
 
@@ -93,7 +98,7 @@ The existing separator remains valid.
 
 ### 3.3 Structured sidecar (work assumption)
 
-To support QR-01/INV-02 without parsing prose, D2 assumes a structured sidecar:
+To support FR-02/INV-01 without parsing prose, D2 assumes a structured sidecar:
 
 - `trading_memory.jsonl` beside `trading_memory.md`, or
 - a structured metadata line in the Markdown entry.
@@ -117,17 +122,22 @@ This prevents a model-produced Buy/Sell from being re-read as the system's final
 
 ## 5. Idempotency
 
-Idempotency key: `(run_id, record_hash)` plus the existing `(trade_date, ticker)` guard.
+Idempotency key: `(decision_id, entry_digest)` plus the existing `(trade_date, ticker)` guard. `run_id` is per-invocation and is not the memory reuse key.
 
 | Case | Behavior |
 |---|---|
-| Same run_id and same record_hash exists | No-op; mark memory step complete |
-| Same trade_date/ticker exists with same record_hash | No-op |
-| Same trade_date/ticker exists with different record_hash | Conflict; publish fails; manual review |
-| Same run_id with different record_hash | Conflict; publish fails; manual review |
+| Same decision_id and entry_digest exists | No-op; mark memory step existing |
+| Same trade_date/ticker exists with same decision_id | No-op; same-day rerun reuses the entry |
+| Same trade_date/ticker with different decision_id | New pre-commit entry_version; current decision publishes; effective version derived from highest committed entry_version |
+| Same decision_id with different entry_digest | Conflict/tamper; fail publish; manual review |
+| Memory disabled | `memory.status=disabled`; no memory artifact required |
 | Entry pending vs resolved with same key | No new decision entry; settlement may update reflection only |
+| Current run reuses a prior committed entry | current artifacts keep current run_id; memory records `reused_decision_ref`; no duplicate decision entry |
+| Entry written but run not committed | no completed terminal manifest; excluded from reads regardless of the entry tag |
 
-The memory write is atomic under the existing lock. A crash after append but before the complete marker must not create a duplicate on retry.
+The memory write is atomic under the existing lock. A crash after append but before the terminal manifest commit must not create a duplicate on retry. The unique readable criterion is the completed terminal manifest plus read-time INV-01; there is no separate mark-committed write. The entry's `pending` tag means outcome settlement is pending; commit_status is derived for display and is not stored in RUN_META or included in entry_digest.
+
+Binding is per decision entry through `memory_entry_binding` (source_run_id, decision_id, record_version, decision_digest, trade_date/ticker, entry_digest, evidence_digest). `entry_digest` covers only stable decision content (decision_id, trade_date/ticker, formal decision fields) and excludes coverage/gaps, provenance, source_run_id, source snapshot hash, timestamps, commit_status, and reuse metadata. `evidence_digest` covers coverage_status, critical_gap_ids, and provenance_digest; it may differ across normal reruns and does not imply entry corruption. The current run keeps its own run_id in the artifact binding; `reused_decision_ref` links to the source entry without rewriting it. The shared memory file is never hashed: normal appends, settlement/reflection, lock maintenance, and policy-based rotation of resolved entries change the file but not any retained decision binding. A memory artifact uses hash_scope = memory_entry. Deleting or modifying a retained decision entry, or changing its entry_digest, is an illegal change and fails INV-01; an evidence_digest change alone is not corruption. Same-day same-binding reruns reuse the entry; different decision_ids create committed versions. Memory-disabled runs require no memory artifact. Rotation absence is recorded as memory not_available.
 
 ---
 
@@ -147,11 +157,11 @@ The memory write is atomic under the existing lock. A crash after append but bef
 
 If report/final-state exist but memory fails:
 
-- `publish_status=partial`;
-- manifest and `publish-complete.json` are not written yet;
+- the terminal manifest is not committed; `run_status` remains running or becomes failed;
+- memory remains physically settlement-pending and is unreadable because no completed terminal manifest exists; `commit_status` is a derived projection, not a stored write;
 - memory retry uses the same `FinalizedRunRecord`;
 - no graph re-run;
-- after memory succeeds, the publisher writes the manifest and complete marker;
+- after memory succeeds and INV-01 passes on the terminal candidate, the publisher commits the terminal manifest;
 - if memory remains unavailable, operator action is required.
 
 ### 6.3 Conflict
@@ -172,7 +182,7 @@ The Portfolio Manager reads memory through `MemoryService.get_past_context(...)`
 
 Rules:
 
-- only finalized, non-pending entries;
+- only entries whose originating run has a completed terminal manifest and whose binding matches the committed manifest; for each (ticker, date), only the highest committed entry_version contributes lessons/statistics; superseded versions are retained for audit but excluded from learning; physical `pending` means settlement pending, not unpublished;
 - only entries whose `resolved` date is on or before the analysis date, when point-in-time filtering is active;
 - no raw model proposals;
 - no secrets;
@@ -181,18 +191,22 @@ Rules:
 
 The memory read is a context input, not a source of truth. The gate still decides the current run.
 
+Historical same-ticker and cross-ticker lessons are allowed only through `MemoryService.get_past_context(...)`, which applies authorization, committed-entry filtering, point-in-time filtering, retention/rotation state, provenance labels, and secret redaction. Runtime agents cannot read the memory file or another run's records directly.
+
 ---
 
 ## 8. Settlement and reflection
 
-Settlement remains based on the finalized decision, not the raw proposal.
+Settlement remains based on the finalized decision, not the raw proposal. It uses a separate append-only historical write protocol from the current decision commit.
 
-- A pending memory entry is settled when the holding window has traded.
+- Current decision commit: `MemoryService.store_finalized` writes the decision with physical `settlement_status=pending`; the terminal manifest commit makes the entry readable. `commit_status=committed` is derived from that manifest and is not a separate write.
+- Historical settlement: `MemoryService.settle_historical`/`ReflectionWriter` appends only outcome and reflection fields to an already committed historical entry.
 - Reflection is an LLM call; it must be recorded as an LLM call in evidence.
-- Reflection text is appended to memory only after the outcome is computed.
-- Reflection cannot change the historical final decision or rating.
-- If settlement fails, the entry stays pending; the failure is recorded.
-- Settlement is outside the D2 implementation scope except for the finalized-record source and idempotency implications.
+- Reflection text is appended only after the outcome is computed.
+- Settlement/reflection cannot change the decision text, rating, binding, decision_id, or entry_digest.
+- Superseded versions may be settled for audit, but only the effective version per (ticker, date) contributes lessons or statistics; old entries are retained but excluded from learning to avoid double counting.
+- If settlement fails, the entry stays pending/unsettled; the failure is recorded in a separate historical-settlement record.
+- Historical settlement is authorized by the source entry’s run provenance, not by the current run’s FinalizedRunRecord.
 
 ---
 
@@ -200,9 +214,10 @@ Settlement remains based on the finalized decision, not the raw proposal.
 
 - Graph checkpoint resume may occur before a `FinalizedRunRecord` exists.
 - Once a `FinalizedRunRecord` exists, graph resume is not supported; use publish-resume.
-- If memory append succeeded but complete marker is missing, publish-resume re-checks idempotency and does not duplicate.
-- If graph checkpoint is resumed with an existing memory entry for the same run/record, the memory entry is treated as already complete.
-- If the record hash changes after resume, it is a new run/record; memory conflict rules apply.
+- If memory append succeeded but terminal manifest commit is missing, publish-resume re-checks idempotency and does not duplicate; the entry remains unreadable until commit.
+- Resume creates a new run_id. Inherited evidence is tagged with `origin_run_id`, `inherited=true`, and separate inherited counters; the coverage snapshot is recomputed and rebound to the new run_id.
+- If graph checkpoint is resumed with an existing memory entry for the same decision_id, the entry is reused only if it is committed; otherwise it remains pending.
+- If the decision_id changes after resume, it is a different decision; memory conflict rules apply.
 
 ---
 
@@ -210,7 +225,10 @@ Settlement remains based on the finalized decision, not the raw proposal.
 
 - Memory writes are serialized by the existing lock file.
 - `MemoryService` re-checks idempotency inside the lock.
-- Two runs for the same ticker/date with different records conflict; the second must not overwrite the first.
+- Two runs for the same ticker/date with different decision_ids are serialized: each reserves a pre-commit entry_version under the lock, writes the provisional entry and supersedes, and records that version in its terminal manifest. Effective version is derived from committed manifests; no old entry is modified after commit.
+- A failed publication does not supersede the old entry or make the provisional entry effective.
+- Two concurrent new versions reserve distinct entry_versions under the lock; the highest committed entry_version is effective, lower committed versions remain historical. A failed commit leaves a version gap but no effective change.
+- Same decision_id with a different entry_digest is a conflict/tamper and is not versioned.
 - Two runs for different tickers/dates may append concurrently under the lock.
 - Backtest memory is isolated per backtest run, not the live memory log.
 
@@ -222,6 +240,8 @@ Settlement remains based on the finalized decision, not the raw proposal.
 - Endpoint references are scheme + host + path only.
 - Coverage and provenance are stored as digests or short labels, not full raw evidence, unless policy allows.
 - Raw model proposals are not stored in memory decision text.
+- Every memory write records `write_scan_status`; the terminal manifest records final `run_scan_status`; completed requires both clean or redacted.
+- Historical settlement/reflection writes use the same scan boundary and cannot alter the decision binding.
 - Memory files are local plaintext; encryption at rest is out of scope for D2.
 
 ---
@@ -230,7 +250,7 @@ Settlement remains based on the finalized decision, not the raw proposal.
 
 - D2-OD-06: structured sidecar vs Markdown metadata line.
 - OQ-02: memory retention/rotation policy.
-- OQ-06: whether REVIEW entries are kept in memory and whether they are settled.
+- OQ-06 (resolved in D1 v1.4.0): REVIEW entries are kept in memory as non-tradeable formal decisions and are not scored; settlement/reflection is append-only.
 - OQ-08: concurrent memory/manifest locking policy.
 
 See `docs/architecture/open-decisions.md`.
@@ -242,4 +262,4 @@ See `docs/architecture/open-decisions.md`.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Existing memory substrate preserved.
-- D1: **not modified**.
+- D1: **v1.9.0 historical baseline approved; current revision human review pending; FR-01, FR-02, FR-03, SB-01, INV-01, and SR-01 contracts synchronized**.

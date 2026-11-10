@@ -3,33 +3,67 @@ schema_version: "1.0"
 document:
   id: "D1-REQ"
   title: "D1 Requirements: Data Availability, Reuse, Safety Gate, and Audit Records"
-  version: "1.0.0"
+  version: "1.9.0"
   status: "approved"
-  date: "2026-10-27"
+  date: "2026-11-09"
   language: "en"
   description: >
     This document defines the approved D1 requirements for the TradingAgents
     baseline. It records the product narrative, the unified requirement
     registry, traceability to the repository and baseline, MoSCoW decisions,
     conflict resolutions, assumptions, open questions, and validation state.
-    Only the six requirements in scope.approved_ids are part of D1.
+    Only the six requirements in scope.approved_ids are part of D1. Version
+    1.1.0 revises FR-01 to limit logical query executions rather than external
+    requests, defines data_query_key, and adds concurrency, terminal-outcome,
+    vendor-cache, retry/fallback, and offline/live acceptance criteria. Version
+    1.2.0 revises FR-02 to define the run lifecycle, a concrete manifest schema,
+    identity/path coverage, measurement boundaries, missing-token handling,
+    end-to-end overhead, and write-failure integrity. Version 1.3.0 revises
+    FR-03 to define the minimal availability record, source identity, closed
+    record/requirement status sets, the effective critical profile defaults,
+    fallback clearing, multi-query aggregation, and deterministic reporting.
+    Version 1.4.0 revises SB-01 to define the trusted gate input, the formal
+    decision body, model-proposal separation, the complete blocked-input
+    decision table, fail-closed gate-failure behavior, all formal and
+    intermediate output boundaries, and entry-point coverage. Version 1.5.0
+    revises INV-01 to define the completed checkpoint, artifact binding and
+    per-artifact contract, canonicalization, source-status comparison
+    granularity, legal fallback versus silent substitution, retry and partial-
+    write behavior, and the separate memory decision/settlement lifecycle.
+    Version 1.6.0 revises SR-01 to separate known-secret from versioned pattern
+    checks, define the fixed scan scope and its limits, resolve the preference
+    audit/restore endpoint conflict, add fail-closed failure behavior, preserve
+    existing scrub and .env controls, and add over-redaction controls. Version
+    1.7.0 renumbers the requirement IDs to match their types: FR-01, FR-02, and
+    FR-03 for functional requirements, SB-01 for safety, INV-01 for invariant,
+    and SR-01 for security. No requirement semantics changed in that renumbering.
+    Version 1.8.0 synchronizes the manifest schema with INV-01, SB-01, FR-03, and
+    SR-01; adds completed-state schema constraints; refines cache A/B comparison,
+    canonicalization and hash inputs, memory entry binding, synthetic missing
+    component records, mandatory capability ownership, security incident records,
+    and external manifest timing. Version 1.9.0 adds the gate error stage,
+    separates write-scan from run-scan results, carries critical profile,
+    coverage snapshot, provenance and input hashes in the manifest, links
+    evidence to multiple requirement components, counts HTTP requests, selects
+    review wording by gate reason, fixes the run clock, and defines same-day
+    rerun, memory-disabled, cross-field semantic, and empty query-set rules.
   baseline_ref: "baseline/runs/baseline-20261020-01"
 
 scope:
   approved_ids:
-    - PR-01
-    - QR-01
+    - FR-01
     - FR-02
+    - FR-03
     - SB-01
-    - INV-02
-    - SR-02
+    - INV-01
+    - SR-01
   in_scope:
-    - "Run-scoped reuse of identical data queries and suppression of duplicate external requests."
-    - "A lean run manifest with run identity, sanitized configuration, data-source status, call counts, token usage, duration, and safety-gate results."
-    - "One run-scoped data-availability state and user-visible reporting of critical gaps."
-    - "A deterministic pre-persistence safety gate that returns REVIEW when a configured critical gap exists."
-    - "Consistent source status, fallback provenance, final rating, and final decision across reports, manifest, persisted state, and memory."
-    - "No credentials or sensitive URL parameters in run records."
+    - "Run-scoped single execution of identical logical data queries, with separate retry and fallback budgets and explicit vendor-cache semantics."
+    - "One lifecycle-complete run manifest per run invocation, with identity, sanitized configuration, data-source status, measurement counters, token usage, timing, safety-gate result, artifact hashes, and running/completed/failed states."
+    - "One canonical run-scoped data-availability state with an effective critical profile, closed record and requirement status sets, deterministic aggregation, fallback clearing rules, and separate critical-gap and non-critical-limitation reporting."
+    - "A deterministic fail-closed safety gate over a trusted coverage snapshot that produces a formal decision, keeps the unapproved model proposal separate, handles incomplete or contradictory inputs, and returns REVIEW with a formal manual-review notice when it blocks or fails."
+    - "One bound formal result across report, manifest, final-state, and memory: identical run_id, record_version, decision_digest, gate/formal-decision fields, coverage and gap summary, canonical provenance, and memory lifecycle rules."
+    - "Secret-safe app-controlled run records through separate known-value and versioned-pattern checks, fixed scan scope, audit/restore endpoint rules, fail-closed failure behavior, and over-redaction controls."
   out_of_scope:
     - "Replacing StockTwits with another social vendor; the 403 root cause is not yet established."
     - "A point-in-time company profile sourced from SEC filings; the current filing fields are not proven to be historical vintages."
@@ -41,10 +75,10 @@ scope:
     - "A production LLM response cache; replay caching remains outside D1."
   assumptions:
     - "The system remains a single-user local tool for D1."
-    - "The critical-source set is configuration, not a hard-coded vendor list."
-    - "REVIEW is an acceptable terminal state for a run with critical data gaps."
-    - "The per-run cache is isolated between concurrent runs."
-    - "The manifest is written after the analysis completes and does not block the model calls."
+    - "The effective critical set is generated from documented defaults for asset type, analysis mode, and enabled capabilities, then adjusted only by explicit recorded overrides; it is not left to implementation discretion."
+    - "REVIEW is an acceptable terminal state for a run with critical data gaps or a blocked gate; it is a non-tradeable sentinel, not a sixth five-tier rating."
+    - "The per-run cache is isolated between concurrent runs; existing vendor caches remain cross-run and are recorded as vendor-cache hits."
+    - "A running manifest is written before model calls and atomically finalized after analysis; terminal writing does not block model calls."
     - "The repository analysis and the baseline artifacts are the authoritative source for this document."
 
 stakeholders:
@@ -66,27 +100,302 @@ stakeholders:
 
 definitions:
   data_query_key: >
-    A stable tuple of the vendor method, normalized arguments, analysis date,
-    and requested data window. Two requests with the same key are considered the
-    same query within one run.
+    The stable, normalized identity of a logical data query: method name, asset
+    type, normalized instrument or topic, analysis date, requested window or
+    lookback, method-specific parameters such as indicator, series, frequency,
+    or limit, vendor selector digest, and cache_key_version. Arguments that
+    normalize to the same vendor resource share one key. Retries, fallback
+    vendor attempts, call site, and timing do not change the key.
+  logical_query: >
+    The normalized query identity defined by data_query_key. Two callers with
+    the same key are the same logical query within one run, regardless of which
+    analyst, tool, or prefetch path issued them.
+  query_execution: >
+    One run-scoped attempt to satisfy a logical_query. It owns the retry and
+    vendor fallback chain and produces one cached terminal outcome. It is not
+    the same as an external HTTP request count.
+  vendor_cache: >
+    A pre-existing cross-run cache inside a vendor adapter, such as the Yahoo
+    OHLCV cache or the SEC EDGAR JSON cache. A vendor-cache hit is recorded on a
+    query_execution and is distinct from run-cache reuse.
+  availability_record: >
+    The minimal executed-query availability unit: one run-scoped query_execution
+    identified by data_query_key and record_kind = executed. It records tool,
+    category, capability, component, supports links, requested and observed
+    window, status, reason_code, record_count, ordered attempt results with
+    http_request_count, tried and serving sources, fallback state, cache kind,
+    and provenance. Exactly one executed availability_record exists per
+    data_query_key per run; supports maps the same evidence to every requirement
+    component it satisfies.
+  component_missing_record: >
+    A synthetic record for a critical component that has no query_execution. Its
+    identity is (run_id, requirement_id, capability, component) and record_kind =
+    component_missing. It has data_query_key = null, attempts = [], status =
+    not_attempted, and source = none. Exactly one component_missing_record
+    exists per missing critical component. It participates in coverage, gaps, and
+    summaries but is excluded from query_executions, external_requests,
+    retry_attempts, fallback_attempts, vendor_cache_hits, and run_cache_hits.
+  source: >
+    The stable logical provider identity from the vendor registry, such as Yahoo
+    Finance, SEC EDGAR, FRED, Polymarket, StockTwits, or Reddit. It is not the
+    tool name, category, URL, or endpoint. A record keeps attempted_sources in
+    order and a nullable serving_source; serving_source is set only when that
+    provider returned usable evidence.
+  critical_requirement: >
+    One entry in the effective critical profile: requirement_id, capability,
+    required components, per-component query rule (all, any, or min:N), minimum
+    record count, window and point-in-time rule, fallback policy, and
+    min_successful_components. The profile is derived from asset type, analysis
+    mode, enabled capabilities, and explicit overrides, then recorded for the run.
+  record_status: >
+    Closed set: success, insufficient_evidence, no_data, unavailable, withheld,
+    not_configured, not_attempted, error. success requires the evidence contract,
+    not merely a completed call; insufficient_evidence covers too few records,
+    partial or stale windows, or undated data barred by the point-in-time rule.
+  requirement_status: >
+    Closed set: satisfied, degraded, missing, not_required. satisfied means the
+    component success count meets the requirement rule; degraded means some but
+    not enough; missing means none; not_required means the capability is outside
+    the effective critical profile.
   critical_gap: >
-    A configured critical source whose status is unavailable, not_configured, or
-    withheld for the current run, or whose fallback is also unavailable.
+    A structured record for a critical requirement with requirement_status
+    degraded or missing: requirement_id, capability, requirement_status,
+    gap_reason from the closed set, missing_components, and provenance.
+    critical_gap_ids is the separate ordered list of those requirement IDs.
+    Non-critical gaps are limitations, not critical gaps.
   coverage_status: >
-    Either complete or partial. complete means every configured critical source
-    has status success. partial means at least one configured critical source has
-    a critical gap.
+    Closed set: complete or partial. complete means every critical requirement
+    has requirement_status satisfied. partial means at least one critical
+    requirement is degraded or missing.
+  critical_profile: >
+    The effective critical profile computed once at run start from asset type,
+    analysis mode, enabled capabilities, and recorded overrides. It contains
+    profile_version, profile_source, contract_version, analysis_mode, asset_type,
+    the ordered critical requirements, and profile_hash. Each requirement lists
+    requirement_id, capability, query_rule, min_successful_components,
+    min_record_count, fallback_policy, criticality, and per-component contracts:
+    component, window_rule, min_record_count, point_in_time_rule, and required.
+    It is stored in the manifest and referenced by the coverage_snapshot.
+  inheritance_record: >
+    Resume/inheritance fields in the manifest: inherited, origin_run_id,
+    origin_attempt_id, inherited_counters (separate from current execution
+    counters), inherited_evidence_digest, and snapshot_rebound_from. Inheritance
+    is allowed only for verified checkpoint evidence from the same logical run
+    lineage, never for ordinary cross-run cache reuse.
+  run_clock: >
+    The fixed run clock: as_of_date, now_utc, timezone, clock_source, derived
+    analysis_mode, and mode_source. The mode is computed once at run start from
+    this clock, never from a later call to today. Resume/replay inherits the
+    original clock unless a clock_override is recorded.
+  evidence_requirement_link: >
+    An explicit link from one availability record to one requirement component:
+    requirement_id, capability, component, and criticality. One executed record
+    may support multiple links; its primary link is repeated in the record's
+    top-level requirement_id/capability/component fields. A component_missing
+    record has exactly one link.
+  coverage_snapshot: >
+    Immutable run-scoped snapshot produced only by the availability program from
+    the critical profile, run clock, and actual availability records. It is
+    stored in the manifest and contains run_id, critical_profile_hash,
+    provenance_digest, coverage_status, structured critical_gaps,
+    critical_gap_ids, snapshot_version, snapshot_hash, computed_at, and
+    computed_by = program. critical_profile_hash MUST equal the actual
+    critical_profile.profile_hash. The model never creates or mutates it.
+  input_hash: >
+    SHA-256 over the canonical gate input: the coverage_snapshot hash, the
+    model_proposal canonical fields, and the gate_version. The safety_gate and
+    FinalizedRunRecord carry the same input_hash for one gate evaluation.
+  gate_input: >
+    The trusted input to the gate: one immutable coverage_snapshot, one
+    model_proposal, and the gate_version. Coverage and gaps are read only from
+    the snapshot; the model cannot supply or alter authoritative coverage state.
+  gate_result: >
+    Closed status passed, blocked, or error, plus reason_codes from the closed
+    gate_reason_code set, primary_reason_code selected by the fixed priority
+    order, run_id, coverage_status, critical_gap_ids, profile_version,
+    snapshot_hash, gate_version, input_hash, and evaluated_at.
+  model_proposal: >
+    The model's unapproved output: model rating (five-tier or REVIEW), decision
+    text, and proposal_status = unapproved. It is retained for audit but is not
+    the formal decision.
+  formal_decision: >
+    The deterministic gate output: status approved or blocked_for_review,
+    final_rating, decision_text, and gate_result. When blocked, final_rating is
+    REVIEW and decision_text uses the review_class matched to the primary gate
+    reason; the model proposal is stored separately and marked not approved.
+  gate_reason_code: >
+    Closed set: critical_gap, coverage_gap_mismatch, invalid_coverage_status,
+    missing_gap_list, invalid_gap_type, missing_availability_record,
+    invalid_critical_profile, invalid_model_rating, model_review,
+    missing_gate_input, stale_coverage_snapshot, snapshot_hash_mismatch,
+    gate_internal_error.
+  artifact_binding: >
+    The canonical identity and decision fields every formal artifact exposes in a
+    machine-readable form: run_id, decision_id, record_version, decision_digest,
+    gate_status, formal_decision_status, final_rating, coverage_status,
+    critical_gap_ids, coverage_snapshot_hash, and an optional record_hash.
+    run_id is the invocation identity; decision_id is the content identity used
+    by memory reuse. Artifacts bind to one formal result only when these values
+    match.
+  canonicalization: >
+    Per-field comparison rules. Encoding is UTF-8 with NFC and LF; object keys
+    are sorted; scalar whitespace is trimmed. Arrays with semantic order keep it:
+    attempts and attempted_sources preserve supplier attempt order, artifacts
+    preserve their declared order, and critical_gap_ids are sorted by
+    requirement_id. Run-level generated_at, evaluated_at, and finished_at are
+    excluded from equality and digests. Evidence timestamps in attempts and
+    observed windows are preserved in records and included in full-record
+    comparison and provenance_digest. Absolute local paths and rendered report
+    prose are excluded; the report binding block and required summary are
+    compared.
+  entry_digest: >
+    SHA-256 over the stable decision-content projection: decision_id,
+    trade_date/ticker, and formal decision status/rating/text. It excludes
+    coverage_status, critical_gap_ids, provenance_digest, run_id, source snapshot
+    hash, timestamps, commit_status, and reuse metadata so the same decision can
+    be reused across normal reruns with different evidence.
+  evidence_digest: >
+    SHA-256 over the per-run evidence projection for a memory entry:
+    coverage_status, critical_gap_ids, and provenance_digest. It may differ
+    across two runs with the same decision_id; evidence difference is not entry
+    corruption and does not block reuse.
+  decision_digest: >
+    SHA-256 over the canonical formal decision input: formal_decision.status,
+    final_rating, and decision_text after UTF-8 NFC, LF, and trailing-whitespace
+    trimming. Run-level timestamps, paths, and cache metadata are not inputs.
+  provenance_digest: >
+    SHA-256 over the canonical ordered availability records and fallback
+    provenance, including data_query_key, record_kind, component identity,
+    ordered attempts, attempt source/status/reason_code/record_count,
+    evidence timestamps, tried and serving sources, and criticality. All cache
+    metadata (cache_kind, vendor_cache_hit, run_cache_hit) and run-level
+    generation timestamps are excluded from the digest input. Report and
+    memory carry the digest plus a derived summary; manifest and final-state
+    carry the full canonical records.
+  record_hash: >
+    Optional SHA-256 over the canonical FinalizedRunRecord projection excluding
+    volatile run-level timestamps (including run_clock.now_utc), artifact paths,
+    cache counters, and computed snapshot timestamps. When present, every artifact
+    binding must carry the same value. It is not a hash of the shared memory file.
+  memory_entry_binding: >
+    A binding to one immutable memory decision entry: source_run_id, decision_id,
+    record_version, decision_digest, trade_date/ticker identity, entry_digest,
+    evidence_digest, a commit_status projection, pre-commit entry_version,
+    optional supersedes, and an optional reused_decision_ref. The
+    effective version is the highest entry_version whose source terminal manifest
+    is committed; no post-commit write to an older entry is required. entry_digest
+    covers only stable decision content (decision_id, trade_date/ticker, formal
+    decision fields) and excludes coverage, gaps, provenance, source_run_id,
+    source snapshot hash, timestamps, commit_status, and other run metadata.
+    evidence_digest covers the per-run evidence and may differ without implying
+    entry corruption. The current artifacts keep
+    the current run_id; a reused historical entry is referenced through
+    reused_decision_ref instead of rewriting its source run identity. The shared memory file itself is not hashed.
+    Settlement/reflection and policy-based rotation of resolved entries are
+    legal and do not change the binding; modifying or deleting a decision entry
+    while it is retained is illegal. The manifest memory object records enabled, status, entry_version, entry_binding,
+    entry_digest, evidence_digest, supersedes, reused_decision_ref,
+    retention_status, and same_day_rerun.
+    A memory artifact uses hash_scope = memory_entry, not a whole-file hash.
+  behavior_evaluation_contract: >
+    The frozen D1 behavior-evaluation contract: eval_set_version, rubric_version,
+    fixed model/config/data snapshots, case count, rubric dimensions, pass
+    thresholds, and blocking rules. It must be fixed before any FR-01 live A/B
+    acceptance runs; the frozen files are docs/req/evaluation/behavior-eval-contract-v1.json,
+    eval-set-v1.json, rubric-v1.json, config-v1.json, prompt-v1.0.yaml, and
+    snapshots-v1.json; actual snapshots remain pending capture. Changing them requires a new version and a recorded decision.
+  evaluation_rubric: >
+    Five 0-to-5 dimensions: evidence fidelity, relevance, coverage correctness,
+    safety, and actionability. The rubric records per-case scores and the
+    aggregate mean. Safety and coverage correctness are zero-tolerance; quality
+    thresholds allow only the declared degradation.
+  eval_set_version: >
+    A frozen evaluation set (docs/req/evaluation/eval-set-v1.json) of at least
+    10 ticker/date cases, including the baseline NVDA 2026-10-19 case, with fixed
+    data snapshots, model, configuration, and prompts for every A/B run. Snapshot
+    capture is required before behavioral acceptance. The fixed config, prompt,
+    and snapshot manifest are recorded with SHA-256 digests in the contract.
+  decision_id: >
+    The content identity of a formal decision, stable across same-day reruns
+    when trade_date, ticker, and decision_digest match. run_id remains unique per
+    invocation. Memory reuse is keyed by decision_id, not run_id; a different
+    decision_id for the same trade_date/ticker is a conflict.
+  review_class: >
+    Closed formal-review class derived from gate reason_codes: none,
+    data_insufficient, model_rating_invalid, model_review, gate_system_error,
+    input_invalid, or coverage_inconsistent. It selects the wording of the
+    blocked formal decision so a rating anomaly or system failure is not
+    mislabeled as missing data.
+  artifact_contract: >
+    Per-artifact required content. Report carries the binding plus coverage,
+    critical-gap, fallback, and gate summaries. Manifest and final-state carry
+    the binding plus full availability records and full gate/formal-decision
+    fields. Memory carries the binding plus final rating, formal decision text or
+    digest, coverage and gap summary, and provenance digest.
+  publish_state: >
+    Closed set running, staged, validated, completed, partial, failed. INV-01 is
+    claimed only for completed; partial or failed runs are not formal success and
+    may be retried with the same run_id, record_version, and record_hash.
+  invariant_checkpoint: >
+    The invariant is checked before completed is recorded, after publication on
+    every read of a completed run's formal artifacts, and after any retry or
+    resume. It is not claimed while artifacts are incomplete.
+  secret_value: >
+    A credential value actually configured or used by the run: an API key,
+    access token, bearer token, password, client secret, URL userinfo password,
+    or a sensitive query or header value. Values are collected in memory for the
+    run and are never written to a record.
+  secret_pattern_rule: >
+    A versioned detection rule category for values not known in advance. The
+    fixed minimum categories are provider key formats, generic bearer and JWT
+    formats, URL userinfo, sensitive query parameter names and values, sensitive
+    authorization headers, and password/token assignments. Each rule set carries
+    secret_rule_version, secret_rule_source, and effective_at.
+  scan_scope: >
+    The closed set of app-controlled boundaries: run manifest, final-state,
+    memory decision entry, formal report metadata and content, logs, preferences,
+    error records, gate reasons, availability reasons, and formal API return.
+    Vendor/provider logs, shell history, OS/network captures, and external
+    service logs are out of scope and MUST be named as such.
+  redaction_policy: >
+    Known secret values are removed by exact match; pattern-matched values are
+    redacted or block the record. Redaction replaces only the secret value with
+    a stable marker such as *** and preserves keys, parameter names, structure,
+    status, reason codes, counts, timings, source and vendor names, tickers,
+    dates, model ids, and relative paths. Whole-record or whole-URL removal and
+    indiscriminate long-string redaction are forbidden as over-redaction.
+  secret_scan_result: >
+    The recorded scan outcome: known_secret_match_count,
+    pattern_match_count, redaction_count, scanner_error, rule_version, and the
+    scanned scope. A clean result requires zero known-secret matches, zero
+    unredacted pattern matches, and no scanner error. The result proves only the
+    defined scope, rules, and fixtures, not the absence of unknown credential
+    formats outside them.
+  endpoint_audit_record: >
+    The audit/display endpoint: scheme, host, and path only. Userinfo, query, and
+    fragment are removed.
+  endpoint_restore_record: >
+    The preference restore endpoint: scheme, host, path, allowlisted
+    non-sensitive query parameters, and secret_ref names. Inline sensitive values
+    are forbidden; a sensitive component is resolved from .env or the process
+    environment, and if it cannot be migrated the record marks re_entry_required.
   safety_gate: >
-    Deterministic code that validates the final rating, the coverage status, and
-    the critical-gap list before the final decision is persisted, displayed, or
-    written to memory. The model cannot override the gate result.
+    Deterministic code that consumes the trusted coverage_snapshot and
+    model_proposal, validates coverage, gaps, profile, snapshot provenance,
+    availability records, and model rating, and produces the formal_decision
+    before any formal display, persistence, memory write, manifest, API return,
+    or backtest scoring. It is fail-closed: invalid input or a gate error yields
+    REVIEW with a manual-review notice, and the model cannot override it.
   zero_tolerance: >
     A pass requires exactly zero violations. A single violation fails the
     acceptance criterion; there is no percentage allowance.
   run_manifest: >
-    A machine-readable JSON record for one run, containing run identity,
-    sanitized configuration, source status, call counts, token usage, duration,
-    safety-gate result, and provenance references.
+    The one machine-readable JSON record for a run invocation, written at
+    <results_dir>/<run_id>/run_manifest.json and valid against
+    docs/req/run-manifest-schema.json. It contains schema_version, run
+    identity, parent_run_id, lifecycle status, sanitized configuration
+    allowlist, timing, call and token counters, data-source status,
+    safety-gate result, artifact hashes, and an optional error record.
   sensitive_url_parameter: >
     A URL userinfo component, query parameter, or fragment that can carry a
     credential, token, password, or API key. Sensitive parameters are excluded
@@ -142,13 +451,13 @@ baseline_observations:
     source: "baseline/runs/baseline-20261020-01/data-availability.csv"
     notes: "Counts are per availability row, including tool calls and three sentiment prefetch rows."
   - id: BO-07
-    statement: "Measured duplicate failed calls in the baseline run."
-    value: "FRED=6, ticker news=2, prediction markets=2"
+    statement: "Measured repeated logical queries and locally failed queries in the baseline run."
+    value: "ticker news: 3 logical attempts (1 sentiment prefetch + 2 news-analyst tool calls); FRED: 6 distinct indicators; prediction markets: 2 distinct topics"
     unit: "calls"
     measured: true
     measurement_status: "measured"
-    source: "baseline/runs/baseline-20261020-01/data-availability.csv"
-    notes: "These are observed repeated calls with no new data."
+    source: "baseline/runs/baseline-20261020-01/transcripts/tool-events-clean.jsonl, prefetch-events.jsonl, and data-availability.csv"
+    notes: "Only the three ticker-news attempts share one data_query_key. The six FRED indicators and two prediction-market topics are distinct logical queries; FRED was not configured and prediction markets were withheld for the historical date, so neither made an external request. The baseline therefore does not prove duplicate external requests."
   - id: BO-08
     statement: "Measured structured-output fallback count in the baseline run."
     value: 0
@@ -201,11 +510,19 @@ baseline_observations:
     measurement_status: "not_measured"
     source: "No complete secret scan has been executed"
     notes: "The baseline review did not establish a clean result for every record and preference file."
+  - id: BO-14
+    statement: "Measured concurrent tool starts in the baseline run."
+    value: "8 get_indicators calls, plus macro, prediction-market, and news calls, started within the same second while analysts ran in parallel"
+    unit: "calls"
+    measured: true
+    measurement_status: "measured"
+    source: "baseline/runs/baseline-20261020-01/transcripts/tool-events-clean.jsonl"
+    notes: "Evidence that identical logical queries can overlap in time; the single-flight requirement must be tested with concurrent callers."
 
 requirements:
-  - id: PR-01
-    type: "performance"
-    title: "Reuse identical data queries within one run"
+  - id: FR-01
+    type: "functional"
+    title: "Single execution per identical logical data query within a run"
     priority: "must"
     status: "approved"
     stakeholders: [analyst, trader, operator]
@@ -214,68 +531,139 @@ requirements:
       evidence:
         - path: "TradingAgents/tradingagents/dataflows/router.py"
           locator: "L200 route_to_vendor"
-          description: "Central data-tool dispatcher; no run-scoped result cache is present."
+          description: "Central data-tool dispatcher; no run-scoped query cache or single-flight guard is present."
           source_type: "code"
         - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
-          locator: "L69 ticker-news prefetch"
-          description: "Sentiment prefetch invokes data functions directly and can repeat work."
+          locator: "L66 get_news.func and L69 jev_screen"
+          description: "Sentiment prefetch invokes data functions directly, so its ticker-news query does not pass through an analyst tool call."
           source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/setup.py"
+          locator: "L157-L166 parallel analyst edges"
+          description: "Analysts run concurrently, so identical logical queries can overlap in time."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/vendors/yahoo/ohlcv.py"
+          locator: "L146-L207 load_ohlcv cache"
+          description: "The existing OHLCV vendor cache is cross-run and must remain distinct from the new run cache."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/vendors/sec_edgar.py"
+          locator: "L122-L132 _cached_json"
+          description: "SEC EDGAR also has a cross-run vendor cache with its own TTL."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/transcripts/tool-events-clean.jsonl"
+          locator: "seq 21 and seq 68 get_news rows"
+          description: "Two news-analyst tool calls use the same ticker-news arguments within one run."
+          source_type: "measured_baseline"
+        - path: "baseline/runs/baseline-20261020-01/transcripts/prefetch-events.jsonl"
+          locator: "sentiment_news row"
+          description: "A third ticker-news attempt with the same window is made by the sentiment prefetch."
+          source_type: "measured_baseline"
         - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
           locator: "FRED, ticker-news, and prediction-market rows"
-          description: "Measured repeated failed calls: 6 FRED, 2 ticker news, 2 prediction markets."
+          description: "The six FRED rows are distinct indicators and the two prediction-market rows are distinct topics; both sets failed locally without an external request."
           source_type: "measured_baseline"
     problem: >
-      The baseline performed identical data queries more than once in the same
-      run. Repeated failures consumed tool rounds and provider context without
-      returning new data.
+      The baseline made three logical ticker-news queries with the same key: one
+      sentiment prefetch and two news-analyst tool calls. The six FRED rows and
+      two prediction-market rows were distinct logical queries that failed
+      locally because the source was not configured or withheld for the
+      historical date, so they did not produce duplicate external requests.
+      Repeating the logical work consumes tool rounds and model context, and the
+      existing vendor caches make an external-request count an unreliable
+      acceptance target.
     statement: >
-      Within one analysis run, the system MUST execute at most one external data
-      query per data_query_key. It MUST reuse the first result, including a
-      failure or withheld status, for the remainder of that run. It MUST NOT
-      reuse results across runs.
+      Within one run, the system MUST start at most one query_execution per
+      logical_query. The first query_execution MUST own the retries and vendor
+      fallback chain for that logical query; retries and fallbacks MUST be
+      bounded by separate configured budgets and MUST NOT start another
+      query_execution. Concurrent callers for the same key MUST join the same
+      in-flight execution. When the execution policy reaches a terminal outcome,
+      whether success, no_data, withheld, not_configured, or unavailable/error
+      after the budgets allow no further attempt, that outcome MUST be cached and
+      reused for the remainder of the run with the same status, reason, and
+      provenance. The run cache MUST NOT be shared across runs. Verified
+      checkpoint evidence inheritance under a recorded lineage is a separate
+      recovery mechanism, tagged origin_run_id/inherited and counted in separate
+      inherited counters; it is not ordinary run-cache reuse. Existing vendor
+      caches MAY be shared across runs under their existing TTLs; a vendor-cache
+      hit is a property of one query_execution and MUST be recorded separately
+      from external requests.
     acceptance_criteria:
-      - id: PR-01-AC1
-        input: "A test run requests the same data_query_key three times; the mock vendor returns success on the first call."
-        expected_result: "The mock vendor is called exactly once; the second and third requests return the same payload; duplicate external executions = 0."
-        verification: "Unit test with a mock vendor call counter; assert call count and payload equality."
+      - id: FR-01-AC1
+        input: "An offline fixture in which three callers submit the same data_query_key sequentially within one run; the mock vendor chain succeeds on its first invocation."
+        expected_result: "The logical query is executed exactly once; vendor invocation count = 1; all three callers receive the same payload and provenance; duplicate query_executions for that key = 0."
+        verification: "Unit test with a mock vendor call counter and a shared run-scoped access service; assert vendor call count, payload equality, and query_execution_count = 1."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: PR-01-AC2
-        input: "A test run requests the same data_query_key twice; the first result is unavailable, withheld, or not_configured."
-        expected_result: "The first status and reason are cached; no additional vendor call is made; the same status and reason are returned; duplicate external executions = 0."
-        verification: "Unit test with a mock vendor that returns a status sentinel; assert call count and status equality."
+      - id: FR-01-AC2
+        input: "An offline fixture in which N callers (N at least 3) submit the same data_query_key concurrently before the first execution completes; the mock vendor blocks until released."
+        expected_result: "Exactly one query_execution is started; the other callers wait for and receive its result; vendor invocation count = 1; duplicate concurrent executions = 0."
+        verification: "Concurrency test with a thread barrier and a blocking mock vendor; assert a single vendor call and identical results for every caller."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: PR-01-AC3
-        input: "Two consecutive runs use the same data_query_key and start with empty per-run caches."
-        expected_result: "Each run performs its own external execution; cross-run reuse count = 0."
-        verification: "Integration test with two isolated run contexts; assert two vendor calls and no shared cache state."
+      - id: FR-01-AC3
+        input: "Offline fixtures in which the first execution of a data_query_key reaches a terminal outcome under policy: success with no retry needed; no_data without retry; withheld without retry; not_configured without retry; and unavailable/error only after the retry and fallback budgets allow no further attempt. Each fixture is followed by two later callers with the same key."
+        expected_result: "Every terminal outcome is cached for the run, including success, no_data, withheld, and not_configured when the policy ends without retries. Later callers do not start a new query_execution; returned status and reason are identical; duplicate executions = 0."
+        verification: "Unit test with a mock vendor chain returning each terminal status; assert execution count, status and reason equality, and the recorded retry and fallback counters."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: PR-01-AC4
-        input: "A fixture is executed with PR-01 enabled and disabled; the same vendor responses are injected."
-        expected_result: "Report text, manifest statuses, final rating, and final decision are identical except for cache metadata; semantic diff = 0."
-        verification: "Integration test; canonicalize cache metadata and compare report, manifest, and final-state payloads."
+      - id: FR-01-AC4
+        input: "Run A uses the data_query_key with an empty run cache and a cold vendor cache; Run B repeats the same key with its own empty run cache and the vendor cache warmed by Run A."
+        expected_result: "Each run starts its own query_execution; cross-run run-cache reuse = 0. A warm vendor cache MAY satisfy the execution with external_request_count = 0 and vendor_cache_hit = true; that is not run-cache reuse. Vendor-cache hits and external requests are recorded separately."
+        verification: "Integration test with two isolated run contexts; run once cold and once warm; assert two query_executions, zero run-cache reuse, and the expected vendor_cache_hit and external_request counters."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-    dependencies: [INV-02]
+      - id: FR-01-AC5
+        input: "An offline fixture in which the first vendor in the configured chain is rate-limited or unavailable and a later vendor succeeds; retry and fallback budgets are set to fixed small values."
+        expected_result: "Retry attempts stay within retry_budget and vendor fallbacks stay within fallback_budget; query_executions for the key = 1; retry_attempts, fallback_attempts, external_requests, and query_executions are separate counters; exceeding either budget yields a terminal unavailable outcome without a second query_execution."
+        verification: "Unit test with a scripted mock vendor chain and explicit budgets; assert each counter and the terminal outcome."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC6
+        input: "An offline fixture with a fixed model replay or stub and the same injected vendor responses is executed once with FR-01 enabled and once disabled."
+        expected_result: "The business conclusions are identical between the enabled and disabled runs: coverage_status, requirement_status, critical_gaps, final rating, and final decision under fixed replay. Execution metadata is expected to differ and is compared separately: query_executions, external_requests, vendor_cache_hits, run_cache_hits, retry_attempts, fallback_attempts, payload identity, and latency. Business-conclusion diff = 0; execution-metadata differences are recorded, not required to be zero."
+        verification: "Deterministic model replay or stub; compare the canonical business-conclusion fields for equality and compare the execution-metadata fields in a separate report; assert no business-conclusion differences."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-01-AC7
+        input: "A live A/B experiment on eval_set_version = d1-eval-v1 (at least 10 fixed ticker/date cases, including NVDA 2026-10-19), with identical model, configuration, prompts, and data snapshots, and with FR-01 enabled and disabled. The frozen behavior_evaluation_contract and evaluation_rubric are used."
+        expected_result: "Deterministic fixed-replay fixtures are zero-tolerance: unsafe_output_escape_count = 0, critical-gap outcomes unchanged, and gate REVIEW outcomes unchanged for identical inputs/coverage. Live model sampling is evaluated separately: mean rubric score drop at most 0.5, no single case drop over 1.0, and live REVIEW-rate increase at most 10 percentage points. Any breach of the matching rule fails acceptance. Exact text equality is not required. Rubric, eval-set version, per-case scores, and deltas are recorded."
+        verification: "Validate docs/req/evaluation/behavior-eval-contract-v1.json, eval-set-v1.json, rubric-v1.json, config-v1.json, prompt-v1.0.yaml, and snapshots-v1.json; capture every case snapshot; run live A/B with the frozen set and rubric; record per-case and aggregate scores, safety escapes, coverage changes, REVIEW rate, latency, token, and cost; fail on any threshold breach."
+        zero_tolerance: false
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: []
+    constraint_relations: [INV-01]
     conflicts:
-      - "Data freshness: a cached success could hide an intra-run update. Resolution: the cache is scoped to one run and the key includes the requested window and analysis date."
-      - "Cache metadata could change report output. Resolution: cache metadata is recorded only in the manifest, not in the user-facing decision text."
+      - "Data freshness: a cached success could hide an intra-run update. Resolution: the run cache is scoped to one run and the key includes the requested window and analysis date."
+      - "Vendor caches already exist across runs, so an external-request count would misjudge normal behavior. Resolution: the run cache is per-run and never shared; vendor-cache hits are allowed, counted separately, and are not run-cache reuse."
+      - "Cache metadata could change report output. Resolution: cache metadata is recorded in run records, not in the user-facing decision text."
+      - "Retries and vendor fallbacks would look like duplicate queries. Resolution: they are bounded by separate budgets inside one query_execution and are counted separately."
+      - "Concurrent callers could each start the query. Resolution: single-flight joins them to one in-flight execution."
     assumptions:
-      - "A normalization function produces a stable key for ticker, dates, lookback, indicator, and vendor method."
-      - "Concurrent runs do not share in-memory caches."
+      - "A normalization function produces a stable data_query_key for method, asset type, normalized instrument or topic, analysis date, requested window or lookback, method-specific parameters, vendor selector digest, and cache_key_version."
+      - "Arguments that resolve to the same vendor resource, such as indicator aliases, share one data_query_key."
+      - "Retry and fallback budgets are configuration values with documented defaults."
+      - "fallback_budget bounds vendor attempts within the configured chain; retry_budget bounds per-vendor retries; the two counters are independent."
+      - "The run cache is isolated between concurrent runs; verified checkpoint evidence inheritance is allowed only under a recorded lineage and separate inherited counters; ordinary cross-run cache reuse is forbidden. Existing vendor caches remain cross-run and are recorded as vendor-cache hits."
+      - "Terminal outcomes are cached when the execution policy reaches them; success, no_data, withheld, and not_configured may be terminal without retry, while unavailable/error is terminal only after the budgets allow no further attempt."
+      - "Business-conclusion fields and execution-metadata fields are compared separately; cache and execution metadata are not required to match across cache-enabled and cache-disabled runs."
     notes: >
-      The baseline establishes the duplicate-call problem. The latency and token
-      savings of PR-01 have not yet been measured.
+      FR-01 v1.1.0 limits logical query executions, not external HTTP requests.
+      The baseline proves one repeated logical ticker-news query across the
+      sentiment prefetch and news-analyst tool calls. It does not prove
+      duplicate external requests for FRED or prediction markets: those rows are
+      distinct logical queries that failed locally. Performance, token, and cost
+      effects are measured separately and are not part of this requirement.
 
-  - id: QR-01
-    type: "quality"
-    title: "Emit a lean run manifest"
+  - id: FR-02
+    type: "functional"
+    title: "Emit one lifecycle-complete run manifest"
     priority: "must"
     status: "approved"
     stakeholders: [reviewer, operator, analyst]
@@ -283,73 +671,174 @@ requirements:
       origin: "Repository analysis and measured baseline"
       evidence:
         - path: "TradingAgents/cli/stats_handler.py"
-          locator: "L10 StatsCallbackHandler"
-          description: "The callback counts LLM calls, tool calls, and token usage but does not persist them."
+          locator: "L9 StatsCallbackHandler"
+          description: "The callback counts LLM calls, tool calls, and token usage but does not persist them, measure duration, or expose prefetch/reflection counts."
           source_type: "code"
         - path: "TradingAgents/cli/run.py"
-          locator: "L135 results directory and L139 message_tool.log"
-          description: "The CLI writes reports and a tool-call log but no machine-readable run manifest."
+          locator: "L135-L140 results directory and message_tool.log"
+          description: "The CLI writes reports and a tool-call log but no machine-readable run manifest or lifecycle record."
           source_type: "code"
         - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-          locator: "L255 run_settings"
-          description: "An allowlisted settings view exists and excludes keys and endpoints."
+          locator: "L167-L181 propagate and L372-L401 _run_graph"
+          description: "The graph lifecycle has a start and completion path but no startup or terminal manifest writer."
           source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L255-L275 run_settings"
+          description: "An allowlisted settings view exists and excludes keys, endpoints, and local paths."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+          locator: "L308-L335 _memory_step"
+          description: "Settlement and reflection run during the analysis and can make LLM calls that must be attributed by the counters."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/memory/reflection.py"
+          locator: "L63 invoke"
+          description: "The Reflector uses the quick-thinking LLM, so reflection calls are observable by the same callback boundary."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/metrics.json"
+          locator: "inner counters and llm_usage_missing"
+          description: "The baseline metrics were collected by an external wrapper and include llm_calls, tool_calls, tokens, prefetch_event_count, retry_events, and llm_usage_missing."
+          source_type: "measured_baseline"
+        - path: "baseline/runs/baseline-20261020-01/run-manifest.json"
+          locator: "all fields"
+          description: "The baseline manifest is an external collection artifact with a different shape; it has no run_status lifecycle, safety_gate_result, or artifact hashes."
+          source_type: "measured_baseline"
         - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
           locator: "file size"
           description: "The baseline stderr log is empty; vendor warnings were not visible without an external logging wrapper."
           source_type: "measured_baseline"
     problem: >
       The baseline produced reports and a tool-call log but no native,
-      machine-readable run record. The run metrics were collected by an external
-      wrapper, and default vendor warnings were not visible in stderr.
+      machine-readable run record. The run metrics and manifest were collected
+      by an external wrapper, not by the product, and the external manifest does
+      not record lifecycle state, a schema version, sanitized configuration,
+      artifact hashes, or a terminal failure record. The callback counts also do
+      not distinguish prefetch, reflection, retry, fallback, or missing token
+      usage, and the baseline contract does not say which calls are included.
     statement: >
-      Every analysis run MUST write one run_manifest JSON file containing run
-      identity, sanitized configuration, data-source status, LLM and tool call
-      counts, input and output token usage, duration, and the safety-gate
-      result. The manifest MUST be valid against the documented manifest schema.
+      Each run invocation MUST create exactly one manifest at
+      <results_dir>/<run_id>/run_manifest.json. The manifest MUST validate
+      against docs/req/run-manifest-schema.json and MUST carry schema_version,
+      run_id, parent_run_id, run_status, artifact_binding, formal_decision,
+      critical_profile, coverage_snapshot, provenance_digest, safety-gate input_hash,
+      run_clock, inheritance record, audit-only model_proposal, security scan results, memory entry binding, run identity,
+      sanitized configuration allowlist, timing, call and token counters, full
+      availability records with data_query_key, supports links, ordered attempts,
+      and http_request_count, safety-gate result, and artifact hashes. The
+      availability-record structure MUST be the same contract used by FR-03;
+      manifest and final-state MUST be able to carry the full record set.
+      completed requires a passed or blocked safety gate, clean or redacted
+      per-write and run-level security scans with zero known-secret and
+      unredacted pattern matches, a non-pending formal decision, and report,
+      final-state, and memory-entry artifacts when memory is enabled.
+      Before any model call, the system MUST atomically write a running manifest.
+      On normal completion or a handled failure, it MUST atomically replace it
+      with a completed or failed manifest. A run invocation has a unique run_id;
+      a checkpoint resume is a new invocation with parent_run_id set to the
+      interrupted run_id. If the process is forcibly terminated (SIGKILL, OOM,
+      or power loss), only the last successfully written running manifest is
+      guaranteed; no terminal manifest is guaranteed. The manifest MUST NOT
+      contain credentials, endpoints, or local absolute paths.
     acceptance_criteria:
-      - id: QR-01-AC1
-        input: "A complete analysis run using the approved D1 configuration."
-        expected_result: "Exactly one run_manifest file is written; it validates against the manifest schema; manifest count = 1 per run."
-        verification: "Integration test; check file existence and validate the JSON against the manifest schema."
+      - id: FR-02-AC1
+        input: "A complete analysis run using the approved D1 configuration; the graph and persistence succeed."
+        expected_result: "Exactly one schema-valid manifest exists at <results_dir>/<run_id>/run_manifest.json; run_status = completed; run_id, ticker, analysis_date, and asset_type match the run context and the final-state run_id; duplicate manifests for the run_id = 0."
+        verification: "Integration test; enumerate manifest files, validate the JSON against run-manifest-schema.json, and compare path and identity fields with the run context and final-state."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: QR-01-AC2
-        input: "A completed run manifest."
-        expected_result: "The manifest contains run_id, sanitized config, data_source_status, llm_call_count, tool_call_count, tokens_in, tokens_out, duration_seconds, and safety_gate_result; missing required fields = 0."
-        verification: "Schema validation and field-presence assertions."
+      - id: FR-02-AC2
+        input: "A run in which the graph raises a handled exception after the running manifest is written, or persistence fails after analysis completes."
+        expected_result: "The same manifest path is atomically replaced with run_status = failed; error.stage, error.type, and sanitized error.message are present; finished_at and durations are non-null; partial counts are retained; the manifest is schema-valid; duplicate manifests = 0."
+        verification: "Failure-injection integration test at analysis and persistence stages; assert the terminal record, error fields, timing, and schema validity."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: QR-01-AC3
-        input: "A completed run with callback counts and a final report."
-        expected_result: "Manifest call counts and token totals match the callback totals; source-status entries match data-availability rows; mismatches = 0."
-        verification: "Integration test; reconcile manifest values against callback counters and availability records."
+      - id: FR-02-AC3
+        input: "A run terminated by SIGKILL or an equivalent abrupt process stop after the running manifest is written and before completion."
+        expected_result: "The last successfully written manifest remains run_status = running and schema-valid; no completed or failed manifest is required; no corrupt or partial file exists at the final manifest path; run_id and identity match the started run."
+        verification: "Subprocess test that kills the process during analysis; read and validate the manifest path; assert running status, identity, and absence of corruption."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: QR-01-AC4
-        input: "Five runs in the same environment, each writing a manifest."
-        expected_result: "Manifest-writing overhead is at most 1 second per run; measured overhead is recorded in the validation report."
-        verification: "Benchmark with monotonic timing around the manifest write; report median and maximum."
+      - id: FR-02-AC4
+        input: "Two run invocations in the same results directory, one of which is a checkpoint resume of an interrupted invocation."
+        expected_result: "Each invocation has a unique run_id and exactly one manifest; the resume records parent_run_id and does not overwrite the interrupted run's manifest; the run_id in the manifest equals its directory name and the final-state run_id; duplicate, orphaned, or mismatched manifests = 0."
+        verification: "Integration test with two run contexts and a resumed checkpoint; enumerate manifests and assert identity, path, parent linkage, and uniqueness."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC5
+        input: "A completed manifest produced by a run."
+        expected_result: "The manifest validates against run-manifest-schema.json; schema_version = 1.0; artifact_binding, formal_decision, audit-only model_proposal and proposal_digest, critical_profile, coverage_snapshot, provenance_digest, run_clock, inheritance record, security (write and run scans), memory entry binding, counts, tokens, timing, and data_source_status are present with the declared types, units, enums, and nullability; each data_source_status record carries data_query_key, supports links, ordered attempts with http_request_count, tried and serving sources, status, reason_code, record_count, and provenance; config contains only the allowlisted fields and no key, endpoint, or local path; validation errors = 0."
+        verification: "Schema validation plus a sanitizer scan of config and artifact paths; compare required fields with the schema contract."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC6
+        input: "A deterministic fixture with known LLM calls, including one structured-output retry and one reflection call; known tool calls, including one failed tool call; three prefetch data calls; one vendor retry; and one vendor fallback."
+        expected_result: "Manifest llm_calls equals the fixture ground truth and the independent callback count; tool_calls excludes prefetch; prefetch_calls = 3; reflection_llm_calls is a counted subset of llm_calls; retry_attempts and fallback_attempts match the fixture and are not merged into llm_calls, tool_calls, or query_executions; mismatches = 0."
+        verification: "Deterministic fixture with instrumented mock LLM and vendors; compare manifest counters against fixture ground truth and an independent event log, not only against the callback totals."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC7
+        input: "Three fixtures: every LLM call reports usage; half report usage; no call reports usage."
+        expected_result: "tokens.status is complete, partial, and unavailable respectively; complete requires non-null input, output, and total tokens; partial stores the sum of known calls with correct with-usage and without-usage counts; unavailable stores null tokens and never synthetic zeros; llm_calls_with_usage + llm_calls_without_usage = llm_calls; mismatches = 0."
+        verification: "Unit and integration tests with mock LLM responses that include, omit, or partially omit usage_metadata."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC8
+        input: "Twenty pairs (40 runs total) of one-ticker, one-round runs on the fixed fixture: manifest-enabled and no-op-writer runs alternate order with the same model, config, and fixture; payload size at most 256 KiB. End-to-end duration is measured externally from process start to the return of the final manifest replace."
+        expected_result: "manifest_write_seconds is measured by the publisher from serialization start to temp-file flush/fsync before the final atomic replace, so it is known before the terminal file is written; duration_seconds equals startup_manifest_write_seconds + analysis_seconds + publish_seconds within 50 ms, where publish_seconds ends before the terminal manifest replace and no timing field depends on its own final value. External paired process duration includes the replace and is used for the overhead comparison. p95 is nearest-rank over the 20 per-pair deltas (sort ascending; rank = ceiling(0.95 x N)). Startup and terminal manifest write p95 at most 100 ms; end-to-end overhead p95 at most 1% and at most 1 second; report N, pairing order, p50/p95/max, payload size, and environment; thresholds are provisional."
+        verification: "External paired benchmark with monotonic phase timing and nearest-rank p95; report pairing order, per-pair deltas, p50/p95/max, payload size, and environment."
         zero_tolerance: false
         measurement_status: "not_measured"
         threshold_status: "provisional"
-    dependencies: [PR-01, FR-02, SB-01, SR-02]
+      - id: FR-02-AC9
+        input: "A run in which the final manifest write fails (simulated ENOSPC or EACCES), or the manifest fails schema validation before publication."
+        expected_result: "The run reports failure to its caller and does not claim completed; no incomplete or corrupt manifest is left at the final path; the last valid running manifest remains schema-valid; a retry can write a complete manifest; silent success = 0."
+        verification: "Failure-injection test monkeypatching the atomic writer and schema validator; assert error propagation, final-path integrity, and retry success."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-02-AC10
+        input: "Independent completed-status negative fixtures: safety_gate.status = not_run; safety_gate.status = error; security run scan = failed; known_secret_match_count > 0; artifact_binding.decision_digest = null; formal_decision.status = pending; report artifact missing; final-state artifact missing; memory-entry artifact missing when memory is enabled. Cross-field semantic contradictions: binding.gate_status differs from safety_gate.status; binding.formal_decision_status differs from formal_decision.status; binding.final_rating differs from formal_decision.final_rating; binding.critical_gap_ids differs from safety_gate.critical_gap_ids; binding.coverage_status differs from coverage_snapshot.coverage_status; binding.coverage_snapshot_hash differs from safety_gate.snapshot_hash; binding.run_id differs from run_id; coverage_snapshot.provenance_digest differs from provenance_digest; safety_gate.input_hash differs from the canonical model-proposal gate-input hash."
+        expected_result: "Each fixture is rejected by the completed-state schema condition or the cross-field semantic completion check and cannot remain run_status = completed. No false completed record is accepted; mismatches = 0."
+        verification: "Schema validation plus a semantic completed-record validator; assert rejection for every independent counterexample."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: [FR-01, FR-03]
+    constraint_relations: [SB-01, SR-01, INV-01]
     conflicts:
-      - "A detailed manifest conflicts with the lean D1 scope. Resolution: record counts and statuses, not full prompts or raw tool bodies."
-      - "Manifest overhead could increase latency. Resolution: write the manifest after the analysis and keep the payload bounded."
+      - "A detailed manifest conflicts with the lean D1 scope. Resolution: record counters, statuses, hashes, and the config allowlist, not full prompts or raw tool bodies."
+      - "A startup record adds work before model calls. Resolution: keep the running record bounded and measure the write separately from the terminal record."
+      - "A terminal record conflicts with forced termination. Resolution: guarantee only the last running record after SIGKILL, OOM, or power loss; handled failures write a failed record."
+      - "Callback totals prove transcription but not accuracy. Resolution: reconcile against fixture ground truth and an independent event log."
+      - "Missing token usage can look like zero usage. Resolution: use complete, partial, and unavailable statuses with null values and usage-coverage counts."
+      - "Writing after analysis hides end-to-end overhead. Resolution: measure analysis, publish, and manifest write separately, and compare enabled versus disabled end-to-end duration."
     assumptions:
-      - "A manifest JSON schema will be versioned with the requirements registry."
+      - "The manifest schema is versioned and stored at docs/req/run-manifest-schema.json."
+      - "run_id is unique per run invocation and is safe as a path component; a resume uses a new invocation with parent_run_id."
+      - "The manifest path is <results_dir>/<run_id>/run_manifest.json."
+      - "llm_calls counts every model invocation observed by the run callback boundary, including structured-output retries, provider-level retries visible to the boundary, and reflection/settlement calls; reflection_llm_calls is a subset."
+      - "tool_calls counts analyst tool callbacks, including failed tool calls; prefetch_calls counts direct data calls outside tool callbacks."
+      - "retry_attempts and fallback_attempts are vendor-boundary counters and are not merged into llm_calls, tool_calls, or query_executions."
+      - "A missing token usage value is stored as null with tokens.status partial or unavailable; zeros are never synthesized."
+      - "timing.duration_seconds runs from started_at before the startup manifest write through the terminal manifest write; analysis_seconds starts after the startup write, and publish_seconds covers publication plus the terminal manifest write."
+      - "Manifest publication uses schema validation and an atomic temp-file plus replace; a failed write is surfaced to the caller."
+      - "Internal publish staging files are not additional run manifests; exactly one run manifest is exposed at the run path."
       - "Manifest retention is outside D1; the manifest is written to the run's results directory."
     notes: >
-      QR-01 is the lean D1 version. It does not require raw tool-output retention
-      or per-agent token attribution.
+      FR-02 is the lean D1 version. It does not require raw tool-output retention
+      or per-agent token attribution. The external baseline manifest is evidence
+      of the problem only; it does not satisfy this lifecycle, schema, counter,
+      or integrity contract.
 
-  - id: FR-02
+  - id: FR-03
     type: "functional"
-    title: "Maintain one data-availability state and show critical gaps"
+    title: "Maintain one canonical data-availability state with a closed critical-gap decision table"
     priority: "must"
     status: "approved"
     stakeholders: [analyst, trader, reviewer]
@@ -361,65 +850,170 @@ requirements:
           description: "The graph state has report fields and debate state but no unified data-availability field."
           source_type: "code"
         - path: "TradingAgents/tradingagents/dataflows/router.py"
-          locator: "L200 route_to_vendor"
-          description: "The router produces success, unavailable, not-configured, and no-data outcomes that are not accumulated into one state."
+          locator: "L200 route_to_vendor and L237-L295 fallback outcomes"
+          description: "The router produces success, unavailable, not-configured, no-data, and fallback outcomes that are not accumulated into one state."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/errors.py"
+          locator: "L1-L55 vendor error taxonomy"
+          description: "NoMarketDataError, VendorUnavailableError, and VendorNotConfiguredError are distinct behaviors; empty and stale data share one error type with only a free-text detail."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/dataflows/date_window.py"
+          locator: "L67-L190 coverage_gap and withhold rules"
+          description: "Coverage gaps, live-only withholding, and point-in-time rules are decided per call, not aggregated into a run state."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+          locator: "L66-L76 prefetch calls"
+          description: "The social analyst prefetches three sources directly; failures become placeholder strings with no structured status."
           source_type: "code"
         - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
           locator: "all rows"
-          description: "The baseline has 20 success, 4 withheld, 6 not_configured, and 4 unavailable rows."
+          description: "The baseline has 20 success, 4 withheld, 6 not_configured, and 4 unavailable rows; it has no per-requirement aggregation or effective critical profile."
           source_type: "measured_baseline"
     problem: >
       The baseline did not maintain one shared view of source availability.
-      Different agents rediscovered the same gaps, and the final decision did not
-      receive a single canonical list of missing critical sources.
+      Different agents rediscovered the same gaps, the final decision did not
+      receive a single canonical list of missing critical data, and the baseline
+      CSV had no definition of the minimal record, source identity, success
+      threshold, fallback clearing rule, effective critical set, or multi-query
+      aggregation. A successful vendor call was not distinguished from data that
+      actually satisfied the evidence contract.
     statement: >
-      Each run MUST maintain one run-scoped data_availability state. For every
-      data source, the state MUST record source name, status, reason, requested
-      window, and record count. The user-facing report MUST show every configured
-      critical gap. The final decision MUST consume the same state.
+      Each run MUST compute one immutable effective critical profile from asset
+      type, analysis mode, enabled capabilities, and explicit overrides, and MUST
+      record it together with the fixed run_clock. It MUST maintain one canonical
+      run-scoped data_availability state. The executed-query unit is one availability_record per logical query
+      execution (the FR-01 data_query_key), with record_kind = executed and keyed
+      by tool, category, capability, component, supports links, requested and
+      observed window, source, status, reason_code, record_count, ordered
+      attempts with http_request_count, fallback/provenance, and cache kind. A
+      critical component with no
+      query_execution MUST be modeled separately as one component_missing_record
+      with record_kind = component_missing; it has no data_query_key or attempts
+      and is excluded from execution counters. Record status MUST be
+      one of success, insufficient_evidence, no_data, unavailable, withheld,
+      not_configured, not_attempted, or error; success requires the evidence
+      contract, not merely a completed call. Records MUST aggregate
+      deterministically into component, requirement, category, and run status
+      using the closed requirement statuses satisfied, degraded, missing, and
+      not_required. coverage_status MUST be complete if and only if every
+      critical requirement is satisfied, otherwise partial. critical_gaps MUST
+      contain exactly the degraded or missing critical requirements with a closed
+      gap_reason. A fallback clears a gap only when it meets the same capability,
+      component, instrument, requested window, as-of date, point-in-time rule,
+      minimum-record count, and provenance contract; otherwise the gap remains.
+      Non-critical gaps MUST be recorded and shown as limitations without
+      affecting coverage_status or critical_gaps. The report, manifest, safety
+      gate, and final decision MUST consume the same canonical state. The state
+      MUST be deterministic under query reordering, concurrency, cache variation,
+      and report language.
     acceptance_criteria:
-      - id: FR-02-AC1
-        input: "A fixture in which one configured critical source returns unavailable and the remaining critical sources return success."
-        expected_result: "data_availability contains the failed source with status unavailable and a non-empty reason; report contains the same source and reason; mismatches = 0."
-        verification: "Integration test; assert the state, report, and availability record."
+      - id: FR-03-AC1
+        input: "A fixed fixture with a closed set of records: success meeting the evidence contract; insufficient_evidence from too few records, a partial window, or stale data; no_data; unavailable; withheld; not_configured; not_attempted; and error; all mapped to one fixed critical profile."
+        expected_result: "Every record status is in the closed set; success is assigned only when the evidence contract is met; insufficient_evidence is never treated as success; component, requirement, coverage, and critical-gap outputs match the decision table exactly; mismatches = 0."
+        verification: "Unit test with a table-driven fixture and an expected component/requirement/coverage/gap table; assert every status and aggregate."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: FR-02-AC2
-        input: "A fixture with one critical gap and two non-critical successes."
-        expected_result: "coverage_status = partial; critical_gaps contains exactly one entry; report contains a Data availability section; missing critical-gap entries = 0."
-        verification: "Integration test; assert coverage status, list length, and report section."
+      - id: FR-03-AC2
+        input: "A fixed fixture with multiple logical queries: two tools served by Yahoo Finance, one by SEC EDGAR, one by FRED, one fallback chain, and repeated/parallel variants of the same component."
+        expected_result: "Exactly one executed availability_record exists per data_query_key; component_missing records are separate and have no data_query_key; each executed record carries one or more supports links and each component_missing record carries exactly one; source is the provider identity, not the tool, category, URL, or endpoint; ordered attempts, http_request_count, tried and serving sources, fallback_used, and provenance are correct; aggregation to component, requirement, category, and run follows the supports mapping; mismatches = 0."
+        verification: "Unit and integration test with instrumented mock vendors; assert record identity, source identity, and each aggregation level."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: FR-02-AC3
-        input: "A fixture in which all configured critical sources return success."
-        expected_result: "coverage_status = complete; critical_gaps length = 0; report does not claim a gap."
-        verification: "Integration test; assert coverage status and empty gap list."
+      - id: FR-03-AC3
+        input: "Four fixed runs: stock with a current-date analysis date; stock with a historical analysis date; crypto with a current-date analysis date; stock with the news and social analysts disabled. A fifth run uses an explicit profile override."
+        expected_result: "The run_clock fixes as_of_date, now_utc, timezone, clock_source, analysis_mode, and mode_source; mode is not recomputed from a later today. The effective critical profile equals the default table: market_price is mandatory in every profile and is fetched by the deterministic preflight; stock financial_statements is mandatory in every mode, independent of fundamentals-analyst selection, and is fetched by the deterministic preflight using the versioned annual-plus-latest-quarter as-filed contract; crypto has no financial_statements requirement; current-date stock and crypto add ticker_news when the news analyst is enabled; current-date social_sentiment when the social analyst is enabled uses sentiment_stocktwits and sentiment_reddit with at least one successful component, while sentiment_news is optional context; historical mode excludes live-only social_sentiment, prediction_markets, company_profile, and insider_transactions from the critical set; other disabled analyst capabilities are not required; the override is recorded with profile_source = override; profile_version and profile_source are present; mismatches = 0."
+        verification: "Table-driven unit tests over asset type, mode, analyst selection, and override; assert the exact effective critical requirement IDs and flags."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: FR-02-AC4
-        input: "A run with a custom critical-source configuration that excludes the failing source."
-        expected_result: "The excluded source is recorded with its status but is not listed in critical_gaps; coverage_status follows the configured set; configuration mismatch = 0."
-        verification: "Unit test with two configurations; assert gap membership."
+      - id: FR-03-AC4
+        input: "Fallback fixtures: primary fails and a same-contract fallback succeeds; fallback succeeds with fewer records or a different window; global news attempts to clear ticker news; an undated Yahoo statement attempts to clear an SEC financial statement."
+        expected_result: "A same-contract fallback satisfies the requirement with fallback_used = true and no critical gap; a partial or different-contract fallback leaves the requirement degraded with gap_reason fallback_partial or insufficient_evidence; global news does not clear ticker news; undated Yahoo statements do not clear financial_statements; mismatches = 0."
+        verification: "Unit tests with scripted fallback chains and per-component evidence contracts; assert requirement status, gap_reason, and provenance."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-    dependencies: [INV-02]
+      - id: FR-03-AC5
+        input: "A fixed profile with financial_statements (income, balance, cashflow; all required) and social_sentiment (sentiment_stocktwits and sentiment_reddit; at least one successful), with multiple records per component, repeated logical queries, and concurrent execution."
+        expected_result: "Each component status follows its all, any, or min:N rule; requirement status is satisfied, degraded, or missing exactly as the decision table predicts; coverage_status matches; shuffling record order and running queries concurrently does not change any component, requirement, or run result; mismatches = 0."
+        verification: "Table-driven unit and concurrency tests with shuffled and parallel record insertion; assert deterministic aggregation."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-03-AC6
+        input: "Two fixtures: one with one critical gap and two non-critical gaps; one with every critical requirement satisfied but the same two non-critical gaps."
+        expected_result: "The report contains a Data availability section listing every critical gap with requirement_id, capability, requirement_status, gap_reason, missing components, and provenance; non-critical gaps appear in a separate Data limitations section and never in critical_gaps; in the second fixture coverage_status = complete and the non-critical gaps are still visible; missing or hidden non-critical gaps = 0."
+        verification: "Integration test; diff the report sections and assert critical_gaps and coverage_status."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-03-AC7
+        input: "A fixed profile containing a critical capability that is never queried, plus a capability excluded from criticality that is queried and fails."
+        expected_result: "The never-queried critical component produces exactly one component_missing_record with identity (run_id, requirement_id, capability, component), record_kind = component_missing, data_query_key = null, attempts = [], one supports link, status = not_attempted, and source = none; it produces a critical gap with gap_reason not_attempted and is excluded from query_executions, external_requests, retry_attempts, fallback_attempts, vendor_cache_hits, and run_cache_hits. The excluded capability is recorded as non-critical or not_required, appears in Data limitations if it failed, and does not appear in critical_gaps or change coverage_status; mismatches = 0."
+        verification: "Integration test with mocked tool calls; assert synthetic records, criticality, gap membership, and coverage status."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-03-AC8
+        input: "The same fixed business fixture replayed with shuffled query order, concurrent queries, warm and cold caches, and two report languages; report, manifest, safety-gate input, and memory are inspected as consumers."
+        expected_result: "Business conclusions are identical: effective critical profile, component and requirement statuses, coverage_status, critical_gap_ids and gap_reasons, final rating and final decision under fixed replay, plus language-independent binding and summary fields. Execution metadata may differ and is reported separately: query execution order, attempt timestamps, cache hits, external/http request counts, retry/fallback counts, and latency. Rendered prose and report language are excluded from equality; business-conclusion mismatches = 0."
+        verification: "Deterministic replay and concurrency test plus a consumer audit; compare business conclusions and language-independent summaries for equality, and report execution metadata separately."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-03-AC9
+        input: "A fixture with one critical gap and a model-produced tradeable rating, where the report, manifest, safety gate, and memory are all produced."
+        expected_result: "The final decision receives the same canonical data_availability state; the critical gap and coverage_status are identical in report, manifest, gate input, and memory; no consumer re-derives a different gap list; mismatches = 0. The gate's REVIEW consequence is verified by SB-01, not by this criterion."
+        verification: "End-to-end integration test; capture the canonical state and assert every consumer's gap and coverage fields against it."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: FR-03-AC10
+        input: "Independent component fixtures for query_rule all with a non-empty query set, any with a non-empty set, min:N with N within range, all with an empty set, any with an empty set, min:N with N = 0, min:N with N greater than the query-set size, a valid profile whose required component has no query execution, and an invalid profile with a required component absent from the profile."
+        expected_result: "For a non-empty query set, all requires every query success, any requires at least one success, and min:N requires at least N successes; an empty set with all or any is missing when required and not_required when optional. A valid profile with a required component that has no query execution produces exactly one component_missing_record with status not_attempted. An invalid profile with a missing required component, N = 0, or N greater than the query-set size produces invalid_critical_profile before analysis and blocks; it does not produce component_missing. The two cases are mutually exclusive and every case follows the complete aggregation table; mismatches = 0."
+        verification: "Table-driven unit tests over query-set cardinality and thresholds; assert component, requirement, and coverage results for every case."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: [FR-01]
+    constraint_relations: [SB-01, INV-01, FR-02]
     conflicts:
-      - "Showing every gap makes reports longer. Resolution: report summary plus manifest detail."
-      - "A configurable critical set can change the decision gate. Resolution: the active critical set is recorded in the manifest."
+      - "Showing every gap makes reports longer. Resolution: a Data availability section for critical gaps and a separate Data limitations section for non-critical gaps."
+      - "A configurable critical set can change the decision gate. Resolution: the effective profile is derived from fixed defaults, mandatory market_price, and recorded overrides."
+      - "A completed vendor call can look successful while returning unusable data. Resolution: success requires the evidence contract; insufficient_evidence is a separate status."
+      - "Fallback can silently substitute a weaker source. Resolution: a fallback clears a gap only under the same capability, window, point-in-time, and minimum-record contract."
+      - "Multiple queries for one capability can disagree. Resolution: component, requirement, and run aggregation follow fixed all, any, min:N, and min_successful_components rules."
+      - "Live-only data cannot be served point-in-time. Resolution: historical mode excludes live-only capabilities from the default critical set and reports them as limitations."
     assumptions:
-      - "The critical-source set is provided by configuration."
-      - "The default critical-source set will be confirmed before implementation."
+      - "Effective critical profile defaults use profile_version d1-default-v1. analysis_mode is historical when the analysis date is before today (is_historical), otherwise current_date."
+      - "market_price is mandatory for every run and cannot be removed by configuration. It requires one successful get_stock_data component with at least one record and the requested window."
+      - "For stock only, financial_statements is critical in every mode, independent of fundamentals-analyst selection, because the trade decision requires fundamentals. The deterministic preflight owns the fetch when the analyst is disabled; crypto has no financial_statements requirement."
+      - "The financial_statements evidence contract is versioned: each of income_statement, balance_sheet, and cashflow requires at least one annual period and the latest quarterly period known by as_of, with filing/availability date on or before as_of, point_in_time_rule = as_filed, window_rule = as_of_date, min_record_count = 1. A period without a filing date is insufficient_evidence. If either period is missing, the component is not satisfied."
+      - "ticker_news is critical in current_date mode when the news analyst is enabled; it requires one successful get_news component with at least one record. The news analyst or the shared ticker-news prefetch owns the fetch. It is non-critical in historical mode because the feed cannot guarantee window coverage."
+      - "social_sentiment is critical in current_date mode when the social analyst is enabled and requires sentiment_stocktwits and sentiment_reddit with min_successful_components = 1 and at least one record per successful component. sentiment_news is optional context and does not by itself satisfy social_sentiment. It is non-critical in historical mode."
+      - "market_price and stock financial_statements are fetched by a deterministic preflight even when the corresponding analyst is disabled; ticker_news and social_sentiment are analyst-enabled capabilities."
+      - "A component_missing_record is not a query_execution and does not increment query_executions, external_requests, retry_attempts, fallback_attempts, vendor_cache_hits, or run_cache_hits."
+      - "macro_indicators, technical_indicators, global_news, company_profile, insider_transactions, and prediction_markets are non-critical by default. They may be made critical by an explicit recorded override."
+      - "Explicit overrides may add or remove non-mandatory requirements; profile_source is set to override and profile_version is recorded. market_price and stock financial_statements remain mandatory."
+      - "record_status is closed: success, insufficient_evidence, no_data, unavailable, withheld, not_configured, not_attempted, error. requirement_status is closed: satisfied, degraded, missing, not_required."
+      - "gap_reason priority for a degraded or missing requirement is deterministic: not_attempted, not_configured, error, unavailable, no_data, withheld, insufficient_evidence, fallback_partial."
+      - "A component with multiple logical queries uses all, any, or min:N as declared in the effective profile; repeated identical queries are collapsed by FR-01."
+      - "The canonical state is computed once per run and sorted by requirement_id, capability, component, and data_query_key before aggregation and reporting."
+      - "The run_clock is fixed at run start and records as_of_date, now_utc, timezone, clock_source, analysis_mode, and mode_source; resume/replay inherits it unless a clock_override is recorded."
+      - "A component query set is the set of queries linked to that component by supports. all requires a non-empty set and all successes; any requires at least one success; min:N requires at least N successes. An empty set is missing when the component is required and not_required when optional; min:N with N = 0 or N greater than the set size is an invalid critical profile."
+      - "http_request_count counts actual outbound HTTP requests per vendor attempt, including retries and redirects; cache hits and local not_configured/withheld short-circuits count 0. external_requests is the sum of http_request_count."
     notes: >
-      FR-02 defines the state and user-visible reporting. SB-01 defines the
-      deterministic consequence for the final rating.
+      FR-03 defines the canonical state, the closed status sets, the effective
+      critical profile, fallback clearing, multi-query aggregation, and
+      deterministic reporting. SB-01 defines the deterministic REVIEW consequence
+      for a critical gap. INV-01 requires the same canonical state fields across
+      report, manifest, final-state, and memory.
 
   - id: SB-01
     type: "safety"
-    title: "Deterministic final-output gate with REVIEW on critical gaps"
+    title: "Deterministic fail-closed final-output gate with a separated model proposal"
     priority: "must"
     status: "approved"
     stakeholders: [trader, reviewer, security_reviewer]
@@ -427,69 +1021,191 @@ requirements:
       origin: "Repository analysis and measured baseline"
       evidence:
         - path: "TradingAgents/tradingagents/agents/rating.py"
-          locator: "L106 run_rating"
-          description: "The current rating path parses a rating and returns REVIEW only when no rating can be read."
+          locator: "L96-L117 parse_rating, run_rating, is_review"
+          description: "The current rating path parses a rating and returns REVIEW only when no rating can be read; REVIEW is already a terminal sentinel outside the five-tier set."
           source_type: "code"
         - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
-          locator: "L80 invoke_structured"
-          description: "The Portfolio Manager produces the final structured decision; no data-coverage gate is applied after it."
+          locator: "L80-L103 invoke_structured"
+          description: "The Portfolio Manager produces the final structured decision and writes final_rating/final_trade_decision directly; no data-coverage gate is applied."
           source_type: "code"
         - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-          locator: "L358 record_decision"
-          description: "The decision is persisted before any coverage-aware code gate exists."
+          locator: "L358-L370 record_decision and L437-L465 _log_state"
+          description: "The decision is persisted to the state log and memory before any coverage-aware code gate exists."
           source_type: "code"
+        - path: "TradingAgents/cli/run.py"
+          locator: "L310-L340 streaming display and L380-L385 review notice"
+          description: "The CLI streams and displays the Portfolio Manager output before any formal gate, then only warns when a rating is unreadable."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/reporting.py"
+          locator: "L20-L46 and L92-L119 write_report_tree"
+          description: "Reports copy final_trade_decision and the rating header directly; there is no formal blocked-decision body."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/memory/log.py"
+          locator: "L32-L60 store_decision"
+          description: "The memory log stores the model decision and rating tag without a gate result or an explicitly separated unapproved proposal."
+          source_type: "code"
+        - path: "TradingAgents/tradingagents/backtest.py"
+          locator: "L150-L170 propagate calls and L196-L207 scoring"
+          description: "Backtest cells call propagate directly and score by rating; REVIEW is excluded from scoring rather than produced by a coverage gate."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/transcripts/final-status.json"
+          locator: "final_rating and final_trade_decision"
+          description: "The baseline persisted a Hold decision while news and social sources were unavailable; no gate recorded or blocked it."
+          source_type: "measured_baseline"
+        - path: "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/5_portfolio/decision.md"
+          locator: "entire file"
+          description: "The saved formal decision is the model's Hold text, with no coverage/gate notice."
+          source_type: "measured_baseline"
     problem: >
-      The baseline could persist a tradeable rating even when critical sources
-      were unavailable. The model output was not subject to a deterministic
-      coverage gate.
+      The baseline could persist, display, and score a tradeable rating even when
+      critical sources were unavailable. The model decision and the formal
+      decision were the same text, so a critical-gap REVIEW changed only the
+      rating and left the trade recommendation visible as the official
+      conclusion. The gate input was not a trusted snapshot, incomplete or
+      contradictory inputs had no defined handling, gate failure had no fallback,
+      and the gate was not verified across all entry points.
     statement: >
-      Before a final decision is persisted, displayed, or written to memory,
-      deterministic code MUST validate the final rating, coverage status, and
-      critical-gap list. If a configured critical gap exists, the final rating
-      MUST be REVIEW. The model cannot override the gate result.
+      Every run MUST produce a formal decision through deterministic gate code
+      from a trusted gate_input containing one immutable coverage_snapshot
+      produced by the availability program and one model_proposal. The gate MUST
+      treat the snapshot as authoritative; the model MUST NOT create, supply, or
+      mutate coverage_status or critical_gaps. The gate MUST return a
+      gate_result with status passed, blocked, or error and reason_codes from the
+      closed gate_reason_code set. The formal decision MUST be approved only when
+      coverage_status is complete, critical_gaps is empty, every critical
+      requirement has an availability record, the critical profile is valid, the
+      snapshot is current, and the model rating is one of the five legal
+      ratings. formal_decision.status MUST be approved or blocked_for_review.
+      A critical gap, a model REVIEW, coverage/gap contradiction,
+      malformed or missing input, an invalid critical profile, a missing
+      availability record, a stale or hash-mismatched snapshot, or a gate
+      exception MUST block the formal decision. When blocked, final_rating MUST
+      be REVIEW and the formal decision text MUST use the review_class matched to
+      the primary reason and state that manual review is required; it MUST NOT
+      mislabel a rating/system failure as missing data. The model_proposal MUST be
+      retained separately with proposal_status = unapproved; it MUST NOT be
+      presented as the formal conclusion. The gate MUST run before the terminal
+      manifest and every formal output that contains a formal decision; the
+      running startup manifest may be written before the gate with
+      safety_gate.status = not_run. The independent failed-run manifest and a
+      minimal secret-free security incident record are exceptions that may be
+      written without completing the normal gate. Formal outputs MUST consume the same
+      formal_decision and coverage_snapshot. Intermediate streaming, debug,
+      staging, checkpoint, and raw-agent outputs MAY show the model proposal only
+      when marked intermediate or not approved. The blocked formal text MUST be
+      selected by review_class so a rating anomaly or system failure is not
+      misdescribed as missing data. A gate failure MUST fail closed: status error, final
+      rating REVIEW, a formal gate-unavailable review notice, a failed run
+      record, and no tradeable output. All entry points MUST use the same gate
+      path.
     acceptance_criteria:
       - id: SB-01-AC1
-        input: "A completed run with at least one configured critical gap and a model-produced Buy rating."
-        expected_result: "Persisted final_rating = REVIEW; report rating = REVIEW; memory tag = REVIEW; non-REVIEW final ratings = 0."
-        verification: "Integration test; assert rating in report, final-state, manifest, and memory."
+        input: "Five fixtures, one per legal model rating (Buy, Overweight, Hold, Underweight, Sell), each with a valid trusted coverage_snapshot that is partial and contains a critical gap; every model proposal is valid and its decision text contains a trade recommendation."
+        expected_result: "For all five ratings, gate_result.status = blocked, reason_codes contains critical_gap, formal_decision.status = blocked_for_review, final_rating = REVIEW, and the formal decision text uses the data_insufficient review class and states that manual review is required. The model_proposal is retained with proposal_status = unapproved and is not presented as the formal conclusion. Non-REVIEW formal ratings = 0; report, manifest, final-state, and memory agree."
+        verification: "Integration test over all five ratings; assert gate result, formal rating and text, proposal separation, and every formal consumer."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
       - id: SB-01-AC2
-        input: "A completed run with no critical gaps and a valid model-produced Overweight rating."
-        expected_result: "Final rating remains Overweight; gate result = passed; rating changes = 0."
-        verification: "Integration test; assert rating and gate result."
+        input: "Five fixtures, one per legal model rating (Buy, Overweight, Hold, Underweight, Sell), each with coverage_status = complete, an empty critical_gaps list, every critical requirement present, a valid profile, and a current snapshot."
+        expected_result: "For all five ratings, gate_result.status = passed, formal_decision.status = approved, final_rating equals the model rating, no REVIEW is introduced, and formal decision_text is the approved model decision text. Rating changes = 0; report, manifest, final-state, and memory agree."
+        verification: "Integration test over all five ratings; assert gate result, unchanged rating, approved formal text, and every formal consumer."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
       - id: SB-01-AC3
-        input: "A completed run with a missing or invalid final rating, or a missing coverage_status."
-        expected_result: "Final rating = REVIEW; gate result = blocked; tradeable ratings = 0."
-        verification: "Unit test with malformed final-state fixtures; assert gate result and persisted rating."
+        input: "A fixture with coverage_status = complete and an empty critical_gaps list, where the model proposal itself returns REVIEW and REVIEW text."
+        expected_result: "Gate_result.status = blocked with reason_codes containing model_review; formal_decision.status = blocked_for_review; final_rating = REVIEW; the formal text is the deterministic review notice; REVIEW is not converted to Hold and is not treated as a passed five-tier rating; the model proposal is retained as REVIEW with proposal_status = unapproved; tradeable formal ratings = 0."
+        verification: "Unit test for the model-REVIEW case plus integration through the formal consumers; assert gate status, final rating, text, and proposal status."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
       - id: SB-01-AC4
-        input: "Any completed run that reaches the persistence step."
-        expected_result: "The manifest contains a safety_gate_result value; missing gate results = 0."
-        verification: "Integration test; assert manifest field presence and schema validity."
+        input: "Two independent fixtures: one with coverage_status = complete and a non-empty critical_gaps list; one with coverage_status = partial and an empty critical_gaps list."
+        expected_result: "Both fixtures are blocked with reason_codes containing coverage_gap_mismatch; formal_decision.status = blocked_for_review; final_rating = REVIEW; the formal text uses the coverage-inconsistency review class, not a generic data-insufficient message; neither is passed or treated as a complete/partial five-tier decision; tradeable formal ratings = 0."
+        verification: "Separate unit tests for each contradiction plus integration through the formal consumers; assert each case independently."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-    dependencies: [FR-02, INV-02]
+      - id: SB-01-AC5
+        input: "A table of independent malformed-input fixtures: illegal coverage_status value; missing critical_gaps; critical_gaps of the wrong type; a critical requirement with no availability record; an invalid critical profile; a missing or invalid model rating; a missing gate_input."
+        expected_result: "Each fixture is blocked or error with its distinct reason code (invalid_coverage_status, missing_gap_list, invalid_gap_type, missing_availability_record, invalid_critical_profile, invalid_model_rating, missing_gate_input), formal_decision.status = blocked_for_review, final_rating = REVIEW, and the formal text uses the review_class matched to that reason. No fixture produces a tradeable formal rating. Cases are tested separately; mismatches = 0."
+        verification: "Table-driven unit tests for every malformed input plus integration through the formal consumers; assert each reason code independently."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC6
+        input: "Fixtures where the model output attempts to supply or alter coverage_status and critical_gaps; a snapshot with a stale version; a snapshot with a mismatched hash; and a valid program-produced snapshot."
+        expected_result: "Model-supplied coverage and gaps are ignored; the stale snapshot is blocked with reason_codes containing stale_coverage_snapshot; the hash mismatch is blocked with snapshot_hash_mismatch; the valid snapshot is accepted only from the program producer. The gate and formal report use the same snapshot_hash; mismatches = 0."
+        verification: "Unit tests with forged model fields and tampered snapshots plus integration asserting the shared snapshot hash in gate output and formal report."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC7
+        input: "A blocked run, with capture of streaming messages, debug output, staging files, CLI final summary, complete_report.md/html, 5_portfolio/decision.md, final-state, memory, manifest, and API return."
+        expected_result: "Intermediate outputs may show the model proposal only as intermediate or unapproved. Formal outputs use formal_decision; the blocked model proposal appears only in a separate Model Proposal (not approved) section or field. No formal output presents the model trade recommendation as the final conclusion; mismatches = 0."
+        verification: "Consumer audit and integration test over every formal output path; assert labels, formal fields, and absence of an unapproved trade conclusion in formal text."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC8
+        input: "An entry-point matrix with a critical gap: CLI run_analysis, programmatic TradingAgentsGraph.propagate, a backtest cell, a checkpoint-resumed run, and a headless/API run."
+        expected_result: "Every entry point invokes the same deterministic gate and produces final_rating = REVIEW, a blocked gate_result, and the same formal review notice. No entry point bypasses the gate; bypass count = 0."
+        verification: "Entry-point integration matrix; assert gate invocation, formal result, and manifest safety_gate presence for each path."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC9
+        input: "Fault-injection fixtures where the gate raises an exception, times out, cannot parse the snapshot, has a gate/profile version mismatch, or hits an internal error."
+        expected_result: "Gate_result.status = error with reason_codes containing gate_internal_error; formal_decision.status = blocked_for_review; final_rating = REVIEW; formal_decision.review_class = gate_system_error and the formal text states that the gate is unavailable and manual review is required; the manifest records run_status = failed with error.stage = gate; tradeable formal outputs = 0; silent pass = 0."
+        verification: "Fault-injection integration test for each failure mode; assert error propagation, failed run record, review notice, and absence of tradeable output."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SB-01-AC10
+        input: "One passed run and one blocked run, with manifest, report, final-state, memory, and API return captured."
+        expected_result: "Manifest safety_gate status, reason_codes, primary_reason_code, coverage_status, critical_gap_ids, profile_version, snapshot_hash, gate_version, input_hash, and run_id match the gate_input snapshot and model_proposal; formal_decision.review_class matches the reason-code mapping; final_rating matches the formal status; and the formal review notice or approved model text matches the gate outcome. Missing or mismatched fields = 0."
+        verification: "Integration test; compare every gate field with the snapshot, formal decision, and all formal consumers."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: [FR-03, FR-02]
+    constraint_relations: [INV-01]
     conflicts:
-      - "REVIEW reduces actionable output. Resolution: REVIEW is an explicit safe state, not a hidden Hold."
-      - "A model may dispute the gate. Resolution: the gate is code, not prompt text."
+      - "REVIEW reduces actionable output. Resolution: REVIEW is an explicit terminal safe state, not a hidden Hold."
+      - "Preserving the model proposal helps audit but risks being read as the conclusion. Resolution: retain it only as model_proposal with proposal_status = unapproved and a separate report section."
+      - "The model can write coverage claims. Resolution: only the program-produced coverage_snapshot is authoritative; model claims are ignored."
+      - "A gate failure can stop a completed analysis. Resolution: fail closed with REVIEW, a gate-unavailable notice, and a failed run record."
+      - "Intermediate streaming is useful for observability. Resolution: intermediate outputs may show the proposal only when explicitly marked intermediate/unapproved; formal outputs use formal_decision."
+      - "Different entry points could implement different gates. Resolution: one shared finalization path is required by AC8."
     assumptions:
-      - "REVIEW is the approved non-tradeable state."
-      - "The critical-gap definition is the same one used by FR-02."
+      - "REVIEW is a terminal non-tradeable sentinel outside the five-tier rating set; it is not a sixth trading rating."
+      - "coverage_status and critical_gaps come only from the FR-03 coverage_snapshot; the model cannot supply or mutate them."
+      - "Gate status is closed: passed, blocked, error. formal_decision.status is closed: approved, blocked_for_review. model_proposal.proposal_status is unapproved."
+      - "gate_reason_code is closed: critical_gap, coverage_gap_mismatch, invalid_coverage_status, missing_gap_list, invalid_gap_type, missing_availability_record, invalid_critical_profile, invalid_model_rating, model_review, missing_gate_input, stale_coverage_snapshot, snapshot_hash_mismatch, gate_internal_error."
+      - "reason_codes are sorted by a fixed priority for determinism: gate_internal_error, missing_gate_input, invalid_critical_profile, stale_coverage_snapshot, snapshot_hash_mismatch, invalid_coverage_status, missing_gap_list, invalid_gap_type, missing_availability_record, coverage_gap_mismatch, invalid_model_rating, model_review, critical_gap."
+      - "Formal outputs are CLI final summary, complete_report.md/html, 5_portfolio/decision.md, final-state, memory, manifest, API return, and backtest scoring. Intermediate outputs are streaming messages, debug output, staging files, checkpoint state, and raw agent text."
+      - "When blocked, the formal decision text uses the review_class matched to the primary reason, states that manual review is required, and lists all reason codes and critical gaps; it contains no trade instruction as the formal conclusion."
+      - "The gate runs before the terminal manifest and every formal output with a formal decision; the running startup manifest may precede the gate and uses safety_gate.status = not_run. The gate and formal report use the same coverage_snapshot."
+      - "When multiple reasons occur, primary_reason_code is the first reason in the fixed priority list; review_class is derived from that primary reason. All reason_codes are retained and listed as secondary reasons, but they do not change the primary formal prompt. The mapping is: critical_gap or missing_availability_record -> data_insufficient; invalid_model_rating -> model_rating_invalid; model_review -> model_review; invalid_coverage_status or coverage_gap_mismatch -> coverage_inconsistent; missing_gap_list, invalid_gap_type, missing_gate_input, invalid_critical_profile -> input_invalid; stale_coverage_snapshot, snapshot_hash_mismatch, gate_internal_error -> gate_system_error; passed -> none."
+      - "Gate failure is a handled failure: the manifest run_status is failed with error.stage = gate, and no tradeable output is produced."
     notes: >
-      The existing rating parser and structured-output validation are reused;
-      D1 adds the coverage-aware pre-persistence gate.
+      Decision table. complete + empty gaps + valid rating + valid profile + all
+      critical records + current snapshot -> passed. complete + non-empty gaps ->
+      blocked coverage_gap_mismatch. partial + empty gaps -> blocked
+      coverage_gap_mismatch. partial + non-empty gaps -> blocked critical_gap.
+      Invalid coverage -> invalid_coverage_status. Missing gaps -> missing_gap_list.
+      Wrong gap type -> invalid_gap_type. Missing availability record ->
+      missing_availability_record. Invalid profile -> invalid_critical_profile.
+      Missing/invalid rating -> invalid_model_rating. Model REVIEW -> model_review.
+      Missing gate input -> missing_gate_input. Stale/mismatched snapshot ->
+      stale_coverage_snapshot or snapshot_hash_mismatch. Gate exception ->
+      error/gate_internal_error. This gate is the deterministic boundary between
+      the unapproved model proposal and every formal decision.
 
-  - id: INV-02
+  - id: INV-01
     type: "invariant"
-    title: "Consistent provenance and final decision across artifacts"
+    title: "One bound formal result across report, manifest, final-state, and memory"
     priority: "must"
     status: "approved"
     stakeholders: [reviewer, trader, analyst]
@@ -501,68 +1217,158 @@ requirements:
           description: "Reports are written to a report tree, independent of the state log and memory log."
           source_type: "code"
         - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-          locator: "L437 _log_state"
-          description: "The full-state log is written separately from reports and memory."
+          locator: "L437-L475 _log_state"
+          description: "The full-state log is written separately from reports and memory and has no binding identity."
           source_type: "code"
         - path: "TradingAgents/tradingagents/memory/log.py"
-          locator: "L32 store_decision"
-          description: "The memory log stores the final decision and rating in a fourth location."
+          locator: "L32-L60 store_decision and later settlement"
+          description: "The memory entry is written separately, then updated later with outcome and reflection; no run_id or record binding ties it to the other artifacts."
           source_type: "code"
         - path: "baseline/runs/baseline-20261020-01/report-consistency.json"
           locator: "all fields"
-          description: "The baseline measured decision, report, and full-state consistency, but did not measure source-status consistency across every artifact."
+          description: "The baseline checked decision/report/full-state consistency but did not measure source-status consistency, identity binding, or memory agreement."
+          source_type: "measured_baseline"
+        - path: "baseline/runs/baseline-20261020-01/memory/trading_memory.md"
+          locator: "entry tag and DECISION block"
+          description: "The baseline memory entry contains only trade date, ticker, rating, pending status, and prose; it has no run_id, record_version, decision digest, coverage, gaps, or gate result."
           source_type: "measured_baseline"
     problem: >
       The baseline wrote decision data to reports, a full-state log, and memory,
-      but no invariant tied source status and final decision together across all
-      artifacts.
+      but no identity bound them to one formal result and no invariant defined
+      which fields each artifact must carry. Report and memory held different
+      shapes from the manifest and final-state, source-status and fallback
+      comparison granularity was undefined, and memory was later updated by
+      settlement. Missing artifacts, partial writes, crash recovery, and retries
+      had no consistency contract.
     statement: >
-      For every run, the user-facing report, run manifest, persisted final state,
-      and memory log MUST agree on source status, fallback provenance, final
-      rating, and final decision. Silent substitution is forbidden.
+      INV-01 holds at the completed checkpoint and on every read of a completed
+      run's formal artifacts, not while artifacts are incomplete. Report,
+      manifest, final-state, and memory MUST bind to one formal result through
+      artifact_binding: identical run_id, record_version, decision_digest,
+      gate_status, formal_decision_status, final_rating, coverage_status,
+      critical_gap_ids, and coverage_snapshot_hash; record_hash, when present,
+      MUST also match. The artifact contract MUST be identical in requirement and
+      different only in representation: manifest and final-state carry the full
+      canonical availability records and full gate/formal-decision fields; report
+      carries the binding block plus coverage, critical-gap, fallback, and gate
+      summaries; memory carries the binding, formal rating, formal decision text
+      or digest, coverage/gap summary, and provenance_digest. Source-status and
+      fallback comparison MUST use the canonical availability-record identity,
+      ordered attempts, evidence timestamps, and provenance_digest, not rendered
+      prose. Legal fallback MUST be disclosed with fallback_used, primary
+      failure, attempted_sources, and serving_source; silent substitution is
+      forbidden. A missing or empty required artifact, partial write, crash
+      before completion, or failed retry MUST fail the invariant and MUST NOT be
+      claimed as completed. Retries MUST preserve run_id, record_version, and
+      record_hash and MUST NOT create a duplicate memory decision entry. Memory
+      binding MUST identify one immutable decision entry through memory_entry_binding,
+      not a hash of the shared memory file. Settlement and reflection MAY append
+      outcome fields, and policy-based rotation of resolved entries is legal;
+      modifying or deleting a retained decision entry, or changing its binding
+      fields, is illegal. Rotation that removes an entry MUST be recorded and
+      treated as memory not_available, not as a binding mismatch.
     acceptance_criteria:
-      - id: INV-02-AC1
-        input: "A fixture with success, unavailable, withheld, and fallback-used sources in one run."
-        expected_result: "Source-status and provenance mismatches across report, manifest, final-state, and memory = 0."
-        verification: "Cross-artifact diff test; canonicalize fields and compare all four artifacts."
+      - id: INV-01-AC1
+        input: "A completed run with one success, one unavailable, one withheld, and one legal fallback source; capture the report binding block, manifest, final-state, and memory."
+        expected_result: "Report, manifest, and final-state bind the current run: run_id, decision_id, record_version, decision_digest, gate_status, formal_decision_status, final_rating, coverage_status, critical_gap_ids, and coverage_snapshot_hash are exact across those three. Memory either carries the current binding or a valid reused_decision_ref with matching decision_id/decision_digest/entry_digest; for a reused historical entry, source run_id/snapshot fields are not required to equal the current run. Report/memory summaries equal derived values; mismatches = 0."
+        verification: "Integration test; extract machine-readable bindings and summaries from every artifact and compare against the canonical manifest/final-state record."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: INV-02-AC2
-        input: "A fixture in which a primary source fails and a fallback source succeeds."
-        expected_result: "All four artifacts contain the fallback source and the primary failure; silent substitutions = 0."
-        verification: "Integration test; assert fallback marker and primary status in every artifact."
+      - id: INV-01-AC2
+        input: "The same completed fixture with different object key order, whitespace, line endings, report language, timestamps, and local absolute paths."
+        expected_result: "Canonicalization produces identical bindings, decision_digest values, provenance_digest values, and summaries. Run-level generated_at/evaluated_at/finished_at and local paths are excluded; attempts and attempted_sources keep supplier attempt order; evidence timestamps in attempts and observed windows are preserved and compared; rendered report prose is not compared; false mismatches = 0. A semantic rewrite or an attempt-order change is still detected as a mismatch."
+        verification: "Unit canonicalization test plus integration with reordered and reformatted artifacts, including reordered attempts and changed evidence timestamps; assert stable digests, preserved attempt order, and zero false mismatches."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: INV-02-AC3
-        input: "A completed run with a valid final decision."
-        expected_result: "Final rating and final decision mismatches across report, manifest, final-state, and memory = 0."
-        verification: "Integration test; assert exact string equality after whitespace canonicalization."
+      - id: INV-01-AC3
+        input: "A fixture with success, unavailable, withheld, not_configured, and a legal fallback; one provider serves multiple capabilities and multiple availability records exist."
+        expected_result: "Availability-record identity is (run_id, record_kind, data_query_key, requirement_id, capability, component, source, status, reason_code, record_count, fallback_used, serving_source, attempted_sources). Executed records carry a data_query_key and ordered attempts; component_missing records carry no data_query_key and no attempts. The full record sets and provenance_digest are equal between manifest and final-state; report and memory fit their declared summaries exactly; mismatches = 0."
+        verification: "Integration test; compare full records for manifest/final-state and derived summaries for report/memory, including provenance_digest and fallback labels."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: INV-02-AC4
-        input: "A completed run in which one required artifact is missing."
-        expected_result: "The run fails the invariant check; missing artifacts = 0 after the fix, and any missing artifact is reported as a failure before the fix."
-        verification: "Negative test with a deleted artifact; assert non-zero failure."
+      - id: INV-01-AC4
+        input: "A legal same-contract fallback, plus independent silent-substitution fixtures: primary failure omitted; fallback_used = false; serving source presented as the primary; fallback label omitted from report or memory."
+        expected_result: "The legal fallback passes with fallback_used = true, primary failure present, attempted_sources and serving_source correct, and disclosure in report, manifest, final-state, and memory (current entry or historical reference). Each silent-substitution fixture fails the invariant with a non-zero mismatch; silent substitutions = 0."
+        verification: "Integration tests for the legal fallback and each silent-substitution case separately; assert fallback provenance and failure."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-    dependencies: []
+      - id: INV-01-AC5
+        input: "A completed run with a formal decision text and rating."
+        expected_result: "Report, manifest, and final-state share exact current-run run_id, decision_id, record_version, decision_digest, gate_status, formal_decision_status, final_rating, coverage_status, and critical_gap_ids. final_decision_text is exact between manifest and final-state after canonicalization. Memory is either current-binding-equal or carries a valid reused_decision_ref with the same decision_id, decision_digest, and entry_digest; its source run fields are not compared to the current run. Rendered prose is not used for equality; mismatches = 0."
+        verification: "Integration test; compare exact binding fields and text only between manifest/final-state, and compare report/memory against the digest and required summary."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-01-AC6
+        input: "Independent negative fixtures in which one required artifact is deleted, empty, or missing a binding field: report, manifest, final-state, and memory."
+        expected_result: "Each case fails the invariant, the run is not marked completed, formal success is not claimed, and the missing-artifact error is recorded. False passes = 0; there is no after-the-fix condition."
+        verification: "Separate negative test for each artifact; assert non-zero invariant failure and no completed status."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-01-AC7
+        input: "Fault injection after each artifact write, followed by a retry that does not re-run the model and reuses the same run_id, record_version, and record_hash."
+        expected_result: "Before completion the run is running, partial, or failed and the invariant is not claimed. No completed manifest exists while artifacts are incomplete. Retry completes with exactly one copy of each required artifact, the same binding identity, one memory decision entry with the same memory_entry_binding and entry_digest, and zero cross-artifact mismatches; duplicate or conflicting entries = 0."
+        verification: "Crash/restart fault-injection test at each write point; assert publish state, idempotent retry, and final cross-artifact equality."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-01-AC8
+        input: "A completed run, followed by settlement/reflection, legal policy-based rotation of resolved entries, and an illegal deletion or modification of a retained decision entry."
+        expected_result: "Settlement only appends outcome and reflection fields; memory_entry_binding, entry_digest, evidence_digest, and formal decision fields remain immutable and equal to the other artifacts. The memory artifact hash uses hash_scope = memory_entry, so appends, settlement, lock maintenance, and legal rotation do not invalidate it. Legal rotation removes only resolved entries under policy and records retention_status = rotated or not_available without a binding mismatch. Illegal deletion or modification of a retained decision entry is detected as a binding failure. The shared memory file hash is never used; mismatches = 0 for legal cases."
+        verification: "Integration test across decision write, settlement, legal rotation, and illegal deletion/modification; assert memory_entry_binding immutability and the legal/illegal distinction."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-01-AC9
+        input: "A run lifecycle captured before completion, at the completed checkpoint, and on a later read; then one binding field is tampered after completion."
+        expected_result: "The invariant is not claimed before completion, passes at completion and on a valid read, and detects the tampered binding on the next read, blocking formal exposure. False pass = 0; mismatches = 0 for valid artifacts."
+        verification: "Lifecycle test plus read-time validation and tamper injection; assert checkpoint behavior and non-zero detection."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: INV-01-AC10
+        input: "Four fixtures: a same-day rerun with the same trade_date/ticker and same decision_id/entry_digest; a same-day rerun with a different decision_id; a same-decision_id fixture with tampered entry_digest; a run with memory disabled."
+        expected_result: "The same-binding rerun reuses the existing committed entry, sets memory.status = existing, commit_status = committed, same_day_rerun = true, and records reused_decision_ref; no duplicate is created. The different-decision rerun publishes its report/manifest/final-state independently and writes a pre-commit entry_version greater than the current highest committed version, with supersedes = previous decision_id; the terminal manifest records that version. The effective version is derived as the highest entry_version whose source terminal manifest is committed, so no post-commit write to the old entry is required. A failed new publication leaves a version gap but does not make the provisional version effective and does not remove the old effective version. entry_digest covers stable decision content only; evidence_digest may differ across reruns without blocking reuse. The same-decision_id tampered entry_digest is a conflict and does not overwrite the retained entry. With memory disabled, memory.status = disabled and commit_status = disabled; no memory artifact is required and the other three artifacts still satisfy INV-01. Mismatches = 0."
+        verification: "Integration test across same-day rerun, versioned different decisions, tampered entry_digest conflict, and memory-disabled configurations; assert memory versions, supersession, deduplication, and required-artifact rules."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: [FR-02, SB-01]
+    constraint_relations: [FR-01, FR-03, SR-01]
     conflicts:
-      - "A short report conflicts with full provenance. Resolution: report summary plus canonical manifest detail."
-      - "The memory log stores prose, not a manifest. Resolution: the gate writes the rating and decision before all artifact writers."
+      - "A short report conflicts with full provenance. Resolution: report carries a binding block plus declared summaries; manifest and final-state carry the full canonical records; report and memory are compared through binding and provenance_digest."
+      - "The memory log stores prose and is updated later by settlement. Resolution: INV-01 binds only the immutable decision portion; settlement may append outcome/reflection, and rotation is recorded as not_available."
+      - "A lean manifest may not carry every artifact's prose. Resolution: all artifacts share the canonical binding and digests, not rendered prose."
+      - "Retries can duplicate memory. Resolution: retries reuse run_id, record_version, and record_hash and must keep one memory decision entry."
+      - "Redaction can change compared strings. Resolution: all artifacts use the same sanitizer and compare sanitized canonical values."
     assumptions:
-      - "The canonical artifact set is report, manifest, final-state, and memory."
-      - "Whitespace normalization is permitted; semantic rewrites are not."
+      - "The canonical artifact set is report, manifest, final-state, and memory; report and memory use declared summaries bound by decision_digest and provenance_digest."
+      - "The report exposes a machine-readable binding block; memory exposes a binding tag or structured header; manifest and final-state expose binding fields directly."
+      - "Canonicalization uses UTF-8, NFC, LF line endings, sorted keys, documented array ordering, and excludes run-level generated_at/evaluated_at/finished_at and local absolute paths. Attempt order and evidence timestamps are preserved."
+      - "The full source-status comparison is between manifest and final-state; report and memory compare their declared summaries and provenance_digest against those derived values."
+      - "publish_state is closed: running, staged, validated, completed, partial, failed. INV-01 is claimed only for completed."
+      - "The invariant is checked before completion, on read, and after retry/resume."
+      - "Memory binds through memory_entry_binding to one immutable decision entry; settlement/reflection is append-only; legal rotation of resolved entries is distinct from illegal deletion of a retained entry; rotation absence is recorded as memory not_available."
     notes: >
-      INV-02 is the consistency invariant that binds FR-02, SB-01, QR-01, and
-      PR-01 together.
+      This invariant chooses one contract: report, manifest, and final-state bind
+      to the current run and the same decision/gate/coverage fields. Memory either
+      binds to the current run or carries a valid reused_decision_ref to a
+      historical decision; historical source run_id/snapshot fields are not
+      compared to the current run. Manifest and final-state hold the full canonical
+      record; report and memory hold binding plus declared summaries and
+      provenance digest. Missing artifacts, partial writes, crashes, or failed
+      retries never satisfy the invariant. It binds FR-01 provenance, FR-03
+      coverage, FR-02 manifest, SB-01 formal decision, and SR-01 sanitization
+      together.
 
-  - id: SR-02
+  - id: SR-01
     type: "security"
-    title: "No credentials or sensitive URL parameters in run records"
+    title: "Secret-safe run records with known-value and versioned pattern checks"
     priority: "must"
     status: "approved"
     stakeholders: [security_reviewer, operator, reviewer]
@@ -570,111 +1376,201 @@ requirements:
       origin: "Repository analysis and measured baseline"
       evidence:
         - path: "TradingAgents/tradingagents/dataflows/net.py"
-          locator: "L6 get_scrubbed"
-          description: "FRED and Alpha Vantage query keys are scrubbed from request errors."
+          locator: "L6-L24 get_scrubbed"
+          description: "Existing exact-value scrubber for FRED and Alpha Vantage request error URLs; it does not cover other record boundaries or pattern matches."
           source_type: "code"
         - path: "TradingAgents/tradingagents/dataflows/vendors/alpha_vantage/common.py"
-          locator: "L96 get_scrubbed call"
-          description: "Alpha Vantage passes its API key as a scrub secret."
+          locator: "L95-L97 get_scrubbed call"
+          description: "Existing API-key scrub path for Alpha Vantage request errors."
           source_type: "code"
         - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-          locator: "L255 run_settings"
-          description: "The report settings are an allowlist and exclude keys and endpoints."
+          locator: "L255-L275 run_settings"
+          description: "Existing allowlist for report settings; it excludes keys and endpoints but does not scan other writers."
           source_type: "code"
         - path: "TradingAgents/cli/prefs.py"
-          locator: "L49 save_last_run"
-          description: "The preferences file stores backend_url, which can contain sensitive URL parameters if the user supplies them."
+          locator: "L30-L58 save_last_run"
+          description: "Preferences store backend_url and other selections directly, so inline userinfo, query tokens, or fragments can be persisted."
           source_type: "code"
+        - path: "TradingAgents/cli/prompts.py"
+          locator: "L731-L738 .env creation and chmod"
+          description: "Existing .env creation already uses mode 0600; this is a preserved baseline control, not a new D1 acceptance item."
+          source_type: "code"
+        - path: "TradingAgents/tests/test_api_key_env.py"
+          locator: "L168-L190 .env mode tests"
+          description: "Existing tests already assert the 0600 .env mode."
+          source_type: "code"
+        - path: "baseline/runs/baseline-20261020-01/logs/stdout.log"
+          locator: "entire file"
+          description: "Reviewed baseline stdout; no API key value was observed, but this is not a complete scan."
+          source_type: "measured_baseline"
+        - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
+          locator: "file size"
+          description: "Empty stderr; the baseline did not run a complete secret scan."
+          source_type: "measured_baseline"
     problem: >
-      Some provider errors already scrub API keys and the report settings are
-      allowlisted, but the preferences file can store a full backend URL and no
-      complete secret scan exists for all run records.
+      Some provider request errors already replace one exact API key, and report
+      settings are allowlisted, but no common detector covers the manifest,
+      final-state, memory, report, logs, error records, preferences, or formal
+      API return. Preferences can persist a full backend URL, which is needed to
+      restore the next run but may contain inline userinfo or query credentials.
+      Known-value checking and pattern checking were not separated, rules were
+      not versioned, and a scan result was treated as proof that every possible
+      credential was safe. There was also no behavior for scanner failure or an
+      unredactable secret.
     statement: >
-      Run records MUST NOT contain credentials or sensitive URL parameters. This
-      applies to the run manifest, logs, preferences, final state, memory, and
-      report metadata. Endpoint records MUST contain only scheme, host, and path.
+      SR-01 applies to app-controlled run records and formal outputs: run
+      manifest, final-state, memory decision entry, report metadata and content,
+      logs, preferences, error records, gate and availability reasons, and formal
+      API return. Vendor/provider logs, shell history, OS/network captures, and
+      external service logs are explicitly out of scope. Sensitive information
+      MUST be checked in two separate ways: (1) exact match against secret_value
+      values actually configured or used in the run, and (2) the versioned
+      secret_pattern_rule set with a fixed minimum detection scope. A clean
+      record requires zero known-secret exact matches and zero unredacted
+      pattern matches; the result proves only the defined scope, rules, and
+      fixtures, not the absence of unknown credential formats outside them.
+      Audit/display endpoints MUST contain only scheme, host, and path.
+      Preferences MAY keep an endpoint_restore_record with allowlisted
+      non-sensitive query parameters and secret_ref names, but MUST NOT contain
+      inline userinfo, sensitive query values, or fragments. If a user supplies
+      inline sensitive components, the app MUST migrate them to .env or the
+      process environment and store references, or omit them and set
+      re_entry_required. Redaction MUST replace only the secret value, preserve
+      keys, parameter names, structure, status, reason codes, counts, timings,
+      source and vendor names, tickers, dates, model ids, and relative paths, and
+      MUST avoid over-redaction. If a secret is found and cannot be removed, or
+      the detector, sanitizer, or rule version is unavailable or fails, the run
+      MUST fail closed: the dangerous content and the affected formal output MUST
+      NOT be written. A separate minimal security incident record MAY be written
+      only when it contains no secret value and is not a formal decision artifact;
+      it records the security stage, rule version, failure type, and a sanitized
+      reason. If the incident record cannot be written safely, nothing is
+      written. The run is marked failed with a security-stage error. Every write
+      MUST perform and record a per-write scan (write_scan_status); the terminal
+      manifest MUST also record the final run-level scan (run_scan_status). A
+      running manifest may have run_scan_status = not_run. A completed manifest
+      requires clean or redacted write_scan_status and run_scan_status. Scan
+      scope, rule version, and both scan results MUST be recorded whenever a safe
+      record can be written.
     acceptance_criteria:
-      - id: SR-02-AC1
-        input: "A run with a configured API key and an endpoint containing userinfo, a query token, and a fragment."
-        expected_result: "Secret matches in manifest, logs, and preferences = 0; recorded endpoint contains scheme, host, and path only."
-        verification: "Integration test with a secret-pattern scanner and endpoint assertion."
+      - id: SR-01-AC1
+        input: "A deterministic run fixture with a configured known API key, a mock provider that accepts the key and endpoint without a network dependency, and an endpoint containing userinfo, a sensitive query value, and a fragment; the run reaches the manifest, final-state, memory, report, log, and preference writers."
+        expected_result: "Known secret values are collected and exact-match scanned at every in-scope writer. Scanning each of manifest, final-state, memory, report, logs, and preferences yields zero known-secret exact matches; manifest.security.known_secret_match_count = 0; the audit endpoint contains scheme, host, and path only; no case fails before reaching the record writers; mismatches = 0."
+        verification: "Deterministic integration test with a mock provider and instrumented record writers; scan every output and assert the record path was reached."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: SR-02-AC2
-        input: "A preference file written after a run that uses a backend URL with sensitive parameters."
-        expected_result: "Preferences contain no userinfo, query, or fragment; forbidden URL components = 0."
-        verification: "Unit test; parse the preference JSON and scan URL fields."
+      - id: SR-01-AC2
+        input: "Fixtures for the fixed minimum pattern categories: provider key formats, generic bearer and JWT formats, URL userinfo, sensitive query parameter names and values, sensitive authorization headers, and password/token assignments; each printed with secret_rule_version and secret_rule_source."
+        expected_result: "Every category is detected by the versioned rule set; each detected value is redacted or the record is blocked; unredacted pattern_match_count = 0; the recorded rule version and source match the rule set used; unknown rule version fails closed. Known-value and pattern checks are reported separately."
+        verification: "Table-driven pattern-rule tests with positive and negative controls; assert the rule version, category coverage, redaction or block, and separate counters."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: SR-02-AC3
-        input: "A fresh interactive key setup that creates a .env file."
-        expected_result: "The .env file mode is 0600."
-        verification: "Filesystem mode assertion."
+      - id: SR-01-AC3
+        input: "A preference file written after a run with an endpoint containing userinfo, a sensitive query token, a non-sensitive allowlisted query parameter, and a fragment; and a second case where the sensitive parts cannot be migrated."
+        expected_result: "The audit endpoint contains scheme, host, and path only. The restore endpoint keeps scheme, host, path, the non-sensitive allowlisted query parameter, and secret_ref names; it contains no inline userinfo, sensitive query value, or fragment. The secret_ref resolves from .env or the process environment. In the unmigratable case the sensitive parts are omitted and re_entry_required is set; inline sensitive values = 0."
+        verification: "Unit test on the preference writer and resolver; assert audit/restore separation, ref resolution, and re-entry behavior."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-      - id: SR-02-AC4
-        input: "A fixture containing known key, token, password, userinfo, query, and fragment patterns in environment and tool errors."
-        expected_result: "Secret-pattern matches in run records = 0; every sensitive value is redacted."
-        verification: "Secret-scan fixture with a documented pattern list."
+      - id: SR-01-AC4
+        input: "Fault injection in which a known secret remains after redaction, the detector or sanitizer raises, or the rule version is missing or unknown."
+        expected_result: "The run fails closed: the dangerous content and affected formal output are not written; a separate minimal security incident record may be written with no secret value and only security stage, rule version, failure type, and sanitized reason; if the incident record cannot be written safely, nothing is written. Run status is failed with error.stage = security. known-secret leakage = 0; scanner failure treated as pass = 0."
+        verification: "Fault-injection tests at each writer and sanitizer boundary; assert blocked dangerous output, the allowed minimal incident record, failed run status, and no secret in any record."
         zero_tolerance: true
         measurement_status: "not_measured"
         threshold_status: "approved"
-    dependencies: []
+      - id: SR-01-AC5
+        input: "A mixed fixture containing a real secret plus public URLs, ticker symbols, dates, model ids, vendor names, status codes, reason codes, counts, timings, and relative paths."
+        expected_result: "Only the secret values are replaced; all non-secret values are byte-identical after canonicalization; no whole record, whole URL, or long non-secret string is removed. Over-redaction count = 0."
+        verification: "Unit test comparing the redacted and unredacted canonical values; assert secret markers and preserved non-secret fields."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SR-01-AC6
+        input: "A run that exercises every in-scope boundary, with a complete scan_scope record and a scan result; a control case with a boundary omitted."
+        expected_result: "Every in-scope boundary is scanned and named in scan_scope; rule_version, per-write write_scan_status, and final run_scan_status are recorded; a running manifest may have run_scan_status = not_run, while a completed manifest requires both statuses clean or redacted; out-of-scope boundaries are named explicitly. The omitted-boundary control fails the check. The result states that it proves only the defined scope, rules, and fixtures, not all possible credentials; universal-safety claim = 0."
+        verification: "Boundary-coverage audit plus a missing-boundary negative control; assert scope completeness, version recording, and the documented limitation."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+      - id: SR-01-AC7
+        input: "The existing get_scrubbed tests, the existing .env 0600 test, and the new in-scope writers."
+        expected_result: "Existing get_scrubbed exact-value scrubbing and the existing .env 0600 behavior continue to pass as preserved controls. The new scan scope adds manifest, final-state, memory, report, logs, preferences, error/gate/availability records, and formal API return. The .env mode is not claimed as a new D1 acceptance item; regressions = 0."
+        verification: "Regression suite for existing tests plus boundary inventory for the new scope."
+        zero_tolerance: true
+        measurement_status: "not_measured"
+        threshold_status: "approved"
+    implementation_dependencies: [FR-02, INV-01]
+    constraint_relations: [FR-03, SB-01]
     conflicts:
-      - "Redaction reduces debugging detail. Resolution: record hashes and allowlisted metadata, not secret values."
-      - "The manifest must record configuration while excluding sensitive parameters. Resolution: sanitize configuration before serialization."
+      - "Redaction reduces debugging detail. Resolution: replace only secret values and preserve structure, status, reason codes, counts, timings, and public identifiers."
+      - "The manifest must record configuration while excluding sensitive parameters. Resolution: use the sanitizer and a sanitized config allowlist."
+      - "Preferences need the endpoint for the next run, while audit records must not carry secrets. Resolution: audit endpoint is scheme/host/path; restore endpoint keeps non-sensitive query parameters and secret_ref names, never inline sensitive values."
+      - "A scanner can prove only its scope and rules. Resolution: record scope, rule version, counters, and the explicit limitation; do not claim universal credential absence."
+      - "Redaction can damage diagnostics. Resolution: preserve non-secret structure and add over-redaction tests."
+      - "Scanner failure could silently pass. Resolution: fail closed, block the record, and record a failed security stage."
     assumptions:
-      - "The secret-pattern list is configurable and includes key, token, password, userinfo, query, and fragment patterns."
-      - "The .env file is in scope for mode checks."
+      - "Known secret values are collected from the run's configured credentials, URL userinfo, sensitive query values, and sensitive headers; they are held in memory only."
+      - "secret_pattern_rule has a fixed minimum category set and is versioned with secret_rule_version, secret_rule_source, and effective_at."
+      - "scan_scope is the closed app-controlled boundary set; external provider logs, shell history, OS/network captures, and service-side logs are out of scope."
+      - "A clean result means zero known-secret exact matches and zero unredacted pattern matches within the defined scope and fixtures; it does not prove universal secret absence."
+      - "The audit endpoint is scheme/host/path only; the restore endpoint may retain allowlisted non-sensitive query parameters and secret_ref names."
+      - "Sensitive values are stored in .env or the process environment; .env mode 0600 is an existing control already tested in the baseline."
+      - "Redaction replaces only values with a stable marker and preserves keys, structure, and non-secret identifiers."
+      - "A detector/sanitizer failure or an unredactable secret fails closed with no record write and a security-stage run failure."
     notes: >
-      The existing scrubbers and allowlist are reused; D1 extends the boundary to
-      the manifest, preferences, logs, and final-state records.
+      The existing get_scrubbed path and the .env 0600 control are preserved, not
+      re-claimed. D1 adds a two-part known-value and versioned-pattern check over
+      the app-controlled record boundaries, a preference audit/restore split for
+      endpoints, fail-closed behavior, and over-redaction tests. On failure, the
+      dangerous content is blocked; a separate minimal secret-free security
+      incident record is allowed and is not a formal decision artifact. The scan
+      result is evidence for the defined scope and fixtures only.
 
 conflict_resolutions:
   - id: C-01
-    requirements: [QR-01, SR-02]
-    description: "QR-01 needs a configuration record; SR-02 forbids sensitive URL parameters."
-    resolution: "QR-01 records a sanitized configuration allowlist; SR-02 defines the sanitizer and the zero-match acceptance check."
+    requirements: [FR-02, SR-01]
+    description: "FR-02 needs a configuration record; SR-01 forbids sensitive URL parameters."
+    resolution: "FR-02 records a sanitized configuration allowlist; SR-01 defines the sanitizer and the zero-match acceptance check."
   - id: C-02
-    requirements: [PR-01, INV-02]
+    requirements: [FR-01, INV-01]
     description: "Caching can hide whether a value was reused, which can break provenance consistency."
-    resolution: "The cache stores status, reason, and source metadata; INV-02 requires the same metadata in every artifact."
+    resolution: "The run cache stores terminal status, reason, vendor provenance, and vendor-cache-hit state; INV-01 binds the canonical provenance_digest and full records between manifest and final-state, with report and memory carrying the digest plus declared summaries."
   - id: C-03
-    requirements: [FR-02, INV-02]
+    requirements: [FR-03, INV-01]
     description: "A user-facing gap summary can omit detail that another artifact retains."
-    resolution: "The report contains a summary; the manifest and final state contain the canonical full list; INV-02 checks the canonical fields."
+    resolution: "Manifest and final-state contain the full canonical coverage and availability records; report and memory contain the binding, coverage/gap summary, and provenance_digest. INV-01 compares full records only between manifest and final-state and compares report/memory summaries against derived values."
   - id: C-04
-    requirements: [FR-02, SB-01]
-    description: "FR-02 exposes gaps; SB-01 converts a critical gap into REVIEW, which reduces actionable output."
-    resolution: "SB-01 uses the same critical-gap definition as FR-02 and records the gate result; REVIEW is the explicit safe state."
+    requirements: [FR-03, SB-01]
+    description: "FR-03 exposes gaps; SB-01 converts a critical gap into REVIEW, which reduces actionable output."
+    resolution: "SB-01 uses the same critical-gap definition as FR-03 and records the gate result; REVIEW is the explicit safe state."
   - id: C-05
-    requirements: [QR-01, INV-02]
+    requirements: [FR-02, INV-01]
     description: "A lean manifest may not carry enough detail for the consistency invariant."
-    resolution: "The manifest is the canonical machine-readable record; the report and memory carry the same canonical identity and decision fields."
+    resolution: "The manifest is the canonical machine-readable record. Report, manifest, and final-state carry the current artifact_binding; memory carries the current binding or a reused_decision_ref. Report and memory carry declared summaries and provenance_digest, while manifest and final-state carry the full records."
   - id: C-06
-    requirements: [PR-01, QR-01]
+    requirements: [FR-01, FR-02]
     description: "Cache reuse reduces calls, while the manifest must still explain what was served."
-    resolution: "The manifest records cache hits and source status; reused values keep their original provenance."
+    resolution: "The manifest records cache hits and source status; run-cache reuse and vendor-cache reads are distinguishable, and reused values keep their original provenance."
   - id: C-07
-    requirements: [QR-01, PR-01, SB-01]
+    requirements: [FR-02, FR-01, SB-01]
     description: "Recording and gating add work to a latency-sensitive run."
-    resolution: "The manifest is written after model execution; the safety gate is deterministic and does not call a model."
+    resolution: "A bounded running manifest is written before model calls and atomically finalized after execution; the safety gate is deterministic and does not call a model. Startup, publish, and manifest-write overhead are measured separately."
   - id: C-08
-    requirements: [SR-02, INV-02]
+    requirements: [SR-01, INV-01]
     description: "Redaction can change the exact strings compared across artifacts."
-    resolution: "All artifacts use the same sanitizer; consistency checks compare sanitized values."
+    resolution: "All artifacts use the same sanitizer; consistency checks compare sanitized canonical values and digests, not unsanitized raw text."
 
 moscow:
   must:
-    - PR-01
-    - QR-01
+    - FR-01
     - FR-02
+    - FR-03
     - SB-01
-    - INV-02
-    - SR-02
+    - INV-01
+    - SR-01
   should: []
   could: []
   wont:
@@ -696,126 +1592,216 @@ moscow:
     quality A/B, a new dependency, or a deployment model that D1 does not cover.
 
 traceability:
-  - req_id: PR-01
+  - req_id: FR-01
     code_refs:
       - path: "TradingAgents/tradingagents/dataflows/router.py"
         locator: "L200 route_to_vendor"
-        description: "Dispatcher where a run-scoped cache and status recorder can be inserted."
+        description: "Dispatcher where the run-scoped cache, single-flight guard, and query counters can be inserted."
       - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
-        locator: "L69 ticker-news prefetch"
-        description: "Direct prefetch path that must use the same cache and provenance."
+        locator: "L66 get_news.func and L69 jev_screen"
+        description: "Direct prefetch path that must share the same data_query_key and provenance as analyst tool calls."
+      - path: "TradingAgents/tradingagents/graph/setup.py"
+        locator: "L157-L166 parallel analyst edges"
+        description: "Concurrent analyst execution that requires single-flight handling for identical keys."
+      - path: "TradingAgents/tradingagents/dataflows/vendors/yahoo/ohlcv.py"
+        locator: "L146-L207 load_ohlcv cache"
+        description: "Existing cross-run vendor cache that must remain distinct from the run cache."
+      - path: "TradingAgents/tradingagents/dataflows/vendors/sec_edgar.py"
+        locator: "L122-L132 _cached_json"
+        description: "Existing cross-run vendor cache whose hits must be counted separately."
     baseline_refs:
+      - path: "baseline/runs/baseline-20261020-01/transcripts/tool-events-clean.jsonl"
+        locator: "seq 21 and seq 68 get_news rows"
+        description: "Two news-analyst tool calls with the same ticker-news arguments."
+      - path: "baseline/runs/baseline-20261020-01/transcripts/prefetch-events.jsonl"
+        locator: "sentiment_news row"
+        description: "A third ticker-news attempt with the same window from the sentiment prefetch."
       - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
         locator: "FRED, ticker-news, prediction-market rows"
-        description: "Measured duplicate failed calls."
+        description: "FRED and prediction-market rows are distinct logical queries that failed locally; ticker news is the repeated logical query."
       - path: "baseline/runs/baseline-20261020-01/metrics.json"
         locator: "tool_calls"
         description: "Measured 31 tool calls."
-    notes: "The cache is a new behavior; the baseline only establishes the problem."
-  - req_id: QR-01
+    notes: "FR-01 v1.1.0 limits query executions, not HTTP requests; existing vendor caches are preserved and counted separately."
+  - req_id: FR-02
     code_refs:
+      - path: "docs/req/run-manifest-schema.json"
+        locator: "root contract"
+        description: "Concrete manifest schema with lifecycle, identity, config allowlist, timing, counters, tokens, source status, safety gate, artifacts, and error."
       - path: "TradingAgents/cli/stats_handler.py"
-        locator: "L10 StatsCallbackHandler"
-        description: "Existing LLM/tool/token counters."
+        locator: "L9 StatsCallbackHandler"
+        description: "Existing LLM/tool/token counters; no persistence, duration, prefetch, reflection, retry, or error counters."
       - path: "TradingAgents/cli/run.py"
-        locator: "L135 results directory"
-        description: "Run-scoped output location for the manifest."
+        locator: "L135-L140 results directory and message_tool.log"
+        description: "Run-scoped output location and the existing call log."
       - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-        locator: "L255 run_settings"
-        description: "Allowlisted settings view."
+        locator: "L167-L181 propagate and L372-L401 _run_graph"
+        description: "Run lifecycle where the running manifest must be written before model calls and finalized afterward."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L255-L275 run_settings"
+        description: "Allowlisted settings view for the manifest config block."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L308-L335 _memory_step"
+        description: "Settlement and reflection calls that must be attributed to the LLM counters."
+      - path: "TradingAgents/tradingagents/memory/reflection.py"
+        locator: "L63 invoke"
+        description: "Reflection LLM boundary."
     baseline_refs:
       - path: "baseline/runs/baseline-20261020-01/metrics.json"
         locator: "all fields"
-        description: "External metrics prototype."
+        description: "External metrics prototype with llm_calls, tool_calls, tokens, prefetch_event_count, retry_events, and llm_usage_missing."
+      - path: "baseline/runs/baseline-20261020-01/run-manifest.json"
+        locator: "all fields"
+        description: "External manifest with a different shape; it is not a native lifecycle or safety-gate record."
       - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
         locator: "file size"
         description: "Empty default stderr in the baseline."
-    notes: "The manifest schema is a new artifact; no native manifest exists in the baseline."
-  - req_id: FR-02
+    notes: "run-manifest-schema.json is the concrete contract; no native manifest exists in the baseline."
+  - req_id: FR-03
     code_refs:
       - path: "TradingAgents/tradingagents/agents/state.py"
         locator: "AgentState"
-        description: "State definition to extend with data_availability."
+        description: "State definition to extend with the canonical data_availability snapshot and effective critical profile."
       - path: "TradingAgents/tradingagents/dataflows/router.py"
-        locator: "L200 route_to_vendor"
-        description: "Source of status outcomes."
+        locator: "L200 route_to_vendor and L237-L295 fallback outcomes"
+        description: "Source of record status, attempted sources, serving source, and fallback provenance."
+      - path: "TradingAgents/tradingagents/dataflows/errors.py"
+        locator: "L1-L55 vendor error taxonomy"
+        description: "Maps vendor errors onto the closed record-status set."
+      - path: "TradingAgents/tradingagents/dataflows/date_window.py"
+        locator: "L67-L190 coverage_gap and withhold rules"
+        description: "Supplies window coverage, point-in-time, and withheld status semantics."
+      - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+        locator: "L66-L76 prefetch calls"
+        description: "Direct social prefetch paths that must produce availability records."
     baseline_refs:
       - path: "baseline/runs/baseline-20261020-01/data-availability.csv"
         locator: "all rows"
-        description: "Measured status mix."
-    notes: "No unified availability state exists in the baseline."
+        description: "Measured 20 success, 4 withheld, 6 not_configured, and 4 unavailable rows; no effective profile or aggregation level."
+      - path: "baseline/runs/baseline-20261020-01/transcripts/tool-events-clean.jsonl"
+        locator: "all tool starts and ends"
+        description: "Independent event stream for record and component reconciliation."
+    notes: "No canonical availability state, effective critical profile, or closed aggregation table exists in the baseline."
   - req_id: SB-01
     code_refs:
       - path: "TradingAgents/tradingagents/agents/rating.py"
-        locator: "L106 run_rating"
-        description: "Existing rating parser and REVIEW sentinel."
+        locator: "L96-L117 parse_rating, run_rating, is_review"
+        description: "Existing five-tier parser and terminal REVIEW sentinel."
       - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
-        locator: "L80 structured decision"
-        description: "Where the final model output is produced."
+        locator: "L80-L103 structured decision"
+        description: "Where the unapproved model proposal and model rating are produced."
       - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-        locator: "L358 record_decision"
-        description: "Persistence point where the deterministic gate must run."
+        locator: "L358-L370 record_decision and L437-L465 _log_state"
+        description: "Persistence points that must consume the formal decision, not the model proposal."
+      - path: "TradingAgents/cli/run.py"
+        locator: "L310-L340 streaming display and L380-L385 review notice"
+        description: "Intermediate streaming display and the current REVIEW notice."
+      - path: "TradingAgents/tradingagents/reporting.py"
+        locator: "L20-L46 and L92-L119 write_report_tree"
+        description: "Formal report writer that must use the gated formal decision."
+      - path: "TradingAgents/tradingagents/memory/log.py"
+        locator: "L32-L60 store_decision"
+        description: "Memory writer that must store the formal rating and decision, with the proposal separated."
+      - path: "TradingAgents/tradingagents/backtest.py"
+        locator: "L150-L170 and L196-L207"
+        description: "Backtest entry point and scoring that must use the same gate."
     baseline_refs:
       - path: "baseline/runs/baseline-20261020-01/transcripts/final-status.json"
-        locator: "final_rating"
-        description: "Baseline final rating, produced without a coverage gate."
-    notes: "The REVIEW sentinel exists; the critical-gap gate does not."
-  - req_id: INV-02
+        locator: "final_rating and final_trade_decision"
+        description: "Baseline persisted Hold while critical news/social data was unavailable."
+      - path: "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/5_portfolio/decision.md"
+        locator: "entire file"
+        description: "Baseline formal decision is the model's unmodified Hold text, with no gate notice."
+    notes: "The REVIEW sentinel exists, but there is no trusted snapshot, formal blocked-decision body, separated model proposal, fail-closed gate, or entry-point coverage."
+  - req_id: INV-01
     code_refs:
       - path: "TradingAgents/tradingagents/reporting.py"
-        locator: "L92 write_report_tree"
-        description: "Report writer."
+        locator: "L20-L46 header and L92-L119 write_report_tree"
+        description: "Report writer that must carry the binding block and declared coverage, gap, fallback, and gate summaries."
       - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-        locator: "L437 _log_state"
-        description: "Full-state writer."
+        locator: "L437-L475 _log_state"
+        description: "Final-state writer that must carry the full binding and canonical availability records."
       - path: "TradingAgents/tradingagents/memory/log.py"
-        locator: "L32 store_decision"
-        description: "Memory writer."
+        locator: "L32-L60 store_decision and settlement paths"
+        description: "Memory decision entry and later append-only settlement that must preserve the immutable binding."
+      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+        locator: "L358-L370 record_decision"
+        description: "Publication path where the completed checkpoint and retry identity are enforced."
     baseline_refs:
       - path: "baseline/runs/baseline-20261020-01/report-consistency.json"
         locator: "all fields"
-        description: "Measured decision/report/full-state consistency; source-status consistency was not fully measured."
-    notes: "The invariant extends consistency from decision text to source status and fallback provenance."
-  - req_id: SR-02
+        description: "Measured decision/report/full-state consistency only; no identity binding or source-status consistency."
+      - path: "baseline/runs/baseline-20261020-01/memory/trading_memory.md"
+        locator: "entry tag and DECISION block"
+        description: "Memory has only trade date, ticker, rating, pending status, and prose; no run binding, coverage, gaps, or gate result."
+    notes: "The invariant now defines completion timing, artifact contract, canonical binding, provenance granularity, retry behavior, and memory lifecycle."
+  - req_id: SR-01
     code_refs:
       - path: "TradingAgents/tradingagents/dataflows/net.py"
-        locator: "L6 get_scrubbed"
-        description: "Existing secret scrubber."
+        locator: "L6-L24 get_scrubbed"
+        description: "Existing exact-value scrubber for provider request errors."
       - path: "TradingAgents/tradingagents/dataflows/vendors/alpha_vantage/common.py"
-        locator: "L96 get_scrubbed call"
+        locator: "L95-L97 get_scrubbed call"
         description: "Existing API-key scrub path."
       - path: "TradingAgents/tradingagents/graph/trading_graph.py"
-        locator: "L255 run_settings"
-        description: "Existing allowlist."
+        locator: "L255-L275 run_settings"
+        description: "Existing allowlist for report settings."
       - path: "TradingAgents/cli/prefs.py"
-        locator: "L49 save_last_run"
-        description: "Preference writer that needs URL sanitization."
+        locator: "L30-L58 save_last_run"
+        description: "Preference writer needing the audit/restore split and inline-secret migration."
+      - path: "TradingAgents/cli/prompts.py"
+        locator: "L731-L738 .env creation and chmod"
+        description: "Existing .env 0600 control preserved by SR-01."
+      - path: "TradingAgents/tests/test_api_key_env.py"
+        locator: "L168-L190 .env mode tests"
+        description: "Existing regression tests for .env 0600."
     baseline_refs:
       - path: "baseline/runs/baseline-20261020-01/logs/stdout.log"
         locator: "entire file"
-        description: "Reviewed baseline stdout; no API key value was observed."
+        description: "Reviewed baseline stdout; no API key value was observed, but this is not a complete scan."
       - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
         locator: "file size"
         description: "Empty stderr; this is not a complete secret scan."
-    notes: "No complete historical secret scan exists; SR-02 introduces the zero-match check."
+    notes: "Existing get_scrubbed and .env 0600 are preserved controls. SR-01 adds the two-part known-value/versioned-pattern scan, preference audit/restore split, fail-closed behavior, over-redaction tests, and explicit scope limitation."
 
 validation:
   status: "passed"
+  machine_status: "passed"
+  human_review_status: "pending"
+  human_review_notes: "Machine checks passed; human approval of the revised requirements and schema remains pending."
   schema: "docs/req/req-schema.json"
-  tool: "AJV CLI 5.x (JSON Schema draft 2020-12) and custom Python checks"
+  script: "docs/req/validate_requirements.py"
+  command: "python3 -m pip install pyyaml jsonschema && python3 docs/req/validate_requirements.py"
+  result_record: "docs/req/validation-results.json"
+  tool: "Python pyyaml + jsonschema Draft 2020-12 and custom Python checks"
   checks:
     - id: "schema_compile"
       result: "pass"
-      details: "AJV compiled req-schema.json with --spec=draft2020 --strict=false; the date field is enforced by an ISO-date pattern."
+      details: "req-schema.json declares draft 2020-12 and compiles in a draft-2020-12 validator; date fields are enforced by ISO-date patterns."
     - id: "schema_validation"
       result: "pass"
-      details: "requirements.yaml was converted to JSON and validated against req-schema.json; result: valid."
+      details: "requirements.yaml version 1.9.0 was loaded as YAML and validated against req-schema.json; result: valid."
+    - id: "run_manifest_schema"
+      result: "pass"
+      details: "run-manifest-schema.json compiles under draft 2020-12; it carries artifact_binding, formal_decision, audit-only model_proposal, critical_profile, coverage_snapshot, provenance_digest, run_clock, inheritance record, memory entry binding, write/run security scans, full availability records with supports links and ordered attempts, and completed-state constraints; it accepts representative running, completed, failed-gate, failed-startup, and memory-disabled manifests while rejecting completed records with not_run/error gates, failed security scans, pending formal decisions, cross-field contradictions, or missing report/final-state/memory-entry artifacts."
+    - id: "availability_decision_table"
+      result: "pass"
+      details: "FR-03 defines closed record, requirement, and coverage status sets; per-component evidence contracts; deterministic component and requirement aggregation with empty-set and threshold rules; fallback clearing; effective critical profile defaults; component_missing records and supports links; and ten acceptance criteria."
+    - id: "gate_decision_table"
+      result: "pass"
+      details: "SB-01 defines the trusted coverage snapshot, the formal decision body with reason-specific review classes, model-proposal separation, closed gate statuses and reason codes, the complete blocked-input decision table, fail-closed gate failure with error.stage = gate, formal/intermediate output boundaries, and ten acceptance criteria."
+    - id: "artifact_binding_contract"
+      result: "pass"
+      details: "INV-01 defines the completed checkpoint, artifact_binding, per-artifact contract, canonicalization, source-status granularity, legal fallback versus silent substitution, retry/partial-write behavior, memory entry binding and artifact hash scope, same-day rerun, memory-disabled behavior, and settlement/rotation lifecycle."
+    - id: "secret_scan_contract"
+      result: "pass"
+      details: "SR-01 separates known-secret and versioned pattern checks, defines the closed scan scope and its limitation, separates per-write and final run scans, resolves the preference audit/restore endpoint conflict, specifies fail-closed behavior with an allowed minimal incident record, preserves existing get_scrubbed and .env 0600 controls, and adds over-redaction controls."
     - id: "duplicate_ids"
       result: "pass"
       details: "No duplicate IDs across requirements, acceptance criteria, stakeholders, baseline observations, conflict resolutions, or open questions."
     - id: "missing_references"
       result: "pass"
-      details: "All dependencies, scope IDs, MoSCoW IDs, conflict-resolution IDs, and traceability entries resolve to known requirements."
+      details: "All implementation dependencies, constraint relations, scope IDs, MoSCoW IDs, conflict-resolution IDs, and traceability entries resolve to known requirements; the implementation-dependency graph is acyclic."
     - id: "conflicts"
       result: "pass"
       details: "Every requirement has at least one conflict statement; every conflict resolution references at least two known requirements."
@@ -824,10 +1810,10 @@ validation:
       details: "No banned vague terms found in requirement problems, statements, acceptance inputs, expected results, or verification methods."
     - id: "unverifiable_acceptance"
       result: "pass"
-      details: "All 24 acceptance criteria specify input, a measurable expected result, and a verification method."
+      details: "All acceptance criteria currently present specify input, a measurable expected result, and a verification method."
     - id: "zero_tolerance_invariants"
       result: "pass"
-      details: "All INV-02 and SB-01 acceptance criteria set zero_tolerance=true."
+      details: "All INV-01 and SB-01 acceptance criteria set zero_tolerance=true."
     - id: "measurement_honesty"
       result: "pass"
       details: "No provisional target is marked as measured; all unmeasured values are marked measured=false."
@@ -840,38 +1826,22 @@ validation:
     - id: "traceability_paths"
       result: "pass"
       details: "All traceability code and baseline paths exist in the repository or baseline artifacts."
-  notes: "Schema validation and all custom checks passed. document.date is enforced by an ISO-date pattern."
+  notes: "Machine validation passed for version 1.9.0; human review is pending. Earlier version notes use the current IDs for consistency. FR-01 v1.1.0 revised logical query execution and vendor-cache semantics. FR-02 v1.2.0 defined the run lifecycle and manifest integrity. FR-03 v1.3.0 defined the canonical availability record, effective critical profile, and deterministic aggregation. SB-01 v1.4.0 defined the trusted gate input, formal decision body, and fail-closed gate. INV-01 v1.5.0 defined artifact binding, canonicalization, provenance granularity, retry behavior, and memory lifecycle. SR-01 v1.6.0 defines known-value and versioned-pattern scanning, fixed scan scope and limitations, endpoint audit/restore rules, fail-closed failure behavior, existing-control preservation, and over-redaction controls. Version 1.7.0 renumbered requirement and acceptance IDs. Version 1.8.0 synchronized the manifest schema with INV-01, SB-01, FR-03, and SR-01. Version 1.9.0 adds gate/security scan phases, critical profile and coverage snapshot storage, evidence-to-component links, HTTP request counts, reason-specific review classes, fixed run clock, same-day rerun and memory-disabled rules, cross-field semantic checks, and empty query-set aggregation."
 
 open_questions:
-  - id: OQ-01
-    question: "Which data sources are in the configured critical-source set for D1?"
-    impact: "FR-02 and SB-01 depend on the critical-gap definition."
-    blocking: true
   - id: OQ-02
-    question: "Where should the run manifest be stored and how long should it be retained?"
-    impact: "QR-01 storage location and retention policy."
+    question: "How long should run manifests and memory entries be retained after the storage location is fixed?"
+    impact: "FR-02 manifest retention and INV-01 memory lifecycle; storage location itself is resolved."
     blocking: false
-  - id: OQ-03
-    question: "Which secret-pattern list is authoritative for SR-02, and does it include provider-specific key formats?"
-    impact: "SR-02 scanner coverage."
-    blocking: true
   - id: OQ-04
-    question: "What normalization rules define a stable data_query_key for dates, windows, indicators, and vendor methods?"
-    impact: "PR-01 cache correctness."
-    blocking: true
-  - id: OQ-05
-    question: "Is the provisional 1-second manifest-overhead target accepted for QR-01?"
-    impact: "QR-01 acceptance threshold."
+    question: "Which existing vendor caches remain cross-run, and what TTL applies to each?"
+    impact: "FR-01 vendor-cache-hit accounting and vendor-cache retention policy; the run-cache definition is resolved."
     blocking: false
-  - id: OQ-06
-    question: "Is REVIEW acceptable as the terminal output when a critical gap exists, without a user override?"
-    impact: "SB-01 behavior and user experience."
-    blocking: true
-  - id: OQ-07
-    question: "Does SR-02 cover only .env files and run records, or also the host shell history and external provider logs?"
-    impact: "Security scope and verification boundary."
+  - id: OQ-05
+    question: "Are the FR-02-AC8 provisional thresholds accepted: manifest write p95 at most 100 ms for a payload at most 256 KiB, and end-to-end overhead p95 at most 1% and at most 1 second?"
+    impact: "FR-02 acceptance thresholds and publisher design."
     blocking: false
   - id: OQ-08
     question: "Can concurrent runs share a manifest or preference directory without a locking policy?"
-    impact: "PR-01 cache isolation and QR-01 manifest writes."
+    impact: "FR-01 cache isolation and FR-02 manifest writes."
     blocking: false
