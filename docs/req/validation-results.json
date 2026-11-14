@@ -1,27 +1,49 @@
 {
   "document": "requirements.yaml",
-  "document_version": "1.9.0",
-  "generated_at": "2026-11-10T04:12:53.310258+00:00",
-  "duration_seconds": 0.126,
+  "document_version": "1.14.1",
+  "generated_at": "2026-11-10T18:52:41.780853+00:00",
+  "duration_seconds": 0.228,
   "command": "python3 docs/req/validate_requirements.py",
   "input_hashes": {
-    "docs/req/requirements.yaml": "94148efaa612771c80ca3e958fe3fd4dcc331e5ac871b7f8e6a23156d3e2287f",
-    "docs/req/req-schema.json": "860fd36def76c6bd3dd47fdf0635ad5f08bad21d9738e800695fda786b0dc534",
-    "docs/req/run-manifest-schema.json": "c78db33e674f6c2086da197b4c4e47272307cbee5a2bace1cf37c87ab852eb75",
-    "docs/req/validate_requirements.py": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+    "docs/req/requirements.yaml": "4d14c9e447eddbfeed5cdedd9d466c9325eba9ce88a1a52d29a05056666824d4",
+    "docs/req/req-schema.json": "be39b0fc1234ceafe105813e201fbfd81c0e49bc4e0b79424d8f44a71783d170",
+    "docs/req/run-manifest-schema.json": "475a073f4a74f5d8fd158ae78aced025cb268bc145352ccc5dbc69b8ddb6e074",
+    "docs/req/validate_requirements.py": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
     "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
     "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
     "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
     "docs/req/evaluation/config-v1.json": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
     "docs/req/evaluation/prompt-v1.0.yaml": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
-    "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2"
+    "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2",
+    "docs/req/fixtures/portfolio_risk_input_v1.json": "7ec10c984b6c3038231afcf3b91159d29fcf7a9ec55b3b49fddeb0a6590c41fb",
+    "docs/req/fixtures/portfolio_risk_input_invalid_v1.json": "ad9a2001293c11d69676e88cc8ff76d3d887e78d1c422231e62e05b8acf6c752",
+    "docs/req/fixtures/portfolio_risk_policy_v1.json": "20f71d1f7842cdc0488adb340e45b4f216836e9457b709890cd3eece0ea6f4ae",
+    "docs/req/fixtures/run_clock_historical_v1.json": "779eb5d96958ca5a1034fdc2a130d99b0c78e92830d4fd2c962bc9b26678cf63",
+    "docs/req/fixtures/run_clock_future_v1.json": "f71eebe530e756bb7634511ba0a282a0cb7b44eb71dc2e31774fb02d2f0d2523",
+    "docs/req/fixtures/risk_evidence_expected_v1.json": "5d9489aa05c90f128aedfedef6312f8f8184df090347636dbcd37b51f81642c1",
+    "docs/req/fixtures/archive_history_v1.json": "6b202f6a5ffa3bfb106c883e69fcb7d7a5c6f940375d35e64f0fab7a14bc5c16",
+    "docs/req/fixtures/archive_recovery_v1.json": "15da36d648d2d20613692c69afe89b80502d2bbfc0ee0d60bb4cb0709f8e002e",
+    "docs/req/fixtures/financial_metrics_v1.json": "5a2a5b71f968c3452256c5e63d27f720758419d0df1c0a538604daa454ce529b",
+    "docs/req/fixtures/downstream_brief_v1.json": "84ae225fc76fbed5104a2820b73ef3ee8ff334b8f38eb74d6262b994c9d73427",
+    "docs/req/evaluation/brief-eval-contract-v1.json": "e4d5b1e39eb7f830bc588f1cbaee4640f36038d43af8b7b6afa42109460fd38c",
+    "docs/req/fixtures/brief_budget_policy_v1.json": "d587273513ed353460c14944de756faab9fd891dbbcff8a8b66f833e2f2a90c5",
+    "docs/req/fixtures/brief_eval_states_v1.json": "85ee69912ccd11419a6603e86e3837cc28049af21004bd081a63f72817c699b7",
+    "yhx/requirements.yaml": "86690cb15d2086205d6260fe4d5af8833c09eb58d94095f724f28e3f8822afd1"
   },
-  "script_hash": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+  "script_hash": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
   "is_current": true,
   "machine_checks": [
     {
       "id": "requirements_schema",
       "result": "pass"
+    },
+    {
+      "id": "scope_status_consistency",
+      "result": "pass",
+      "details": {
+        "approved": 6,
+        "draft": 7
+      }
     },
     {
       "id": "manifest_schema_compile",
@@ -31,8 +53,9 @@
       "id": "manifest_samples",
       "result": "pass",
       "details": {
-        "samples": 10,
-        "completed_negatives": 13,
+        "samples": 15,
+        "completed_negatives": 15,
+        "risk_negatives": 8,
         "canonicalization_checks": 6
       }
     },
@@ -44,7 +67,7 @@
       "id": "acceptance_count",
       "result": "pass",
       "details": {
-        "count": 54
+        "count": 111
       }
     },
     {
@@ -63,6 +86,316 @@
         "dimensions": 5,
         "acceptance_status": "blocked_until_snapshots_and_human_approval"
       }
+    },
+    {
+      "id": "portfolio_risk_document_coverage",
+      "result": "pass",
+      "details": {
+        "requirements": [
+          "FR-04",
+          "INV-02"
+        ],
+        "fr04_acs": 11,
+        "inv02_acs": 7,
+        "check_kind": "document_coverage_only",
+        "cache_risk_eval_separated": true,
+        "documented_cases": [
+          "add_long",
+          "cache_risk_separation",
+          "crypto_buy",
+          "dual_over_limit",
+          "evaluator_error",
+          "historical_memory_reuse",
+          "historical_valuation_cutoff",
+          "insufficient_cash",
+          "missing_candidate",
+          "missing_policy",
+          "unsupported_candidate",
+          "zero_position_new_long"
+        ]
+      }
+    },
+    {
+      "id": "risk_evidence_fixture",
+      "result": "pass",
+      "details": {
+        "input_ref": "docs/req/fixtures/portfolio_risk_input_v1.json",
+        "input_digest": "7ec10c984b6c3038231afcf3b91159d29fcf7a9ec55b3b49fddeb0a6590c41fb",
+        "policy_ref": "docs/req/fixtures/portfolio_risk_policy_v1.json",
+        "policy_digest": "a4cedf7ddc98babaa8dbb3dea6f748a57c13ccb040f12067c94e07dce74bf1a1",
+        "policy_comparison": {
+          "human_approval_ref": null,
+          "max_projected_weight": "0.30",
+          "max_stop_distance": "0.05",
+          "max_valuation_age_seconds": 28800,
+          "precision_rule": "input<=12dp;internal>=28sd;exact_compare;display=6dp_half_up",
+          "threshold_status": "provisional"
+        },
+        "valuation_cutoff": "2026-10-20T03:59:59.999999+00:00",
+        "projected_weight": "0.3",
+        "stop_distance": "0.05",
+        "evaluation_status": "passed",
+        "tamper_checks": [
+          "input_digest",
+          "wrong_metric",
+          "policy_threshold",
+          "stop_distance"
+        ],
+        "future_analysis_date": "rejected_without_clipping",
+        "invalid_input": {
+          "risk_reason_code": "INVALID_RISK_INPUT",
+          "normalized_artifact": false,
+          "diagnostic_ref_required": true
+        }
+      }
+    },
+    {
+      "id": "archive_document_coverage",
+      "result": "pass",
+      "details": {
+        "requirements": [
+          "FR-05",
+          "FR-06",
+          "QR-02"
+        ],
+        "fr05_acs": 4,
+        "fr06_acs": 6,
+        "qr02_acs": 2,
+        "check_kind": "document_coverage_only",
+        "covered_history": [
+          "ticker",
+          "analysis_date",
+          "intersection",
+          "normaliz",
+          "order",
+          "limit",
+          "offset",
+          "paging",
+          "next_offset",
+          "truncated",
+          "unknown",
+          "corrupt",
+          "invalid_filter",
+          "revalidat",
+          "section_manifest",
+          "export",
+          "legacy",
+          "publication_snapshot",
+          "temporary",
+          "history_reference_closure",
+          "reused_decision_ref",
+          "source publication proof",
+          "historical_reference_unverified"
+        ],
+        "covered_recovery": [
+          "snapshot_ready",
+          "missing",
+          "corrupt",
+          "unsupported",
+          "quarantine",
+          "model",
+          "external",
+          "analysis graph",
+          "settlement",
+          "reflection",
+          "memory",
+          "claim",
+          "stale",
+          "retry",
+          "at most one",
+          "run_id",
+          "commit marker",
+          "artifact_binding",
+          "report_section_manifest",
+          "risk input",
+          "policy references",
+          "reserved entry version",
+          "schema/renderer",
+          "reference",
+          "publication_snapshot",
+          "temporary",
+          "fencing token",
+          "first write",
+          "different decision entry",
+          "additional duplicate"
+        ],
+        "covered_benchmark": [
+          "30",
+          "nearest-rank",
+          "p95",
+          "2.000",
+          "provisional",
+          "1,048,576",
+          "100",
+          "10",
+          "supported local filesystem",
+          "not limited to windows/ntfs",
+          "failure",
+          "timed-out",
+          "cpu/ram",
+          "filesystem",
+          "timing",
+          "12-section",
+          "risk evidence",
+          "memory",
+          "rendered output"
+        ]
+      }
+    },
+    {
+      "id": "archive_static_fixture",
+      "result": "pass",
+      "details": {
+        "history_cases": [
+          "intersection",
+          "normalization",
+          "order",
+          "limit",
+          "offset",
+          "pagination",
+          "truncated",
+          "unknown_ticker",
+          "unknown_run_id",
+          "corrupt_record",
+          "invalid_filter",
+          "invalid_limit",
+          "invalid_offset",
+          "visibility"
+        ],
+        "static_examples": [
+          "duplicate_snapshot_label",
+          "valid_snapshot_label",
+          "missing_snapshot_label",
+          "corrupt_snapshot_label",
+          "unsupported_snapshot_label",
+          "analysis_complete_label",
+          "cleanup_warning_label",
+          "single_success_label"
+        ],
+        "committed": [
+          "r1",
+          "r2",
+          "r7"
+        ],
+        "quarantined": [
+          "r3",
+          "r4",
+          "r5"
+        ],
+        "not_visible": [
+          "r6"
+        ],
+        "cleanup_failure_warning": true,
+        "snapshot_fields_verified": 12,
+        "check_kind": "static_example_check",
+        "proof_scope": "static_fixture_only",
+        "not_proven_here": [
+          "process_concurrency",
+          "lease_fencing",
+          "lost_lease_rejection",
+          "zero_external_calls"
+        ]
+      }
+    },
+    {
+      "id": "financial_metrics_document_coverage",
+      "result": "pass",
+      "details": {
+        "requirements": [
+          "FR-07"
+        ],
+        "acs": 11,
+        "check_kind": "document_coverage_only"
+      }
+    },
+    {
+      "id": "financial_metrics_fixture",
+      "result": "pass",
+      "details": {
+        "scenarios": 21,
+        "checks": 36,
+        "check_kind": "requirement_evidence_fixture"
+      }
+    },
+    {
+      "id": "downstream_brief_document_coverage",
+      "result": "pass",
+      "details": {
+        "requirements": [
+          "FR-08"
+        ],
+        "acs": 5,
+        "check_kind": "document_coverage_only"
+      }
+    },
+    {
+      "id": "downstream_brief_fixture",
+      "result": "pass",
+      "details": {
+        "scenarios": 16,
+        "checks": 16,
+        "policy_version": "brief-budget-policy-v1",
+        "check_kind": "static_example_check",
+        "proof_scope": "static_fixture_only",
+        "not_proven_here": [
+          "model_following_brief_format",
+          "live_token_savings",
+          "decision_quality_equivalence"
+        ]
+      }
+    },
+    {
+      "id": "brief_evaluation_contract",
+      "result": "pass",
+      "details": {
+        "contract_version": "d1-brief-contract-v1",
+        "current_state": "blocked",
+        "acceptance_status": "blocked",
+        "case_snapshots": {
+          "total_cases": 10,
+          "captured_cases": 1,
+          "readable_cases": 0,
+          "digest_matched_cases": 0,
+          "pending_case_ids": [
+            "aapl-2026-10-19",
+            "msft-2026-10-19",
+            "amzn-2026-10-19",
+            "googl-2026-10-19",
+            "meta-2026-10-19",
+            "tsla-2026-10-19",
+            "amd-2026-10-19",
+            "jpm-2026-10-19",
+            "xom-2026-10-19"
+          ],
+          "all_ready": false
+        },
+        "digests_verified": 5,
+        "check_kind": "evaluation_contract_semantic_check"
+      }
+    },
+    {
+      "id": "brief_budget_policy",
+      "result": "pass",
+      "details": {
+        "policy_version": "brief-budget-policy-v1",
+        "resolution_order": [
+          "reject_if_mandatory_exceeds_hard_cap",
+          "expand_to_hard_cap",
+          "resolvable_reference",
+          "full_report_within_context_hard_cap",
+          "BRIEF_REJECTED"
+        ],
+        "check_kind": "budget_policy_static_check"
+      }
+    },
+    {
+      "id": "brief_eval_state_fixture",
+      "result": "pass",
+      "details": {
+        "cases": 7,
+        "checks": 7,
+        "check_kind": "state_transition_fixture"
+      }
     }
   ],
   "human_review": {
@@ -71,21 +404,41 @@
     "reviewed_at": null,
     "notes": "Human approval reset to pending because validated inputs changed.",
     "bound_input_hashes": {
-      "docs/req/requirements.yaml": "94148efaa612771c80ca3e958fe3fd4dcc331e5ac871b7f8e6a23156d3e2287f",
-      "docs/req/req-schema.json": "860fd36def76c6bd3dd47fdf0635ad5f08bad21d9738e800695fda786b0dc534",
-      "docs/req/run-manifest-schema.json": "c78db33e674f6c2086da197b4c4e47272307cbee5a2bace1cf37c87ab852eb75",
-      "docs/req/validate_requirements.py": "6901bd16736bc859341ea0c9b27cc8b9e2baaf64717a3d10da902fe6049c713d",
+      "docs/req/requirements.yaml": "4d14c9e447eddbfeed5cdedd9d466c9325eba9ce88a1a52d29a05056666824d4",
+      "docs/req/req-schema.json": "be39b0fc1234ceafe105813e201fbfd81c0e49bc4e0b79424d8f44a71783d170",
+      "docs/req/run-manifest-schema.json": "475a073f4a74f5d8fd158ae78aced025cb268bc145352ccc5dbc69b8ddb6e074",
+      "docs/req/validate_requirements.py": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
       "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
       "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
       "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
       "docs/req/evaluation/config-v1.json": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
       "docs/req/evaluation/prompt-v1.0.yaml": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
-      "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2"
+      "docs/req/evaluation/snapshots-v1.json": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2",
+      "docs/req/fixtures/portfolio_risk_input_v1.json": "7ec10c984b6c3038231afcf3b91159d29fcf7a9ec55b3b49fddeb0a6590c41fb",
+      "docs/req/fixtures/portfolio_risk_input_invalid_v1.json": "ad9a2001293c11d69676e88cc8ff76d3d887e78d1c422231e62e05b8acf6c752",
+      "docs/req/fixtures/portfolio_risk_policy_v1.json": "20f71d1f7842cdc0488adb340e45b4f216836e9457b709890cd3eece0ea6f4ae",
+      "docs/req/fixtures/run_clock_historical_v1.json": "779eb5d96958ca5a1034fdc2a130d99b0c78e92830d4fd2c962bc9b26678cf63",
+      "docs/req/fixtures/run_clock_future_v1.json": "f71eebe530e756bb7634511ba0a282a0cb7b44eb71dc2e31774fb02d2f0d2523",
+      "docs/req/fixtures/risk_evidence_expected_v1.json": "5d9489aa05c90f128aedfedef6312f8f8184df090347636dbcd37b51f81642c1",
+      "docs/req/fixtures/archive_history_v1.json": "6b202f6a5ffa3bfb106c883e69fcb7d7a5c6f940375d35e64f0fab7a14bc5c16",
+      "docs/req/fixtures/archive_recovery_v1.json": "15da36d648d2d20613692c69afe89b80502d2bbfc0ee0d60bb4cb0709f8e002e",
+      "docs/req/fixtures/financial_metrics_v1.json": "5a2a5b71f968c3452256c5e63d27f720758419d0df1c0a538604daa454ce529b",
+      "docs/req/fixtures/downstream_brief_v1.json": "84ae225fc76fbed5104a2820b73ef3ee8ff334b8f38eb74d6262b994c9d73427",
+      "docs/req/evaluation/brief-eval-contract-v1.json": "e4d5b1e39eb7f830bc588f1cbaee4640f36038d43af8b7b6afa42109460fd38c",
+      "docs/req/fixtures/brief_budget_policy_v1.json": "d587273513ed353460c14944de756faab9fd891dbbcff8a8b66f833e2f2a90c5",
+      "docs/req/fixtures/brief_eval_states_v1.json": "85ee69912ccd11419a6603e86e3837cc28049af21004bd081a63f72817c699b7",
+      "yhx/requirements.yaml": "86690cb15d2086205d6260fe4d5af8833c09eb58d94095f724f28e3f8822afd1"
     },
-    "bound_document_version": "1.9.0"
+    "bound_document_version": "1.14.1"
   },
   "limitations": [
-    "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, and dependency acyclicity.",
-    "Behavioral evaluation is blocked until snapshots and human approval are complete."
+    "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, dependency acyclicity, draft/approved scope consistency, and portfolio-risk/archive document coverage.",
+    "portfolio_risk_document_coverage checks required case concepts in acceptance text; it is a document coverage check, not behavior verification.",
+    "archive_document_coverage checks required archive/recovery/benchmark concepts in acceptance text; it is a document coverage check, not behavior verification.",
+    "financial_metrics_document_coverage and downstream_brief_document_coverage check required concepts and expected fixture values in acceptance text; they are document coverage checks, not behavior verification.",
+    "Behavioral evaluation is blocked until snapshots and human approval are complete; the frozen v1 eval files are unchanged.",
+    "Risk evidence, archive, financial, and brief fixtures recompute local requirement evidence and negatives; they are requirement-evidence checks, not application tests.",
+    "archive_static_fixture, downstream_brief_fixture, brief_budget_policy, brief_evaluation_contract, and brief_eval_state_fixture are static checks. Process concurrency, lease fencing, lost-lease rejection, zero-external-call behavior, live model brief-following, and live token/quality evaluation still require process-level, dependency-sentinel, and live evaluation tests that were not executed.",
+    "No application implementation or application test was executed in this requirements-validation pass."
   ]
 }

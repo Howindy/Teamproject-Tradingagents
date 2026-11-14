@@ -1,164 +1,185 @@
-# ADR 001 — Run Governance Architecture: Lean A with FinalizedRunRecord
+# ADR 001 — Run Governance Architecture: Lean A Extended
 
-Status: **v0.1 — draft / pending human review**  
+Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Decision status: **proposed**  
-Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
+Date: 2026-11-11  
+D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
+Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+Supersedes: ADR 001 v0.1 (D1 v1.9.0, 6 requirements)  
 Implementation status: **design only; no application code changed**
 
 ---
 
 ## 1. Context
 
-D1 defines six requirements: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01`. The baseline establishes:
+The baseline establishes only the original TradingAgents behavior:
 
-- 195.383s end-to-end, 19 LLM calls, 31 tool calls.
+- 195.383 s end-to-end, 19 LLM calls, 31 tool calls.
 - 156,541 input tokens, 27,639 output tokens.
-- Repeated logical query: 3 ticker-news attempts with the same key. The 6 FRED indicators and 2 prediction-market topics were distinct logical queries that failed locally without an external request.
-- No native manifest; default stderr is empty.
-- No unified availability state and no coverage-aware safety gate.
-- The baseline decision/report/full-state were consistent, but source-status consistency across every artifact was not measured.
-- Partial secret scrubbing exists, but no full secret scan was performed.
+- Three ticker-news logical attempts with the same key; 6 FRED indicators and 2 prediction-market topics were distinct local failures.
+- 20 success, 4 withheld, 6 not_configured, 4 unavailable data-status rows.
+- No native lifecycle manifest, no unified coverage state, no coverage-aware safety gate, no deterministic portfolio-risk check, no history/recovery interface, no structured metric block, and no bounded downstream brief.
+- The baseline decision/report/full-state were consistent, but source-status consistency, risk evidence, and memory binding were not measured.
 
-The architecture must make the safety gate non-bypassable, keep model proposals separate from final decisions, and ensure formal outputs share one canonical record.
+D1 v1.14.1 adds seven draft capabilities without reducing the original six:
+
+- `FR-04`/`INV-02`: deterministic portfolio risk inside the finalization gate.
+- `FR-05`: historical retrieval of committed publications.
+- `FR-06`: model-free startup recovery of pending publication.
+- `QR-02`: bounded recovery performance.
+- `FR-07`: deterministic derived financial metrics.
+- `FR-08`: bounded downstream brief with canonical mandatory content.
+
+The architecture must satisfy all of them without creating a second final authority, a second publication transaction, a second data path, a second memory identity, or a second context assembler.
 
 ---
 
 ## 2. Decision
 
-Adopt **Lean A** as the working D2 architecture:
+Retain **Lean A** and extend it with bounded capability services:
 
-- `RunContext` is lifecycle and dependency wiring only; it fixes `run_clock` and allocates a unique `run_id`.
-- Business rules are separate services: `DataAccessService`, `AvailabilityIndex`, `RunEvidenceStore`, `ContextAssembler`, `SafetyGate`, `ArtifactPublisher`, `MemoryService`, `SecretRedactor`, `CheckpointCoordinator`.
-- `AvailabilityIndex` produces the critical profile, ordered attempts, supports links, component_missing records, and a coverage snapshot containing `critical_profile_hash` and `provenance_digest`.
-- `PreflightCoordinator` fetches mandatory market price and stock financial statements before analyst nodes, using the same `DataAccessService` run cache.
-- `FailureFinalizer` writes an independent `RunFailureRecord` and failed manifest when no normal `FinalizedRunRecord` exists; this path does not require model output.
-- `SafetyGate` consumes a trusted coverage snapshot and model proposal, selects `primary_reason_code` and `review_class`, and produces an immutable `FinalizedRunRecord`.
-- Model proposals and formal decisions are separate fields; memory reuses by `decision_id`, not by per-invocation `run_id`.
-- All formal display, persistence, and memory consume `FinalizedRunRecord` only.
-- Old writers are wrapped, made private, or require a finalized record.
-- Publish is staged and atomic per file; `run_status=completed` requires an INV-01 check and the terminal manifest.
-- Memory writes use `(decision_id, entry_digest)` plus the existing `(trade_date, ticker)` guard; same-day same-binding reruns reuse the entry, different decision_ids reserve pre-commit versions with supersedes and effective version is derived from committed manifests; only same decision_id with different entry_digest conflicts, and memory-disabled runs require no memory artifact.
-- Coverage fallback only clears a gap if it satisfies the same component/window/point-in-time/minimum-record contract.
-- The terminal manifest `run_status=completed` is the unique commit point; INV-01 checks the terminal candidate and the committed files, not the running manifest.
-- Runtime context uses a provisional coverage view; the final coverage snapshot is created after the graph and used only by the gate/formal outputs.
-- The context budget is the effective input budget (per-call cap minus output/tool/constraint reserves), not 75% of the provider window.
-- Historical settlement/reflection uses a separate append-only protocol from current decision commit.
-- Immutable decision timing ends at the gate; publish metrics live in the terminal manifest.
-- Implementation is phased: core formal-result loop with query reuse first, then memory lifecycle, recovery, optional compression, and behavior evaluation. Before recovery/compression are enabled, resume is rejected and over-budget context fails closed.
+- `RunContext` owns lifecycle, run identity, fixed clock, paths, and dependency wiring only.
+- Business rules live in separate services: `DataAccessService`, `AvailabilityIndex`, `RunEvidenceStore`, `SafetyGate`, `ArtifactPublisher`, `MemoryService`, `SecretRedactor`, `CheckpointCoordinator`, and the new risk/publication/finance/brief services.
+- `AvailabilityIndex` produces the only critical profile and coverage snapshot.
+- The original terminal Portfolio Manager remains and is wrapped by `PortfolioManagerAdapter`; it consumes full reports, plans, risk debate, and past memory, and produces the unapproved `ModelProposal` with `source=portfolio_manager`. Trader/risk-debater output is never promoted to the final model proposal.
+- `SafetyGate` is the only formal decision authority and the **only caller** of `RiskInputValidator`, `RiskPolicyResolver`, and `PortfolioRiskEvaluator`; applicability runs once inside the gate and an applicable result is recorded even when coverage blocks. The evaluator is pure and has no writer, persistence, memory, or decision path.
+- `ArtifactPublisher` is the only formal publication writer. It determines the memory plan/reservation, writes/verifies the recovery snapshot before promising recovery, writes the original memory entry idempotently, persists/validates the permanent-snapshot files before the terminal commit, validates the terminal candidate, atomically commits, reads back, and cleans temporary material last. Recovery first checks the terminal manifest: committed+verified+identity match is idempotent success without `recovery/`; committed conflict/corruption returns a typed result without overwrite or republish; only uncommitted records proceed with the recovery snapshot. Recovery drives the same publisher and commit; it has no separate transaction or marker.
+- Post-commit read failure keeps the committed terminal manifest immutable, rejects the record as success, and records an independent corruption diagnostic. It does not replace the committed manifest with `failed`.
+- `PublicationSnapshotStore` holds permanent committed records. `RecoverySnapshotStore` holds temporary pending envelopes. History and export read the permanent snapshot and revalidate on every read. Permanent artifacts form an acyclic hash DAG: `binding.json` has no terminal-manifest hash; the manifest hashes permanent files; no hashed file contains the manifest hash. `record_hash` is a canonical content digest with `artifact_binding.record_hash` and result-carrying hashes excluded; file-byte hashes are separate.
+- Only `DataAccessService` calls vendor adapters. `FinancialFactService` requests structured facts through it and normalizes the returned payload; the existing SEC statement capability is connected through an explicit SEC adapter boundary with shared cache, counters, and provenance. `FinancialMetricService` is pure; the metric block is computed before research debate and persisted in a `metric_evidence_bundle`.
+- `ContextAssembler` remains the only context entry. `DownstreamBriefBuilder` generates/reuses the five-role brief before context delivery, using the program coverage view and its version; for those roles the brief replaces the four full analyst reports. It does not mutate full/formal/history/recovery artifacts.
+- `MemoryService` remains the only memory writer. `MemoryReservationStore` provides a persistent, append-only allocation history with a high-water mark over all historical allocations, including failed; a failed version is never reissued; retries/recovery reuse their own reservation; `committed` is a derived projection, not a second commit condition. The reuse/new plan is fixed before the recovery snapshot.
+- Normal publication and recovery share one `RunOwnershipLock`, owner identity, and fencing token. The OS file lock is short-lived; the logical lease records activity. Ownership is checked in the same critical section as the protected write; takeover acquires the file lock and increments fencing; lease expiry does not release the file lock. The lock order is run lock then memory lock. Recovery reads/parses/renders outside the locks; staged content is revalidated against current ownership/publication state before use.
+- All formal display, persistence, memory, history, export, and scoring consume `FinalizedRunRecord` or a verified committed publication.
+- Old writers are wrapped, made private, or require a finalized record; `propagate` keeps its `(final_state, signal)` return shape after publication.
+- The terminal manifest `run_status=completed` plus read-time `INV-01` is the only commit condition.
+- Implementation is phased: foundations; core closed loop + Portfolio Manager/model proposal + minimum memory identity/idempotency + FR-02-required section manifest/permanent snapshot/recovery snapshot; memory enhancements; financial metrics; history/startup scan/export/benchmark; brief/context; behavior evaluation. Approved FR-02/INV-01/SB-01 obligations are not downgraded by draft dependencies.
+- Disabled capabilities reject or degrade explicitly; a disabled phase is not evidence that the requirement is satisfied.
+- Approved `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding; approved `INV-01` binding/read-time verification; and approved `SB-01` risk-branch behavior remain obligations even though related draft requirements exist. Draft status limits completion/acceptance claims, not approved behavior.
 
-### 2.1 ADD iterations applied
+### 2.1 ADD-R iterations applied
 
-1. **Context and drivers**: app-controlled records versus external logs; six D1 requirement drivers.
-2. **Evidence model**: executed availability records, supports links, component_missing records, fixed run clock, critical profile, coverage snapshot.
-3. **Formal decision**: trusted gate input, reason priority, review class, formal decision, model-proposal separation.
-4. **Publication and consistency**: artifact binding, decision id, manifest, memory entry binding, INV-01 checkpoints.
-5. **Security and operations**: write/run scan phases, incident record, checkpoint signature, runtime policies.
-6. **Evaluation**: compare Lean A, event ledger, and decorator; select Lean A for review.
+1. Full-scope drivers, constraints, and retain/adjust assessment.
+2. Risk: pure evaluator inside the shared gate (chosen over a separate risk gate, model-assisted risk, or pre-model filter).
+3. Publication lifecycle: extend the publisher with permanent/recovery snapshots and claim/fencing (chosen over a separate archive transaction, graph re-run, or directory-scan history).
+4. Financial metrics: deterministic fact/metric service through the unified data access (chosen over model arithmetic, a direct vendor path, or subtraction-derived quarters).
+5. Brief: a budgeted view inside the existing context assembler (chosen over a second assembler, character truncation, or an unchecked model brief).
+6. Integration, compatibility, phasing, and evidence review.
 
-See `architecture-blueprint.md` §1A for the full ADD driver/quality-attribute table.
+See `architecture-blueprint.md` §8 for the iteration record and `docs/architecture/adr/002-full-scope-add-r.md` for the extension decisions.
 
-Lean A is a **recommendation for review**, not an approved team decision.
+Lean A remains a **recommendation for review**, not an approved team decision.
 
 ---
 
 ## 3. Options considered
 
-### Option A — Central Run Coordinator (Lean A variant)
+### Option A — Lean A Extended (selected for proposal)
 
-RunContext owns lifecycle/DI; services own business logic.
-
-**Advantages**
-
-- Clear separation of lifecycle from policy.
-- Strong path to `FinalizedRunRecord` and non-bypassable gate.
-- Testable services with explicit interfaces.
-- Lower conceptual overhead than event sourcing.
-
-**Costs**
-
-- Cross-cutting integration across CLI, graph, tools, reporting, memory, prefs.
-- Requires strict writer migration and static bypass checks.
-- Risk of RunContext growing into a god object if boundaries are not enforced.
-
-### Option B — Event-Sourced Run Ledger + Reducers
-
-Every run fact is appended to a ledger; reducers produce availability, metrics, manifest, gate input, and artifacts.
+`RunContext` owns lifecycle/DI; services own policy; one gate, one publisher, one context assembler, one memory writer.
 
 **Advantages**
 
-- Strongest construction guarantee for `INV-01`.
-- Pure reducers and replay are highly testable.
-- Cache, availability, metrics, and gate inputs derive from one event stream.
-- Ledger outside graph state is checkpoint-friendly.
+- Covers all 13 requirements without a second authority or transaction.
+- Keeps the graph and agents; adapters migrate public surfaces.
+- Testable pure risk/metric functions and table-driven gate/coverage rules.
+- Explicit permanent/temporary record split for history and recovery.
 
 **Costs**
 
-- Higher schema/replay complexity.
-- Event schema evolution cost.
-- Retention and sanitization of the ledger are additional concerns.
-- More implementation work than Lean A.
+- Cross-cutting integration across CLI, graph, tools, reporting, memory, history, export, and recovery.
+- Requires strict writer migration and bypass audits.
+- More service interfaces and test suites than v0.1.
+- Risk and recovery add new failure modes that must be proven.
 
-### Option C — Minimal Decorator / Contextvar Layer under the same safety contract
+### Option B — Independent capability subsystems
 
-Keep current architecture; add wrappers, contextvar, stats manifest, and a gate. For a fair comparison, this option must satisfy the same entry coverage, `SB-01`, `INV-01`, and `SR-01` requirements as Lean A; a CLI-only gate is not a valid candidate.
+Risk, archive, and brief each get their own gate, transaction, or assembler.
 
 **Advantages**
 
-- Lower conceptual overhead than event sourcing.
-- Minimal runtime overhead for a single entry point.
-- Fastest prototype path if coverage is narrow.
+- Local ownership and simpler individual modules.
 
 **Costs**
 
-- Under the required same safety contract, it must wrap CLI, programmatic, backtest, checkpoint, and headless paths; change surface becomes high.
-- `INV-01` and `SR-01` depend on every writer/wrapper being migrated; bypass risk remains higher than Lean A unless migration is pervasive.
-- Hidden contextvar state complicates concurrency, retry, and testing.
+- Creates multiple final authorities, commit markers, and context sources.
+- Makes cross-artifact consistency and INV-01 unprovable.
+- Rejected under the same safety and functional contract as Option A.
+
+### Option C — Event-sourced run ledger
+
+Every run fact is appended to a ledger; reducers produce availability, metrics, gate input, risk result, publication, and recovery.
+
+**Advantages**
+
+- Strongest replay and construction guarantee.
+- Audit-friendly for every derived result.
+
+**Costs**
+
+- Higher schema, replay, migration, and sanitization cost.
+- More work than Lean A for the same D1 outcome.
+- Retained as a re-decision option if Lean A cannot prove non-bypassability or replay becomes mandatory.
+
+### Option D — Decorator/contextvar extension
+
+Keep the current architecture and add wrappers around writers and the graph.
+
+**Advantages**
+
+- Low conceptual overhead for one entry point.
+
+**Costs**
+
+- Under the same required coverage (CLI, programmatic, backtest, checkpoint, recovery), the change surface becomes high.
+- Hidden state complicates concurrency and testing.
+- Bypass risk remains higher than Lean A.
+- Retained only as a tactical prototype comparison.
 
 ---
 
 ## 4. Comparison summary
 
-| Criterion | Lean A | B: Event Ledger | C: Decorator (same safety contract) |
-|---|---|---|---|
-| Entry coverage under same contract | High (design) | High (design) | High required, difficult to prove |
-| Requirement coverage confidence | High (design) | High (design) | Medium (design) |
-| Change surface | High | Medium | High |
-| Complexity | High | Medium–High | Medium–High |
-| Runtime cost | Low (design) | Low–Medium (design) | Low (design) |
-| Testability | High | High | Medium |
-| Maintainability | Medium | High | Low–Medium |
-| Bypass resistance | High | High | Medium–Low |
-| Checkpoint friendliness | Medium–High | High | Medium |
+| Criterion | A: Lean A Extended | B: Independent subsystems | C: Event ledger | D: Decorator |
+|---|---|---|---|---|
+| One final authority | Yes | No | Yes | Fragile |
+| One publication transaction | Yes | No | Yes | Fragile |
+| One context assembler | Yes | No | Yes | Fragile |
+| Requirement coverage confidence | High (D) | Low (D) | High (D) | Medium (D) |
+| Change surface | High | High | Medium | High |
+| Complexity | High | Medium–High | Medium–High | Medium–High |
+| Testability | High | Medium | High | Medium |
+| Compatibility with existing graph | High | Medium | Medium | High |
+| Replay/audit strength | Medium–High | Medium | High | Low–Medium |
 
-All candidates are compared under the same entry coverage, gate, invariant, and secret-scanning requirements. No candidate has been implemented. All ratings except baseline facts are design expectations, not measurement results.
-
-Full table: `docs/architecture/evaluation-table.md`.
+All candidates are compared under the same gate, binding, redaction, and history/recovery contract. No candidate has been implemented. All ratings except baseline facts are design expectations.
 
 ---
 
-## 5. Why Lean A
+## 5. Why Lean A Extended
 
-1. It satisfies the D1 zero-tolerance safety and consistency requirements without the full event-schema/replay cost of B.
-2. `FinalizedRunRecord` provides a single formal output contract; the publisher can enforce that only finalized data is displayed or persisted.
-3. RunContext remains small; business policy is testable in separate services.
-4. Under the same required entry coverage, it is less likely than C to leave a bypass through programmatic or backtest paths.
-5. It gives the team a concrete migration path: wrap old writers, then make them private or record-dependent.
-
-Lean A is chosen for the D2 draft because it balances safety and change cost. B remains the fallback if Lean A cannot prove non-bypassability or if replay becomes necessary. C is retained only as a tactical prototype comparison.
+1. It preserves the single-authority and single-transaction properties that the new requirements depend on.
+2. It reuses the existing graph, agents, renderer, memory substrate, and CLI instead of rewriting them.
+3. Pure risk and metric functions make deterministic boundaries testable with offline fixtures.
+4. The permanent/temporary publication split gives history and recovery a clear source of truth without a second commit marker.
+5. The brief remains a view, so it cannot silently change formal records or context authority.
+6. It gives a concrete migration path: wrap old writers, then make them record-dependent.
 
 ### 5.1 Candidate validation slice
 
-Before final implementation approval, build the same thin vertical slice for Lean A, B, and C under identical entry coverage and safety requirements:
+Before final implementation approval, each candidate must implement the same thin slice under identical safety requirements:
 
 - one mandatory preflight run;
 - one coverage snapshot with a critical gap;
-- one gate block and one failure record;
-- one terminal manifest commit and INV-01 read-back;
+- one stock Buy with a passed risk evaluation and one with an over-limit/invalid input;
+- one gate block, one gate error, and one failure record;
+- one terminal manifest commit and read-time INV-01;
+- one recovery snapshot, claim/fencing, and model-free completion;
+- one history retrieval and one export-conflict case;
 - one write/run secret scan;
-- one same-day memory reuse/version case.
+- one same-day memory reuse and one versioned decision.
 
-Record changed files, new interfaces, approximate LOC, test count, bypass findings, and time-to-green. The slice is evidence for the change/complexity comparison, not a production implementation. If Lean A does not show an acceptable complexity advantage under the same safety contract, reopen this ADR.
+Record changed files, interfaces, approximate LOC, test count, bypass findings, and time-to-green. The slice is evidence for the comparison, not a production implementation. If Lean A does not show an acceptable complexity advantage under the same contract, reopen this ADR.
 
 ---
 
@@ -167,25 +188,27 @@ Record changed files, new interfaces, approximate LOC, test count, bypass findin
 ### Positive
 
 - Model proposals cannot be mistaken for final decisions.
-- Coverage and fallback provenance can be enforced before persistence.
-- Manifest, report, final-state, and memory share one artifact_binding and decision_id.
-- Partial publish is explicit; completed requires an INV-01 check and terminal manifest.
-- Memory duplication is controlled by decision_id/entry_digest; same-day reruns and disabled memory are explicit.
-- Concurrency rules for same-run queries and different runs are explicit.
+- Stock Buy/Overweight cannot be approved without a deterministic risk result.
+- Coverage, risk, metrics, and decision evidence share one binding and one read-time verification.
+- History contains only committed, verified publications.
+- Recovery completes the existing publication without model/data/graph calls and without a second commit authority.
+- Financial metrics have structured fact/period identity and a persistable evidence bundle.
+- The brief preserves mandatory content and cannot mutate formal artifacts.
+- Compatibility adapters keep existing callers working.
 
 ### Negative
 
-- Old writers must be migrated; direct calls will fail until adapted. `propagate` return semantics, report/memory writers, and backtest callers require compatibility adapters, deprecation notes, and full regression tests.
-- More components and interfaces than the current codebase.
-- Publish staging, coverage snapshot, and cross-artifact semantic checks add implementation and test work.
-- Context assembler and token policy are new complexity.
-- Fixed run clock, decision_id, and memory lifecycle require migration of old writers.
-- Remaining D1 open decisions are non-blocking retention and concurrency items.
+- Old writers must be migrated; direct calls fail until adapted.
+- More components, interfaces, and test suites than v0.1.
+- Risk and recovery add failure modes that must be proven with negative tests.
+- The temporary/permanent snapshot split adds storage and cleanup complexity.
+- Token measurement, reference resolution, and quality evaluation are new.
+- Remaining open decisions block parts of implementation and acceptance.
 
 ### Neutral
 
-- Existing vendor caches remain; they are distinct from the FR-01 run cache.
-- Checkpoint resume becomes stricter and may refuse more cases.
+- Existing vendor caches remain and are counted separately.
+- Checkpoint resume remains stricter and is distinct from publication recovery.
 - Coding-agent permissions are documented, not implemented by this ADR.
 
 ---
@@ -195,19 +218,22 @@ Record changed files, new interfaces, approximate LOC, test count, bypass findin
 Re-open this ADR if any of the following occurs:
 
 1. Lean A cannot guarantee non-bypassability of `FinalizedRunRecord` without pervasive rewrites.
-2. Publish/retry/memory idempotency becomes too complex without an event ledger.
-3. The team requires replayable evidence for audit or debugging beyond the run evidence journal.
-4. Multi-user or concurrent publication becomes in scope.
-5. D1 changes the critical-source, REVIEW, or cross-run cache semantics.
-6. Measured cache/latency/token benefits show Lean A does not justify its complexity.
-7. Context compression requires event-level replay or deterministic summaries.
-8. The permission model requires stronger isolation than the runtime tool boundary provides.
+2. The risk evaluator cannot remain pure and shared without creating a second authority.
+3. Recovery cannot use the existing publication path without a second commit marker.
+4. History/export cannot verify a committed publication from the permanent snapshot alone.
+5. Publish/retry/memory idempotency requires event-level replay.
+6. Multi-user or concurrent publication becomes in scope.
+7. D1 changes critical-source, REVIEW, risk-policy, history, or recovery semantics.
+8. Measured benefits do not justify the complexity.
+9. The brief requires a separate context authority to meet quality thresholds.
+10. Permission isolation requires stronger separation than the tool boundary.
 
 ---
 
 ## 8. Related documents
 
 - `architecture-blueprint.md`
+- `docs/architecture/adr/002-full-scope-add-r.md`
 - `docs/architecture/invariants.md`
 - `docs/architecture/trace-matrix.md`
 - `docs/architecture/memory-design.md`
@@ -224,5 +250,5 @@ Re-open this ADR if any of the following occurs:
 - Application implementation: **not started**.
 - Tests: **not started**.
 - Monitoring: **not implemented**.
-- Benefits: **not measured**.
-- D1: **v1.9.0 historical baseline approved; current revision human review pending; FR-01, FR-02, FR-03, SB-01, INV-01, and SR-01 contracts synchronized**.
+- Benefits: **not measured** except the baseline facts.
+- D1: v1.14.1; six requirements approved, seven draft; human review pending.

@@ -1,217 +1,420 @@
 # D2 Open Decisions
 
-Status: **v0.1 — draft / pending human review**  
-Date: 2026-10-27  
-D1 baseline: `docs/req/requirements.yaml` v1.9.0 (historical baseline approved; current revision human review pending; IDs renumbered)
+Status: **v0.2 — ADD-R round 2 draft / pending human review**  
+Date: 2026-11-11  
+D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
+Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
 Implementation status: **design only; no application code changed**
 
-This file records decisions that are **not closed**. Recommendations are for discussion only; they are not approvals.
+This file records decisions that are **not closed**. Recommendations are for discussion only; they are not approvals. A historical approval or a previously resolved decision is evidence, not approval of the current revision.
 
 ---
 
-## 1. Decision status legend
+## 1. Status legend
 
 - **open** — no decision.
 - **recommended, not approved** — a recommendation exists; the team must decide.
-- **blocking** — implementation cannot start safely without it.
-- **non-blocking** — can proceed with a work assumption, but the assumption must be recorded.
+- **blocking** — implementation or acceptance cannot start safely without it.
+- **non-blocking** — can proceed with a recorded work assumption.
+- **resolved in D1** — closed in the requirement text; retained for traceability, not re-opened here.
+- **proposed by D2** — an architecture choice proposed by this round; pending human review.
 
 ---
 
-## 2. D1 open questions
+## 2. D1 open questions carried forward
 
-### OQ-01 — Critical-source set
-
-- **Status**: resolved in D1 v1.3.0.
-- **Question**: which capabilities are critical for coverage and gate?
-- **Resolution**: the effective critical profile is generated from asset type, analysis mode, and enabled capabilities. `market_price` is mandatory and fetched by the deterministic preflight; stock `financial_statements` is mandatory in every mode, independent of fundamentals-analyst selection, and is fetched by the deterministic preflight; each of income, balance, and cashflow requires at least one annual and the latest quarterly period known by as_of with an as-filed point-in-time rule. Crypto has no financial_statements requirement. Current-date runs add `ticker_news` when news is enabled and `social_sentiment` when social is enabled; social uses StockTwits and Reddit with at least one success, while sentiment news is optional context. Historical mode excludes live-only capabilities from the critical set; macro, prediction, technical, profile, insider, and global-news capabilities are non-critical by default. Explicit overrides are recorded.
-- **Impact**: `AvailabilityIndex`, `SafetyGate`, report gaps, tests, evaluation.
-- **Related requirements**: FR-03, SB-01.
-- **Blocking phase**: none; defaults and override rules are defined.
-- **D1 change applied**: FR-03 now defines `critical_requirement`, the effective profile defaults, `not_attempted`, and the closed decision table.
-
-### OQ-02 — Manifest retention
-
-- **Status**: location resolved in D1 v1.2.0; retention remains open and non-blocking.
-- **Question**: how long is a run manifest retained?
-- **Options**:
-  1. Keep every run manifest indefinitely.
-  2. Retention window with rotation.
-  3. Results plus a global manifest index.
-- **Recommendation (not approved)**: keep every run manifest in D1; define retention later.
-- **Impact**: `ArtifactPublisher`, results layout, audit.
-- **Related requirements**: FR-02.
-- **Blocking phase**: D3 implementation detail.
-- **D1 change applied**: FR-02 now fixes the manifest path at `<results_dir>/<run_id>/run_manifest.json`; retention remains outside D1.
-
-### OQ-03 — Secret-pattern list
-
-- **Status**: resolved in D1 v1.6.0.
-- **Question**: which patterns are authoritative for SR-01?
-- **Resolution**: SR-01 separates exact known-secret value checks from versioned pattern rules. The fixed minimum pattern categories are provider key formats, generic bearer/JWT, URL userinfo, sensitive query parameter names and values, sensitive authorization headers, and password/token assignments. Rules carry secret_rule_version, secret_rule_source, and effective_at; an unknown or missing version fails closed.
-- **Impact**: `SecretRedactor`, tests, all output boundaries.
-- **Related requirements**: SR-01.
-- **Blocking phase**: none; rule categories and versioning are defined.
-- **D1 change applied**: SR-01 now defines separate known-value and pattern checks, rule versioning, scan scope, and fail-closed behavior.
-
-### OQ-04 — Vendor-cache retention and FR-01 key normalization
-
-- **Status**: resolved for FR-01 in D1 v1.1.0; vendor-cache retention remains open and non-blocking.
-- **Question**: which existing vendor caches remain cross-run, and what TTL applies to each?
-- **Resolution**: `data_query_key` now includes method, normalized instrument or topic, asset type, analysis date, window or lookback, method-specific parameters, vendor selector digest, and cache-key version. FR-01 limits `query_execution` count, not external HTTP requests; run-cache reuse across runs is forbidden, while existing vendor caches may serve a request and are recorded as vendor-cache hits.
-- **Impact**: `DataAccessService`, FR-01 tests, evidence counters, vendor-cache retention policy.
-- **Related requirements**: FR-01.
-- **Blocking phase**: none for the FR-01 run-cache definition; retention policy may be decided during D3.
-- **D1 change applied**: FR-01-AC4 now separates cross-run run-cache reuse from vendor-cache reads and records `vendor_cache_hit` and `http_request_count`/`external_requests` separately.
-
-### OQ-05 — Manifest overhead targets
-
-- **Status**: provisional targets and measurement method defined in D1 v1.9.0; measurement pending.
-- **Question**: are the FR-02-AC8 thresholds right: manifest write p95 at most 100 ms for a payload at most 256 KiB, and end-to-end overhead p95 at most 1% and at most 1 second?
-- **Options**:
-  1. Accept the provisional thresholds.
-  2. Set lower thresholds after the benchmark.
-  3. Record measurements without a hard target.
-- **Recommendation (not approved)**: benchmark first; keep the thresholds provisional until measured.
-- **Impact**: FR-02-AC8, publisher design, end-to-end latency.
-- **Related requirements**: FR-02.
-- **Blocking phase**: D3 benchmark.
-- **D1 change applied**: FR-02-AC8 separates manifest write duration from end-to-end overhead, defines an external paired measurement and nearest-rank p95, and marks both thresholds provisional.
-
-### OQ-06 — REVIEW acceptance and override
-
-- **Status**: resolved in D1 v1.4.0.
-- **Question**: is REVIEW acceptable as the terminal state, and is there any override?
-- **Resolution**: REVIEW is a terminal non-tradeable sentinel outside the five-tier set. The gate has no model override and no operator override in D1. A blocked decision persists a formal REVIEW decision with a manual-review notice; the model proposal is retained separately as unapproved. Backtest scoring excludes REVIEW. A gate failure also fails closed to REVIEW and marks the run failed.
-- **Impact**: `SafetyGate`, CLI, memory, backtest, user experience.
-- **Related requirements**: SB-01.
-- **Blocking phase**: none; gate input/output, blocked body, proposal separation, and failure fallback are defined.
-- **D1 change applied**: SB-01 now defines trusted gate input, formal decision body, model-proposal separation, the blocked-input decision table, fail-closed gate failure, output boundaries, and entry-point coverage.
-
-### OQ-07 — SR-01 scope
-
-- **Status**: resolved in D1 v1.6.0.
-- **Question**: does SR-01 cover only `.env` and run records, or also shell history/provider logs?
-- **Resolution**: SR-01 covers app-controlled boundaries: manifest, final-state, memory decision entry, report metadata/content, logs, preferences, error/gate/availability records, and formal API return. Vendor/provider logs, shell history, OS/network captures, and external service logs are explicitly out of scope. `.env` mode 0600 is a preserved existing control, not a new D1 acceptance item.
-- **Impact**: permission model, redaction tests, security scope.
-- **Related requirements**: SR-01.
-- **Blocking phase**: none; scope is closed and out-of-scope boundaries are named.
-- **D1 change applied**: SR-01 now records scan_scope and explicitly limits the scan claim to defined boundaries, rules, and fixtures.
-
-### OQ-08 — Concurrent locking
+### OQ-02 — Manifest and memory retention
 
 - **Status**: open; non-blocking.
-- **Question**: can concurrent runs share manifest/preference directories without a locking policy?
-- **Options**:
-  1. Per-run directories; no shared manifest.
-  2. Shared manifest index with lock.
-  3. Serialize all runs.
-- **Recommendation (not approved)**: per-run manifest/run directories; memory uses the existing lock; no shared manifest index in D2. Preferences remain the original global file with atomic replace and last-writer-wins for concurrent local runs; next startup reads that single file.
-- **Impact**: `ArtifactPublisher`, `MemoryService`, prefs, concurrency tests.
-- **Related requirements**: FR-01, FR-02, INV-01.
-- **Blocking phase**: D3 implementation.
-- **D1 change suggestion**: none required for D2.
+- **Question**: how long are run manifests, publication snapshots, recovery snapshots, and memory entries retained?
+- **Impact**: `ArtifactPublisher`, `PublicationSnapshotStore`, `MemoryService`, storage growth, audit.
+- **Recommendation (not approved)**: keep every run manifest and committed publication snapshot for D1; define retention later; clean only temporary recovery material after commit.
+- **Blocking phase**: D3 implementation detail.
+- **Related**: FR-02, FR-05, FR-06, INV-01.
+
+### OQ-04 — Vendor-cache retention and TTL
+
+- **Status**: open; non-blocking.
+- **Question**: which existing vendor caches remain cross-run, and what TTL applies?
+- **Impact**: `DataAccessService`, `FR-01` vendor-cache-hit accounting, evidence counters.
+- **Resolution already in D1**: run cache is per-run; vendor cache is separate.
+- **Recommendation (not approved)**: keep existing vendor caches under their current TTL; record hits; do not change TTL in this round.
+- **Blocking phase**: D3 cache configuration.
+- **Related**: FR-01.
+
+### OQ-05 — Manifest overhead thresholds
+
+- **Status**: open; non-blocking; provisional target.
+- **Question**: accept manifest-write p95 <=100 ms for <=256 KiB and end-to-end overhead p95 <=1% and <=1 s?
+- **Impact**: `ArtifactPublisher`, `FR-02-AC8`, latency.
+- **Recommendation (not approved)**: benchmark first; keep thresholds provisional until measured.
+- **Blocking phase**: D3 benchmark.
+- **Related**: FR-02, QR-02.
+
+### OQ-08 — Concurrent manifest/preference locking
+
+- **Status**: open; non-blocking.
+- **Question**: can concurrent runs share a manifest or preference directory without a locking policy?
+- **Resolution proposed by D2**: per-run manifest/publication directories; memory uses the existing lock; preferences remain one global atomic-replace file with last-writer-wins; no shared mutable publication index is authoritative.
+- **Impact**: `ArtifactPublisher`, `MemoryService`, `RecoveryClaimStore`, preferences.
+- **Blocking phase**: D3 concurrency tests.
+- **Related**: FR-01, FR-02, FR-06, INV-01.
+
+### OQ-09 — Authoritative risk-input supplier and ownership
+
+- **Status**: open; **blocking**.
+- **Question**: who supplies `portfolio_value`, `cash_balance`, current quantity/value, valuation price/time, order fields, currency, and provenance; which broker/portfolio source is approved?
+- **Impact**: `FR-04` input ownership, provenance, currency scope, valuation consistency, applicability; implementation cannot be completed safely without it.
+- **Recommendation (not approved)**: caller/application supplies a validated structured envelope (CLI file/API argument) with an explicit source identifier; model text is never authoritative; no broker integration in this scope.
+- **Blocking phase**: before D3 risk implementation.
+- **Related**: FR-04, INV-02.
+
+### OQ-10 — Risk policy and threshold approval
+
+- **Status**: open; **blocking for approved-policy claims**.
+- **Question**: are the 0.30 concentration, 0.05 stop-distance, freshness window, and precision rule approved; what `policy_ref`, `policy_version`, and `human_approval_ref` bind them?
+- **Impact**: `PortfolioRiskEvaluator`, `RiskPolicyResolver`, gate REVIEW rate, formal risk evidence.
+- **Recommendation (not approved)**: a valid provisional snapshot with `threshold_status=provisional` and `human_approval_ref=null` MAY be used and MUST be labeled provisional, as `FR-04` permits. An approved snapshot requires a non-null `human_approval_ref`. Do not claim thresholds are approved without it. Missing/invalid/incomplete policy blocks with `POLICY_SNAPSHOT_UNAVAILABLE`; a valid provisional policy is not treated as absent.
+- **Blocking phase**: before claiming approved thresholds/policy, not before the explicit provisional path. D1 marks OQ-10 `blocking: true`; the architecture reads that as blocking approved-policy claims because `FR-04` explicitly permits provisional values.
+- **Related**: FR-04, INV-02, SB-01.
+
+### OQ-11 — Historical valuation cutoff and point-in-time portfolio source
+
+- **Status**: open; non-blocking.
+- **Question**: is the timezone-aware end-of-day cutoff and the point-in-time portfolio source approved for historical/backtest analyses?
+- **Impact**: `FR-04` historical applicability, valuation freshness, `INV-02` evidence scope.
+- **D1 text**: cutoff is defined as `min(now_utc, end_of_day(as_of_date, timezone))`; future date rejected.
+- **Recommendation (not approved)**: use the defined cutoff; block stale/inconsistent input; no FX conversion; confirm the historical source before backtest use.
+- **Blocking phase**: before historical/backtest risk runs.
+- **Related**: FR-04, INV-02.
+
+### OQ-12 — Risk-policy behavior-evaluation set and thresholds
+
+- **Status**: open; **blocking** for behavioral acceptance.
+- **Question**: should a new risk-policy evaluation set/contract version be created, and what separate REVIEW-rate and quality thresholds apply?
+- **Impact**: `FR-04-AC11`, `INV-02-AC7`, behavior evaluation.
+- **Recommendation (not approved)**: keep the frozen v1 eval set unchanged; create a new version for risk-policy A/B; hold cache A/B risk policy fixed.
+- **Blocking phase**: before risk behavioral acceptance.
+- **Related**: FR-04, INV-02.
+
+### OQ-13 — QR-02 target and platform matrix
+
+- **Status**: open; **blocking** for performance acceptance.
+- **Question**: is the 2.000 s nearest-rank p95 approved; which local filesystems/hardware are supported?
+- **Impact**: `QR-02`, recovery benchmark, acceptance evidence.
+- **Recommendation (not approved)**: keep 2.000 s provisional; define a supported local-filesystem/hardware matrix; correctness/model-free remain zero-tolerance even if the target is missed.
+- **Blocking phase**: before QR-02 acceptance (not before correctness implementation).
+- **Related**: QR-02.
+
+### OQ-14 — Non-NVDA financial reference manifest
+
+- **Status**: open; **blocking**.
+- **Question**: which two non-NVDA companies, fiscal periods, and independently published sources should be frozen before `FR-07` implementation?
+- **Impact**: `FR-07-AC10`, tolerance validation, implementation readiness.
+- **Recommendation (not approved)**: freeze two companies with distinct fiscal calendars; record source URLs/versions/hashes; do not generate expected values from the code under test.
+- **Blocking phase**: before FR-07 implementation/acceptance.
+- **Related**: FR-07.
+
+### OQ-15 — TTM EPS scope
+
+- **Status**: open; non-blocking.
+- **Question**: is approximate TTM EPS (annual + current YTD - prior YTD) acceptable, or should the first version report only fiscal-year P/E?
+- **Impact**: `FR-07` TTM EPS/P-E scope, n/a behavior.
+- **Recommendation (not approved)**: keep approximate TTM EPS labeled approximate; if inputs are incomplete, n/a rather than relax; keep fiscal-year P/E as a separate row.
+- **Blocking phase**: before FR-07 finalization.
+- **Related**: FR-07.
+
+### OQ-16 — Brief budgets, token/quality thresholds, and contract version
+
+- **Status**: open; **blocking** for acceptance.
+- **Question**: what mandatory/compressible budgets, hard cap, token/quality thresholds, and evaluation contract version govern `FR-08`?
+- **Impact**: `DownstreamBriefBuilder`, `TokenCounter`, `FR-08` acceptance, cost claims.
+- **Recommendation (not approved)**: keep budgets/thresholds provisional; use the frozen brief evaluation contract; no saving claimed until `accepted` with approved `quality_loss_max` and zero safety escapes.
+- **Blocking phase**: before FR-08 acceptance.
+- **Related**: FR-08.
 
 ---
 
-## 3. New D2 decisions
+## 3. D2 decisions carried or updated
 
 ### D2-OD-01 — FinalizedRunRecord schema/version
 
-- **Status**: open; blocking.
-- **Question**: which parts of the D1 v1.9.0 record contract still need a D2 implementation decision?
-- **Recommendation (not approved)**: reuse the D1 contract: `run_id` plus `decision_id`, `record_version`, critical profile/coverage snapshot, gate result/input_hash, formal decision, artifact binding, and memory entry binding. Use canonical JSON/SHA-256 for decision, provenance, and record hashes; keep realized artifact hashes in the publish manifest. D2 must confirm only the versioning/migration mechanics.
+- **Status**: proposed; blocking before implementation.
+- **Recommendation (not approved)**: reuse the D1 contract: `run_id` plus `decision_id`, `record_version`, critical profile/coverage snapshot, gate result/`input_hash`, formal decision, artifact binding, memory entry binding, and new optional risk/metric/section references. Use canonical JSON/SHA-256. D2 must confirm only versioning/migration mechanics.
 - **Impact**: publisher, memory, manifest, trace, all tests.
-- **Related requirements**: SB-01, INV-01, FR-02.
 - **Blocking phase**: before D3.
 
-### D2-OD-02 — Publish order, staging layout, and commit protocol
+### D2-OD-02 — Publish order, staging, and commit protocol
 
-- **Status**: open; blocking.
-- **Question**: exact staging layout, retry count, and terminal-commit implementation.
-- **Recommendation (not approved)**: running manifest → record → report → final-state → memory entry pending → terminal manifest candidate + INV-01 check → atomic terminal manifest commit → read-back verification. The terminal manifest `run_status=completed` is the unique commit point; a complete marker is non-authoritative internal staging metadata only. 3 retries; no model re-run.
-- **Impact**: `ArtifactPublisher`, `MemoryService`, tests.
-- **Related requirements**: FR-02, INV-01.
+- **Status**: proposed in blueprint §12.5; pending review.
+- **Recommendation (not approved)**: running manifest -> analysts/metrics/block -> brief/provisional view -> research/risk debate -> final coverage -> gate/record -> sections -> memory plan/reservation -> recovery snapshot (complete/read-back verified) -> memory idempotent write -> permanent snapshot write/validate -> terminal candidate + INV-01 -> ownership-protected atomic commit -> post-commit read -> cleanup last. Terminal manifest completed plus read-time INV-01 is the only commit condition; no independent marker. A post-commit read failure keeps the committed manifest immutable and records an independent diagnostic; it does not replace the manifest with `failed`.
+- **Impact**: `ArtifactPublisher`, `RecoveryService`, `MemoryService`, `RunOwnershipLock`, tests.
 - **Blocking phase**: before D3.
 
 ### D2-OD-03 — Checkpoint support matrix and degraded resume
 
-- **Status**: open; blocking.
-- **Question**: which state is resumable, and is degraded resume allowed?
-- **Recommendation (not approved)**: support graph/journal state with fixed `run_clock`, critical profile contract version, decision_id, and schema versions; resume creates a new run_id and tags inherited evidence/counters separately; refuse unsupported versions; degraded resume is opt-in and uses coverage_status=partial only, so missing critical evidence deterministically blocks with REVIEW.
+- **Status**: proposed as a work assumption; blocking before checkpoint implementation.
+- **Recommendation (not approved)**: support graph/journal state with fixed clock, profile contract version, decision_id, and schema versions; resume creates a new `run_id`; refuse unsupported versions; degraded resume is opt-in, `coverage_status=partial` only, so the gate blocks with REVIEW.
+- **Distinction**: checkpoint resume is not startup publication recovery.
 - **Impact**: `CheckpointCoordinator`, evidence store, tests.
-- **Related requirements**: D2 design, SB-01, INV-01.
-- **Blocking phase**: before D3.
+- **Blocking phase**: before D3 checkpoint.
 
-### D2-OD-04 — Fallback coverage contract and substitution
+### D2-OD-04 — Fallback coverage contract
 
-- **Status**: resolved in D1 v1.3.0.
-- **Question**: which fallback classes can clear which gaps?
-- **Resolution**: a fallback clears a gap only under the same capability, component, instrument, requested window, as-of date, point-in-time rule, minimum-record count, and provenance contract. Global news does not clear ticker news; undated Yahoo statements do not clear SEC financial statements; partial fallback leaves the requirement degraded with `fallback_partial` or `insufficient_evidence`.
+- **Status**: resolved in D1 (retained).
+- **Resolution**: a fallback clears a gap only under the same capability/component/instrument/window/as-of/point-in-time/minimum-record/provenance contract. Global news does not clear ticker news; undated Yahoo statements do not clear SEC statements.
 - **Impact**: `DataAccessService`, `AvailabilityIndex`, gate.
-- **Related requirements**: FR-03, SB-01.
-- **Blocking phase**: none; same-contract fallback is the default and approved substitutes must be recorded.
 
 ### D2-OD-05 — Token limits and compression thresholds
 
-- **Status**: open; non-blocking for architecture, blocking for implementation.
-- **Question**: exact per-call/evidence/history limits and compression strategy.
-- **Recommendation (not approved)**: provisional values in `runtime-policy-catalog.md`; deterministic truncation first; no LLM summarizer by default.
+- **Status**: proposed as a work assumption; provisional.
+- **Recommendation (not approved)**: 128k window, 24k cap, 9k reserves, 80% soft, 95% hard, 4k evidence, 8k history, 2k summary; deterministic truncation first; optional LLM summarization only if enabled. Before compression is enabled, over-budget fails closed.
 - **Impact**: `ContextAssembler`, prompts, token cost, tests.
-- **Related requirements**: FR-02, quality.
-- **Blocking phase**: before D3 context implementation.
+- **Blocking phase**: before D3 context/brief implementation.
+- **Related**: ARCH-OD-04.
 
-### D2-OD-06 — Memory structured sidecar vs Markdown metadata
+### D2-OD-06 — Memory sidecar, lease TTL, and retry defaults
 
-- **Status**: open; blocking for memory implementation.
-- **Question**: add JSONL sidecar, or keep structured metadata in Markdown?
-- **Recommendation (not approved)**: either representation must carry `decision_id`, `entry_version`, `entry_digest`, `evidence_digest`, `memory_entry_binding`, `supersedes` (effective version derived from committed records), `reused_decision_ref`, retention status, and same-day-rerun status; the shared memory file is never hashed. A sidecar is preferred if machine consistency is required; a Markdown metadata line is acceptable for minimal change.
-- **Impact**: `MemoryService`, idempotency, INV-01 tests.
-- **Related requirements**: INV-01, FR-02.
-- **Blocking phase**: before D3 memory implementation.
+- **Status**: proposed as a work assumption; blocking for memory/recovery implementation.
+- **Recommendation (not approved)**: either a JSONL sidecar or a structured Markdown metadata line; carry decision/entry/evidence digests, version, supersedes, reuse reference, risk summary, retention status. The reservation ledger is separate (see ARCH-OD-20). Recovery lease TTL and retry budget are configuration values with documented defaults (for example 30 s lease, 3 retries) pending review.
+- **Impact**: `MemoryService`, `MemoryReservationStore`, `RecoveryClaimStore`, idempotency tests.
+- **Blocking phase**: before D3 memory/recovery.
 
 ### D2-OD-07 — Coding-agent role whitelist
 
-- **Status**: open; non-blocking for D2 docs, blocking for implementation workflow.
-- **Question**: approve the roles/paths in `permission-model.md`.
-- **Recommendation (not approved)**: D2 architect writes docs only; future implementation/test roles require explicit approval.
+- **Status**: proposed; this round uses `architect_add_r`.
+- **Recommendation (not approved)**: ADD-R writes only `architecture-blueprint.md` and `docs/architecture/**`; future implementation/test roles require explicit approval.
 - **Impact**: agent permissions, audit, workflow.
-- **Related requirements**: D2 governance, SR-01.
-- **Blocking phase**: before coding agents implement D3.
+- **Blocking phase**: before D3 implementation agents.
 
 ### D2-OD-08 — Runtime AI tool boundary and context exposure
 
-- **Status**: open; blocking for implementation.
-- **Question**: exact tool list, context layer exposure, and prohibited data.
-- **Recommendation (not approved)**: registered data tools only; no file/env/shell/arbitrary network; context layers per `POL-CTX-01`; the runtime may receive supports links and coverage summaries but cannot mutate them.
+- **Status**: proposed; blocking before implementation.
+- **Recommendation (not approved)**: registered data tools only; no file/env/shell/arbitrary network; context layers per `POL-CTX-01`; runtime may receive supports links, coverage summaries, and the five-role brief but cannot mutate them or supply authoritative risk input.
 - **Impact**: tool registry, prompts, permission tests.
-- **Related requirements**: SR-01, D2 governance.
 - **Blocking phase**: before D3.
 
-### D2-OD-09 — Behavior evaluation snapshots and approval
+### D2-OD-09 — Behavior-evaluation snapshots and approval
 
 - **Status**: open; blocking for behavioral acceptance only.
-- **Question**: who captures the nine pending evaluation snapshots, and who approves the rubric/contract?
-- **Recommendation (not approved)**: use `docs/req/evaluation/eval-set-v1.json`, `rubric-v1.json`, `behavior-eval-contract-v1.json`, `config-v1.json`, `prompt-v1.0.yaml`, and `snapshots-v1.json`; capture every case snapshot with the documented fields; obtain two independent raters plus adjudication; record human approval before any live A/B acceptance claim.
-- **Impact**: FR-01-AC7, evaluation-table, report evidence.
-- **Related requirements**: FR-01.
-- **Blocking phase**: before behavioral acceptance, not before architecture implementation.
+- **Question**: who captures the pending evaluation snapshots and approves the rubric/contracts?
+- **Recommendation (not approved)**: use the frozen v1 files; capture every case snapshot; two independent raters plus adjudication; record human approval before any live A/B acceptance. Add a separate risk-policy version (OQ-12) and brief contract (OQ-16).
+- **Impact**: FR-01/FR-04/FR-08 behavior acceptance.
+- **Blocking phase**: before behavioral acceptance.
 
 ---
 
-## 4. D1 suggested changes (not applied)
+## 4. New ADD-R architecture decisions
 
-D1 v1.1.0 applied the FR-01 change, v1.2.0 applied the FR-02 change, v1.3.0 applied the FR-03 change, v1.4.0 applied the SB-01 change, v1.5.0 applied the INV-01 change, and v1.6.0 applied the SR-01 change; v1.7.0 renumbered the requirement IDs to match their types, v1.8.0 synchronized the manifest schema and cross-artifact contracts, and v1.9.0 completed the gate, security, memory, clock, and aggregation synchronization. The remaining items below are suggestions for team review:
+### ARCH-OD-01 — Missing `yhx/requirements.yaml` evidence
 
-1. **FR-01** — applied in D1 v1.1.0. FR-01 now limits `query_execution` count, defines `data_query_key`, separates run-cache reuse from vendor-cache reads, and adds concurrent, terminal-outcome, retry/fallback, offline, and live acceptance criteria.
-2. **FR-03** — applied in D1 v1.3.0. FR-03 now defines the minimal availability record, source identity, closed record/requirement status sets, effective critical profile defaults, fallback clearing, multi-query aggregation, and deterministic reporting.
-3. **SB-01** — applied in D1 v1.4.0. SB-01 now defines the trusted gate input, formal decision body, model-proposal separation, complete blocked-input decision table, fail-closed gate failure, output boundaries, and entry-point coverage.
-4. **INV-01** — applied in D1 v1.5.0. INV-01 now defines the completed checkpoint, artifact binding and per-artifact contract, canonicalization, provenance granularity, legal fallback, retry behavior, and memory settlement/rotation lifecycle.
-5. **FR-02** — applied in D1 v1.2.0. The manifest now carries lifecycle status, a schema version, artifact hashes, timing, counters, and token-usage status.
-6. **SR-01** — applied in D1 v1.6.0. SR-01 now defines known-secret and versioned-pattern checks, fixed scan scope and its limitation, preference audit/restore endpoints, fail-closed failure behavior, existing-control preservation, and over-redaction controls.
-7. **OQ-05** — applied in D1 v1.9.0. FR-02-AC8 separates manifest write duration from end-to-end overhead, defines external paired measurement and nearest-rank p95, and marks both thresholds provisional.
+- **Status**: open; **blocking for reproducible D1 validation/CI**, not an architecture choice.
+- **Observation**: `docs/req/requirements.yaml` cites `yhx/requirements.yaml` as evidence and `validate_requirements.py` includes it in the bound input hashes; `validation-results.json` records its digest; the file is absent from this checkout.
+- **Impact**: the validator cannot reach "missing evidence paths = 0"; `--check` cannot match; the claimed machine pass is not reproducible.
+- **Recommendation (not approved)**: the requirement owner must either restore the file at the cited path or remove the evidence references and rebind the validation result. Architecture documents must not change `docs/req/**`.
+- **Blocking phase**: D4/CI evidence.
+- **Related**: FR-07, FR-08, validator.
 
-Items 1, 2, 3, 4, 5, 6, and 7 are applied; the rest remain suggestions. D1 is at v1.9.0; requirement IDs are renumbered and manifest/gate/security/memory/aggregation contracts are synchronized.
+### ARCH-OD-02 — Validator dependencies undeclared
+
+- **Status**: open; **blocking for CI reproducibility**.
+- **Observation**: `validate_requirements.py` imports `yaml` and `jsonschema`; no root dependency manifest declares them; the current environment lacks `yaml`.
+- **Impact**: the requirement validator cannot run in a clean environment.
+- **Recommendation (not approved)**: add a declared tooling dependency (for example `requirements-dev.txt` or a documented tool environment) and a CI install step; this is a CI/requirements-owner change.
+- **Blocking phase**: D4/CI.
+- **Related**: all requirements validation.
+
+### ARCH-OD-03 — Risk policy locator, storage, and approval record
+
+- **Status**: open; **blocking before risk implementation**.
+- **Question**: where does the risk policy snapshot live (file path/format), how is `policy_digest` computed, and what human-approval record binds `human_approval_ref`?
+- **Impact**: `RiskPolicyResolver`, `PortfolioRiskEvaluator`, `SafetyGate`, `FR-04-AC9`.
+- **Recommendation (not approved)**: a versioned local policy file (for example `config/risk_policy_v1.json`) with canonical JSON digest; `threshold_status=provisional` and `human_approval_ref=null` until a recorded human decision; approved policy requires a non-null reference.
+- **Blocking phase**: before D3 risk.
+- **Related**: OQ-10.
+
+### ARCH-OD-04 — Selected model/tokenizer for context and brief budgets
+
+- **Status**: open; **blocking before brief/context implementation**.
+- **Question**: which model/tokenizer measures the final request and brief budgets? What happens when the tokenizer is unavailable?
+- **Impact**: `TokenCounter`, `ContextAssembler`, `DownstreamBriefBuilder`, `FR-08`.
+- **Recommendation (not approved)**: use the selected model's tokenizer; if unavailable, reject the brief/context (`BRIEF_REJECTED`/`ContextBudgetError`) rather than falling back to characters.
+- **Blocking phase**: before D3 brief/context.
+- **Related**: OQ-16, D2-OD-05.
+
+### ARCH-OD-05 — History index strategy
+
+- **Status**: open; non-blocking.
+- **Question**: scan committed publication roots on demand, or maintain a derived index?
+- **Impact**: `HistoryService`, bounded listing, performance.
+- **Recommendation (not approved)**: scan committed publication roots and optionally maintain a **non-authoritative** derived index that can be rebuilt; never let the index decide commitment or override read-time validation.
+- **Blocking phase**: D3 history implementation detail.
+- **Related**: FR-05.
+
+### ARCH-OD-06 — Recovery lease, retry, and quarantine layout
+
+- **Status**: open; blocking for recovery implementation.
+- **Question**: lease TTL, takeover policy, retry budget, claim storage, quarantine path, and cleanup rules.
+- **Impact**: `RecoveryClaimStore`, `RecoveryService`, `QR-02`, `FR-06`.
+- **Recommendation (not approved)**: per-run claim file/record with owner and monotonically increasing fencing token; stale takeover after a documented TTL increments the token; bounded retries; quarantine under a separate non-history path; never delete valid material on a persistent fault.
+- **Blocking phase**: before D3 recovery.
+- **Related**: FR-06, QR-02, D2-OD-06.
+
+### ARCH-OD-07 — Publication/recovery snapshot retention and cleanup
+
+- **Status**: open; non-blocking.
+- **Question**: how long are permanent publication snapshots and temporary recovery envelopes retained? What exactly is cleaned after commit?
+- **Impact**: `PublicationSnapshotStore`, `RecoveryService`, storage, audit.
+- **Recommendation (not approved)**: keep permanent publication snapshots for D1; after commit clean only claim/staging/temporary recovery material; a cleanup failure is a warning and never changes history.
+- **Blocking phase**: D3 retention detail.
+- **Related**: FR-02, FR-05, FR-06, OQ-02.
+
+### ARCH-OD-08 — Risk input envelope shape for CLI/API
+
+- **Status**: open; blocking for risk integration.
+- **Question**: how does the caller supply the structured risk envelope without confusing it with the existing optional `PortfolioContext` prompt text?
+- **Impact**: `EntrypointAdapter`, `RiskInputValidator`, CLI/API, `PortfolioContext`.
+- **Recommendation (not approved)**: add a separate validated risk-input object/file (or explicit fields) with provenance; keep `PortfolioContext` as prompt context only; never infer authoritative numbers from rendered text.
+- **Blocking phase**: before D3 risk.
+- **Related**: OQ-09.
+
+### ARCH-OD-09 — Brief reference resolver and consumer
+
+- **Status**: open; non-blocking.
+- **Question**: what handle format can the receiving downstream consumer resolve, and what is the fallback when it cannot?
+- **Impact**: `DownstreamBriefBuilder`, `ContextAssembler`, `FR-08`.
+- **Recommendation (not approved)**: a run-scoped handle resolvable by the same process/consumer; if the consumer cannot resolve it, treat the reference as invalid and follow the ordered policy to full-report or rejection.
+- **Blocking phase**: D3 brief implementation.
+- **Related**: FR-08, OQ-16.
+
+### ARCH-OD-10 — Metric evidence bundle optionality by phase
+
+- **Status**: proposed; non-blocking.
+- **Decision**: when `FR-07` is not enabled, the metric block/bundle is not required; when enabled, the bundle is persisted in publication and recovery snapshots. A missing/corrupt bundle at recovery blocks a metric-dependent publication rather than triggering a live fetch.
+- **Impact**: `ArtifactPublisher`, `RecoveryService`, `FR-07`, `FR-02`.
+- **Blocking phase**: before enabling FR-07.
+
+### ARCH-OD-11 — Completed-with-blocked-formal-decision semantics
+
+- **Status**: proposed; pending review.
+- **Decision**: a handled coverage/risk block is a completed run with a blocked formal decision (`final_rating=REVIEW`), not a failed run. A gate exception is a failed run (`run_status=failed`, `error.stage=gate`). This prevents a business block from being mislabeled as a crash and a crash from being published as a completed block.
+- **Impact**: `SafetyGate`, `ArtifactPublisher`, `PublicationStatusReader`, reports, tests.
+- **Blocking phase**: before D3 gate/publication.
+
+### ARCH-OD-12 — Historical memory reference closure scope
+
+- **Status**: proposed; pending review.
+- **Decision**: `verified_package` includes a `history_reference_closure` for every followed `reused_decision_ref`; when a source proof is unavailable, label `historical_reference_unverified` and limit verification to the current run. Never depend on original-machine-only files.
+- **Impact**: `ExportService`, `MemoryService`, `FR-05-AC4`.
+- **Blocking phase**: before D3 export.
+
+### ARCH-OD-13 — Approved SB-01 references the draft FR-04 risk branch
+
+- **Status**: open; **blocking for claiming the approved SB-01 risk branch**.
+- **Observation**: `SB-01` is approved, but its v1.14.1 text includes stock Buy/Overweight risk evaluation, `portfolio_risk_input_invalid`, `portfolio_risk_limit_exceeded`, `portfolio_risk_evaluator_error`, and `review_class=portfolio_risk_limit`. `FR-04` and `INV-02` are draft. Approval of SB-01 therefore does not approve the draft risk input source, thresholds, policy snapshot, or behavior evaluation.
+- **Impact**: `SafetyGate`, `PortfolioRiskEvaluator`, `SB-01-AC11/AC12`, `FR-04`, `INV-02`.
+- **Recommendation (not approved)**: implement the risk branch as a proposal; do not claim the approved SB-01 risk branch as complete until `FR-04`/`INV-02` are approved or a human decision explicitly scopes the approved risk behavior. A valid provisional policy MAY be used and labeled provisional; missing/invalid policy blocks. Do not turn OQ-10 into a rule that unapproved always means absent.
+- **Blocking phase**: before enabling stock Buy/Overweight formal approval.
+- **Related**: SB-01, FR-04, INV-02, OQ-09, OQ-10.
+
+### ARCH-OD-14 — Approved FR-02/INV-01 contain draft-requirement dependencies
+
+- **Status**: open; **blocking for full-scope acceptance claims**.
+- **Observation**: approved `FR-02` acceptance criteria and constraint relations reference recovery snapshots (`FR-06`), section manifests (`FR-05`), metric bundles (`FR-07`), and downstream brief/publication interaction (`FR-08`, `QR-02`). Approved `INV-01` references `FR-04`..`FR-08` and `QR-02`. The draft requirements are not approved. A machine pass on the approved requirements does not mean the coupled draft behavior is approved or implemented.
+- **Impact**: FR-02, INV-01, SB-01, full-scope acceptance, trace matrix claims.
+- **Recommendation (not approved)**: keep the approved baseline obligations intact. `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding are required by the approved text and are not made optional by draft `FR-05`/`FR-06`. `INV-01` binding/read-time verification and `SB-01` risk-branch behavior are likewise required. Draft status limits **claims** of approval/completion for draft details (for example `FR-06` startup scan, `FR-05` history, `FR-04` input-source/policy details), not the approved obligations. Humans must decide how to bind the draft details; the architecture must not declare any draft requirement approved or disable an approved behavior.
+- **Blocking phase**: before claiming full-scope acceptance.
+- **Related**: FR-02, INV-01, SB-01, FR-04..FR-08, QR-02.
+
+### ARCH-OD-15 — Permanent snapshot staging, hashing, and post-commit diagnostics
+
+- **Status**: open; **blocking before publication implementation**.
+- **Question**: where are permanent-snapshot files staged before the terminal commit, how are their hashes bound into the terminal manifest, and where is the independent post-commit corruption diagnostic stored?
+- **Impact**: `ArtifactPublisher`, `PublicationSnapshotStore`, `PublicationStatusReader`, history/export.
+- **Recommendation (not approved)**: write all permanent-snapshot files under a per-run staging/publication directory, fsync/validate them, bind their hashes into the terminal candidate, and atomically commit the terminal manifest last. The snapshot is authoritative only after commit. The hash DAG in blueprint §9.6.5 is acyclic: `binding.json` has no terminal-manifest hash; the manifest hashes permanent files; no hashed file contains the manifest hash. A post-commit validation failure keeps the committed manifest immutable and writes a separate diagnostic record outside the formal decision/commit path.
+- **Blocking phase**: before publication implementation.
+- **Related**: FR-02, INV-01, FR-05.
+
+### ARCH-OD-16 — Shared run lock, lease, takeover, and lock order
+
+- **Status**: open; **blocking before publication/recovery**.
+- **Question**: what is the local-FS lock file format, lease TTL, takeover condition, fencing-token increment, and release rule shared by normal publication and recovery?
+- **Impact**: `RunOwnershipLock`, `ArtifactPublisher`, `RecoveryService`, `MemoryService`.
+- **Recommendation (not approved)**: `run.lock` is a short-lived OS advisory file lock; `lease.json` is the logical lease (`owner_id`, `fencing_token`, `lease_expires_at`, status). File lock is held only for ownership check/token update/protected write, never across recovery or waiting. Takeover acquires the file lock first; lease expiry alone does not release the file lock; a paused old process holding the file lock can only be waited on or reported as `LOCK_BUSY`; never delete the lock file. Once acquired, takeover increments the fencing token; the old owner rechecks on every write and is rejected with `LostOwnership`. Lock order run lock -> memory lock; retry reacquires and rechecks; cleanup releases only its own lock. No second commit marker or transaction.
+- **Blocking phase**: before publication/recovery.
+- **Related**: FR-02, FR-06, INV-01.
+
+### ARCH-OD-17 — Brief replacement mapping and protected-marker format
+
+- **Status**: open; **blocking before FR-08 implementation**.
+- **Question**: exactly which full reports are replaced for the five target roles, and what structured protection markers prevent compression from truncating mandatory content?
+- **Impact**: `DownstreamBriefBuilder`, `ContextAssembler`, prompts, `FR-08`.
+- **Recommendation (not approved)**: the brief replaces `market_report`, `sentiment_report`, `news_report`, and `fundamentals_report` for Bull, Bear, and the three risk debaters; other roles keep full inputs. Mandatory blocks use structured `protected: true` plus begin/end markers; generic compression/reference/full-report fallback must preserve them verbatim.
+- **Blocking phase**: before brief implementation.
+- **Related**: FR-08.
+
+### ARCH-OD-18 — Brief timing versus the final coverage snapshot
+
+- **Status**: open; **blocking before FR-08 acceptance**.
+- **Question**: `FR-08` says the brief uses the `FR-03` availability state, but the five roles run before the final coverage snapshot exists. Which program view/version is authoritative for the brief, and how is it reconciled with the final gate snapshot?
+- **Impact**: `DownstreamBriefBuilder`, `AvailabilityIndex`, `SafetyGate`, `FR-08`.
+- **Recommendation (not approved)**: the brief uses the program provisional `CoverageView` and records `coverage_view_version`; the final gate uses the final `coverage_snapshot`. Regenerate the brief with a new version if the view changes before a later five-role consumer. This is an interpretation for human review, not a requirement change.
+- **Blocking phase**: before FR-08 acceptance.
+- **Related**: FR-03, FR-08, SB-01.
+
+### ARCH-OD-19 — Financial-fact graph placement and SEC query shape
+
+- **Status**: open; **blocking before FR-07 implementation**.
+- **Question**: where exactly in the graph are facts/metrics computed/block-appended, and what `DataAccessService` query shape does `SecEdgarAdapter` expose for structured facts?
+- **Impact**: `FinancialFactService`, `SecEdgarAdapter`, `FundamentalsAdapter`, `FR-07`.
+- **Recommendation (not approved)**: after the fundamentals report exists and before Bull/Bear; a `get_structured_financial_facts`-style query through `DataAccessService` returns per-fact records with separate disclosure fields (subject/accession/filing_ref/filed_at/form/source_fact_ref and raw concept/value/unit/currency/period/fiscal/sign) and canonical fields (fact_id/concept/per-fact period/fiscal identity/span/cumulative duration/sign/unit/currency/lineage). `FinancialFactService` validates/normalizes canonical fields only via recorded versioned rules with input evidence and source refs; a filing's fiscal year/quarter is not copied as each historical fact's period identity. Missing or multiple plausible sources return unavailable/ambiguous; never guess from date proximity, equal value, column order, or a default. The existing statement tools use the same adapter/cache/counters.
+- **Blocking phase**: before FR-07 implementation.
+- **Related**: FR-07, FR-01, FR-03.
+
+### ARCH-OD-20 — Memory reservation storage and format
+
+- **Status**: open; **blocking before memory/recovery implementation**.
+- **Question**: where is the persistent reservation history stored, and how does it atomically track the allocation high-water mark (including failed reservations) and derived commit projections?
+- **Impact**: `MemoryReservationStore`, `MemoryService`, `RecoveryService`, `INV-01`, `INV-02`.
+- **Recommendation (not approved)**: a lock-protected `memory/reservations.jsonl` ledger keyed by ticker/date/decision_id, recording entry_version, owner run_id, status reserved/committed/failed, and fencing token. It is authoritative for version allocation, not for decision content. The next version is `high_water + 1` over every historical allocation, including failed reservations; a failed version is never reissued; retries/recovery reuse their own reservation; recovery uses the original run_id/version/snapshot; `committed` is a derived projection from the terminal manifest, not a second commit condition. Repair replays the append-only allocation history and never resets the watermark or reissues failed versions. If a structured sidecar is rejected, the same fields must live in a structured Markdown metadata line under the same lock.
+- **Blocking phase**: before memory/recovery implementation.
+- **Related**: INV-01, FR-06, D2-OD-06.
+
+### ARCH-OD-21 — Portfolio Manager adapter and model-proposal source
+
+- **Status**: open; **blocking before analysis-chain implementation**.
+- **Question**: how is the original Portfolio Manager invoked and how is the `ModelProposal` source represented without promoting Trader/risk-debater output?
+- **Impact**: `PortfolioManagerAdapter`, `SafetyGate`, report/memory audit fields, `SB-01`.
+- **Recommendation (not approved)**: wrap the original terminal PM node; consume full reports/plans/risk debate/past memory; produce `ModelProposal {rating, text, source=portfolio_manager, source_refs, model_provider/id, proposal_status=unapproved}`. Trader/risk-debater outputs are source references only. The PM does not write formal artifacts.
+- **Blocking phase**: before analysis-chain implementation.
+- **Related**: SB-01, INV-01, FR-03.
+
+### ARCH-OD-22 — Uncommitted same-decision memory coordination
+
+- **Status**: open; **blocking before memory coordination implementation**.
+- **Question**: what wait timeout, retryable statuses, recovery trigger, and conflict behavior apply when run B finds run A's same-decision entry uncommitted?
+- **Impact**: `MemoryRecoveryCoordinator`, `MemoryService`, `RecoveryService`, `INV-01`/`INV-02`.
+- **Recommendation (not approved)**: A active -> B waits bounded without run/memory locks, then `MEMORY_PENDING_RETRYABLE`; A invalid with valid snapshot -> recover under A's original run_id/reservation/snapshot; missing snapshot -> `MEMORY_RECOVERY_UNAVAILABLE`; recovery failure -> `MEMORY_RECOVERY_FAILED`; binding conflict -> `MEMORY_CONFLICT`. Never transfer ownership; B reuses only after A commits/validates.
+- **Blocking phase**: before memory coordination implementation.
+- **Related**: INV-01, FR-06, INV-02.
+
+### ARCH-OD-23 — Permanent/recovery snapshot layout and cleanup dependency
+
+- **Status**: open; **blocking before publication implementation**.
+- **Question**: what exact directories/references distinguish permanent publication from temporary recovery, and what may readers depend on after cleanup?
+- **Impact**: `PublicationSnapshotStore`, `RecoverySnapshotStore`, `HistoryService`, `ExportService`, `ArtifactPublisher`.
+- **Recommendation (not approved)**: use the `publication/`, `recovery/`, `locks/`, `diagnostics/` layout in blueprint §9.6.1. Formal report/history/export/memory binding validation depend only on `publication/` + terminal manifest; `recovery/` is temporary and may be cleaned; a terminal `recovery_snapshot_summary` is audit-only. The hash DAG is acyclic: `binding.json` contains no terminal-manifest hash; the manifest hashes permanent files including binding; no hashed file contains the manifest hash; optional `commit_evidence.json` is audit-only. `record_hash` uses the §9.6.6 projection excluding `artifact_binding.record_hash` and result-carrying hashes; content digest and file-byte hash are distinct.
+- **Blocking phase**: before publication implementation.
+- **Related**: FR-02, FR-05, FR-06, INV-01.
+
+### ARCH-OD-24 — record_hash projection and timestamp exclusion
+
+- **Status**: open; **blocking before publication implementation**.
+- **Question**: accept the §9.6.6 field-level projection, including exclusion of `artifact_binding.record_hash` and all result-carrying hashes, the content-digest vs file-byte-hash split, and the exact volatile-timestamp list?
+- **Impact**: `SafetyGate`, `ArtifactPublisher`, `Canonicalizer`, `INV-01`, `INV-A-41`.
+- **Recommendation (not approved)**: canonical content -> exclude self/result hashes and specified volatile run timestamps (`generated_at`, run-level `evaluated_at`, `finished_at`, `run_clock.now_utc`, paths, cache counters, computed snapshot timestamps) -> compute `record_hash` -> fill binding -> serialize -> file-byte SHA-256 -> terminal manifest. Preserve risk `evaluated_at` and provenance/evidence/filed-at timestamps.
+- **Blocking phase**: before publication implementation.
+- **Related**: INV-01, FR-02, FR-04.
 
 ---
 
@@ -219,21 +422,47 @@ Items 1, 2, 3, 4, 5, 6, and 7 are applied; the rest remain suggestions. D1 is at
 
 | Decision | Blocking phase | Related requirements |
 |---|---|---|
-| D2-OD-01 record schema | Before D3 | SB-01, INV-01, FR-02 |
-| D2-OD-02 publish protocol | Before D3 | FR-02, INV-01 |
-| D2-OD-03 checkpoint matrix | Before D3 | D2, SB-01, INV-01 |
-| D2-OD-06 memory sidecar | Before D3 memory | INV-01 |
-| D2-OD-08 runtime tool boundary | Before D3 | SR-01 |
-| D2-OD-09 behavior evaluation snapshots/approval | Before behavioral acceptance | FR-01 |
+| OQ-09 risk input source/ownership | Before risk implementation | FR-04, INV-02 |
+| OQ-10 risk policy/threshold approval | Before claiming approved thresholds/policy (provisional path permitted) | FR-04, INV-02, SB-01 |
+| OQ-12 risk-policy evaluation set | Before risk behavioral acceptance | FR-04, INV-02 |
+| OQ-13 QR-02 target/platform | Before performance acceptance | QR-02 |
+| OQ-14 non-NVDA reference manifest | Before FR-07 implementation | FR-07 |
+| OQ-16 brief budgets/token/quality | Before FR-08 acceptance | FR-08 |
+| ARCH-OD-01 missing `yhx` evidence | D4/CI reproducibility | FR-07, FR-08, validator |
+| ARCH-OD-02 undeclared validator deps | D4/CI reproducibility | all requirements |
+| ARCH-OD-03 risk policy locator/approval record | Before risk implementation | FR-04, INV-02 |
+| ARCH-OD-04 tokenizer/model selection | Before brief/context implementation | FR-08 |
+| ARCH-OD-06 recovery lease/retry/layout | Before recovery implementation | FR-06, QR-02 |
+| ARCH-OD-08 risk input envelope | Before risk integration | FR-04 |
+| ARCH-OD-13 approved SB-01 references draft FR-04 | Before claiming the approved risk branch | SB-01, FR-04, INV-02 |
+| ARCH-OD-14 approved FR-02/INV-01 depend on draft requirements | Before full-scope acceptance claims | FR-02, INV-01, FR-04..FR-08, QR-02 |
+| ARCH-OD-15 permanent-snapshot staging/post-commit diagnostics | Before publication implementation | FR-02, INV-01, FR-05 |
+| ARCH-OD-16 shared run lock/lease/takeover/lock order | Before publication/recovery | FR-02, FR-06, INV-01 |
+| ARCH-OD-17 brief replacement mapping/protected markers | Before FR-08 implementation | FR-08 |
+| ARCH-OD-18 brief timing vs final coverage snapshot | Before FR-08 acceptance | FR-03, FR-08, SB-01 |
+| ARCH-OD-19 financial-fact graph placement/SEC query shape | Before FR-07 implementation | FR-07, FR-01, FR-03 |
+| ARCH-OD-20 memory reservation storage/format | Before memory/recovery implementation | INV-01, FR-06 |
+| ARCH-OD-21 Portfolio Manager adapter/model-proposal source | Before analysis-chain implementation | SB-01, INV-01, FR-03 |
+| ARCH-OD-22 uncommitted same-decision memory coordination | Before memory coordination implementation | INV-01, FR-06, INV-02 |
+| ARCH-OD-23 permanent/recovery layout/cleanup dependency | Before publication implementation | FR-02, FR-05, FR-06, INV-01 |
+| ARCH-OD-24 record_hash projection/timestamp exclusion | Before publication implementation | INV-01, FR-02, FR-04 |
+| D2-OD-01 record schema/version | Before D3 | SB-01, INV-01, FR-02 |
+| D2-OD-02 publish protocol | Before D3 | FR-02, INV-01, FR-06 |
+| D2-OD-03 checkpoint matrix | Before D3 checkpoint | D2, SB-01, INV-01 |
+| D2-OD-06 memory sidecar shape | Before D3 memory implementation | INV-01, FR-06 |
+| D2-OD-08 runtime tool boundary | Before D3 | SR-01, FR-04, FR-07 |
+| D2-OD-09 behavior snapshots/approval | Before behavioral acceptance | FR-01, FR-04, FR-08 |
 
-Resolved in D1: OQ-01 critical profile, OQ-03 secret rules, OQ-04 run-cache semantics, OQ-06 REVIEW policy, OQ-07 SR-01 scope, D2-OD-04 fallback contract.
-Non-blocking: OQ-02, OQ-04 (vendor-cache retention), OQ-05, OQ-08, D2-OD-05, D2-OD-07.
+Resolved/retained: OQ-01 critical profile, OQ-03 secret rules, OQ-04 run-cache semantics (TTL still open), OQ-06 REVIEW policy, OQ-07 SR-01 scope, D2-OD-04 fallback contract.
+
+Non-blocking: OQ-02, OQ-04 TTL, OQ-05, OQ-08, OQ-11, OQ-15, D2-OD-05, D2-OD-07, ARCH-OD-05, ARCH-OD-07, ARCH-OD-09, ARCH-OD-10, ARCH-OD-11, ARCH-OD-12.
 
 ---
 
 ## 6. Status
 
-- D1: **v1.9.0 historical baseline approved; current revision human review pending; FR-01, FR-02, FR-03, SB-01, INV-01, and SR-01 contracts synchronized**.
-- D2 documents: **v0.1 draft / pending human review**.
+- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.
 - Application code: **unchanged**.
 - Tests/monitoring: **not started/not implemented**.
+- The architecture does not invent approvals, thresholds, measurements, or test results.

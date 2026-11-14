@@ -112,6 +112,12 @@
             "type": "string",
             "minLength": 10
           }
+        },
+        "draft_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirement_id"
+          }
         }
       }
     },
@@ -195,7 +201,37 @@
         "eval_set_version",
         "inheritance_record",
         "entry_digest",
-        "evidence_digest"
+        "evidence_digest",
+        "portfolio_risk_input",
+        "candidate_trade",
+        "portfolio_risk_policy_snapshot",
+        "portfolio_risk_result",
+        "risk_reason_code",
+        "risk_input_digest",
+        "risk_input_ref",
+        "risk_behavior_evaluation",
+        "valuation_cutoff",
+        "run_id",
+        "formal_publication",
+        "recovery_snapshot",
+        "recovery_claim",
+        "report_section_manifest",
+        "history_query",
+        "export_target",
+        "recovery_benchmark",
+        "publication_snapshot",
+        "history_reference_closure",
+        "financial_fact",
+        "financial_period",
+        "derived_metric",
+        "metric_block",
+        "metric_conflict",
+        "downstream_brief",
+        "brief_budget_policy",
+        "brief_evaluation",
+        "metric_claim",
+        "metric_evidence_bundle",
+        "context_audit_metadata"
       ],
       "properties": {
         "data_query_key": {
@@ -397,6 +433,156 @@
         "evidence_digest": {
           "type": "string",
           "minLength": 20
+        },
+        "portfolio_risk_input": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Authoritative caller/application-supplied structured portfolio valuation and candidate trade with one currency and valuation time."
+        },
+        "candidate_trade": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Structured new-long stock candidate trade with validated order value, entry, stop, action, position effect, instrument type, leverage, and order count."
+        },
+        "portfolio_risk_result": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Deterministic portfolio-risk result with evaluation status, closed risk reason codes, ratios, effective order value, policy version, threshold status, input digest, valuation time, currency, and evaluation time."
+        },
+        "risk_reason_code": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Closed portfolio-risk reason-code set used by the deterministic evaluator and the shared SafetyGate."
+        },
+        "risk_input_digest": {
+          "type": "string",
+          "minLength": 20,
+          "description": "SHA-256 over the canonical authoritative portfolio-risk input and policy version used by one evaluation."
+        },
+        "portfolio_risk_policy_snapshot": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Locatable policy snapshot with actual concentration and stop thresholds, freshness window, precision rule, threshold status, human approval reference, and digest."
+        },
+        "risk_input_ref": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Run-scoped locatable reference to the canonical stored risk-input artifact with relative path, SHA-256, and file hash scope."
+        },
+        "risk_behavior_evaluation": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Separate cache A/B and risk-policy behavior evaluations with fixed risk policy in cache comparison and a dedicated risk-policy threshold set."
+        },
+        "valuation_cutoff": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Unique timezone-aware risk valuation cutoff derived as min(run_clock.now_utc, end of run_clock.as_of_date in run_clock.timezone); future analysis dates are rejected, never clipped."
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Team run invocation identity, unique per invocation, path-safe, preserved across publication retries and recovery; UUIDv4 is not required."
+        },
+        "formal_publication": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Formal publication lifecycle and the rule that terminal manifest completed plus read-time INV-01 is the only commit condition."
+        },
+        "recovery_snapshot": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Complete durably written and read-back-verified redacted formal records and fixed render inputs for model-free startup recovery."
+        },
+        "recovery_claim": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Atomic per-run recovery claim or lease with duplicate-start, stale-claim, isolation, bounded-retry, and single-success rules."
+        },
+        "report_section_manifest": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Versioned-renderer and current-capability section list with section paths, state fields, byte sizes, hashes, and complete-report digest."
+        },
+        "history_query": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Historical publication query with optional ticker/date intersection filters, canonical normalization, deterministic order, bounded results, and typed unknown/corrupt behavior."
+        },
+        "export_target": {
+          "type": "string",
+          "minLength": 20,
+          "description": "User-selected export destination that must not overwrite a non-empty target and does not migrate or modify legacy reports."
+        },
+        "recovery_benchmark": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Fixed recovery performance workload, 30 reset trials, nearest-rank p95, provisional 2-second target, environment metadata, and retained failure samples."
+        },
+        "publication_snapshot": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Permanent formal record set for one committed publication, retained after cleanup and authoritative for history and formal references; distinct from the temporary recovery envelope."
+        },
+        "history_reference_closure": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Transitive source proof for reused historical memory references in a verified export package, or an explicit scope limitation when source proof is unavailable."
+        },
+        "financial_fact": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Structured SEC filing fact with period, unit, currency, filed_at, source, fact identity, sign, and restatement lineage."
+        },
+        "financial_period": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Period identity by start/end, fiscal year/quarter, span, duration, and restatement lineage; near dates are not merged."
+        },
+        "derived_metric": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Deterministic metric with formula, inputs, period, precision, status, source fact IDs, and structured n/a reason."
+        },
+        "metric_block": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Code-generated authoritative numeric metric block with stable IDs, formulas, sources, periods, status, and n/a reasons."
+        },
+        "metric_conflict": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Disclosed narrative-versus-computed-metric mismatch with unverified narrative labeling and no authoritative wrong number."
+        },
+        "downstream_brief": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Bounded downstream context view for the five debate roles, with mandatory gaps/metrics/sources and compressible narrative."
+        },
+        "brief_budget_policy": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Versioned mandatory/compressible budget, overflow rejection or expansion, Unicode, marker, character, and token rules."
+        },
+        "brief_evaluation": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Controlled brief-on/off evaluation measuring added output, reduced input, net token/cost, fidelity, gaps, quality, and safety."
+        },
+        "metric_claim": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Structured model claim with explicit metric_id, period, and parseable value; the only claim scope for deterministic metric-conflict detection."
+        },
+        "metric_evidence_bundle": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Persisted facts, formula/fact/policy versions, metric block, input digest, and result digest stored in permanent and recovery snapshots for model-free recovery."
+        },
+        "context_audit_metadata": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Separate brief audit metadata with source summary, policy version, mandatory digest, omissions, budget decision, fallback reason, and resolvable reference handle."
         }
       }
     },
