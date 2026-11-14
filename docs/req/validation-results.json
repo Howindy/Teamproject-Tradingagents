@@ -1,14 +1,14 @@
 {
   "document": "requirements.yaml",
-  "document_version": "1.14.1",
-  "generated_at": "2026-11-10T18:52:41.780853+00:00",
-  "duration_seconds": 0.228,
+  "document_version": "1.20.0",
+  "generated_at": "2026-11-14T21:27:15.257408+00:00",
+  "duration_seconds": 0.232,
   "command": "python3 docs/req/validate_requirements.py",
   "input_hashes": {
-    "docs/req/requirements.yaml": "4d14c9e447eddbfeed5cdedd9d466c9325eba9ce88a1a52d29a05056666824d4",
-    "docs/req/req-schema.json": "be39b0fc1234ceafe105813e201fbfd81c0e49bc4e0b79424d8f44a71783d170",
-    "docs/req/run-manifest-schema.json": "475a073f4a74f5d8fd158ae78aced025cb268bc145352ccc5dbc69b8ddb6e074",
-    "docs/req/validate_requirements.py": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
+    "docs/req/requirements.yaml": "b2187270a9d4062e0c01a5aae09214193e347972fd42a1e4d984a5f2e002b7aa",
+    "docs/req/req-schema.json": "7323f7337ded1072a07a55ff6e9f22299c822aaa89d07dd2795852842227b7c3",
+    "docs/req/run-manifest-schema.json": "fdc8e1104c80e37e9dcda6eb3ffb2bb250dfd8d16b5e23079a7653fa090b635a",
+    "docs/req/validate_requirements.py": "5afe1ef1b02ff3dafa624efc9b7aa52360399429747776fe3de0f3405ee4c9ed",
     "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
     "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
     "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
@@ -26,11 +26,13 @@
     "docs/req/fixtures/financial_metrics_v1.json": "5a2a5b71f968c3452256c5e63d27f720758419d0df1c0a538604daa454ce529b",
     "docs/req/fixtures/downstream_brief_v1.json": "84ae225fc76fbed5104a2820b73ef3ee8ff334b8f38eb74d6262b994c9d73427",
     "docs/req/evaluation/brief-eval-contract-v1.json": "e4d5b1e39eb7f830bc588f1cbaee4640f36038d43af8b7b6afa42109460fd38c",
+    "docs/req/evaluation/brief-eval-contract-v2.json": "a931e3c713cf9fea40775eaac8957879d10df25ff29b218636944a292da24055",
     "docs/req/fixtures/brief_budget_policy_v1.json": "d587273513ed353460c14944de756faab9fd891dbbcff8a8b66f833e2f2a90c5",
     "docs/req/fixtures/brief_eval_states_v1.json": "85ee69912ccd11419a6603e86e3837cc28049af21004bd081a63f72817c699b7",
-    "yhx/requirements.yaml": "86690cb15d2086205d6260fe4d5af8833c09eb58d94095f724f28e3f8822afd1"
+    "docs/req/fixtures/brief_eval_states_v2.json": "fcaeb051a545f7c3a16d8752aacc541ece88d0ce134b99021e98dc6267bf7b62",
+    "docs/req/fixtures/gr01_freeze_states_v1.json": "f7f1a80bb72157a6a415c36e0013e401b2a1844c5d19bc0853502686bfb10a92"
   },
-  "script_hash": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
+  "script_hash": "5afe1ef1b02ff3dafa624efc9b7aa52360399429747776fe3de0f3405ee4c9ed",
   "is_current": true,
   "machine_checks": [
     {
@@ -41,8 +43,9 @@
       "id": "scope_status_consistency",
       "result": "pass",
       "details": {
-        "approved": 6,
-        "draft": 7
+        "approved": 0,
+        "draft": 17,
+        "deferred": 1
       }
     },
     {
@@ -64,10 +67,10 @@
       "result": "pass"
     },
     {
-      "id": "acceptance_count",
+      "id": "fit_criterion_count",
       "result": "pass",
       "details": {
-        "count": 111
+        "count": 119
       }
     },
     {
@@ -95,8 +98,8 @@
           "FR-04",
           "INV-02"
         ],
-        "fr04_acs": 11,
-        "inv02_acs": 7,
+        "fr04_acs": 9,
+        "inv02_acs": 6,
         "check_kind": "document_coverage_only",
         "cache_risk_eval_separated": true,
         "documented_cases": [
@@ -158,7 +161,7 @@
           "FR-06",
           "QR-02"
         ],
-        "fr05_acs": 4,
+        "fr05_acs": 3,
         "fr06_acs": 6,
         "qr02_acs": 2,
         "check_kind": "document_coverage_only",
@@ -181,11 +184,7 @@
           "export",
           "legacy",
           "publication_snapshot",
-          "temporary",
-          "history_reference_closure",
-          "reused_decision_ref",
-          "source publication proof",
-          "historical_reference_unverified"
+          "temporary"
         ],
         "covered_recovery": [
           "snapshot_ready",
@@ -199,8 +198,6 @@
           "settlement",
           "reflection",
           "memory",
-          "claim",
-          "stale",
           "retry",
           "at most one",
           "run_id",
@@ -214,7 +211,6 @@
           "reference",
           "publication_snapshot",
           "temporary",
-          "fencing token",
           "first write",
           "different decision entry",
           "additional duplicate"
@@ -304,7 +300,7 @@
         "requirements": [
           "FR-07"
         ],
-        "acs": 11,
+        "acs": 10,
         "check_kind": "document_coverage_only"
       }
     },
@@ -324,7 +320,7 @@
         "requirements": [
           "FR-08"
         ],
-        "acs": 5,
+        "acs": 4,
         "check_kind": "document_coverage_only"
       }
     },
@@ -348,7 +344,7 @@
       "id": "brief_evaluation_contract",
       "result": "pass",
       "details": {
-        "contract_version": "d1-brief-contract-v1",
+        "contract_version": "d1-brief-contract-v2",
         "current_state": "blocked",
         "acceptance_status": "blocked",
         "case_snapshots": {
@@ -370,6 +366,10 @@
           "all_ready": false
         },
         "digests_verified": 5,
+        "claim_boundary": "budget_met/local_cost_saving/token_reduction/whole_application_saving separated",
+        "cost_target_status": "unresolved",
+        "token_target_status": "not_defined",
+        "measurement_scope": "local_cost_attribution",
         "check_kind": "evaluation_contract_semantic_check"
       }
     },
@@ -392,9 +392,40 @@
       "id": "brief_eval_state_fixture",
       "result": "pass",
       "details": {
+        "cases": 17,
+        "checks": 17,
+        "accepted_claims": 4,
+        "fixture_version": "brief-eval-states-v2",
+        "check_kind": "state_transition_and_claim_fixture"
+      }
+    },
+    {
+      "id": "spec_consistency",
+      "result": "pass",
+      "details": {
+        "pr01": "startup/terminal write, percent and absolute overhead separated",
+        "gr01": "Stage A pre-implementation readiness; Stage B post-implementation timing; FR-07 gate",
+        "cr01": "local cost attribution; budget/target, local saving, token change, and whole-app claim separated",
+        "qr02": "performance/deferred",
+        "fr01_qr01": "FR-01-AC7 merged into AC6; QR-01 criteria separated",
+        "deferred_scope": "FR-05 export, FR-06 multi-worker, FR-07 TTM/FCF YoY inactive",
+        "threshold_refs": {
+          "unresolved": [
+            "CR-01-AC3",
+            "CR-01-AC4"
+          ],
+          "resolved": "number or explicit null"
+        }
+      }
+    },
+    {
+      "id": "gr01_freeze_fixture",
+      "result": "pass",
+      "details": {
         "cases": 7,
         "checks": 7,
-        "check_kind": "state_transition_fixture"
+        "fixture_version": "gr01-freeze-states-v1",
+        "check_kind": "stage_a_b_static_transition_fixture"
       }
     }
   ],
@@ -404,10 +435,10 @@
     "reviewed_at": null,
     "notes": "Human approval reset to pending because validated inputs changed.",
     "bound_input_hashes": {
-      "docs/req/requirements.yaml": "4d14c9e447eddbfeed5cdedd9d466c9325eba9ce88a1a52d29a05056666824d4",
-      "docs/req/req-schema.json": "be39b0fc1234ceafe105813e201fbfd81c0e49bc4e0b79424d8f44a71783d170",
-      "docs/req/run-manifest-schema.json": "475a073f4a74f5d8fd158ae78aced025cb268bc145352ccc5dbc69b8ddb6e074",
-      "docs/req/validate_requirements.py": "9f8471df5699949a0cfc10699a23686409bfea1842d9c55c9bdb70d91813e72f",
+      "docs/req/requirements.yaml": "b2187270a9d4062e0c01a5aae09214193e347972fd42a1e4d984a5f2e002b7aa",
+      "docs/req/req-schema.json": "7323f7337ded1072a07a55ff6e9f22299c822aaa89d07dd2795852842227b7c3",
+      "docs/req/run-manifest-schema.json": "fdc8e1104c80e37e9dcda6eb3ffb2bb250dfd8d16b5e23079a7653fa090b635a",
+      "docs/req/validate_requirements.py": "5afe1ef1b02ff3dafa624efc9b7aa52360399429747776fe3de0f3405ee4c9ed",
       "docs/req/evaluation/eval-set-v1.json": "941fc99ba2ddcb5d72e0828d3a88b677b9785333849be27df3b778aa062af5c7",
       "docs/req/evaluation/rubric-v1.json": "df49bb4363207ec69b21d985932ef1c7f2cae51a7aa14c860ce00ad88780eb4f",
       "docs/req/evaluation/behavior-eval-contract-v1.json": "3c50c146dba46498259d73574149940b99f755e4a637f9ea831dfb20b02ac7b8",
@@ -425,20 +456,27 @@
       "docs/req/fixtures/financial_metrics_v1.json": "5a2a5b71f968c3452256c5e63d27f720758419d0df1c0a538604daa454ce529b",
       "docs/req/fixtures/downstream_brief_v1.json": "84ae225fc76fbed5104a2820b73ef3ee8ff334b8f38eb74d6262b994c9d73427",
       "docs/req/evaluation/brief-eval-contract-v1.json": "e4d5b1e39eb7f830bc588f1cbaee4640f36038d43af8b7b6afa42109460fd38c",
+      "docs/req/evaluation/brief-eval-contract-v2.json": "a931e3c713cf9fea40775eaac8957879d10df25ff29b218636944a292da24055",
       "docs/req/fixtures/brief_budget_policy_v1.json": "d587273513ed353460c14944de756faab9fd891dbbcff8a8b66f833e2f2a90c5",
       "docs/req/fixtures/brief_eval_states_v1.json": "85ee69912ccd11419a6603e86e3837cc28049af21004bd081a63f72817c699b7",
-      "yhx/requirements.yaml": "86690cb15d2086205d6260fe4d5af8833c09eb58d94095f724f28e3f8822afd1"
+      "docs/req/fixtures/brief_eval_states_v2.json": "fcaeb051a545f7c3a16d8752aacc541ece88d0ce134b99021e98dc6267bf7b62",
+      "docs/req/fixtures/gr01_freeze_states_v1.json": "f7f1a80bb72157a6a415c36e0013e401b2a1844c5d19bc0853502686bfb10a92"
     },
-    "bound_document_version": "1.14.1"
+    "bound_document_version": "1.20.0"
   },
   "limitations": [
-    "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, dependency acyclicity, draft/approved scope consistency, and portfolio-risk/archive document coverage.",
+    "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, dependency acyclicity, draft/deferred/approved scope consistency, PR/GR/CR/QR specification consistency, threshold-ref resolution, and portfolio-risk/archive document coverage.",
     "portfolio_risk_document_coverage checks required case concepts in acceptance text; it is a document coverage check, not behavior verification.",
     "archive_document_coverage checks required archive/recovery/benchmark concepts in acceptance text; it is a document coverage check, not behavior verification.",
     "financial_metrics_document_coverage and downstream_brief_document_coverage check required concepts and expected fixture values in acceptance text; they are document coverage checks, not behavior verification.",
     "Behavioral evaluation is blocked until snapshots and human approval are complete; the frozen v1 eval files are unchanged.",
     "Risk evidence, archive, financial, and brief fixtures recompute local requirement evidence and negatives; they are requirement-evidence checks, not application tests.",
     "archive_static_fixture, downstream_brief_fixture, brief_budget_policy, brief_evaluation_contract, and brief_eval_state_fixture are static checks. Process concurrency, lease fencing, lost-lease rejection, zero-external-call behavior, live model brief-following, and live token/quality evaluation still require process-level, dependency-sentinel, and live evaluation tests that were not executed.",
+    "spec_consistency verifies document/contract relationships (PR-01 statistics, GR-01 direction, CR-01 separation, FR-01/QR-01 split, QR-02 type, deferred active scope). It does not prove application behavior.",
+    "threshold_ref resolution treats a null target as unresolved/blocked, never as an approved numeric threshold; CR-01-AC3 and CR-01-AC4 currently resolve to null targets.",
+    "brief-eval-contract-v2 is a revision draft; brief-eval-contract-v1 and the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
+    "gr01_freeze_fixture covers Stage A without implementation, missing material, post-implementation timing, version mismatch, and retroactive freeze; it is a static fixture, not an implementation test.",
+    "brief_eval_state_fixture covers blocked/ready/accepted/failed and budget/local-saving/token/whole-application claim boundaries; it is a static fixture, not a live evaluation.",
     "No application implementation or application test was executed in this requirements-validation pass."
   ]
 }

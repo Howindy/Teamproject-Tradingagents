@@ -2,15 +2,15 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 ---
 
 ## 1. Purpose and status
 
-This catalog names every runtime policy needed by the full D1 v1.14.1 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
+This catalog names every runtime policy needed by the full D1 v1.20.0 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
 
 Status values:
 
@@ -45,8 +45,8 @@ Status values:
 | `POL-PUB-02` | Post-commit corruption and diagnostics | D1-required; D2 proposal pending human review | FR-02, INV-01, FR-05 |
 | `POL-LOCK-01` | Shared run ownership, lock order, and fencing | D1-required; D2 proposal pending human review | FR-02, FR-06, INV-01 |
 | `POL-ARCH-01` | History, section manifest, and export | D1 draft; D2 proposal pending human review | FR-05, INV-01, SR-01 |
-| `POL-REC-01` | Recovery snapshot, claim, fencing, and idempotency | D1 draft; D2 proposal pending human review | FR-06, QR-02 |
-| `POL-PERF-01` | Recovery benchmark and provisional p95 | D1 draft; provisional target | QR-02 |
+| `POL-REC-01` | Recovery snapshot and idempotency; claim/fencing deferred | D1 draft; D2 proposal pending human review | FR-06, QR-02 |
+| `POL-PERF-01` | Recovery benchmark and provisional p95 | QR-02 deferred; future provisional target | QR-02 |
 | `POL-MEM-01` | Memory idempotency and lifecycle | D1-required; D2 proposal pending human review | INV-01, FR-04, FR-06 |
 | `POL-FIN-01` | Structured financial facts and metrics | D1 draft; D2 proposal pending human review | FR-07, FR-01, FR-03 |
 | `POL-BRIEF-01` | Brief mandatory content and ordered budget | D1 draft; provisional budgets | FR-08, FR-03, FR-07 |
@@ -439,12 +439,12 @@ If a work assumption changes, revisit:
 | Class | Items | Effect |
 |---|---|---|
 | Implementation-start blockers | Risk input source (OQ-09), risk policy locator/approval record (ARCH-OD-03), shared lock/lease format (ARCH-OD-16), permanent/recovery layout (ARCH-OD-15/23), record_hash projection (ARCH-OD-24), memory reservation format/authority (ARCH-OD-20), SEC query contract (ARCH-OD-19), PM adapter/model-proposal source (ARCH-OD-21), uncommitted-memory status protocol (ARCH-OD-22), tokenizer/model (ARCH-OD-04) | Must be decided before the affected module starts; not a claim of approval. |
-| Acceptance-only | Risk 30%/5% approved thresholds (OQ-10 approved-policy claims), QR-02 2.000 s/platform (OQ-13), brief budgets/quality thresholds (OQ-16), behavior-eval snapshots (D2-OD-09), manifest overhead (OQ-05) | Do not block starting implementation; block acceptance/completion claims. |
-| Evidence/CI blockers | `yhx/requirements.yaml` absent (ARCH-OD-01), validator dependencies undeclared (ARCH-OD-02) | Block reproducible D1 validation/CI, not module design. |
+| Acceptance-only | Risk 30%/5% approved thresholds (OQ-10 approved-policy claims), future QR-02 2.000 s/platform (OQ-13; deferred), brief budgets/quality/cost thresholds and claim boundary (OQ-16), behavior-eval snapshots (D2-OD-09), manifest overhead (OQ-05) | Do not block starting implementation; block acceptance/completion claims. |
+| Evidence/CI status | Unretained personal-proposal source (ARCH-OD-01) resolved; validator dependencies present locally but CI declaration remains (ARCH-OD-02) | Current `--check` passes; clean CI still needs dependency declaration. |
 
 ## 7. Status
 
 - Policies are classified as D1-required, D2 architecture proposals, provisional parameters, or design-only; none of the D2 additions is approved.
 - No policy is implemented; human review of D2 remains pending.
 - No threshold is measured unless it is a baseline observation.
-- D1 v1.14.1; six approved, seven draft; human review pending.
+- D1 v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.

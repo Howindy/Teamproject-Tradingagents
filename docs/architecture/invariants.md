@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 ---
@@ -20,7 +20,7 @@ Each invariant has:
 
 Unless stated otherwise, these invariants are **zero-tolerance** (one violation fails). `QR-02` performance is provisional and not zero-tolerance, but its correctness/model-free conditions are.
 
-Approved-source invariants are normative for the approved requirements. Invariants sourced only from draft requirements (`FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02`) are design proposals, not approved requirements.
+All requirements are draft, so every invariant is a design proposal, not an approved requirement. `QR-02` is deferred and its performance target is outside current acceptance.
 
 ---
 
@@ -487,5 +487,5 @@ All test status: **not started**. No implementation or monitoring exists.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Monitoring: **not implemented**.
-- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
 - D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.

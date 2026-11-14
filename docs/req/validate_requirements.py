@@ -736,7 +736,7 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
             fail(f"{rid} must be listed in scope.draft_ids")
         if rid in doc["scope"]["approved_ids"]:
             fail(f"{rid} must not be listed in scope.approved_ids")
-        for ac in req["acceptance_criteria"]:
+        for ac in req["fit_criterion"]:
             if ac["measurement_status"] == "measured":
                 fail(f"{ac['id']} must not claim a measured result")
             if not ac["zero_tolerance"]:
@@ -745,13 +745,18 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
     inv02 = requirements["INV-02"]
     fr04_text = " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-        for ac in fr04["acceptance_criteria"]
+        for ac in fr04["fit_criterion"]
     ).lower()
     inv02_text = " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-        for ac in inv02["acceptance_criteria"]
+        for ac in inv02["fit_criterion"]
     ).lower()
     combined = (fr04_text + " " + inv02_text).lower()
+    qr01 = requirements["QR-01"]
+    qr01_text = " ".join(
+        " ".join((ac["input"], ac["expected_result"], ac["verification"]))
+        for ac in qr01["fit_criterion"]
+    ).lower()
     case_tokens = {
         "crypto_buy": ("crypto",),
         "missing_candidate": ("missing",),
@@ -767,15 +772,16 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
         "cache_risk_separation": ("cache", "separate"),
     }
     for case, tokens in case_tokens.items():
+        haystack = qr01_text if case == "cache_risk_separation" else combined
         for token in tokens:
-            if token not in combined:
+            if token not in haystack:
                 fail(f"portfolio-risk acceptance criteria do not cover required case {case}: {token}")
     for token in ("new_long", "add_long", "valuation_cutoff", "policy_snapshot", "input_ref", "future_analysis_date", "clipped"):
         if token not in fr04_text:
             fail(f"FR-04 acceptance criteria do not cover required field or concept: {token}")
     if "min(run_clock.now_utc" not in fr04["statement"] and "min(run_clock.now_utc" not in " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-        for ac in fr04["acceptance_criteria"]
+        for ac in fr04["fit_criterion"]
     ):
         fail("FR-04 must define the unique min(now_utc, end-of-day) valuation cutoff")
     for token in ("original", "unchanged"):
@@ -783,17 +789,10 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
             fail(f"portfolio-risk acceptance criteria do not verify original requirements are {token!r}")
     if "risk-blocked rerun does not create a second entry" in inv02_text:
         fail("INV-02 must not retain the absolute no-new-entry rule")
-    fr01_ac7 = next(
-        (ac for ac in requirements["FR-01"]["acceptance_criteria"] if ac["id"] == "FR-01-AC7"),
-        None,
-    )
-    if fr01_ac7 is None:
-        fail("FR-01-AC7 is required for cache and risk-policy evaluation separation")
-    fr01_text = " ".join((fr01_ac7["input"], fr01_ac7["expected_result"], fr01_ac7["verification"])).lower()
     for token in ("risk-policy", "separate"):
-        if token not in fr01_text:
-            fail(f"FR-01-AC7 does not state the required {token!r} evaluation separation")
-    for ac in fr04["acceptance_criteria"]:
+        if token not in qr01_text:
+            fail(f"QR-01 does not state the required {token!r} evaluation separation")
+    for ac in fr04["fit_criterion"]:
         text = " ".join((ac["input"], ac["expected_result"], ac["verification"])).lower()
         if any(token in text for token in ("30%", "5%", "0.30", "0.05")):
             if ac["threshold_status"] != "provisional":
@@ -809,8 +808,8 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
             fail(f"risk_reason_code definition is missing {code}")
     return {
         "requirements": list(expected),
-        "fr04_acs": len(fr04["acceptance_criteria"]),
-        "inv02_acs": len(inv02["acceptance_criteria"]),
+        "fr04_acs": len(fr04["fit_criterion"]),
+        "inv02_acs": len(inv02["fit_criterion"]),
         "check_kind": "document_coverage_only",
         "cache_risk_eval_separated": True,
         "documented_cases": sorted(case_tokens),
@@ -1208,6 +1207,7 @@ def archive_document_coverage(doc: dict) -> dict:
     for rid in expected:
         if rid not in requirements:
             fail(f"missing archive/recovery requirement {rid}")
+    for rid in ("FR-05", "FR-06"):
         req = requirements[rid]
         if req["status"] != "draft":
             fail(f"{rid} must remain draft until human approval")
@@ -1215,21 +1215,27 @@ def archive_document_coverage(doc: dict) -> dict:
             fail(f"{rid} must be listed in scope.draft_ids")
         if rid in doc["scope"]["approved_ids"]:
             fail(f"{rid} must not be listed in scope.approved_ids")
+    if requirements["QR-02"]["status"] != "deferred":
+        fail("QR-02 must remain deferred")
+    if "QR-02" not in doc["scope"].get("deferred_ids", []):
+        fail("QR-02 must be listed in scope.deferred_ids")
+    if "QR-02" in doc["scope"]["approved_ids"] or "QR-02" in doc["scope"].get("draft_ids", []):
+        fail("QR-02 must not be listed in scope.approved_ids or scope.draft_ids")
     fr05 = requirements["FR-05"]
     fr06 = requirements["FR-06"]
     qr02 = requirements["QR-02"]
     for req in (fr05, fr06, qr02):
-        for ac in req["acceptance_criteria"]:
+        for ac in req["fit_criterion"]:
             if ac["measurement_status"] == "measured":
                 fail(f"{ac['id']} must not claim a measured result")
     for req in (fr05, fr06):
-        for ac in req["acceptance_criteria"]:
+        for ac in req["fit_criterion"]:
             if not ac["zero_tolerance"]:
                 fail(f"{ac['id']} must be zero-tolerance")
     def _doc_text(req):
         ac_text = " ".join(
             " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-            for ac in req["acceptance_criteria"]
+            for ac in req["fit_criterion"]
         )
         return " ".join((req["problem"], req["statement"], " ".join(req["assumptions"]), ac_text)).lower()
 
@@ -1240,17 +1246,16 @@ def archive_document_coverage(doc: dict) -> dict:
         "ticker", "analysis_date", "intersection", "normaliz", "order",
         "limit", "offset", "paging", "next_offset", "truncated", "unknown",
         "corrupt", "invalid_filter", "revalidat", "section_manifest", "export", "legacy",
-        "publication_snapshot", "temporary", "history_reference_closure",
-        "reused_decision_ref", "source publication proof", "historical_reference_unverified",
+        "publication_snapshot", "temporary",
     )
     recovery_tokens = (
         "snapshot_ready", "missing", "corrupt", "unsupported", "quarantine",
         "model", "external", "analysis graph", "settlement", "reflection",
-        "memory", "claim", "stale", "retry", "at most one", "run_id",
+        "memory", "retry", "at most one", "run_id",
         "commit marker", "artifact_binding", "report_section_manifest",
         "risk input", "policy references", "reserved entry version",
         "schema/renderer", "reference", "publication_snapshot", "temporary",
-        "fencing token", "first write", "different decision entry",
+        "first write", "different decision entry",
         "additional duplicate",
     )
     qr_tokens = (
@@ -1273,17 +1278,17 @@ def archive_document_coverage(doc: dict) -> dict:
         for req in (fr05, fr06)
     ).lower():
         fail("archive requirements must state that UUIDv4 is not required")
-    if qr02["acceptance_criteria"][0]["threshold_status"] != "provisional":
+    if qr02["fit_criterion"][0]["threshold_status"] != "provisional":
         fail("QR-02 threshold must remain provisional")
-    if qr02["acceptance_criteria"][0]["measurement_status"] == "measured":
+    if qr02["fit_criterion"][0]["measurement_status"] == "measured":
         fail("QR-02 must not claim a measured benchmark result")
-    if len(qr02["acceptance_criteria"]) < 2 or not qr02["acceptance_criteria"][1]["zero_tolerance"]:
+    if len(qr02["fit_criterion"]) < 2 or not qr02["fit_criterion"][1]["zero_tolerance"]:
         fail("QR-02 must include a zero-tolerance correctness/model-free criterion")
     return {
         "requirements": list(expected),
-        "fr05_acs": len(fr05["acceptance_criteria"]),
-        "fr06_acs": len(fr06["acceptance_criteria"]),
-        "qr02_acs": len(qr02["acceptance_criteria"]),
+        "fr05_acs": len(fr05["fit_criterion"]),
+        "fr06_acs": len(fr06["fit_criterion"]),
+        "qr02_acs": len(qr02["fit_criterion"]),
         "check_kind": "document_coverage_only",
         "covered_history": list(history_tokens),
         "covered_recovery": list(recovery_tokens),
@@ -1814,28 +1819,27 @@ def financial_document_coverage(doc: dict) -> dict:
         fail("FR-07 must remain draft in scope.draft_ids")
     text = " ".join((req["problem"], req["statement"], " ".join(req["assumptions"]), " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-        for ac in req["acceptance_criteria"]
+        for ac in req["fit_criterion"]
     ))).lower()
     tokens = (
         "financial_fact", "period_start", "period_end", "fiscal_year", "filed_at",
-        "currency", "unit", "restatement", "ambiguous", "latest four", "ttm revenue",
-        "ttm diluted eps", "p/e on fiscal-year eps", "p/e on ttm eps", "zero denominator",
+        "currency", "unit", "restatement", "ambiguous", "zero denominator",
         "non-positive", "capex", "currency mismatch", "unit mismatch", "run cache",
         "metric block", "metric_conflict", "reference manifest", "direct vendor",
         "subject_id", "accession", "filing_ref", "same-day", "ambiguous-filing",
-        "fiscal-year continuity", "cumulative", "coverage interval",
         "metric_evidence_bundle", "formula_version", "metric_claim", "refetch",
+        "free cash flow", "p/e on fiscal-year eps", "ttm", "deferred",
     )
     for token in tokens:
         if token not in text:
             fail(f"FR-07 document coverage missing {token}")
-    for token in ("105.9", "85.2", "17.9", "75.0", "66.2", "62.0", "302,969", "7.91", "44.3", "27.4"):
+    for token in ("105.9", "85.2", "17.9", "75.0", "66.2", "62.0", "44.3", "69,987"):
         if token not in text:
             fail(f"FR-07 document coverage missing expected value {token}")
-    for ac in req["acceptance_criteria"]:
+    for ac in req["fit_criterion"]:
         if ac["measurement_status"] == "measured":
             fail(f"{ac['id']} must not claim a measured result")
-    return {"requirements": [rid], "acs": len(req["acceptance_criteria"]), "check_kind": "document_coverage_only"}
+    return {"requirements": [rid], "acs": len(req["fit_criterion"]), "check_kind": "document_coverage_only"}
 
 
 def brief_document_coverage(doc: dict) -> dict:
@@ -1848,23 +1852,22 @@ def brief_document_coverage(doc: dict) -> dict:
         fail("FR-08 must remain draft in scope.draft_ids")
     text = " ".join((req["problem"], req["statement"], " ".join(req["assumptions"]), " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
-        for ac in req["acceptance_criteria"]
+        for ac in req["fit_criterion"]
     ))).lower()
     tokens = (
         "bull researcher", "bear researcher", "risk debaters", "mandatory", "compressible",
         "canonical", "fr-03", "metric block", "brief_budget_policy", "brief_rejected", "unicode",
-        "token", "net_tokens", "quality", "safety", "downstream view", "full report",
+        "token", "quality", "safety", "downstream view", "full report",
         "context_audit_metadata", "reference", "expand", "hard cap", "resolvable",
-        "lifecycle", "blocked", "ready", "accepted", "failed", "same approved threshold",
-        "quality_loss", "quality_loss_max", "short report", "byte-identical",
+        "short report", "byte-identical", "cr-01",
     )
     for token in tokens:
         if token not in text:
             fail(f"FR-08 document coverage missing {token}")
-    for ac in req["acceptance_criteria"]:
+    for ac in req["fit_criterion"]:
         if ac["measurement_status"] == "measured":
             fail(f"{ac['id']} must not claim a measured result")
-    return {"requirements": [rid], "acs": len(req["acceptance_criteria"]), "check_kind": "document_coverage_only"}
+    return {"requirements": [rid], "acs": len(req["fit_criterion"]), "check_kind": "document_coverage_only"}
 
 
 def _brief_case_snapshot_state() -> dict:
@@ -1898,9 +1901,9 @@ def _brief_case_snapshot_state() -> dict:
 
 
 def brief_eval_contract_checks() -> dict:
-    _, contract = _fixture_json("../evaluation/brief-eval-contract-v1.json")
-    if contract.get("status") != "frozen_contract":
-        fail("brief evaluation contract must be frozen")
+    _, contract = _fixture_json("../evaluation/brief-eval-contract-v2.json")
+    if contract.get("status") not in {"frozen_contract", "revision_draft"}:
+        fail("brief evaluation contract status must be frozen_contract or revision_draft")
     allowed_states = {"blocked", "ready", "accepted", "failed"}
     if contract.get("acceptance_status") not in allowed_states:
         fail("brief acceptance_status must be blocked/ready/accepted/failed")
@@ -1908,25 +1911,131 @@ def brief_eval_contract_checks() -> dict:
     if switch.get("off") != "full_reports" or switch.get("on") != "downstream_brief":
         fail("brief evaluation switch mapping is invalid")
     metrics = set(contract.get("metrics", []))
-    for metric in ("added_output_tokens", "reduced_downstream_input_tokens", "added_output_cost",
-                   "reduced_input_cost_saving", "net_tokens", "net_cost", "fidelity",
-                   "key_number_preservation", "gap_preservation", "quality_loss",
-                   "safety_escapes", "latency_seconds"):
+    for metric in ("added_output_tokens", "brief_generation_input_tokens", "reduced_downstream_input_tokens",
+                   "added_output_cost", "reduced_input_cost_saving", "net_tokens", "net_cost",
+                   "fidelity", "key_number_preservation", "gap_preservation", "quality_loss",
+                   "safety_escapes", "latency_seconds", "measurement_scope", "retry_attempts",
+                   "fallback_attempts", "claim_classification"):
         if metric not in metrics:
             fail(f"brief evaluation contract missing metric {metric}")
     direction = contract.get("token_direction", {})
     if direction.get("net_tokens") != "added_output_tokens - reduced_downstream_input_tokens":
         fail("brief net token direction is invalid")
-    if direction.get("net_cost") != "added_output_cost - reduced_input_cost_saving":
-        fail("brief net cost direction is invalid")
-    if direction.get("negative_net_cost_means_saving") is not True:
-        fail("brief net cost sign direction is invalid")
+    if "local cost attribution" not in direction.get("net_cost", ""):
+        fail("brief net cost must be described as local cost attribution")
+    if "excludes brief-generation input cost" not in direction.get("net_cost", ""):
+        fail("brief net cost must disclose excluded brief-generation input cost")
+    if direction.get("negative_net_cost_means_saving") is not False:
+        fail("brief contract must not equate negative local net cost with a saving claim")
     if "if either price is null" not in direction.get("missing_price_behavior", ""):
         fail("brief missing-price behavior is not defined")
+    if direction.get("scope") != "local_cost_attribution":
+        fail("brief cost scope must be local_cost_attribution")
+    if "local_cost_saving" not in direction.get("saving_definition", "") or "whole_application_saving" not in direction.get("saving_definition", ""):
+        fail("brief saving definition must separate local saving from whole-application saving")
+
+    claim_defs = contract.get("claim_definitions", {})
+    for key in ("budget_met", "local_cost_saving", "token_reduction", "zero_difference",
+                "positive_cost_difference_within_budget", "whole_application_saving",
+                "quality_or_safety_override"):
+        if key not in claim_defs:
+            fail(f"brief claim definitions missing {key}")
+    if "does not by itself imply a saving" not in claim_defs.get("budget_met", ""):
+        fail("budget_met must not imply a saving")
+    if "net_cost < 0" not in claim_defs.get("local_cost_saving", ""):
+        fail("local_cost_saving must require a negative local difference")
+    if "does not claim it" not in claim_defs.get("whole_application_saving", ""):
+        fail("whole_application_saving must remain unclaimed")
+    if "cannot be offset" not in claim_defs.get("quality_or_safety_override", ""):
+        fail("quality/safety override must be forbidden")
+
+    model = contract.get("state_model", {})
+    checkpoints = model.get("checkpoints", {})
+    if not checkpoints.get("pre_run_inputs") or not checkpoints.get("post_run_result_evidence"):
+        fail("brief state model must separate pre-run inputs from post-run result evidence")
+    priority = " ".join(model.get("state_priority", [])).lower()
+    for token in ("blocked", "ready", "failed", "accepted"):
+        if token not in priority:
+            fail(f"brief state priority missing {token}")
+    transitions = " ".join(model.get("transitions", [])).lower()
+    for token in ("blocked -> ready", "ready -> accepted", "ready -> failed"):
+        if token not in transitions:
+            fail(f"brief state transitions missing {token!r}")
+    if "observed_failures" not in model.get("observed_failure_policy", ""):
+        fail("brief observed-failure policy must preserve observed failures")
+    if "attempt_id" not in model.get("attempt_policy", "") or "prior failed evidence" not in model.get("attempt_policy", ""):
+        fail("brief attempt policy must preserve prior failed evidence")
+
     states = contract.get("state_conditions", {})
     for state in allowed_states:
         if state not in states:
             fail(f"brief evaluation contract missing state condition {state}")
+    blocked = [s.lower() for s in states.get("blocked", [])]
+    ready = [s.lower() for s in states.get("ready", [])]
+    accepted = [s.lower() for s in states.get("accepted", [])]
+    failed = [s.lower() for s in states.get("failed", [])]
+    blocked_text = " ".join(blocked)
+    ready_text = " ".join(ready)
+    accepted_text = " ".join(accepted)
+    failed_text = " ".join(failed)
+    for token in ("pre-run inputs", "missing or invalid", "observed_failures"):
+        if token not in blocked_text:
+            fail(f"brief blocked state missing {token!r}")
+    for token in ("all pre-run inputs are valid", "no result exists for the current attempt", "not yet been executed"):
+        if token not in ready_text:
+            fail(f"brief ready state missing {token!r}")
+    if "no accepted result" in ready_text:
+        fail("brief ready state must not be defined as no accepted result yet")
+    for token in ("evaluation was executed from ready", "all samples", "quality_loss <=", "safety_escapes = 0", "net_cost <=", "no applicable"):
+        if token not in accepted_text:
+            fail(f"brief accepted state missing {token!r}")
+    if "ready" in [s.strip() for s in accepted]:
+        fail("brief accepted state must not list ready as a circular precondition")
+    for token in ("result evidence is missing", "safety_escapes > 0", "quality_loss >", "net_cost >", "digest mismatch"):
+        if token not in failed_text:
+            fail(f"brief failed state missing {token!r}")
+
+    scope = contract.get("measurement_scope", {})
+    if scope.get("scope") != "local_cost_attribution":
+        fail("brief measurement scope must be local_cost_attribution")
+    included = " ".join(scope.get("included", [])).lower()
+    excluded = " ".join(scope.get("excluded", [])).lower()
+    for token in ("brief-generation output", "downstream input"):
+        if token not in included:
+            fail(f"brief measurement scope missing included term {token!r}")
+    for token in ("brief-generation input", "retry", "fallback", "downstream output", "non-brief", "infrastructure"):
+        if token not in excluded:
+            fail(f"brief measurement scope missing excluded term {token!r}")
+    if not scope.get("retry_fallback_record"):
+        fail("brief measurement scope must record retry/fallback occurrence")
+    if scope.get("expansion_status") != "not_approved":
+        fail("brief cost-scope expansion must remain not approved")
+    token_target = contract.get("token_target", {})
+    if token_target.get("status") != "not_defined" or token_target.get("net_tokens_max") is not None:
+        fail("brief token target must remain undefined and null")
+    aggregation = contract.get("measurement_aggregation", {})
+    if not any(x in aggregation.get("target_comparison", "").lower() for x in ("total", "sum", "aggregate")):
+        fail("brief cost target must compare a fixed total/sum or aggregate, not a per-case value")
+    if aggregation.get("aggregation_metric") not in {"sum", "total"}:
+        fail("brief cost aggregation must be explicitly total/sum")
+    if aggregation.get("not_per_case_mean") is not True:
+        fail("brief cost target must state that per-case mean is not the default")
+    usage = contract.get("usage_accounting", {})
+    for key in ("complete", "partial", "unavailable", "no_generation_call"):
+        if key not in usage:
+            fail(f"brief usage accounting missing {key}")
+    if "not zero" not in usage.get("unavailable", ""):
+        fail("brief unavailable usage must not be reported as zero")
+    if "distinct from unavailable" not in usage.get("no_generation_call", ""):
+        fail("brief true-zero generation must be distinct from unavailable usage")
+    attempt_policy = contract.get("state_model", {}).get("attempt_policy", "")
+    for token in ("fixes its inputs", "later configuration changes do not mutate a terminal attempt"):
+        if token not in attempt_policy:
+            fail(f"brief attempt policy missing {token!r}")
+    post_evidence = " ".join(contract.get("state_model", {}).get("checkpoints", {}).get("post_run_result_evidence", []))
+    if "result_digest may be null" not in post_evidence:
+        fail("brief state model must allow null result_digest only before completion")
+
     digests = contract.get("input_digests", {})
     fixed = contract.get("fixed_inputs", {})
     verified = 0
@@ -1960,43 +2069,27 @@ def brief_eval_contract_checks() -> dict:
         fail("brief safety escapes must be zero")
     quality_approved = bool(thresholds.get("quality_loss_max_approved"))
     quality_max = thresholds.get("quality_loss_max")
+    cost_approved = bool(thresholds.get("net_cost_max_approved"))
+    cost_max = thresholds.get("net_cost_max")
     if quality_approved and quality_max is None:
         fail("approved quality_loss_max requires a numeric threshold")
-    prices = contract.get("prices", {})
-    input_price = prices.get("input_per_token")
-    output_price = prices.get("output_per_token")
-    result = contract.get("result") or {}
-    added_output = result.get("added_output_tokens")
-    reduced_input = result.get("reduced_downstream_input_tokens")
-    if added_output is not None and reduced_input is not None:
-        net_tokens = added_output - reduced_input
-        if result.get("net_tokens") is not None and result.get("net_tokens") != net_tokens:
-            fail("brief net token arithmetic mismatch")
-        if input_price is None or output_price is None:
-            if any(result.get(k) is not None for k in ("added_output_cost", "reduced_input_cost_saving", "net_cost")):
-                fail("missing price must produce null cost fields")
-        else:
-            added_cost = Decimal(added_output) * Decimal(str(output_price))
-            input_saving = Decimal(reduced_input) * Decimal(str(input_price))
-            net_cost = added_cost - input_saving
-            if result.get("added_output_cost") is not None and Decimal(str(result["added_output_cost"])) != added_cost:
-                fail("brief added output cost mismatch")
-            if result.get("reduced_input_cost_saving") is not None and Decimal(str(result["reduced_input_cost_saving"])) != input_saving:
-                fail("brief input cost saving mismatch")
-            if result.get("net_cost") is not None and Decimal(str(result["net_cost"])) != net_cost:
-                fail("brief net cost mismatch")
+    if not quality_approved and quality_max is not None:
+        fail("unapproved quality_loss_max must be null")
+    if cost_approved and cost_max is None:
+        fail("approved net_cost_max requires a numeric threshold")
+    if not cost_approved and cost_max is not None:
+        fail("unapproved net_cost_max must be null")
     human = bool(contract.get("human_approved"))
+    prices = contract.get("prices", {})
+    prices_ready = prices.get("input_per_token") is not None and prices.get("output_per_token") is not None
     case_ready = snapshot_state["all_ready"]
-    if not case_ready or not quality_approved or not human:
+    # Current contract has no result and incomplete pre-run inputs: it is blocked.
+    if not case_ready or not quality_approved or not cost_approved or not prices_ready or not human:
         current_state = "blocked"
-    elif result.get("safety_escapes", 0) > 0:
-        current_state = "failed"
-    elif result.get("quality_loss") is not None and quality_max is not None and result["quality_loss"] > quality_max:
-        current_state = "failed"
-    elif result.get("safety_escapes") == 0 and result.get("quality_loss") is not None and quality_max is not None and result["quality_loss"] <= quality_max and result.get("all_samples"):
-        current_state = "accepted"
-    else:
+    elif contract.get("result") is None:
         current_state = "ready"
+    else:
+        current_state = "failed"
     if contract.get("acceptance_status") != current_state:
         fail(f"brief acceptance_status {contract.get('acceptance_status')} != current state {current_state}")
     if current_state == "blocked" and not contract.get("blocking_reasons"):
@@ -2006,6 +2099,10 @@ def brief_eval_contract_checks() -> dict:
             "acceptance_status": contract["acceptance_status"],
             "case_snapshots": snapshot_state,
             "digests_verified": verified,
+            "claim_boundary": "budget_met/local_cost_saving/token_reduction/whole_application_saving separated",
+            "cost_target_status": "approved" if cost_approved else "unresolved",
+            "token_target_status": token_target.get("status"),
+            "measurement_scope": scope.get("scope"),
             "check_kind": "evaluation_contract_semantic_check"}
 
 
@@ -2037,31 +2134,329 @@ def brief_budget_policy_checks() -> dict:
 
 
 def brief_eval_state_fixture_checks() -> dict:
-    _, fixture = _fixture_json("brief_eval_states_v1.json")
+    _, fixture = _fixture_json("brief_eval_states_v2.json")
     allowed = {"blocked", "ready", "accepted", "failed"}
     checked = 0
+    accepted_claims = 0
     for case in fixture.get("cases", []):
+        quality_ok = bool(case.get("quality_loss_max_approved")) and case.get("quality_loss_max") is not None
+        cost_ok = bool(case.get("net_cost_max_approved")) and case.get("net_cost_max") is not None
+        pre_ok = (bool(case.get("case_snapshots_ready")) and bool(case.get("fixed_input_digests_ready"))
+                  and bool(case.get("prices_ready")) and quality_ok and cost_ok
+                  and bool(case.get("human_approved")))
+        result = case.get("result")
         if case.get("requested_state") is not None and case["requested_state"] not in allowed:
             actual = "invalid"
-        elif not case.get("quality_loss_max_approved") or not case.get("human_approved") or not case.get("case_snapshots_ready"):
+        elif not pre_ok:
             actual = "blocked"
+            if result and result.get("safety_escapes", 0) > 0:
+                observed = case.get("observed_failures") or []
+                if "safety_escapes>0" not in observed:
+                    fail(f"brief state fixture {case['id']} hides an observed safety failure behind blocked")
+        elif not case.get("run_completed"):
+            actual = "ready"
+        elif not case.get("result_evidence_valid") or result is None:
+            actual = "failed"
+        elif result.get("safety_escapes", 0) > 0:
+            actual = "failed"
+        elif Decimal(str(result.get("quality_loss"))) > Decimal(str(case.get("quality_loss_max"))):
+            actual = "failed"
+        elif Decimal(str(result.get("net_cost"))) > Decimal(str(case.get("net_cost_max"))):
+            actual = "failed"
+        elif (result.get("all_samples") and result.get("safety_escapes") == 0
+              and Decimal(str(result.get("quality_loss"))) <= Decimal(str(case.get("quality_loss_max")))
+              and Decimal(str(result.get("net_cost"))) <= Decimal(str(case.get("net_cost_max")))):
+            actual = "accepted"
         else:
-            result = case.get("result")
-            if result is None:
-                actual = "ready"
-            elif result.get("safety_escapes", 0) > 0:
-                actual = "failed"
-            elif Decimal(str(result.get("quality_loss"))) > Decimal(str(case.get("quality_loss_max"))):
-                actual = "failed"
-            elif result.get("all_samples") and result.get("safety_escapes") == 0 and Decimal(str(result.get("quality_loss"))) <= Decimal(str(case.get("quality_loss_max"))):
-                actual = "accepted"
-            else:
-                actual = "ready"
+            actual = "failed"
         if actual != case.get("expected"):
             fail(f"brief eval state fixture {case['id']} expected {case.get('expected')}, got {actual}")
+        if actual == "accepted":
+            accepted_claims += 1
+            net_cost = Decimal(str(result.get("net_cost")))
+            net_tokens = Decimal(str(result.get("net_tokens")))
+            cost_max = Decimal(str(case.get("net_cost_max")))
+            claims = []
+            if net_cost <= cost_max:
+                claims.append("budget_met")
+            if net_cost < 0:
+                claims.append("local_cost_saving")
+            elif net_cost == 0:
+                claims.append("no_strict_saving")
+            if net_tokens < 0:
+                claims.append("token_reduction")
+            claims.append("no_whole_application_saving")
+            expected_claim = ";".join(claims)
+            if case.get("expected_claim") != expected_claim:
+                fail(f"brief state fixture {case['id']} claim {case.get('expected_claim')} != {expected_claim}")
+        checked += 1
+    rules = fixture.get("claim_rules", {})
+    for key in ("budget_met", "local_cost_saving", "token_reduction", "zero_difference",
+                "positive_within_budget", "whole_application_saving"):
+        if key not in rules:
+            fail(f"brief state fixture missing claim rule {key}")
+    return {"cases": len(fixture.get("cases", [])), "checks": checked,
+            "accepted_claims": accepted_claims,
+            "fixture_version": fixture.get("fixture_version"),
+            "check_kind": "state_transition_and_claim_fixture"}
+
+
+def gr01_freeze_fixture_checks() -> dict:
+    _, fixture = _fixture_json("gr01_freeze_states_v1.json")
+    checked = 0
+    for case in fixture.get("cases", []):
+        stage_a = (bool(case.get("manifest_present")) and bool(case.get("manifest_complete"))
+                   and bool(case.get("sources_recorded")) and case.get("freeze_status") == "frozen"
+                   and bool(case.get("freeze_digest_valid")) and bool(case.get("human_review_complete")))
+        stage_a_result = "pass" if stage_a else "fail"
+        if not case.get("implementation_started"):
+            stage_b_result = "not_applicable"
+        else:
+            first = case.get("first_implementation_at")
+            freeze = case.get("freeze_at")
+            stage_b_result = "pass" if (stage_a and first and freeze and first > freeze
+                                        and case.get("reference_version") == case.get("frozen_version")
+                                        and case.get("freeze_digest_valid")) else "fail"
+        expected = case.get("expected", {})
+        if stage_a_result != expected.get("stage_a") or stage_b_result != expected.get("stage_b"):
+            fail(f"GR-01 freeze fixture {case['id']} expected {expected}, got stage_a={stage_a_result}, stage_b={stage_b_result}")
         checked += 1
     return {"cases": len(fixture.get("cases", [])), "checks": checked,
-            "check_kind": "state_transition_fixture"}
+            "fixture_version": fixture.get("fixture_version"),
+            "check_kind": "stage_a_b_static_transition_fixture"}
+
+
+def _resolve_json_pointer(value, pointer: str):
+    if pointer in ("", "/"):
+        return value
+    for part in [p for p in pointer.strip("/").split("/") if p]:
+        part = part.replace("~1", "/").replace("~0", "~")
+        if isinstance(value, list):
+            value = value[int(part)]
+        elif isinstance(value, dict):
+            value = value[part]
+        else:
+            raise KeyError(part)
+    return value
+
+
+def pr_gr_cr_consistency_checks(doc: dict) -> dict:
+    requirements = {r["id"]: r for r in doc["requirements"]}
+    results = {}
+
+    # Shared brief-evaluation definition must point to v2, not duplicate its state machine.
+    brief_def = doc["definitions"]["brief_evaluation"]
+    for token in ("brief-eval-contract-v2", "budget_met", "local_cost_saving", "whole-application", "result evidence"):
+        if token not in brief_def:
+            fail(f"brief_evaluation definition missing current-contract term {token!r}")
+    if "accepted when measured results are within the approved quality_loss_max with zero safety escapes" in brief_def:
+        fail("brief_evaluation definition still uses the old quality-only accepted definition")
+
+    # FR-08 must defer cost/token/saving claims to CR-01 and point to v2.
+    fr08 = requirements["FR-08"]
+    if "brief-eval-contract-v2" not in fr08["statement"]:
+        fail("FR-08 must name the active brief evaluation contract")
+    if "no cost, token, or whole-application saving claim" not in fr08["statement"]:
+        fail("FR-08 must make no cost/token/whole-application saving claim")
+
+    # PR-01 write samples and overhead formulas.
+    pr = requirements["PR-01"]
+    if pr["type"] != "performance":
+        fail("PR-01 must be a performance requirement")
+    pr_acs = {a["id"]: a for a in pr["fit_criterion"]}
+    if set(pr_acs) != {"PR-01-AC1", "PR-01-AC2", "PR-01-AC3", "PR-01-AC4"}:
+        fail("PR-01 must have four fit criteria: startup write, terminal write, percent overhead, absolute overhead")
+    if pr_acs["PR-01-AC1"]["metric"] != "startup_manifest_write_p95_seconds":
+        fail("PR-01-AC1 must measure startup write p95 separately")
+    if pr_acs["PR-01-AC2"]["metric"] != "terminal_manifest_write_p95_seconds":
+        fail("PR-01-AC2 must measure terminal write p95 separately")
+    if not pr_acs["PR-01-AC3"]["metric"].endswith("_percent"):
+        fail("PR-01-AC3 must use a percent metric")
+    if not pr_acs["PR-01-AC4"]["metric"].endswith("_seconds"):
+        fail("PR-01-AC4 must use a seconds metric")
+    for ac_id in ("PR-01-AC1", "PR-01-AC2"):
+        text = " ".join((pr_acs[ac_id]["input"], pr_acs[ac_id]["expected_result"])).lower()
+        if "per-pair" in text:
+            fail(f"{ac_id} must not compute write latency from per-pair deltas")
+        if "replace" not in text or "before" not in text:
+            fail(f"{ac_id} must state the pre-replace write boundary")
+    formula_text = " ".join((pr["statement"], pr_acs["PR-01-AC3"]["input"], pr_acs["PR-01-AC3"]["expected_result"], pr_acs["PR-01-AC4"]["input"], pr_acs["PR-01-AC4"]["expected_result"])).lower()
+    for token in ("absolute_overhead_i", "overhead_percent_i", "baseline_duration_i > 0", "negative"):
+        if token not in formula_text:
+            fail(f"PR-01 is missing overhead formula or negative-sample condition: {token}")
+    results["pr01"] = "startup/terminal write, percent and absolute overhead separated"
+
+    # GR-01 Stage A/B and dependency gate.
+    gr = requirements["GR-01"]
+    if "FR-07" in gr.get("implementation_dependencies", []):
+        fail("GR-01 must not depend on FR-07 implementation")
+    if "GR-01" not in requirements["FR-07"].get("implementation_dependencies", []):
+        fail("FR-07 must list GR-01 as an implementation prerequisite")
+    gr_acs = {a["id"]: a for a in gr["fit_criterion"]}
+    if len(gr_acs) < 6:
+        fail("GR-01 must cover companies, sources, non-code generation, Stage A, Stage B, and dependency gate")
+    if gr_acs["GR-01-AC1"].get("metric") != "reference_company_count" or float(gr_acs["GR-01-AC1"].get("threshold", 0)) < 2:
+        fail("GR-01-AC1 must require at least two reference companies")
+    if "code_generated_expected_value_count" not in gr_acs["GR-01-AC3"].get("metric", ""):
+        fail("GR-01-AC3 must check code-generated expected values")
+    a_text = gr_acs["GR-01-AC4"]["expected_result"].lower()
+    for token in ("no fr-07 implementation record is required", "absence of an implementation record is not missing evidence"):
+        if token not in a_text:
+            fail(f"GR-01-AC4 Stage A is missing {token!r}")
+    b_text = gr_acs["GR-01-AC5"]["expected_result"].lower()
+    for token in ("not_applicable", "first related implementation record"):
+        if token not in b_text:
+            fail(f"GR-01-AC5 Stage B is missing {token!r}")
+    gate_text = gr_acs["GR-01-AC6"]["expected_result"].lower()
+    if "fr-07" not in gate_text or "blocked" not in gate_text:
+        fail("GR-01-AC6 must state the FR-07 gate direction and blocked state")
+    gr_text = gr["statement"].lower()
+    if "stage a" not in gr_text or "stage b" not in gr_text:
+        fail("GR-01 statement must distinguish Stage A and Stage B")
+    results["gr01"] = "Stage A pre-implementation readiness; Stage B post-implementation timing; FR-07 gate"
+
+    # CR-01 local cost attribution, target, and claim boundary.
+    cr = requirements["CR-01"]
+    if "local cost attribution" not in cr["title"].lower():
+        fail("CR-01 title must name local cost attribution")
+    if not any(e.get("path") == "docs/req/evaluation/brief-eval-contract-v2.json" for e in cr["sources"]["evidence"]):
+        fail("CR-01 must reference brief-eval-contract-v2.json")
+    cr_acs = {a["id"]: a for a in cr["fit_criterion"]}
+    if len(cr_acs) != 5:
+        fail("CR-01 must separate measurement, safety, quality/state, target, and claim boundary")
+    if cr_acs["CR-01-AC1"].get("metric") != "measurement_formula_error_count":
+        fail("CR-01-AC1 must check measurement formula/null handling")
+    if cr_acs["CR-01-AC2"].get("metric") != "safety_escapes":
+        fail("CR-01-AC2 must check safety escapes")
+    if "quality_loss" not in cr_acs["CR-01-AC3"].get("metric", ""):
+        fail("CR-01-AC3 must check quality loss")
+    if "net_cost" not in cr_acs["CR-01-AC4"].get("metric", ""):
+        fail("CR-01-AC4 must check the cost target")
+    if cr_acs["CR-01-AC5"].get("metric") != "claim_boundary_violation_count":
+        fail("CR-01-AC5 must check claim boundaries")
+    for ac_id in ("CR-01-AC3", "CR-01-AC4"):
+        if "brief-eval-contract-v2.json#/thresholds/" not in cr_acs[ac_id].get("threshold_ref", ""):
+            fail(f"{ac_id} must reference the v2 contract threshold")
+    ac1_text = " ".join((cr_acs["CR-01-AC1"]["input"], cr_acs["CR-01-AC1"]["expected_result"])).lower()
+    for token in ("brief-generation input", "retry/fallback", "excluded"):
+        if token not in ac1_text:
+            fail(f"CR-01-AC1 must disclose local scope term {token!r}")
+    ac4_text = " ".join((cr_acs["CR-01-AC4"]["input"], cr_acs["CR-01-AC4"]["expected_result"])).lower()
+    if "budget_met" not in ac4_text or "not a saving" not in ac4_text:
+        fail("CR-01-AC4 must separate budget attainment from saving")
+    ac5_text = " ".join((cr_acs["CR-01-AC5"]["input"], cr_acs["CR-01-AC5"]["expected_result"])).lower()
+    for token in ("budget_met", "local_cost_saving", "token_reduction", "whole-application"):
+        if token not in ac5_text:
+            fail(f"CR-01-AC5 is missing claim boundary {token!r}")
+    cr_text = cr["statement"].lower()
+    for token in ("local cost attribution", "budget_met", "local_cost_saving", "whole-application", "pre-run", "result evidence"):
+        if token not in cr_text:
+            fail(f"CR-01 statement is missing {token!r}")
+    results["cr01"] = "local cost attribution; budget/target, local saving, token change, and whole-app claim separated"
+
+    # QR-02 type and deferred status.
+    qr02 = requirements["QR-02"]
+    if qr02["type"] != "performance":
+        fail("QR-02 must use the performance type")
+    if qr02["status"] != "deferred":
+        fail("QR-02 must remain deferred")
+    results["qr02"] = "performance/deferred"
+
+    # FR-01/QR-01 responsibility split.
+    fr01 = requirements["FR-01"]
+    if any(a["id"] == "FR-01-AC7" for a in fr01["fit_criterion"]):
+        fail("FR-01-AC7 must be merged into FR-01-AC6")
+    fr01_ac6 = next(a for a in fr01["fit_criterion"] if a["id"] == "FR-01-AC6")
+    ac6_text = " ".join((fr01_ac6["input"], fr01_ac6["expected_result"], fr01_ac6["verification"])).lower()
+    for token in ("fixed", "replay", "unsafe_output_escape_count"):
+        if token not in ac6_text:
+            fail(f"FR-01-AC6 is missing deterministic replay condition {token!r}")
+    qr = requirements["QR-01"]
+    if "FR-01-AC6" not in qr["statement"]:
+        fail("QR-01 must reference FR-01-AC6 as its deterministic precondition")
+    qr_acs = {a["id"]: a for a in qr["fit_criterion"]}
+    if qr_acs["QR-01-AC1"].get("metric") != "mean_rubric_drop":
+        fail("QR-01-AC1 must judge only mean rubric drop")
+    if qr_acs["QR-01-AC2"].get("metric") != "per_case_rubric_drop_max":
+        fail("QR-01-AC2 must judge only per-case drop")
+    if qr_acs["QR-01-AC3"].get("metric") != "live_review_rate_increase":
+        fail("QR-01-AC3 must judge only REVIEW-rate increase")
+    if qr_acs["QR-01-AC5"].get("metric") != "unsafe_output_escape_count":
+        fail("QR-01-AC5 must own the zero-safety-escape condition")
+    for ac_id in ("QR-01-AC1", "QR-01-AC2", "QR-01-AC3"):
+        text = " ".join((qr_acs[ac_id]["input"], qr_acs[ac_id]["expected_result"])).lower()
+        if "unsafe_output_escape_count" in text:
+            fail(f"{ac_id} must not duplicate the safety escape condition")
+    results["fr01_qr01"] = "FR-01-AC7 merged into AC6; QR-01 criteria separated"
+
+    # Deferred scope must not remain active in fit criteria.
+    def fc_text(req_id):
+        return " ".join(" ".join((a["input"], a["expected_result"], a["verification"])) for a in requirements[req_id]["fit_criterion"]).lower()
+    for token in ("verified_package", "history_reference_closure", "export_conflict"):
+        if token in fc_text("FR-05"):
+            fail(f"FR-05 active fit criteria must not require deferred export item {token!r}")
+    for token in ("fencing", "takeover", "stale claim"):
+        if token in fc_text("FR-06"):
+            fail(f"FR-06 active fit criteria must not require deferred multi-worker item {token!r}")
+    for token in ("ttm_revenue =", "ttm_eps =", "pe_ttm =", "fcf_yoy ="):
+        if token in fc_text("FR-07"):
+            fail(f"FR-07 active fit criteria must not require deferred metric formula {token!r}")
+    results["deferred_scope"] = "FR-05 export, FR-06 multi-worker, FR-07 TTM/FCF YoY inactive"
+
+    # Non-functional field completeness and threshold-ref resolution.
+    unresolved = []
+    for req in doc["requirements"]:
+        if req["type"] in {"performance", "cost", "quality"}:
+            for ac in req["fit_criterion"]:
+                for field in ("metric", "operator", "unit"):
+                    if not ac.get(field):
+                        fail(f"{ac['id']} is missing non-functional field {field}")
+                if ac.get("threshold") is None and not ac.get("threshold_ref"):
+                    fail(f"{ac['id']} needs threshold or threshold_ref")
+        for ac in req["fit_criterion"]:
+            ref = ac.get("threshold_ref")
+            if not ref:
+                continue
+            path, _, pointer = ref.partition("#")
+            target = ROOT / path
+            if not target.exists():
+                fail(f"{ac['id']} threshold_ref file does not exist: {path}")
+            try:
+                value = _resolve_json_pointer(load(target), pointer)
+            except Exception:
+                fail(f"{ac['id']} threshold_ref does not resolve: {ref}")
+            if value is None:
+                unresolved.append(ac["id"])
+                if ac.get("threshold_status") == "approved":
+                    fail(f"{ac['id']} has approved threshold_status but a null threshold_ref")
+            elif isinstance(value, bool) or not isinstance(value, (int, float)):
+                fail(f"{ac['id']} threshold_ref must resolve to a number or null")
+    results["threshold_refs"] = {"unresolved": sorted(unresolved), "resolved": "number or explicit null"}
+
+    # Targeted contradiction guards.
+    fr01_ac5 = " ".join((requirements["FR-01"]["fit_criterion"][4]["expected_result"],)).lower()
+    if "exceeding either budget yields" in fr01_ac5:
+        fail("FR-01-AC5 must not force a terminal unavailable outcome on either-budget exhaustion")
+    if "unique identity is (run_id, data_query_key)" not in requirements["FR-03"]["statement"]:
+        fail("FR-03 must state the executed record identity as (run_id, data_query_key)")
+    if "invalid model rating MUST block with invalid_model_rating" not in requirements["FR-04"]["statement"]:
+        fail("FR-04 must block invalid ratings with invalid_model_rating")
+    if "invalid ratings use not_applicable" in requirements["SB-01"]["notes"] or any("invalid ratings may use not_applicable" in x for x in requirements["SB-01"]["assumptions"]):
+        fail("SB-01 must not allow invalid ratings to use not_applicable")
+    if "Authoritative blocked/error decision table" not in requirements["SB-01"]["notes"]:
+        fail("SB-01 must contain the explicit blocked/error decision table")
+    fr08_ac4 = " ".join((requirements["FR-08"]["fit_criterion"][3]["expected_result"],)).lower()
+    if "quality_loss" in fr08_ac4:
+        fail("FR-08-AC4 must not retain optimization quality thresholds; those are CR-01")
+    qr01_text = " ".join((requirements["QR-01"]["statement"], " ".join(a["expected_result"] for a in requirements["QR-01"]["fit_criterion"]))).lower()
+    if "minimum of repeats" in qr01_text or "single score or" in qr01_text:
+        fail("QR-01 must use one fixed sampling rule, not an open single-score-or-minimum choice")
+    if "reused historical memory entry" not in requirements["INV-01"]["statement"] or "reused_decision_ref" not in requirements["INV-01"]["statement"]:
+        fail("INV-01 must state the reused historical memory exception")
+    sr_ac4 = requirements["SR-01"]["fit_criterion"][3]["expected_result"].lower()
+    if "does not claim one" not in sr_ac4:
+        fail("SR-01-AC4 must not require a failed record when it cannot be safely written")
+    return results
 
 
 def main() -> None:
@@ -2081,26 +2476,30 @@ def main() -> None:
     if len(raw_ids) != len(set(raw_ids)):
         fail("duplicate requirement IDs")
     requirements = {r["id"]: r for r in doc["requirements"]}
-    ac_ids = [a["id"] for r in doc["requirements"] for a in r["acceptance_criteria"]]
+    ac_ids = [a["id"] for r in doc["requirements"] for a in r["fit_criterion"]]
     if len(ac_ids) != len(set(ac_ids)):
-        fail("duplicate acceptance-criterion IDs")
+        fail("duplicate fit-criterion IDs")
     for req in doc["requirements"]:
-        for ac in req["acceptance_criteria"]:
+        for ac in req["fit_criterion"]:
             if not ac["id"].startswith(req["id"] + "-AC"):
-                fail(f"acceptance criterion {ac['id']} does not match requirement {req['id']}")
+                fail(f"fit criterion {ac['id']} does not match requirement {req['id']}")
 
     approved_ids = set(doc["scope"]["approved_ids"])
     draft_ids = set(doc["scope"].get("draft_ids", []))
+    deferred_ids = set(doc["scope"].get("deferred_ids", []))
     status_approved = {rid for rid, req in requirements.items() if req["status"] == "approved"}
     status_draft = {rid for rid, req in requirements.items() if req["status"] == "draft"}
+    status_deferred = {rid for rid, req in requirements.items() if req["status"] == "deferred"}
     if approved_ids != status_approved:
         fail("scope.approved_ids does not match requirements with status=approved")
     if draft_ids != status_draft:
         fail("scope.draft_ids does not match requirements with status=draft")
-    if approved_ids & draft_ids:
-        fail("a requirement cannot be both approved and draft")
-    if approved_ids | draft_ids != set(requirements):
-        fail("scope.approved_ids and scope.draft_ids must cover every requirement")
+    if deferred_ids != status_deferred:
+        fail("scope.deferred_ids does not match requirements with status=deferred")
+    if approved_ids & draft_ids or approved_ids & deferred_ids or draft_ids & deferred_ids:
+        fail("a requirement cannot appear in more than one status scope list")
+    if approved_ids | draft_ids | deferred_ids != set(requirements):
+        fail("scope.approved_ids, scope.draft_ids, and scope.deferred_ids must cover every requirement")
 
     for key, label in (
         ("baseline_observations", "baseline observation"),
@@ -2131,7 +2530,7 @@ def main() -> None:
         fail("traceability does not cover every requirement")
     missing = []
     for req in doc["requirements"]:
-        for evidence in req["source"]["evidence"]:
+        for evidence in req["sources"]["evidence"]:
             if not (ROOT / evidence["path"]).exists():
                 missing.append((req["id"], evidence["path"]))
     for trace in doc["traceability"]:
@@ -2154,6 +2553,8 @@ def main() -> None:
     brief_eval_summary = brief_eval_contract_checks()
     brief_budget_summary = brief_budget_policy_checks()
     brief_state_summary = brief_eval_state_fixture_checks()
+    spec_summary = pr_gr_cr_consistency_checks(doc)
+    gr01_freeze_summary = gr01_freeze_fixture_checks()
 
     input_paths = [REQUIREMENTS, REQ_SCHEMA, MANIFEST_SCHEMA, Path(__file__),
                    EVAL_DIR / "eval-set-v1.json", EVAL_DIR / "rubric-v1.json",
@@ -2170,9 +2571,11 @@ def main() -> None:
                    FIXTURE_DIR / "financial_metrics_v1.json",
                    FIXTURE_DIR / "downstream_brief_v1.json",
                    EVAL_DIR / "brief-eval-contract-v1.json",
+                   EVAL_DIR / "brief-eval-contract-v2.json",
                    FIXTURE_DIR / "brief_budget_policy_v1.json",
                    FIXTURE_DIR / "brief_eval_states_v1.json",
-                   ROOT / "yhx" / "requirements.yaml"]
+                   FIXTURE_DIR / "brief_eval_states_v2.json",
+                   FIXTURE_DIR / "gr01_freeze_states_v1.json"]
     hashes = {str(p.relative_to(ROOT)): digest(p) for p in input_paths}
     old = load(RESULTS) if RESULTS.exists() else {}
     if "--check" in sys.argv:
@@ -2202,11 +2605,11 @@ def main() -> None:
         "is_current": True,
         "machine_checks": [
             {"id": "requirements_schema", "result": "pass"},
-            {"id": "scope_status_consistency", "result": "pass", "details": {"approved": len(approved_ids), "draft": len(draft_ids)}},
+            {"id": "scope_status_consistency", "result": "pass", "details": {"approved": len(approved_ids), "draft": len(draft_ids), "deferred": len(deferred_ids)}},
             {"id": "manifest_schema_compile", "result": "pass"},
             {"id": "manifest_samples", "result": "pass", "details": manifest_summary},
             {"id": "completed_counterexamples_cross_field", "result": "pass"},
-            {"id": "acceptance_count", "result": "pass", "details": {"count": len(ac_ids)}},
+            {"id": "fit_criterion_count", "result": "pass", "details": {"count": len(ac_ids)}},
             {"id": "references_and_paths", "result": "pass"},
             {"id": "implementation_dependency_acyclic", "result": "pass"},
             {"id": "behavior_eval_contract", "result": "pass", "details": eval_summary},
@@ -2221,23 +2624,30 @@ def main() -> None:
             {"id": "brief_evaluation_contract", "result": "pass", "details": brief_eval_summary},
             {"id": "brief_budget_policy", "result": "pass", "details": brief_budget_summary},
             {"id": "brief_eval_state_fixture", "result": "pass", "details": brief_state_summary},
+            {"id": "spec_consistency", "result": "pass", "details": spec_summary},
+            {"id": "gr01_freeze_fixture", "result": "pass", "details": gr01_freeze_summary},
         ],
         "human_review": human,
         "limitations": [
-            "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, dependency acyclicity, draft/approved scope consistency, and portfolio-risk/archive document coverage.",
+            "Machine checks cover schema structure, manifest samples, completed counterexamples, cross-field semantics, IDs, references, paths, dependency acyclicity, draft/deferred/approved scope consistency, PR/GR/CR/QR specification consistency, threshold-ref resolution, and portfolio-risk/archive document coverage.",
             "portfolio_risk_document_coverage checks required case concepts in acceptance text; it is a document coverage check, not behavior verification.",
             "archive_document_coverage checks required archive/recovery/benchmark concepts in acceptance text; it is a document coverage check, not behavior verification.",
             "financial_metrics_document_coverage and downstream_brief_document_coverage check required concepts and expected fixture values in acceptance text; they are document coverage checks, not behavior verification.",
             "Behavioral evaluation is blocked until snapshots and human approval are complete; the frozen v1 eval files are unchanged.",
             "Risk evidence, archive, financial, and brief fixtures recompute local requirement evidence and negatives; they are requirement-evidence checks, not application tests.",
             "archive_static_fixture, downstream_brief_fixture, brief_budget_policy, brief_evaluation_contract, and brief_eval_state_fixture are static checks. Process concurrency, lease fencing, lost-lease rejection, zero-external-call behavior, live model brief-following, and live token/quality evaluation still require process-level, dependency-sentinel, and live evaluation tests that were not executed.",
+            "spec_consistency verifies document/contract relationships (PR-01 statistics, GR-01 direction, CR-01 separation, FR-01/QR-01 split, QR-02 type, deferred active scope). It does not prove application behavior.",
+            "threshold_ref resolution treats a null target as unresolved/blocked, never as an approved numeric threshold; CR-01-AC3 and CR-01-AC4 currently resolve to null targets.",
+            "brief-eval-contract-v2 is a revision draft; brief-eval-contract-v1 and the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
+            "gr01_freeze_fixture covers Stage A without implementation, missing material, post-implementation timing, version mismatch, and retroactive freeze; it is a static fixture, not an implementation test.",
+            "brief_eval_state_fixture covers blocked/ready/accepted/failed and budget/local-saving/token/whole-application claim boundaries; it is a static fixture, not a live evaluation.",
             "No application implementation or application test was executed in this requirements-validation pass.",
         ],
     }
     RESULTS.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print("PASS: requirements schema")
     print("PASS: manifest schema and samples")
-    print(f"PASS: {len(requirements)} requirements, {len(ac_ids)} acceptance criteria")
+    print(f"PASS: {len(requirements)} requirements, {len(ac_ids)} fit criteria")
     print("PASS: references, traceability, evidence paths")
     print("PASS: implementation dependencies acyclic")
     print("PASS: behavior evaluation contract present and blocked")
@@ -2248,6 +2658,8 @@ def main() -> None:
     print("PASS: brief evaluation contract present and blocked")
     print("PASS: brief budget policy order present")
     print("PASS: brief eval state fixture checks")
+    print("PASS: PR/GR/CR/QR specification consistency")
+    print("PASS: GR-01 Stage A/B freeze fixture")
     print(f"WROTE: {RESULTS.relative_to(ROOT)}")
     print("HUMAN REVIEW: pending")
 

@@ -174,7 +174,7 @@
     },
     "timing": {
       "type": "object",
-      "description": "Monotonic phase timing. started_at is before the startup manifest write; analysis starts after that write; publish covers report/final-state/memory and terminal manifest serialization/validation/fsync up to the final atomic replace. manifest_write_seconds ends before the final replace so it is known before the terminal file is written. duration_seconds is the sum of startup, analysis, and publish phases; external harness measurement includes the final replace.",
+      "description": "Monotonic phase timing. started_at is before the startup manifest write. startup_manifest_write_seconds runs from serialization start through temp-file flush/fsync before the startup atomic replace; it is a pre-replace write-phase duration and excludes the startup replace. analysis starts after the startup write. publish covers report/final-state/memory and terminal manifest serialization/validation/fsync up to but excluding the terminal atomic replace; manifest_write_seconds is the corresponding pre-replace terminal write phase. duration_seconds is the sum of startup, analysis, and publish phases; external harness measurement includes the final replace. Pre-replace fields must not be presented as complete durable-write latency.",
       "additionalProperties": false,
       "required": [
         "started_at",
@@ -252,7 +252,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Terminal manifest pre-replace write phase: serialization start through temp-file flush/fsync, excluding the terminal atomic replace."
         },
         "startup_manifest_write_seconds": {
           "oneOf": [
@@ -263,7 +264,8 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Startup manifest pre-replace write phase: serialization start through temp-file flush/fsync, excluding the startup atomic replace."
         }
       }
     },

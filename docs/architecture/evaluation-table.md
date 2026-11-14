@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 ---
@@ -63,7 +63,7 @@ All candidates are compared under the **same safety, gate, binding, history, rec
 | Safety | Invalid/over-limit risk never approved; gate errors fail closed | Single gate, risk branch, reason priority, no default approval | Design only |
 | Auditability | Reviewer recomputes risk input/policy/metric evidence | Input artifact digest, policy digest, fact IDs, metric bundle | Design only |
 | Consistency | History/export/recovery bind to one committed result | Permanent publication snapshot, section manifest, read-time INV-01 | Design only |
-| Recoverability | Interrupted publication completes without model/data | Recovery snapshot, claim/fencing, idempotent memory | Design only |
+| Recoverability | Interrupted publication completes without model/data | Recovery snapshot, single-process duplicate guard, idempotent memory; multi-worker claim/fencing deferred | Design only |
 | Security | No secret/path escape in records or export | Known-value/pattern scan, path confinement, export conflict | Design only |
 | Context efficiency | Brief preserves mandatory content and obeys token budget | Mandatory reservation, ordered budget, tokenizer measurement | Design only; no saving measured |
 | Performance | Manifest/recovery overhead bounded | Separate timings, paired benchmark, provisional p95 | Provisional |
@@ -80,7 +80,7 @@ Lean A, independent subsystems, event ledger, and decorator must each implement 
 - gate block and gate error;
 - terminal manifest commit and read-time INV-01;
 - history retrieval and export conflict;
-- recovery snapshot, claim/fencing, model-free completion;
+- recovery snapshot, single-process duplicate guard, model-free completion; multi-worker claim/fencing deferred;
 - write/run secret scan;
 - same-day memory reuse and a versioned decision.
 
@@ -110,7 +110,7 @@ This is a recommendation for review, not an approved decision.
 | `FR-06` | Memory plan/reservation before snapshot; recovery snapshot before memory; same publisher; shared run lock/fencing; idempotent memory; post-commit corruption | Design only | Lease/retry defaults (ARCH-OD-06); shared lock format (ARCH-OD-16) |
 | `FR-07` | Facts/normalization through `DataAccessService`+SEC adapter; pure metrics; block before research debate; evidence bundle; conflict detector | Design only | Non-NVDA reference manifest (OQ-14) blocking; TTM EPS scope (OQ-15); graph placement (ARCH-OD-19) |
 | `FR-08` | Brief before five-role context; replaces four full reports; protected mandatory blocks; budget policy; token counter; audit metadata | Design only | Budgets/token/quality thresholds (OQ-16) blocking; replacement/marker format (ARCH-OD-17); timing interpretation (ARCH-OD-18); no saving measured |
-| `QR-02` | Fixed recovery workload; per-run timing; nearest-rank p95 | Design only | 2.000 s and platform matrix (OQ-13) blocking for acceptance |
+| `QR-02` | Fixed recovery workload; per-run timing; nearest-rank p95 | Design only | 2.000 s and platform matrix (OQ-13) deferred; future acceptance only |
 | `SB-01` | Shared gate, trusted snapshot, review classes, model-proposal separation, risk branch | Design only | All gate/risk tests pending |
 | `INV-01` | Artifact binding, canonical digests, read-time checks, permanent publication snapshot | Design only | Old-writer migration and tests pending |
 | `INV-02` | Pure evaluator authority, zero unsafe approvals, cross-artifact risk evidence | Design only | Thresholds and input source blocking |
@@ -178,7 +178,7 @@ This is a recommendation for review, not an approved decision.
 - Recovery is separate from the analysis path.
 - Net latency change is unknown.
 
-**Status**: not measured. `FR-02-AC8` and `QR-02` thresholds are provisional.
+**Status**: not measured. `PR-01-AC1`–`AC4` and `QR-02` thresholds are provisional.
 
 ### 4.5 Cost
 
@@ -243,8 +243,8 @@ This is a recommendation for review, not an approved decision.
 | History filter/order/pagination | Fixture-driven query tests | not started |
 | Section isolation/tamper | Exact section set + digest plants | not started |
 | Export closure/conflict | Content/closure/byte-identical tests | not started |
-| Recovery claim/fencing | Concurrent workers + stale/lost lease | not started |
-| QR-02 p95 | 30-trial fixed workload | not started; target provisional |
+| Recovery claim/fencing | Concurrent workers + stale/lost lease | deferred |
+| QR-02 p95 | 30-trial fixed workload | deferred; future target provisional |
 | Brief mandatory/budget | Offline budget/reference/rejection fixtures | not started |
 | Brief token/cost/quality | Controlled A/B against frozen contract | blocked: snapshots/approval pending |
 | Live A/B quality | `docs/req/evaluation` frozen set/rubric/contract | blocked: snapshots and human approval pending |
@@ -272,7 +272,7 @@ Human approval, case snapshots, and frozen reference manifests are prerequisites
 
 A feature flag set to off means the phase is not implemented/enabled; it is not evidence that the requirement is satisfied. Requirement completion requires the capability enabled, its acceptance tests passing, and its evidence recorded.
 
-Implementation blockers (risk input source, policy locator, lock format, snapshot layout, memory reservation format, SEC query contract, PM adapter, uncommitted-memory protocol, tokenizer) are distinct from acceptance-only thresholds (risk 30%/5% approval, QR-02 target, brief budgets/quality, behavior snapshots). Acceptance-only items do not block starting a module; they block completion/acceptance claims.
+Implementation blockers (risk input source, policy locator, lock format, snapshot layout, memory reservation format, SEC query contract, PM adapter, uncommitted-memory protocol, tokenizer) are distinct from acceptance-only thresholds (risk 30%/5% approval, future QR-02 target, brief budgets/quality/cost, behavior snapshots). Acceptance-only items do not block starting a module; they block completion/acceptance claims.
 
 ---
 
@@ -285,7 +285,7 @@ Implementation blockers (risk input source, policy locator, lock format, snapsho
 | Risk max stop distance | 0.05 | **Provisional** (OQ-10) |
 | Risk valuation freshness window | Not fixed | **Pending** (OQ-10) |
 | Risk precision rule | input <=12 dp; internal >=28 sd; exact compare; display 6 dp half-up | Design proposal |
-| QR-02 nearest-rank p95 | 2.000 s over 30 trials | **Provisional** (OQ-13) |
+| QR-02 nearest-rank p95 | 2.000 s over 30 trials | **Provisional/deferred** (OQ-13) |
 | FR-02 manifest write p95 | 100 ms for <=256 KiB | **Provisional** (OQ-05) |
 | FR-02 end-to-end overhead | p95 <=1% and <=1 s | **Provisional** (OQ-05) |
 | Brief mandatory/compressible/hard cap | Versioned policy values | **Pending** (OQ-16) |
@@ -319,5 +319,5 @@ Re-open the architecture decision if:
 - Runtime monitoring: **not implemented**.
 - Baseline evidence: **measured**.
 - Design expectations: **not measured**.
-- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
 - D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.

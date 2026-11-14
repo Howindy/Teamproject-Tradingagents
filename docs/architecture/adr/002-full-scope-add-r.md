@@ -3,7 +3,7 @@
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Decision status: **proposed**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1  
+D1 basis: `docs/req/requirements.yaml` v1.20.0
 Depends on: ADR 001 (Lean A Extended)  
 Implementation status: **design only; no application code changed**
 
@@ -11,7 +11,7 @@ Implementation status: **design only; no application code changed**
 
 ## 1. Context
 
-ADR 001 retains Lean A for the six approved requirements and establishes the single lifecycle, gate, publisher, memory writer, and context assembler. D1 v1.14.1 adds seven draft requirements:
+ADR 001 retains Lean A for the original six requirements and establishes the single lifecycle, gate, publisher, memory writer, and context assembler. D1 v1.18.0 marks all requirements draft; the v1.14.1 additions were:
 
 - `FR-04` and `INV-02`: deterministic portfolio risk and zero unsafe approvals.
 - `FR-05`: historical retrieval of committed formal publications.
@@ -182,7 +182,7 @@ Rejected alternatives: a second context assembler (second authority); fixed char
 
 Positive:
 
-- All 13 requirements have a component owner and a planned verification.
+- All 18 requirements have a component owner and a planned verification.
 - One final authority, one publication transaction, one context assembler, one data path, and one memory identity remain intact.
 - Risk and metric logic are pure and testable.
 - History and recovery have a clear permanent/temporary split.
@@ -217,4 +217,4 @@ Reopen this ADR if:
 - Tests: **not started**.
 - Monitoring: **not implemented**.
 - Benefits: **not measured**.
-- D1: v1.14.1; six approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.

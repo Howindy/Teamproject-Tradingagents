@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 ---
@@ -222,4 +222,4 @@ Rules:
 - Permission tests: **not started**.
 - ADD-R coding agents currently allowed to write only `architecture-blueprint.md` and `docs/architecture/**`.
 - No application code changed.
-- D1 v1.14.1; six requirements approved, seven draft; human review pending.
+- D1 v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.

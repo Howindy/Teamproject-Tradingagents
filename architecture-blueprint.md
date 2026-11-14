@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` are approved in D1; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` are **draft** and are not approved  
+D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**  
 Supersedes: blueprint v0.1 (D1 v1.9.0, 6 requirements, 54 acceptance criteria)
 
@@ -11,10 +11,10 @@ Supersedes: blueprint v0.1 (D1 v1.9.0, 6 requirements, 54 acceptance criteria)
 
 ## 1. Purpose, scope, and authority
 
-This blueprint defines the D2 architecture for the **complete functional scope** of D1 v1.14.1:
+This blueprint defines the D2 architecture for the **complete functional scope** of D1 v1.18.0:
 
-- the six approved requirements: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01`;
-- the seven draft requirements: `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02`.
+- all thirteen requirements are draft: `FR-01`, `FR-02`, `FR-03`, `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `SB-01`, `INV-01`, `INV-02`, `SR-01`;
+- `QR-02` is deferred and outside current acceptance.
 
 The design direction remains **Lean A**: `RunContext` owns lifecycle and dependency wiring only; business rules live in separate, testable services; `FinalizedRunRecord` is the only source for formal display, persistence, memory, history, and export.
 
@@ -28,19 +28,19 @@ This round does not create:
 
 ### 1.1 Authority and evidence rules
 
-1. A requirement is approved only when `docs/req/requirements.yaml` says `status: approved`. Draft requirements are design scope, not approval. Historical approvals at v1.9.0 are evidence, not current approval of v1.14.1.
+1. A requirement is approved only when `docs/req/requirements.yaml` says `status: approved`. Draft requirements are design scope, not approval. Historical approvals at v1.9.0 are evidence, not current approval of v1.18.0. No requirement is currently approved; all are draft and `QR-02` is deferred.
 2. The architecture documents are **proposed** until a human review records approval. A recommendation in this document is not an approval.
 3. **M** = measured baseline evidence. **D** = design expectation. **U** = unknown or unvalidated. **P** = provisional target pending human approval.
 4. Only `baseline/runs/baseline-20261020-01/` contains measured runtime evidence. No new runtime measurement, test result, benefit, approval, or transcript is claimed by this round.
 5. The baseline was produced by the **original** TradingAgents code. It does not demonstrate any new requirement, gate, risk evaluator, history, recovery, metric block, or brief.
-6. Pending thresholds (risk 30%/5%, freshness window, QR-02 2.000 s, brief budgets and quality thresholds, FR-02 manifest overhead) remain provisional and are never described as approved.
+6. Pending thresholds (risk 30%/5%, freshness window, QR-02 2.000 s, brief budgets and quality thresholds, PR-01 manifest overhead) remain provisional and are never described as approved.
 7. This round modifies only `architecture-blueprint.md` and `docs/architecture/**`. It does not modify `docs/req/**`, application code, member proposals, or `baseline/**`.
 
 ### 1.2 Current evidence caveats
 
-The requirements registry currently references `yhx/requirements.yaml` as evidence and the validation result is bound to that path's digest, but the file is absent from this checkout. The validator also requires `pyyaml` and `jsonschema`, which are not declared by a repository dependency manifest. Both issues block reproducible D1 validation and CI, but they are requirement-registry/CI problems, not architecture choices. They are recorded in `docs/architecture/open-decisions.md` as ARCH-OD-01 and ARCH-OD-02.
+The requirements registry no longer references the absent `yhx/requirements.yaml`; FR-07 and FR-08 state that the personal-proposal source is not retained. The validator uses `pyyaml` and `jsonschema`, and `python3 docs/req/validate_requirements.py --check` passes. ARCH-OD-01 records the resolved provenance note; ARCH-OD-02 records the remaining CI dependency declaration.
 
-There is also an approval-scope coupling. Approved `FR-02` already requires recovery-snapshot generation, the section manifest, the terminal manifest, and artifact binding; approved `INV-01` already requires binding and read-time verification; approved `SB-01` already requires the stock Buy/Overweight risk branch. These approved obligations are **not** made optional merely because `FR-04`/`FR-05`/`FR-06`/`FR-07`/`FR-08`/`INV-02` are draft. Draft status limits what may be claimed as approved/completed and leaves the detailed draft contracts to human review; it does not remove behavior already required by the approved text. Specifically, `FR-02` recovery-snapshot generation is a Phase 1 obligation separate from the draft `FR-06` startup scan; the `FR-02` section manifest is separate from draft `FR-05` history retrieval. A machine validation pass on approved requirements is not approval of the draft details they reference.
+There is no current approval-scope coupling because no requirement is approved. The former v1.14.1 coupling is resolved for status purposes: `FR-02` recovery-snapshot generation, the section manifest, the terminal manifest, artifact binding, `INV-01` binding/read-time verification, and the `SB-01` risk branch all remain pending human review together with `FR-04`/`FR-05`/`FR-06`/`FR-07`/`FR-08`/`INV-02`. A machine validation pass is not human approval.
 
 ### 1.3 Corrections applied in this revision
 
@@ -58,7 +58,7 @@ There is also an approval-scope coupling. Approved `FR-02` already requires reco
 12. Brief failure states are explicit: disabled uses normal full input; full-report fallback requires explicit policy permission, complete mandatory content, and hard-cap compliance; final `BRIEF_REJECTED` is terminal and cannot re-enter normal input or generic compression.
 13. Cross-run same-decision uncommitted entries use `MemoryRecoveryCoordinator`: bounded wait/retryable, recovery under the original run identity/reservation/snapshot, typed missing-snapshot/failure/conflict statuses, and no ownership transfer.
 14. OS file locks and logical leases are separated: the file lock is short-lived; the lease records activity; takeover acquires the file lock and increments fencing; lease expiry does not release the OS lock or authorize deleting the lock file.
-15. Approved `FR-02`/`INV-01`/`SB-01` obligations are not downgraded by draft dependencies. Recovery-snapshot generation and section manifests remain Phase 1 obligations separate from the draft startup scan/history capability; draft status limits completion/acceptance claims, not approved behavior.
+15. No requirement is currently approved. `FR-02`/`INV-01`/`SB-01` and their recovery-snapshot, section-manifest, binding, and risk-branch obligations are draft and remain pending human review; draft status limits completion/acceptance claims.
 16. Concrete implementation-start proposals are recorded for snapshot layout, the acyclic hash DAG, lock/lease records and state transitions, memory reservation authority/replay, and the per-fact SEC structured query contract; they are proposals pending review, not approvals.
 17. Recovery checks the terminal manifest first: committed+verified+identity match is idempotent success without requiring `recovery/`; committed identity conflict or permanent-artifact corruption returns a typed conflict/corrupt result and never overwrites or auto-republishes. Only uncommitted records read the recovery snapshot.
 18. `record_hash` uses a field-level canonical projection that excludes `artifact_binding.record_hash` and all result-carrying hashes; content digest and file-byte hash are separate, and only specified volatile run fields are excluded while risk/provenance timestamps are preserved.
@@ -80,7 +80,7 @@ ADD-R rules used in this round:
 6. Close the risky flows end to end: risk input/policy, metric fact/period chain, brief mandatory content and token budget, memory reuse/versioning, publication commit/read validation, recovery snapshot/fencing/idempotency, history/export dependency verification.
 7. Define one behavior for normal, business-block, system-failure, over-budget, write-interruption, recovery-retry, and concurrency cases. Character and byte counts are auxiliary; the final model request must obey the token budget.
 8. Phase implementation so a testable core closed loop exists before memory, recovery, metrics, and context enhancements. A disabled capability must reject or degrade explicitly.
-9. Map every requirement and acceptance criterion to a component and a planned verification; give each deterministic safety boundary a negative-test direction.
+9. Map every requirement and fit criterion to a component and a planned verification; give each deterministic safety boundary a negative-test direction.
 10. Keep pending thresholds and unmeasured benefits honest; never fabricate decisions or test results.
 
 ### 2.1 ADD-R iterations in this round
@@ -89,7 +89,7 @@ ADD-R rules used in this round:
 |---|---|---|---|
 | 0 | Full-scope audit and retain/adjust assessment | Extend Lean A; do not rewrite the graph/agents | Proposed |
 | 1 | Deterministic portfolio risk (`FR-04`, `INV-02`, `SB-01` risk branch) | Pure evaluator inside the shared `SafetyGate` | Proposed |
-| 2 | Publication lifecycle, history, recovery (`FR-05`, `FR-06`, `QR-02`, `FR-02`, `INV-01`) | Extend `ArtifactPublisher` with permanent publication snapshot, recovery snapshot, and claim/fencing | Proposed |
+| 2 | Publication lifecycle, history, recovery (`FR-05`, `FR-06`, `QR-02`, `FR-02`, `INV-01`) | Extend `ArtifactPublisher` with permanent publication snapshot and recovery snapshot; claim/fencing is deferred | Proposed |
 | 3 | Financial fact/metric evidence (`FR-07`, `FR-01`, `FR-03`) | Deterministic fact/metric service through `DataAccessService` | Proposed |
 | 4 | Downstream brief and token budget (`FR-08`) | Brief view and budget policy inside the existing `ContextAssembler` | Proposed |
 | 5 | Integration, compatibility, phasing, evidence review | Phased extension; adapters rather than rewrite | Proposed |
@@ -98,23 +98,28 @@ ADD-R rules used in this round:
 
 ## 3. Scope and requirement inventory
 
-| ID | Type | Status | Title | ACs | Phase |
+| ID | Type | Status | Title | FCs | Phase |
 |---|---|---|---|---|---|
-| `FR-01` | functional | approved | Single execution per identical logical data query | 7 | 1 |
-| `FR-02` | functional | approved | Lifecycle-complete run manifest | 15 | 1 |
-| `FR-03` | functional | approved | Canonical data-availability state and critical-gap decision table | 10 | 1 |
-| `FR-04` | functional | draft | Deterministic portfolio-risk evaluation before finalization | 11 | 1 |
-| `FR-05` | functional | draft | Historical formal publication retrieval | 4 | 4 |
+| `FR-01` | functional | draft | Single execution per identical logical data query | 6 | 1 |
+| `FR-02` | functional | draft | Lifecycle-complete run manifest | 11 | 1 |
+| `FR-03` | functional | draft | Canonical data-availability state and critical-gap decision table | 10 | 1 |
+| `FR-04` | functional | draft | Deterministic portfolio-risk evaluation before finalization | 9 | 1 |
+| `FR-05` | functional | draft | Historical formal publication retrieval | 3 | 4 |
 | `FR-06` | functional | draft | Startup recovery of pending formal publication | 6 | 4 |
-| `FR-07` | functional | draft | Deterministic derived financial metrics | 11 | 3 |
-| `FR-08` | functional | draft | Unified downstream analyst-report brief | 5 | 5 |
-| `QR-02` | quality | draft | Bounded startup recovery performance | 2 | 4 |
-| `SB-01` | safety | approved | Deterministic fail-closed final-output gate | 12 | 1 |
-| `INV-01` | invariant | approved | One bound formal result across artifacts and memory | 12 | 1 |
-| `INV-02` | invariant | draft | Deterministic portfolio-risk authority and zero unsafe approvals | 7 | 1 |
-| `SR-01` | security | approved | Secret-safe run records and path confinement | 9 | 1 |
+| `FR-07` | functional | draft | Deterministic derived financial metrics | 10 | 3 |
+| `FR-08` | functional | draft | Unified downstream analyst-report brief | 4 | 5 |
+| `PR-01` | performance | draft | Bounded run-record write and end-to-end overhead | 4 | 1 |
+| `CR-01` | cost | draft | Downstream brief local cost attribution and approved target | 5 | 5 |
+| `GR-01` | governance | draft | Frozen independent reference set for financial metrics | 6 | 3 |
+| `QR-01` | quality | draft | Live cache A/B quality and risk-policy separation | 5 | 1 |
+| `QR-02` | performance | deferred | Bounded startup recovery performance | 2 | 4 |
+| `SB-01` | invariant | draft | Deterministic fail-closed final-output gate | 12 | 1 |
+| `INV-01` | invariant | draft | One bound formal result across artifacts and memory | 11 | 1 |
+| `INV-02` | invariant | draft | Deterministic portfolio-risk authority and zero unsafe approvals | 6 | 1 |
+| `SR-01` | security | draft | Secret-safe credential records | 7 | 1 |
+| `SR-02` | security | draft | Path confinement and escape protection | 2 | 1 |
 
-Approved total: 6 requirements, 65 acceptance criteria. Draft total: 7 requirements, 46 acceptance criteria. Grand total: 13 requirements, 111 acceptance criteria.
+Draft total: 17 requirements, 117 fit criteria. Deferred total: 1 requirement, 2 fit criteria. Grand total: 18 requirements, 119 fit criteria.
 
 Out of scope remains: replacing StockTwits, point-in-time SEC company profile, parallel debate execution, a full exchange calendar, multi-user authentication/encryption, portfolio simulation or order execution, a production LLM cache, direct vendor bypass, deriving a quarter by subtraction, and a second context assembler.
 
@@ -132,7 +137,7 @@ Out of scope remains: replacing StockTwits, point-in-time SEC company profile, p
 | D-06 Secret-safe records and path confinement | `SR-01`, `FR-05`, `FR-06` | Requires one redactor at every boundary, write/run scans, path confinement, and export conflict behavior. |
 | D-07 Deterministic portfolio-risk authority | `FR-04`, `INV-02`, `SB-01` | Requires validated caller input, a locatable policy snapshot, exact-decimal evaluation, and no model/network dependency. |
 | D-08 Historical visibility only for committed publications | `FR-05` | Requires permanent publication snapshots, section manifests, bounded listing, and read-time revalidation. |
-| D-09 Model-free startup recovery with one publication | `FR-06` | Requires a recovery snapshot, per-run claim/fencing, idempotent memory completion, and the same commit condition. |
+| D-09 Model-free startup recovery with one publication | `FR-06` | Requires a recovery snapshot, a single-process duplicate-start guard, idempotent memory completion, and the same commit condition; multi-worker claim/fencing is deferred. |
 | D-10 Bounded recovery performance with zero correctness loss | `QR-02` | Requires a fixed workload, monotonic timing, nearest-rank p95, and retained failures; the target is provisional. |
 | D-11 Deterministic financial fact and metric evidence | `FR-07` | Requires structured fact identity, as-of visibility, period/fiscal-position matching, exact formulas, n/a reasons, and a persisted evidence bundle. |
 | D-12 Bounded downstream brief without authority or quality loss | `FR-08` | Requires canonical mandatory content, separate mandatory/compressible budgets, token measurement, reference resolution, and a quality gate. |
@@ -148,14 +153,14 @@ Out of scope remains: replacing StockTwits, point-in-time SEC company profile, p
 | C-02 | No new vendor, exchange calendar, portfolio simulator, order execution, slippage, fees, or FX conversion. |
 | C-03 | Existing vendor caches may remain cross-run; the `FR-01` run cache is per-run and never shared. |
 | C-04 | The existing Python/LangGraph graph, agents, tool registry, reporting renderer, and memory substrate remain; the change is a governance extension, not a rewrite. |
-| C-05 | D1 v1.14.1 is the current registry; six requirements are approved and seven are draft. No new approval is inferred. |
-| C-06 | Only `architecture-blueprint.md` and `docs/architecture/**` are modified in this round. |
-| C-07 | `docs/req/**`, application code, member proposals, and `baseline/**` are not modified. |
+| C-05 | D1 v1.18.0 is the current registry; 17 requirements are draft and QR-02 is deferred. No new approval is inferred. |
+| C-06 | The D2 round modifies `architecture-blueprint.md` and `docs/architecture/**`; the D1 status revision modifies `docs/req/**`. |
+| C-07 | Application code, member proposals, and `baseline/**` are not modified. |
 | C-08 | The 30% concentration, 5% stop-distance, freshness window, QR-02 2.000 s, and brief thresholds remain provisional until human approval. A passed risk check is not a loss guarantee. |
 | C-09 | History, recovery, and export paths are confined to configured roots; non-empty export targets are never overwritten. |
 | C-10 | One final authority (`SafetyGate`), one publication commit condition (terminal manifest completed plus read-time `INV-01`), one context assembler (`ContextAssembler`). |
 | C-11 | Design expectations and measured evidence are labeled separately. No implementation or test is claimed. |
-| C-12 | The requirements validator currently cannot be reproduced in this checkout because `yhx/requirements.yaml` is absent and its dependencies are undeclared; see ARCH-OD-01/02. |
+| C-12 | The requirements validator `--check` passes with the current unretained-source note and locally available dependencies; a clean CI dependency declaration remains a D4 task. |
 
 ---
 
@@ -170,7 +175,7 @@ Out of scope remains: replacing StockTwits, point-in-time SEC company profile, p
 | QS-05 | Consistency | `INV-01`, `FR-05`, `FR-06` | Reader opens a completed run or a recovered run | Terminal manifest completed plus read-time `INV-01`; all artifacts bind; missing/corrupt content is never returned as success. |
 | QS-06 | Security | `SR-01`, `FR-05` | Secret or path traversal appears in a record, history query, or export target | Known-secret/pattern matches = 0; out-of-root writes = 0; non-empty export returns `EXPORT_CONFLICT` and is byte-identical. |
 | QS-07 | Recoverability | `FR-06`, `QR-02` | Interrupted publication; duplicate startup; stale lease; lost lease | Model/data/graph/settlement/reflection calls = 0; one committed publication per `run_id`; at most one memory entry; failed samples retained; correctness zero-tolerance. |
-| QS-08 | Performance | `FR-02`, `QR-02` | Published manifest and recovery workload | Manifest write and end-to-end overhead measured separately against provisional thresholds; QR-02 nearest-rank p95 at most 2.000 s provisional, with correctness never skipped. |
+| QS-08 | Performance | `FR-02`, `QR-02` | Published manifest and recovery workload | Manifest write and end-to-end overhead measured separately against provisional thresholds; QR-02 is deferred; its future nearest-rank p95 target is 2.000 s provisional, with correctness never skipped. |
 | QS-09 | Context efficiency and quality | `FR-08` | Long analyst reports and five downstream debate roles | Mandatory gaps/metrics/sources/safety constraints preserved; token budget obeyed; quality loss within the approved threshold and zero safety escapes; no token/cost saving claimed until accepted. |
 | QS-10 | Modifiability / testability | All | New requirement or policy version | Service boundary and versioned policy allow table-driven tests without rewriting agents; deterministic rules are pure functions. |
 | QS-11 | Compatibility | Existing codebase | Existing CLI, `propagate`, backtest, report, memory, and tool calls | Existing tests keep passing; legacy adapters preserve return shapes and write only through the publisher; no silent behavior change. |
@@ -193,7 +198,7 @@ Out of scope remains: replacing StockTwits, point-in-time SEC company profile, p
 | `default_config.py` | Retain | Extend with policy identifiers and capability switches; no secrets. |
 | Existing tests | Retain | Add regression and new suites; do not change existing test semantics. |
 | D2 v0.1 Lean A design | Retain | Extend with risk, publication lifecycle, metrics, and brief capabilities. |
-| D2 v0.1 trace matrix (6 requirements / 54 ACs) | Replace | Superseded by the 13-requirement / 111-AC matrix. |
+| D2 v0.1 trace matrix (6 requirements / 54 ACs) | Replace | Superseded by the 18-requirement / 119-FC matrix. |
 | D2 v0.1 open decisions | Retain and extend | Resolved items stay resolved; new architecture open decisions are added. |
 
 No existing public writer is deleted. Old writers are wrapped, made private, or require a finalized record. `propagate` keeps its `(final_state, signal)` return shape after publication.
@@ -204,7 +209,7 @@ No existing public writer is deleted. Old writers are wrapped, made private, or 
 
 ### 8.1 Iteration 0 — Full-scope drivers and retain/adjust decision
 
-- **Drivers**: D-01 through D-13; the seven draft requirements must be designed without creating duplicate authority, transaction, data path, or context entry.
+- **Drivers**: D-01 through D-13; the draft requirements must be designed without creating duplicate authority, transaction, data path, or context entry.
 - **Candidates**:
   - A: Extend Lean A with bounded capability services.
   - B: Add independent risk/archive/brief subsystems, each with its own gate or writer.
@@ -232,7 +237,7 @@ No existing public writer is deleted. Old writers are wrapped, made private, or 
 
 - **Drivers**: D-08, D-09, D-10, `FR-05`, `FR-06`, `QR-02`, `FR-02`, `INV-01`.
 - **Candidates**:
-  - P-A: Extend `ArtifactPublisher` with a permanent publication snapshot, a temporary recovery snapshot, a per-run claim/fencing lease, and shared read-time verification.
+  - P-A: Extend `ArtifactPublisher` with a permanent publication snapshot, a temporary recovery snapshot, a single-process duplicate-start guard, and shared read-time verification; multi-worker claim/fencing is deferred.
   - P-B: A separate archive service with its own transaction and commit marker.
   - P-C: Re-run the graph/analysis to recover.
   - P-D: Directory-scan history without a section manifest.
@@ -976,7 +981,7 @@ Waiting for A holds neither the per-run lock nor the memory lock unless the wait
 - If the terminal manifest retains a `recovery_snapshot_summary`, it is audit metadata only. Readers must not require the temporary recovery file or re-read it to verify the formal record.
 - Verification scope: permanent snapshot + terminal manifest = full `INV-01`/history/export scope; recovery snapshot = recovery-only, valid until cleanup; terminal recovery summary = audit-only, never a substitute for permanent records.
 
-### 12.6 Recovery snapshot, lease fencing, and idempotent completion (FR-06/QR-02)
+### 12.6 Recovery snapshot, lease fencing (deferred), and idempotent completion (FR-06/QR-02)
 
 **Snapshot boundary and order**
 
@@ -1015,7 +1020,7 @@ Waiting for A holds neither the per-run lock nor the memory lock unless the wait
 
 **Performance**
 
-- QR-02 uses 100 committed publications and 10 pending valid snapshots, fixed 12-section report maps, one risk evidence object, one required memory write, rendered output and snapshot each at most 1,048,576 bytes, 30 independently reset trials, and nearest-rank p95 at most 2.000 s **provisional**.
+- QR-02 is deferred. If reactivated, it uses 100 committed publications and 10 pending valid snapshots, fixed 12-section report maps, one risk evidence object, one required memory write, rendered output and snapshot each at most 1,048,576 bytes, 30 independently reset trials, and nearest-rank p95 at most 2.000 s **provisional**.
 - Timing starts immediately before claim/scan and ends after final read-time validation of every recovered run, including rendering, risk evidence handling, publication, memory, and cleanup attempts.
 - Correctness and model-free behavior are zero-tolerance; failures/timeouts are retained and the target is never met by skipping validation.
 
@@ -1262,7 +1267,7 @@ Before compression is enabled, over-budget context raises `ContextBudgetError` a
 | 1. Core closed loop + durability + risk | `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01`, `FR-04`, `INV-02`; preflight; coverage; gate; sole risk caller; **Portfolio Manager adapter and ModelProposal**; manifest; publisher; **minimum memory identity/idempotency and version reservation**; **FR-02-required permanent snapshot and recovery-snapshot generation**; **permanent snapshot write/validate before commit**; **recovery snapshot write/read verify**; post-commit read validation; section manifest | Query/counter/concurrency; coverage/gate matrix; risk pass/block/error; PM/model_proposal source; manifest lifecycle; INV-01; security scans; memory identity/idempotency; snapshot durability; section manifest; post-commit corruption behavior; existing CLI/propagate/backtest regressions | Valid provisional risk policy is used and labeled; missing/invalid policy blocks. Memory disabled means no memory artifact; publication still requires identity/binding rules. |
 | 2. Memory lifecycle enhancements | Supersession, settlement/reflection, rotation, same-day advanced cases, concurrent uncommitted-entry wait/takeover/reject hardening | Memory duplicate/conflict/version/settlement/rotation/concurrency tests | Memory disabled -> no memory artifact; publication still valid |
 | 3. Financial metrics | `FR-07`; structured facts through the SEC adapter; metric block before research debate; evidence bundle; conflict detection; fundamentals adapter | Fact/period/restatement/TTM/n-a/conflict/bundle tests; no direct vendor; block exists before Bull/Bear | FR-07 disabled -> no metric block requirement; enabled but bundle missing at recovery -> block metric-dependent publication |
-| 4. History, recovery scan, export, benchmark | `FR-05`, `FR-06`, `QR-02`; startup recovery scan; history listing; export; recovery claim/fencing; QR-02 benchmark | History filter/order/pagination/revalidation/export; recovery model-free; duplicate/stale/lost-lease; QR-02 correctness and provisional timing | Recovery scan disabled -> `ResumeRejected(unsupported_phase)`; history/export may still read committed runs; no recovery guarantee |
+| 4. History, recovery scan, export, benchmark (partly deferred) | `FR-05`, `FR-06`, `QR-02`; history listing; single-process recovery scan; export and multi-worker claim/fencing deferred; QR-02 benchmark deferred | History filter/order/pagination/revalidation; recovery model-free; single-process duplicate guard; QR-02 future correctness/timing | Recovery scan disabled -> `ResumeRejected(unsupported_phase)`; history may still read committed runs; export/fencing/benchmark deferred |
 | 5. Brief and context | `FR-08`; brief before five-role context; replacement mapping; protected markers; token counter; budget policy; audit metadata; compression | Mandatory preservation; budget/reference/rejection; role replacement; non-mutation; quality/safety evaluation; over-budget failure | Brief disabled -> full reports to five roles (existing behavior); tokenizer missing or all safe fallbacks fail -> `BRIEF_REJECTED` and run failed at context stage; compression disabled -> over-budget fails closed |
 | 6. Behavior evaluation | Frozen eval set, rubric, snapshots, human approval; cache A/B; risk-policy A/B; brief A/B | Per-case scores, safety escapes, coverage changes, REVIEW rate, token/cost fields; no acceptance before snapshots/approval | No behavioral acceptance claimed; no cost optimization claimed |
 
@@ -1272,7 +1277,7 @@ A phase's "feature off" setting means **that phase is not implemented/enabled**.
 
 A valid provisional risk policy is used and must be labeled provisional. Missing, incomplete, or invalid policy blocks. OQ-10 remains blocking for any claim that the thresholds are approved; it does not convert a valid provisional snapshot into an absent policy.
 
-**Approved obligations are not downgraded by draft dependencies.** `FR-02` already requires recovery-snapshot generation, section manifest, terminal manifest, and binding; these are Phase 1 obligations even though the `FR-06` startup recovery scan and `FR-05` history retrieval are later/draft capabilities. `INV-01` binding/read-time verification is not optional. `SB-01` risk-branch behavior is required by the approved text; the draft `FR-04` input/policy details constrain what may be claimed as approved, not whether the approved gate branch exists. Phase 1 does not claim `FR-05` history, `FR-06` startup scan, or `FR-08` brief completion.
+**Draft obligations are reviewed together.** `FR-02` requires recovery-snapshot generation, section manifest, terminal manifest, and binding; `INV-01` binding/read-time verification; and `SB-01` risk-branch behavior. These are draft obligations and remain pending human review together with `FR-04`/`FR-05`/`FR-06`/`FR-07`/`FR-08`/`INV-02`. Phase 1 does not claim `FR-05` history, `FR-06` startup scan, or `FR-08` brief completion.
 
 ---
 
@@ -1280,23 +1285,28 @@ A valid provisional risk policy is used and must be labeled provisional. Missing
 
 | Requirement | Primary components | Planned verification focus | Phase | Evidence status |
 |---|---|---|---|---|
-| `FR-01` | `DataAccessService`, `RunEvidenceStore`, `Canonicalizer` | Sequential/concurrent single-flight; terminal failure cache; run isolation; retry/fallback budgets; business-field equivalence | 1 | Design only |
-| `FR-02` | `RunContext`, `ArtifactPublisher`, `ReportSectionManifestBuilder`, `RunEvidenceStore`, `PublicationSnapshotStore`, `RecoverySnapshotStore` | Manifest lifecycle, counters, tokens, timing, failure injection, completed negatives, publication identity, section isolation, permanent-snapshot validation, recovery-snapshot availability, post-commit corruption, concurrency | 1 (durability) / 4 (history) | Design only |
+| `FR-01` | `DataAccessService`, `RunEvidenceStore`, `Canonicalizer` | Sequential/concurrent single-flight; terminal failure cache; run isolation; retry/fallback budgets; fixed-replay business equivalence; live quality is QR-01 | 1 | Design only |
+| `FR-02` | `RunContext`, `ArtifactPublisher`, `RunEvidenceStore` | Manifest lifecycle, identity, counters, tokens, failure injection, completed negatives, no-overwrite; publication/recovery/section details are INV-01/FR-05/FR-06 | 1 | Design only |
 | `FR-03` | `AvailabilityIndex`, `DataAccessService`, `RunEvidenceStore` | Closed status table, profile defaults, fallback contract, aggregation, determinism, consumer consistency | 1 | Design only |
-| `FR-04` | `SafetyGate`, `RiskInputValidator`, `RiskPolicyResolver`, `PortfolioRiskEvaluator`, `RiskEvidenceStore` | Single caller, applicability once, exact boundaries, invalid input, provisional/approved policy distinction, evaluator error, memory evidence, cache/risk-policy separation | 1 | Design only; thresholds provisional |
-| `FR-05` | `PublicationSnapshotStore`, `ReportSectionManifestBuilder`, `HistoryService`, `ExportService`, `SecretRedactor` | Filters/order/pagination, revalidation, section isolation, export modes, closure, conflict, path safety, post-commit corrupt rejection | 4 | Design only |
-| `FR-06` | `RecoveryService`, `RecoverySnapshotStore`, `RecoveryClaimStore`, `RunOwnershipLock`, `ArtifactPublisher`, `MemoryService` | Model-free recovery, snapshot validity before `snapshot_ready`, memory plan before snapshot, shared lock/fencing, duplicate/stale/lost lease, idempotent memory, commit identity, post-commit corruption | 1 (snapshot primitives) / 4 (startup scan) | Design only |
-| `FR-07` | `FinancialFactService`, `FinancialMetricService`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector`, `FundamentalsAdapter`, `SecEdgarAdapter` | Fact identity, as-of, restatement, ambiguity, TTM continuity, formulas, n/a reasons, block before research debate, conflict scope, bundle recovery, adapter/counter boundary | 3 | Design only; reference manifest pending |
-| `FR-08` | `ContextAssembler`, `DownstreamBriefBuilder`, `TokenCounter`, `PolicyCatalog`, `BriefAuditStore` | Marker handling, mandatory preservation, protected blocks, ordered budget, reference resolution, five-role replacement, view version, non-mutation, controlled evaluation | 5 | Design only; budgets/quality pending |
-| `QR-02` | `RecoveryService`, `RecoverySnapshotStore`, `PublicationSnapshotStore` | Fixed workload, 30 trials, nearest-rank p95, retained failures, correctness/model-free zero-tolerance | 4 | Design only; target provisional |
+| `FR-04` | `SafetyGate`, `RiskInputValidator`, `RiskPolicyResolver`, `PortfolioRiskEvaluator`, `RiskEvidenceStore` | Single caller, applicability once, exact boundaries, invalid input, provisional policy distinction, evaluator error; cache/risk separation is QR-01 | 1 | Design only; thresholds provisional |
+| `FR-05` | `PublicationSnapshotStore`, `ReportSectionManifestBuilder`, `HistoryService`, `SecretRedactor` | Filters/order/pagination, revalidation, section isolation, post-commit corrupt rejection; export deferred | 4 | Design only |
+| `FR-06` | `RecoveryService`, `RecoverySnapshotStore`, `ArtifactPublisher`, `MemoryService` | Model-free single-process recovery, snapshot validity before `snapshot_ready`, memory idempotency, commit identity, post-commit corruption; multi-worker fencing deferred | 1 (snapshot primitives) / 4 (startup scan) | Design only |
+| `FR-07` | `FinancialFactService`, `FinancialMetricService`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector`, `SecEdgarAdapter` | Fact identity, as-of, restatement, ambiguity, direct metrics, fiscal-year P/E, current-span FCF, n/a reasons, block before research debate, conflict scope, bundle recovery; TTM/FCF YoY deferred | 3 | Design only; reference manifest pending (GR-01) |
+| `FR-08` | `ContextAssembler`, `DownstreamBriefBuilder`, `TokenCounter`, `PolicyCatalog`, `BriefAuditStore` | Marker handling, mandatory preservation, protected blocks, ordered budget, reference resolution, five-role replacement, view version, non-mutation; cost is CR-01 | 5 | Design only; budgets pending |
+| `PR-01` | `ArtifactPublisher`, benchmark harness | Paired manifest-write p95 and end-to-end overhead; provisional thresholds | 1 | Design only; no benchmark |
+| `CR-01` | `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness | Controlled brief on/off local cost attribution, approved target, and claim boundary; blocked until prices/thresholds/human approval | 5 | Design only; contract blocked |
+| `GR-01` | `FinancialFactService`, reference harness | Stage A freeze readiness; Stage B post-implementation timing; no code-generated expected values | 3 | Design only; reference pending |
+| `QR-01` | `DataAccessService`, `SafetyGate`, risk services, evaluation harness | Live rubric/REVIEW thresholds; fixed-replay zero-tolerance; separate risk-policy A/B | 1 | Design only; contract blocked |
+| `QR-02` | `RecoveryService`, benchmark harness | Fixed workload, 30 trials, nearest-rank p95, retained failures; deferred | 4 | Deferred; target provisional |
 | `SB-01` | `SafetyGate`, `FinalizedRunRecord`, `ArtifactPublisher`, `PortfolioManagerAdapter` | Five-rating matrices, malformed input, forged snapshot, entry-point bypass, gate error, sole risk caller, PM proposal source, combined coverage+error | 1 | Design only |
-| `INV-01` | `FinalizedRunRecord`, `ArtifactPublisher`, `MemoryService`, `PublicationSnapshotStore`, `RunOwnershipLock` | Binding/canonicalization, full vs summary records, fallback disclosure, missing artifacts, retry, memory lifecycle, section tamper, truthful completion, post-commit immutability | 1/4 | Design only |
-| `INV-02` | `SafetyGate`, `PortfolioRiskEvaluator`, `MemoryService`, `MemoryRecoveryCoordinator`, `ArtifactPublisher` | Generated violation corpus, determinism, injection, cross-artifact risk evidence, single-caller applicability, memory reuse/version, uncommitted-entry coordination, applicability/error matrix | 1 | Design only |
-| `SR-01` | `SecretRedactor`, all writers, `ExportService` | Known-value/pattern scans, endpoint split, fail-closed, over-redaction, scope, archive/history/recovery/export path confinement, export conflict, corruption diagnostics | 1/4 | Design only |
+| `INV-01` | `FinalizedRunRecord`, `ArtifactPublisher`, `MemoryService`, `PublicationSnapshotStore` | Binding/canonicalization, full vs summary records, fallback disclosure, missing artifacts, retry, memory lifecycle, truthful completion; section binding via FR-05 | 1/4 | Design only |
+| `INV-02` | `SafetyGate`, `PortfolioRiskEvaluator`, `MemoryService`, `ArtifactPublisher` | Generated violation corpus, determinism, injection, cross-artifact risk evidence, single-caller applicability, memory reuse/version | 1 | Design only |
+| `SR-01` | `SecretRedactor`, all writers | Known-value/pattern scans, endpoint split, fail-closed, over-redaction, scope, credential scans of archive/history/recovery diagnostics | 1/4 | Design only |
+| `SR-02` | `PathGuard`, `HistoryService`, `RecoveryService` | Path confinement, traversal/absolute-path rejection, symlink/junction escape, out-of-root writes; export conflict deferred | 1/4 | Design only |
 
-The end-to-end scenario tests `T-SCEN-01`..`T-SCEN-18` in §13.2 cover normal pass, business block, system exception, pre-commit interruption, post-commit corruption, duplicate recovery, concurrent publication, context overflow, history/export edge cases, cleanup-after-read, brief failure modes, uncommitted-memory coordination, old-process lock/lease takeover, Portfolio Manager proposal sourcing, failed-version retry, commit/ledger-update interruption, recovery-after-cleanup, and committed-publication corruption.
+The end-to-end scenario tests `T-SCEN-01`..`T-SCEN-18` in §13.2 cover normal pass, business block, system exception, pre-commit interruption, post-commit corruption, single-process duplicate recovery, context overflow, history edge cases, cleanup-after-read, brief failure modes, uncommitted-memory coordination, Portfolio Manager proposal sourcing, failed-version retry, commit/ledger-update interruption, recovery-after-cleanup, and committed-publication corruption. Export, multi-worker fencing, and QR-02 benchmark scenarios are deferred.
 
-Every acceptance criterion and its planned test/monitor is listed in `docs/architecture/trace-matrix.md`. That file is the authoritative requirement-to-component-to-test mapping for this round.
+Every fit criterion and its planned test/monitor is listed in `docs/architecture/trace-matrix.md`. That file is the authoritative requirement-to-component-to-test mapping for this round.
 
 ---
 
@@ -1312,7 +1322,7 @@ Every acceptance criterion and its planned test/monitor is listed in `docs/archi
 | Risk thresholds 30%/5%, freshness window | **P** — provisional; not approved |
 | QR-02 2.000 s p95 | **P** — provisional; not measured |
 | Brief token/cost saving | **D/U** — no saving claimed before accepted evaluation |
-| FR-02 manifest overhead thresholds | **P** — provisional; not measured |
+| PR-01 manifest overhead thresholds | **P** — provisional; not measured |
 | Any implementation, test, transcript, approval, or benefit | **Not claimed** |
 
 ---
@@ -1326,7 +1336,7 @@ Every acceptance criterion and its planned test/monitor is listed in `docs/archi
 | `RunContext` grows into a god object | Policy coupling and testability loss | Keep lifecycle/DI only; business rules in services; dependency rules in §9.5. |
 | Old writers bypass the publisher | Formal decision leak | Writer audit; direct calls require a record; CLI/propagate/backtest/save_reports adapters. |
 | Risk evaluator becomes a second authority | Conflicting final decisions | Pure result returned only to `SafetyGate`; no writer/persistence/memory path. |
-| Recovery creates a second commit path | Duplicate/inconsistent publication | Same terminal-manifest commit and read-time `INV-01`; claim/fencing; no independent marker. |
+| Recovery creates a second commit path | Duplicate/inconsistent publication | Same terminal-manifest commit and read-time `INV-01`; single-process duplicate-start guard; multi-worker claim/fencing deferred; no independent marker. |
 | History scans arbitrary directories | Mixed/stale sections | Read only the permanent publication snapshot and section manifest; revalidate on read. |
 | Metric formulas drift or use ambiguous periods | Wrong numeric authority | Structured fact/period identity, versioned formulas, typed n/a, frozen reference manifest. |
 | Brief becomes a second context source | Inconsistent prompts and formal records | Brief is a view inside `ContextAssembler`; full/formal/history/recovery are byte-identical. |
@@ -1346,17 +1356,17 @@ Every acceptance criterion and its planned test/monitor is listed in `docs/archi
 | OQ-09 | Authoritative supplier/ownership of portfolio risk input | `FR-04` implementation | Blocking; pending human decision |
 | OQ-10 | Approval of 0.30/0.05, freshness window, precision rule, policy identity/digest/approval reference | Claiming approved thresholds and policy; a valid provisional snapshot may still be used and labeled | Blocking for approved-policy claims; pending human decision |
 | OQ-12 | Risk-policy behavior-evaluation set and thresholds | `FR-04`/`INV-02` behavioral acceptance | Blocking; pending human decision |
-| OQ-13 | QR-02 2.000 s target and supported platform matrix | `QR-02` performance acceptance | Blocking for acceptance; correctness still required |
-| OQ-14 | Frozen non-NVDA reference companies/periods/sources | `FR-07` implementation and `FR-07-AC10` | Blocking; pending human decision |
+| OQ-13 | QR-02 2.000 s target and supported platform matrix | `QR-02` future performance acceptance | Deferred; no D1 acceptance |
+| OQ-14 | Frozen non-NVDA reference companies/periods/sources | `GR-01-AC1`–`AC6`, FR-07 Stage A implementation gate | Blocking; pending human decision |
 | OQ-16 | Brief mandatory/compressible budgets, token/quality thresholds, evaluation contract version | `FR-08` acceptance | Blocking; pending human decision |
-| ARCH-OD-01 | `yhx/requirements.yaml` is absent but referenced by evidence and validation hashes | Reproducible D1 validation/CI | Blocking for D4/CI; not an architecture choice |
-| ARCH-OD-02 | `pyyaml`/`jsonschema` are not declared | Validator reproducibility/CI | Blocking for CI; requirement-owner fix |
+| ARCH-OD-01 | Unretained personal-proposal source; path no longer referenced | Provenance | Resolved for current registry |
+| ARCH-OD-02 | `pyyaml`/`jsonschema` present locally but not declared | Validator reproducibility/CI | CI declaration pending |
 | ARCH-OD-03 | Risk policy file location/locator and approval record | Risk policy loader | Blocking before risk implementation |
 | ARCH-OD-04 | Selected model/tokenizer for brief and context budgets | `FR-08` and context budget | Blocking before brief implementation |
 | ARCH-OD-06 | Recovery lease/TTL, takeover, retry, claim storage, quarantine layout | `FR-06` implementation | Blocking before recovery implementation |
 | ARCH-OD-08 | Risk input envelope shape for CLI/API | `FR-04` integration | Blocking before risk integration |
-| ARCH-OD-13 | Approved `SB-01` references the draft `FR-04` risk branch | Claiming the approved risk branch | Blocking before claiming the approved risk branch |
-| ARCH-OD-14 | Approved `FR-02`/`INV-01` contain draft-requirement dependencies | Full-scope acceptance claims | Blocking before full-scope acceptance |
+| ARCH-OD-13 | Former approval of `SB-01` risk branch no longer applies | Status resolved; all requirements draft | Review risk branch with the draft registry |
+| ARCH-OD-14 | Former approval coupling of `FR-02`/`INV-01` no longer applies | Status resolved; review with draft registry | Review coupled obligations together |
 | ARCH-OD-15 | Permanent-snapshot staging/promotion path and hashing before commit | Publication implementation | Blocking before publication implementation |
 | ARCH-OD-16 | Shared run-lock file format, lease TTL, takeover, and lock-release rules | Normal publication and recovery | Blocking before publication/recovery |
 | ARCH-OD-17 | Brief replacement mapping and protected-marker format | `FR-08` implementation | Blocking before brief implementation |
@@ -1374,7 +1384,7 @@ Non-blocking decisions: manifest retention, vendor-cache TTL, manifest overhead 
 | Class | Items | Effect |
 |---|---|---|
 | Implementation-start | OQ-09 risk input source; ARCH-OD-03 risk policy locator; ARCH-OD-16 lock/lease format; ARCH-OD-15/23 snapshot layout; ARCH-OD-24 record_hash projection; ARCH-OD-20 reservation format; ARCH-OD-19 SEC query contract; ARCH-OD-21 PM adapter; ARCH-OD-22 uncommitted-memory protocol; ARCH-OD-04 tokenizer/model | Decide before the affected module starts. Not an approval claim. |
-| Acceptance-only | OQ-10 approved risk thresholds; OQ-13 QR-02 target/platform; OQ-16 brief budgets/quality; D2-OD-09 behavior snapshots; OQ-05 manifest overhead | Do not block starting implementation; block completion/acceptance claims. |
+| Acceptance-only | OQ-10 approved risk thresholds; OQ-13 deferred QR-02 target/platform; OQ-16 brief budgets/quality/cost; D2-OD-09 behavior snapshots; OQ-05 manifest overhead | Do not block starting implementation; block completion/acceptance claims. |
 | Evidence/CI | ARCH-OD-01 missing `yhx` evidence; ARCH-OD-02 validator dependencies | Block reproducible D1 validation/CI, not module design. |
 
 ---
@@ -1396,7 +1406,7 @@ Non-blocking decisions: manifest retention, vendor-cache TTL, manifest overhead 
 
 Status:
 
-- D1: v1.14.1; six requirements approved, seven draft; human review pending for the revision and draft requirements.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review is pending for the revision and the deferred requirement.
 - D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.
 - Application implementation: **not started**.
 - Tests: **not started**.

@@ -1,0 +1,131 @@
+{
+  "fixture_version": "gr01-freeze-states-v1",
+  "cases": [
+    {
+      "id": "valid_pre_implementation",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": true,
+      "freeze_at": "2026-11-01T00:00:00Z",
+      "implementation_started": false,
+      "first_implementation_at": null,
+      "reference_version": "ref-v1",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "pass",
+        "stage_b": "not_applicable"
+      }
+    },
+    {
+      "id": "missing_manifest",
+      "manifest_present": false,
+      "manifest_complete": false,
+      "sources_recorded": false,
+      "freeze_status": "missing",
+      "freeze_digest_valid": false,
+      "human_review_complete": false,
+      "freeze_at": null,
+      "implementation_started": false,
+      "first_implementation_at": null,
+      "reference_version": null,
+      "frozen_version": null,
+      "expected": {
+        "stage_a": "fail",
+        "stage_b": "not_applicable"
+      }
+    },
+    {
+      "id": "valid_after_implementation",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": true,
+      "freeze_at": "2026-11-01T00:00:00Z",
+      "implementation_started": true,
+      "first_implementation_at": "2026-11-02T00:00:00Z",
+      "reference_version": "ref-v1",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "pass",
+        "stage_b": "pass"
+      }
+    },
+    {
+      "id": "implementation_before_freeze",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": true,
+      "freeze_at": "2026-11-02T00:00:00Z",
+      "implementation_started": true,
+      "first_implementation_at": "2026-11-01T00:00:00Z",
+      "reference_version": "ref-v1",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "pass",
+        "stage_b": "fail"
+      }
+    },
+    {
+      "id": "version_mismatch",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": true,
+      "freeze_at": "2026-11-01T00:00:00Z",
+      "implementation_started": true,
+      "first_implementation_at": "2026-11-02T00:00:00Z",
+      "reference_version": "ref-v2",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "pass",
+        "stage_b": "fail"
+      }
+    },
+    {
+      "id": "retroactive_freeze",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": true,
+      "freeze_at": "2026-11-02T00:00:00Z",
+      "implementation_started": true,
+      "first_implementation_at": "2026-11-01T00:00:00Z",
+      "reference_version": "ref-v1",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "pass",
+        "stage_b": "fail"
+      }
+    },
+    {
+      "id": "missing_human_review",
+      "manifest_present": true,
+      "manifest_complete": true,
+      "sources_recorded": true,
+      "freeze_status": "frozen",
+      "freeze_digest_valid": true,
+      "human_review_complete": false,
+      "freeze_at": "2026-11-01T00:00:00Z",
+      "implementation_started": false,
+      "first_implementation_at": null,
+      "reference_version": "ref-v1",
+      "frozen_version": "ref-v1",
+      "expected": {
+        "stage_a": "fail",
+        "stage_b": "not_applicable"
+      }
+    }
+  ]
+}

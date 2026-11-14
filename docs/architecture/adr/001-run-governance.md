@@ -3,8 +3,8 @@
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Decision status: **proposed**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Supersedes: ADR 001 v0.1 (D1 v1.9.0, 6 requirements)  
 Implementation status: **design only; no application code changed**
 
@@ -21,7 +21,7 @@ The baseline establishes only the original TradingAgents behavior:
 - No native lifecycle manifest, no unified coverage state, no coverage-aware safety gate, no deterministic portfolio-risk check, no history/recovery interface, no structured metric block, and no bounded downstream brief.
 - The baseline decision/report/full-state were consistent, but source-status consistency, risk evidence, and memory binding were not measured.
 
-D1 v1.14.1 adds seven draft capabilities without reducing the original six:
+D1 v1.18.0 marks all requirements draft; the v1.14.1 additions did not remove the original six:
 
 - `FR-04`/`INV-02`: deterministic portfolio risk inside the finalization gate.
 - `FR-05`: historical retrieval of committed publications.
@@ -53,15 +53,15 @@ Retain **Lean A** and extend it with bounded capability services:
 - All formal display, persistence, memory, history, export, and scoring consume `FinalizedRunRecord` or a verified committed publication.
 - Old writers are wrapped, made private, or require a finalized record; `propagate` keeps its `(final_state, signal)` return shape after publication.
 - The terminal manifest `run_status=completed` plus read-time `INV-01` is the only commit condition.
-- Implementation is phased: foundations; core closed loop + Portfolio Manager/model proposal + minimum memory identity/idempotency + FR-02-required section manifest/permanent snapshot/recovery snapshot; memory enhancements; financial metrics; history/startup scan/export/benchmark; brief/context; behavior evaluation. Approved FR-02/INV-01/SB-01 obligations are not downgraded by draft dependencies.
+- Implementation is phased: foundations; core closed loop + Portfolio Manager/model proposal + minimum memory identity/idempotency + FR-02-required section manifest/permanent snapshot/recovery snapshot; memory enhancements; financial metrics; history/startup scan/export/benchmark; brief/context; behavior evaluation. FR-02/INV-01/SB-01 obligations remain draft and are reviewed with the whole registry.
 - Disabled capabilities reject or degrade explicitly; a disabled phase is not evidence that the requirement is satisfied.
-- Approved `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding; approved `INV-01` binding/read-time verification; and approved `SB-01` risk-branch behavior remain obligations even though related draft requirements exist. Draft status limits completion/acceptance claims, not approved behavior.
+- `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding; `INV-01` binding/read-time verification; and `SB-01` risk-branch behavior remain obligations in the draft registry. Draft status limits completion/acceptance claims.
 
 ### 2.1 ADD-R iterations applied
 
 1. Full-scope drivers, constraints, and retain/adjust assessment.
 2. Risk: pure evaluator inside the shared gate (chosen over a separate risk gate, model-assisted risk, or pre-model filter).
-3. Publication lifecycle: extend the publisher with permanent/recovery snapshots and claim/fencing (chosen over a separate archive transaction, graph re-run, or directory-scan history).
+3. Publication lifecycle: extend the publisher with permanent/recovery snapshots and a single-process duplicate-start guard; multi-worker claim/fencing is deferred (chosen over a separate archive transaction, graph re-run, or directory-scan history).
 4. Financial metrics: deterministic fact/metric service through the unified data access (chosen over model arithmetic, a direct vendor path, or subtraction-derived quarters).
 5. Brief: a budgeted view inside the existing context assembler (chosen over a second assembler, character truncation, or an unchecked model brief).
 6. Integration, compatibility, phasing, and evidence review.
@@ -80,7 +80,7 @@ Lean A remains a **recommendation for review**, not an approved team decision.
 
 **Advantages**
 
-- Covers all 13 requirements without a second authority or transaction.
+- Covers all 18 requirements without a second authority or transaction.
 - Keeps the graph and agents; adapters migrate public surfaces.
 - Testable pure risk/metric functions and table-driven gate/coverage rules.
 - Explicit permanent/temporary record split for history and recovery.
@@ -174,7 +174,7 @@ Before final implementation approval, each candidate must implement the same thi
 - one stock Buy with a passed risk evaluation and one with an over-limit/invalid input;
 - one gate block, one gate error, and one failure record;
 - one terminal manifest commit and read-time INV-01;
-- one recovery snapshot, claim/fencing, and model-free completion;
+- one recovery snapshot, a single-process duplicate-start guard, and model-free completion; multi-worker claim/fencing is deferred;
 - one history retrieval and one export-conflict case;
 - one write/run secret scan;
 - one same-day memory reuse and one versioned decision.
@@ -251,4 +251,4 @@ Re-open this ADR if any of the following occurs:
 - Tests: **not started**.
 - Monitoring: **not implemented**.
 - Benefits: **not measured** except the baseline facts.
-- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.

@@ -1,0 +1,247 @@
+{
+  "acceptance_status": "blocked",
+  "blocking_reasons": [
+    "case_snapshots_incomplete",
+    "quality_loss_max_not_approved",
+    "net_cost_max_not_approved",
+    "prices_pending",
+    "human_approval_absent"
+  ],
+  "blocking_rules": [
+    "Safety escapes must equal zero.",
+    "Quality loss (positive means degradation) is judged against the same approved quality_loss_max; no separate allowed-regression or blanket any-regression rule applies.",
+    "Cost acceptance requires an approved net_cost_max and local cost attribution at or below that threshold; null is unresolved, not zero.",
+    "Token change is measured but no independent token-improvement target is approved; it does not by itself define acceptance.",
+    "A positive cost difference that meets a positive budget is budget_met, not a saving. A zero difference is not a strict saving. A negative local difference is not a whole-application saving claim.",
+    "No cost or token saving may be claimed before accepted, and quality or safety failures cannot be offset by cost or token results.",
+    "Human approval of thresholds is required before ready/accepted."
+  ],
+  "case_snapshot_state": {
+    "captured_cases": 1,
+    "digest_matched_cases": 0,
+    "eval_set_ref": "docs/req/evaluation/eval-set-v1.json",
+    "pending_case_ids": [
+      "aapl-2026-10-19",
+      "msft-2026-10-19",
+      "amzn-2026-10-19",
+      "googl-2026-10-19",
+      "meta-2026-10-19",
+      "tsla-2026-10-19",
+      "amd-2026-10-19",
+      "jpm-2026-10-19",
+      "xom-2026-10-19"
+    ],
+    "readable_cases": 0,
+    "snapshot_manifest_ref": "docs/req/evaluation/snapshots-v1.json",
+    "total_cases": 10
+  },
+  "contract_version": "d1-brief-contract-v2",
+  "evidence_required": [
+    "all_case_snapshots",
+    "case_snapshot_digests",
+    "all_samples",
+    "per_case_metrics",
+    "aggregate_metrics",
+    "quality_loss",
+    "safety_escapes",
+    "latency",
+    "prices",
+    "net_cost",
+    "input_digests",
+    "result_digest",
+    "measurement_scope",
+    "net_cost_target",
+    "retry_fallback_records",
+    "claim_classification",
+    "attempt_record"
+  ],
+  "fixed_inputs": {
+    "brief_policy": "docs/req/fixtures/brief_budget_policy_v1.json",
+    "config": "docs/req/evaluation/config-v1.json",
+    "data_snapshot": "docs/req/evaluation/snapshots-v1.json",
+    "model": "CS5351/DeepSeek-V4-Flash",
+    "prompt": "docs/req/evaluation/prompt-v1.0.yaml",
+    "risk_policy": "docs/req/fixtures/portfolio_risk_policy_v1.json"
+  },
+  "human_approved": false,
+  "input_digests": {
+    "brief_policy_sha256": "d587273513ed353460c14944de756faab9fd891dbbcff8a8b66f833e2f2a90c5",
+    "config_sha256": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
+    "data_snapshot_sha256": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2",
+    "data_snapshot_status": "pending_capture",
+    "model_id": "CS5351/DeepSeek-V4-Flash",
+    "prompt_sha256": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
+    "risk_policy_digest": "a4cedf7ddc98babaa8dbb3dea6f748a57c13ccb040f12067c94e07dce74bf1a1",
+    "risk_policy_sha256": "20f71d1f7842cdc0488adb340e45b4f216836e9457b709890cd3eece0ea6f4ae"
+  },
+  "lifecycle_states": [
+    "blocked",
+    "ready",
+    "accepted",
+    "failed"
+  ],
+  "metrics": [
+    "added_output_tokens",
+    "reduced_downstream_input_tokens",
+    "added_output_cost",
+    "reduced_input_cost_saving",
+    "net_tokens",
+    "net_cost",
+    "fidelity",
+    "key_number_preservation",
+    "gap_preservation",
+    "quality_loss",
+    "safety_escapes",
+    "latency_seconds",
+    "measurement_scope",
+    "brief_generation_input_tokens",
+    "brief_generation_input_cost",
+    "retry_attempts",
+    "fallback_attempts",
+    "downstream_output_tokens",
+    "claim_classification"
+  ],
+  "prices": {
+    "currency": "USD",
+    "input_per_token": null,
+    "output_per_token": null,
+    "status": "pending"
+  },
+  "state_conditions": {
+    "blocked": [
+      "one or more required pre-run inputs are missing or invalid: case snapshots, fixed input digests, prices, quality_loss_max approval, net_cost_max approval, or human approval",
+      "a completed-run result has not yet been evaluated and pre-run prerequisites are incomplete",
+      "observed safety or quality failures, if any, are recorded in observed_failures and are not cleared by blocked status"
+    ],
+    "ready": [
+      "all pre-run inputs are valid",
+      "no result exists for the current attempt",
+      "the evaluation has not yet been executed for the current attempt"
+    ],
+    "accepted": [
+      "the evaluation was executed from ready",
+      "all samples and result/evidence digests are valid",
+      "quality_loss <= approved quality_loss_max",
+      "safety_escapes = 0",
+      "net_cost <= approved net_cost_max",
+      "no applicable quality, safety, evidence, or cost condition fails"
+    ],
+    "failed": [
+      "the evaluation was executed from ready and result evidence is missing, corrupt, or inconsistent",
+      "or safety_escapes > 0",
+      "or quality_loss > approved quality_loss_max",
+      "or net_cost > approved net_cost_max",
+      "or contract/evidence digest mismatch"
+    ]
+  },
+  "status": "revision_draft",
+  "switch": {
+    "name": "downstream_brief_enabled",
+    "off": "full_reports",
+    "on": "downstream_brief"
+  },
+  "thresholds": {
+    "net_cost_max": null,
+    "net_cost_max_approved": false,
+    "quality_loss_max": null,
+    "quality_loss_max_approved": false,
+    "safety_escapes_max": 0,
+    "threshold_status": "provisional"
+  },
+  "token_direction": {
+    "added_output_cost": "added_output_tokens * output_per_token",
+    "added_output_tokens": "brief-generation output tokens",
+    "brief_generation_input_cost": "brief_generation_input_tokens * input_per_token (recorded; excluded from net_cost in v2)",
+    "missing_price_behavior": "if either price is null, added_output_cost, reduced_input_cost_saving, and net_cost are null",
+    "negative_net_cost_means_saving": false,
+    "net_cost": "added_output_cost - reduced_input_cost_saving (local cost attribution difference; excludes brief-generation input cost, retry/fallback calls outside the counted generation call, downstream output changes, non-brief calls, and infrastructure)",
+    "net_tokens": "added_output_tokens - reduced_downstream_input_tokens",
+    "reduced_downstream_input_tokens": "full-report input tokens minus brief input tokens",
+    "reduced_input_cost_saving": "reduced_downstream_input_tokens * input_per_token",
+    "scope": "local_cost_attribution",
+    "saving_definition": "local_cost_saving only when net_cost < 0; budget_met only when net_cost <= approved net_cost_max; whole_application_saving is not claimed"
+  },
+  "measurement_scope": {
+    "scope": "local_cost_attribution",
+    "label": "local cost attribution difference, not whole-application net cost",
+    "description": "Measures the counted brief-generation output cost and the downstream input-token difference for the five brief consumers only. It is not a whole-application net-cost or saving claim.",
+    "included": [
+      "brief-generation output tokens and cost",
+      "downstream input-token difference and cost saving"
+    ],
+    "excluded": [
+      "brief-generation input tokens and cost",
+      "brief retry or fallback calls outside the counted generation call",
+      "downstream output-token changes",
+      "non-brief application calls",
+      "infrastructure and other application overhead"
+    ],
+    "retry_fallback_record": "Brief-generation retry and fallback occurrences are recorded even when excluded from the local cost formula; they must not disappear from the evidence.",
+    "expansion_status": "not_approved",
+    "expansion_note": "Expanding the acceptance scope to full brief-call input/output/retry cost is a pending decision; no full-call net-cost claim is made here."
+  },
+  "token_target": {
+    "status": "not_defined",
+    "net_tokens_max": null,
+    "note": "Token change is measured but no independent token-improvement target is approved; cost acceptance is separate."
+  },
+  "claim_definitions": {
+    "budget_met": "net_cost <= approved net_cost_max; does not by itself imply a saving",
+    "local_cost_saving": "net_cost < 0 under the local cost attribution formula",
+    "token_reduction": "net_tokens < 0; no independent token target is approved",
+    "zero_difference": "net_cost = 0; proves no increase under this scope, not a strict saving",
+    "positive_cost_difference_within_budget": "net_cost >= 0 and net_cost <= approved net_cost_max; budget_met only",
+    "whole_application_saving": "requires independent whole-application evidence; this contract does not claim it",
+    "quality_or_safety_override": "quality or safety failure cannot be offset by any cost or token result"
+  },
+  "state_model": {
+    "checkpoints": {
+      "pre_run_inputs": [
+        "case snapshots captured/readable/digest-matched",
+        "fixed input digests present",
+        "input and output prices present",
+        "quality_loss_max approved",
+        "net_cost_max approved",
+        "human approval recorded"
+      ],
+      "post_run_result_evidence": [
+        "all samples recorded",
+        "quality_loss",
+        "safety_escapes",
+        "net_cost",
+        "net_tokens",
+        "result/evidence digests",
+        "retry/fallback records",
+        "result_digest may be null only before the attempt completes; a completed run with missing result_digest is failed"
+      ]
+    },
+    "state_priority": [
+      "blocked when pre-run inputs are missing or invalid",
+      "ready when pre-run inputs are valid and no result exists for the current attempt",
+      "failed when a completed run lacks valid result evidence or any applicable condition fails",
+      "accepted when a completed run has valid result evidence and all applicable conditions pass"
+    ],
+    "transitions": [
+      "blocked -> ready when pre-run inputs become valid",
+      "ready -> accepted after a completed run with all conditions passing",
+      "ready -> failed after a completed run with missing/invalid result evidence or any condition failing",
+      "ready -> blocked if pre-run inputs are invalidated before a result exists",
+      "accepted and failed are terminal for the attempt; a retry or re-evaluation creates a new attempt record"
+    ],
+    "observed_failure_policy": "if pre-run inputs are missing and a safety violation is observed, the lifecycle is blocked but the observed failure is recorded in observed_failures and cannot be cleared; the attempt fails once the run is evaluable",
+    "attempt_policy": "each attempt has attempt_id and fixes its inputs, contract version, and input digests at attempt start; a retry or re-evaluation creates a new attempt record; later configuration changes do not mutate a terminal attempt result; prior failed evidence is retained and not overwritten; the effective result is the latest valid attempt, while all failed attempts remain auditable"
+  },
+  "measurement_aggregation": {
+    "target_comparison": "total (sum) local cost attribution over all included samples in the fixed case set",
+    "aggregation_metric": "sum",
+    "not_per_case_mean": true,
+    "token_comparison": "total net_tokens is recorded; no token target is approved",
+    "note": "A per-case mean or any other aggregation requires a new contract version."
+  },
+  "usage_accounting": {
+    "complete": "all included calls report usage; token and cost fields are computed",
+    "partial": "some included calls report usage; known sums and unknown-call counts are recorded",
+    "unavailable": "no included call reports usage; token and cost fields are null, not zero",
+    "no_generation_call": "a true zero for the counted generation call, distinct from unavailable usage"
+  }
+}

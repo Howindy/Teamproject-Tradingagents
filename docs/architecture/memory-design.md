@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1  
-Approval basis: `INV-01`, `FR-02`, `SB-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `INV-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 ---
@@ -324,5 +324,5 @@ See `docs/architecture/open-decisions.md`.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Existing memory substrate preserved.
-- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
 - D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.

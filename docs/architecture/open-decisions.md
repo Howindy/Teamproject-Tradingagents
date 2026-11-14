@@ -2,8 +2,8 @@
 
 Status: **v0.2 — ADD-R round 2 draft / pending human review**  
 Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.14.1 — 13 requirements, 111 acceptance criteria  
-Approval basis: `FR-01`, `FR-02`, `FR-03`, `SB-01`, `INV-01`, `SR-01` approved; `FR-04`, `FR-05`, `FR-06`, `FR-07`, `FR-08`, `INV-02`, `QR-02` draft  
+D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
+Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
 Implementation status: **design only; no application code changed**
 
 This file records decisions that are **not closed**. Recommendations are for discussion only; they are not approvals. A historical approval or a previously resolved decision is evidence, not approval of the current revision.
@@ -45,11 +45,11 @@ This file records decisions that are **not closed**. Recommendations are for dis
 ### OQ-05 — Manifest overhead thresholds
 
 - **Status**: open; non-blocking; provisional target.
-- **Question**: accept manifest-write p95 <=100 ms for <=256 KiB and end-to-end overhead p95 <=1% and <=1 s?
-- **Impact**: `ArtifactPublisher`, `FR-02-AC8`, latency.
-- **Recommendation (not approved)**: benchmark first; keep thresholds provisional until measured.
+- **Question**: accept startup and terminal pre-replace write p95 <=100 ms each, percent overhead p95 <=1%, and absolute overhead p95 <=1 s for <=256 KiB?
+- **Impact**: `ArtifactPublisher`, `PR-01-AC1`–`AC4`, latency.
+- **Recommendation (not approved)**: benchmark first with 20 write samples and 20 paired runs; retain negative samples; keep thresholds provisional until measured.
 - **Blocking phase**: D3 benchmark.
-- **Related**: FR-02, QR-02.
+- **Related**: PR-01, FR-02, QR-02.
 
 ### OQ-08 — Concurrent manifest/preference locking
 
@@ -99,29 +99,29 @@ This file records decisions that are **not closed**. Recommendations are for dis
 
 ### OQ-13 — QR-02 target and platform matrix
 
-- **Status**: open; **blocking** for performance acceptance.
+- **Status**: deferred with QR-02; **not blocking current acceptance**.
 - **Question**: is the 2.000 s nearest-rank p95 approved; which local filesystems/hardware are supported?
-- **Impact**: `QR-02`, recovery benchmark, acceptance evidence.
-- **Recommendation (not approved)**: keep 2.000 s provisional; define a supported local-filesystem/hardware matrix; correctness/model-free remain zero-tolerance even if the target is missed.
-- **Blocking phase**: before QR-02 acceptance (not before correctness implementation).
+- **Impact**: `QR-02`, recovery benchmark, future acceptance evidence.
+- **Recommendation (not approved)**: keep 2.000 s provisional; define a supported local-filesystem/hardware matrix if QR-02 is reactivated; correctness/model-free remain zero-tolerance even if the target is missed.
+- **Blocking phase**: none for D1; before any future QR-02 acceptance.
 - **Related**: QR-02.
 
 ### OQ-14 — Non-NVDA financial reference manifest
 
 - **Status**: open; **blocking**.
 - **Question**: which two non-NVDA companies, fiscal periods, and independently published sources should be frozen before `FR-07` implementation?
-- **Impact**: `FR-07-AC10`, tolerance validation, implementation readiness.
+- **Impact**: `GR-01-AC1`–`AC6`, FR-07 Stage A implementation gate, and tolerance validation.
 - **Recommendation (not approved)**: freeze two companies with distinct fiscal calendars; record source URLs/versions/hashes; do not generate expected values from the code under test.
 - **Blocking phase**: before FR-07 implementation/acceptance.
 - **Related**: FR-07.
 
 ### OQ-15 — TTM EPS scope
 
-- **Status**: open; non-blocking.
+- **Status**: deferred with TTM metrics; non-blocking.
 - **Question**: is approximate TTM EPS (annual + current YTD - prior YTD) acceptable, or should the first version report only fiscal-year P/E?
-- **Impact**: `FR-07` TTM EPS/P-E scope, n/a behavior.
-- **Recommendation (not approved)**: keep approximate TTM EPS labeled approximate; if inputs are incomplete, n/a rather than relax; keep fiscal-year P/E as a separate row.
-- **Blocking phase**: before FR-07 finalization.
+- **Impact**: future `FR-07` TTM EPS/P-E scope; current version retains fiscal-year P/E only.
+- **Recommendation (not approved)**: if TTM is reactivated, label approximate TTM EPS and return n/a on incomplete inputs; keep fiscal-year P/E as a separate row. D1 does not implement TTM.
+- **Blocking phase**: none for D1; before any future TTM extension.
 - **Related**: FR-07.
 
 ### OQ-16 — Brief budgets, token/quality thresholds, and contract version
@@ -206,21 +206,21 @@ This file records decisions that are **not closed**. Recommendations are for dis
 
 ## 4. New ADD-R architecture decisions
 
-### ARCH-OD-01 — Missing `yhx/requirements.yaml` evidence
+### ARCH-OD-01 — Unretained personal-proposal source
 
-- **Status**: open; **blocking for reproducible D1 validation/CI**, not an architecture choice.
-- **Observation**: `docs/req/requirements.yaml` cites `yhx/requirements.yaml` as evidence and `validate_requirements.py` includes it in the bound input hashes; `validation-results.json` records its digest; the file is absent from this checkout.
-- **Impact**: the validator cannot reach "missing evidence paths = 0"; `--check` cannot match; the claimed machine pass is not reproducible.
-- **Recommendation (not approved)**: the requirement owner must either restore the file at the cited path or remove the evidence references and rebind the validation result. Architecture documents must not change `docs/req/**`.
-- **Blocking phase**: D4/CI evidence.
+- **Status**: resolved for D1 v1.18.0; the missing path is no longer referenced.
+- **Observation**: `docs/req/requirements.yaml` previously cited `yhx/requirements.yaml`. FR-07/FR-08 now state that the personal-proposal source is not retained, and the validator no longer includes that path in its bound input hashes.
+- **Impact**: `--check` passes against the current inputs. Provenance for FR-07/FR-08 is the baseline and source code.
+- **Recommendation (not approved)**: if a retained copy is required later, add it with an explicit read-only source record and rebind the validation result.
+- **Blocking phase**: none for the current registry.
 - **Related**: FR-07, FR-08, validator.
 
-### ARCH-OD-02 — Validator dependencies undeclared
+### ARCH-OD-02 — Validator dependencies
 
-- **Status**: open; **blocking for CI reproducibility**.
-- **Observation**: `validate_requirements.py` imports `yaml` and `jsonschema`; no root dependency manifest declares them; the current environment lacks `yaml`.
-- **Impact**: the requirement validator cannot run in a clean environment.
-- **Recommendation (not approved)**: add a declared tooling dependency (for example `requirements-dev.txt` or a documented tool environment) and a CI install step; this is a CI/requirements-owner change.
+- **Status**: resolved in this environment; declaration for CI remains a D4 task.
+- **Observation**: `validate_requirements.py` imports `yaml` and `jsonschema`; both are importable here, and `--check` passes.
+- **Impact**: the validator runs locally, but a root dependency manifest or documented tool environment is still needed for clean CI reproduction.
+- **Recommendation (not approved)**: declare the tooling dependency and add a CI install step; this is a CI/requirements-owner change.
 - **Blocking phase**: D4/CI.
 - **Related**: all requirements validation.
 
@@ -253,11 +253,11 @@ This file records decisions that are **not closed**. Recommendations are for dis
 
 ### ARCH-OD-06 — Recovery lease, retry, and quarantine layout
 
-- **Status**: open; blocking for recovery implementation.
+- **Status**: deferred with multi-worker recovery; single-process duplicate guard remains in D1.
 - **Question**: lease TTL, takeover policy, retry budget, claim storage, quarantine path, and cleanup rules.
-- **Impact**: `RecoveryClaimStore`, `RecoveryService`, `QR-02`, `FR-06`.
-- **Recommendation (not approved)**: per-run claim file/record with owner and monotonically increasing fencing token; stale takeover after a documented TTL increments the token; bounded retries; quarantine under a separate non-history path; never delete valid material on a persistent fault.
-- **Blocking phase**: before D3 recovery.
+- **Impact**: future `RecoveryClaimStore`, `RecoveryService`, `QR-02`; current `FR-06` uses a single-process duplicate-start guard and bounded retry.
+- **Recommendation (not approved)**: if multi-worker recovery is reactivated, use a per-run claim with owner/fencing token, stale takeover, bounded retry, and quarantine. D1 does not implement claim/fencing/takeover.
+- **Blocking phase**: none for D1; before any future multi-worker recovery.
 - **Related**: FR-06, QR-02, D2-OD-06.
 
 ### ARCH-OD-07 — Publication/recovery snapshot retention and cleanup
@@ -303,26 +303,26 @@ This file records decisions that are **not closed**. Recommendations are for dis
 
 ### ARCH-OD-12 — Historical memory reference closure scope
 
-- **Status**: proposed; pending review.
-- **Decision**: `verified_package` includes a `history_reference_closure` for every followed `reused_decision_ref`; when a source proof is unavailable, label `historical_reference_unverified` and limit verification to the current run. Never depend on original-machine-only files.
-- **Impact**: `ExportService`, `MemoryService`, `FR-05-AC4`.
-- **Blocking phase**: before D3 export.
+- **Status**: deferred with FR-05 export; not current acceptance.
+- **Decision**: if export is reactivated, `verified_package` includes a `history_reference_closure` for every followed `reused_decision_ref`; when a source proof is unavailable, label `historical_reference_unverified` and limit verification to the current run. Never depend on original-machine-only files.
+- **Impact**: future `ExportService`, `MemoryService`; current FR-05 has no export mode.
+- **Blocking phase**: none for D1; before any future export capability.
 
-### ARCH-OD-13 — Approved SB-01 references the draft FR-04 risk branch
+### ARCH-OD-13 — Former approval of SB-01 risk branch no longer applies
 
-- **Status**: open; **blocking for claiming the approved SB-01 risk branch**.
-- **Observation**: `SB-01` is approved, but its v1.14.1 text includes stock Buy/Overweight risk evaluation, `portfolio_risk_input_invalid`, `portfolio_risk_limit_exceeded`, `portfolio_risk_evaluator_error`, and `review_class=portfolio_risk_limit`. `FR-04` and `INV-02` are draft. Approval of SB-01 therefore does not approve the draft risk input source, thresholds, policy snapshot, or behavior evaluation.
+- **Status**: resolved for status purposes; all requirements are draft.
+- **Observation**: `SB-01` was approved at v1.14.1 and is now draft. Its current text includes stock Buy/Overweight risk evaluation, `portfolio_risk_input_invalid`, `portfolio_risk_limit_exceeded`, `portfolio_risk_evaluator_error`, and `review_class=portfolio_risk_limit`. `FR-04` and `INV-02` are also draft.
 - **Impact**: `SafetyGate`, `PortfolioRiskEvaluator`, `SB-01-AC11/AC12`, `FR-04`, `INV-02`.
-- **Recommendation (not approved)**: implement the risk branch as a proposal; do not claim the approved SB-01 risk branch as complete until `FR-04`/`INV-02` are approved or a human decision explicitly scopes the approved risk behavior. A valid provisional policy MAY be used and labeled provisional; missing/invalid policy blocks. Do not turn OQ-10 into a rule that unapproved always means absent.
+- **Recommendation (not approved)**: review the risk branch together with the rest of the draft registry. A valid provisional policy MAY be used and labeled provisional; missing/invalid policy blocks. Do not turn OQ-10 into a rule that unapproved always means absent.
 - **Blocking phase**: before enabling stock Buy/Overweight formal approval.
 - **Related**: SB-01, FR-04, INV-02, OQ-09, OQ-10.
 
-### ARCH-OD-14 — Approved FR-02/INV-01 contain draft-requirement dependencies
+### ARCH-OD-14 — Former approval coupling no longer applies
 
-- **Status**: open; **blocking for full-scope acceptance claims**.
-- **Observation**: approved `FR-02` acceptance criteria and constraint relations reference recovery snapshots (`FR-06`), section manifests (`FR-05`), metric bundles (`FR-07`), and downstream brief/publication interaction (`FR-08`, `QR-02`). Approved `INV-01` references `FR-04`..`FR-08` and `QR-02`. The draft requirements are not approved. A machine pass on the approved requirements does not mean the coupled draft behavior is approved or implemented.
+- **Status**: resolved for status purposes; all requirements are draft.
+- **Observation**: `FR-02` constraint relations reference `FR-05`/`FR-06`/`FR-07`/`FR-08`/`QR-02`, but its fit criteria now cover only the manifest lifecycle; publication, section, and recovery details live in `INV-01`/`FR-05`/`FR-06`. `INV-01` references `FR-04`..`FR-08` and `QR-02`. All of these requirements, including `FR-02`, `INV-01`, and `SB-01`, are now draft.
 - **Impact**: FR-02, INV-01, SB-01, full-scope acceptance, trace matrix claims.
-- **Recommendation (not approved)**: keep the approved baseline obligations intact. `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding are required by the approved text and are not made optional by draft `FR-05`/`FR-06`. `INV-01` binding/read-time verification and `SB-01` risk-branch behavior are likewise required. Draft status limits **claims** of approval/completion for draft details (for example `FR-06` startup scan, `FR-05` history, `FR-04` input-source/policy details), not the approved obligations. Humans must decide how to bind the draft details; the architecture must not declare any draft requirement approved or disable an approved behavior.
+- **Recommendation (not approved)**: review the coupled obligations together. Draft status limits **claims** of approval/completion; it does not delete the obligations. Humans must decide how to bind the draft details; the architecture must not declare any requirement approved.
 - **Blocking phase**: before claiming full-scope acceptance.
 - **Related**: FR-02, INV-01, SB-01, FR-04..FR-08, QR-02.
 
@@ -425,17 +425,17 @@ This file records decisions that are **not closed**. Recommendations are for dis
 | OQ-09 risk input source/ownership | Before risk implementation | FR-04, INV-02 |
 | OQ-10 risk policy/threshold approval | Before claiming approved thresholds/policy (provisional path permitted) | FR-04, INV-02, SB-01 |
 | OQ-12 risk-policy evaluation set | Before risk behavioral acceptance | FR-04, INV-02 |
-| OQ-13 QR-02 target/platform | Before performance acceptance | QR-02 |
+| OQ-13 QR-02 target/platform | Deferred with QR-02; no D1 action | QR-02 |
 | OQ-14 non-NVDA reference manifest | Before FR-07 implementation | FR-07 |
 | OQ-16 brief budgets/token/quality | Before FR-08 acceptance | FR-08 |
-| ARCH-OD-01 missing `yhx` evidence | D4/CI reproducibility | FR-07, FR-08, validator |
-| ARCH-OD-02 undeclared validator deps | D4/CI reproducibility | all requirements |
+| ARCH-OD-01 unretained personal-proposal source | Resolved for current registry | FR-07, FR-08, validator |
+| ARCH-OD-02 validator deps locally present; CI declaration pending | D4/CI reproducibility | all requirements |
 | ARCH-OD-03 risk policy locator/approval record | Before risk implementation | FR-04, INV-02 |
 | ARCH-OD-04 tokenizer/model selection | Before brief/context implementation | FR-08 |
-| ARCH-OD-06 recovery lease/retry/layout | Before recovery implementation | FR-06, QR-02 |
+| ARCH-OD-06 recovery lease/retry/layout | Deferred with multi-worker recovery | FR-06, QR-02 |
 | ARCH-OD-08 risk input envelope | Before risk integration | FR-04 |
-| ARCH-OD-13 approved SB-01 references draft FR-04 | Before claiming the approved risk branch | SB-01, FR-04, INV-02 |
-| ARCH-OD-14 approved FR-02/INV-01 depend on draft requirements | Before full-scope acceptance claims | FR-02, INV-01, FR-04..FR-08, QR-02 |
+| ARCH-OD-13 former approval of SB-01 risk branch | Status resolved; review with draft registry | SB-01, FR-04, INV-02 |
+| ARCH-OD-14 former approval coupling | Status resolved; review with draft registry | FR-02, INV-01, FR-04..FR-08, QR-02 |
 | ARCH-OD-15 permanent-snapshot staging/post-commit diagnostics | Before publication implementation | FR-02, INV-01, FR-05 |
 | ARCH-OD-16 shared run lock/lease/takeover/lock order | Before publication/recovery | FR-02, FR-06, INV-01 |
 | ARCH-OD-17 brief replacement mapping/protected markers | Before FR-08 implementation | FR-08 |
@@ -461,7 +461,7 @@ Non-blocking: OQ-02, OQ-04 TTL, OQ-05, OQ-08, OQ-11, OQ-15, D2-OD-05, D2-OD-07, 
 
 ## 6. Status
 
-- D1: v1.14.1; six requirements approved, seven draft; human review pending.
+- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
 - D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.
 - Application code: **unchanged**.
 - Tests/monitoring: **not started/not implemented**.
