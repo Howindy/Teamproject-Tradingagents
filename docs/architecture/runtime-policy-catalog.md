@@ -1,16 +1,17 @@
 # D2 Runtime Policy Catalog
 
-Status: **v0.2 — ADD-R round 2 draft / pending human review**  
-Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.20.0
-Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
+Status: **v0.3 — ADD-R round 3 draft / pending human review**
+Date: 2026-11-15
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`
+D1 basis: `docs/req/requirements.yaml` v1.24.0
+Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
 ---
 
 ## 1. Purpose and status
 
-This catalog names every runtime policy needed by the full D1 v1.20.0 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
+This catalog names every runtime policy needed by the full D1 v1.24.0 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
 
 Status values:
 
@@ -37,15 +38,15 @@ Status values:
 | `POL-CLOCK-01` | Fixed run clock and mode inheritance | D2 architecture proposal; pending human review | FR-03, FR-04 |
 | `POL-GATE-01` | Safety gate, REVIEW, and risk branch | D1-required; D2 proposal pending human review | SB-01, FR-04, INV-01, INV-02 |
 | `POL-PROPOSAL-01` | Portfolio Manager and model proposal source | D1-required; D2 proposal pending human review | SB-01, INV-01 |
-| `POL-SNAP-01` | Permanent/recovery snapshot layout and cleanup dependency | D1-required; D2 proposal pending human review | FR-02, FR-05, FR-06, INV-01 |
+| `POL-SNAP-01` | Permanent/recovery envelope layout and cleanup dependency | D1-required; D2 proposal pending human review | FR-02, FR-05, FR-06, INV-01 |
 | `POL-RISK-01` | Risk input authority and applicability | D1 draft; D2 proposal pending human review | FR-04, INV-02 |
 | `POL-RISK-02` | Risk policy snapshot and exact comparison | D1 draft; provisional values; pending human review | FR-04, INV-02 |
 | `POL-RISK-03` | Risk evidence, input artifact, and memory summary | D1 draft; D2 proposal pending human review | FR-04, INV-01, INV-02 |
 | `POL-PUB-01` | Publish protocol and retries | D1-required; D2 proposal pending human review | FR-02, INV-01, FR-06 |
 | `POL-PUB-02` | Post-commit corruption and diagnostics | D1-required; D2 proposal pending human review | FR-02, INV-01, FR-05 |
-| `POL-LOCK-01` | Shared run ownership, lock order, and fencing | D1-required; D2 proposal pending human review | FR-02, FR-06, INV-01 |
-| `POL-ARCH-01` | History, section manifest, and export | D1 draft; D2 proposal pending human review | FR-05, INV-01, SR-01 |
-| `POL-REC-01` | Recovery snapshot and idempotency; claim/fencing deferred | D1 draft; D2 proposal pending human review | FR-06, QR-02 |
+| `POL-LOCK-01` | Single-process guard; multi-worker locking deferred | D1-required for guard; lease/fencing deferred | FR-02, FR-06, INV-01 |
+| `POL-ARCH-01` | History and section manifest; export deferred | D1 draft; D2 proposal pending human review | FR-05, INV-01, SR-01 |
+| `POL-REC-01` | Single-process recovery envelope and idempotency; claim/fencing deferred | D1 draft; D2 proposal pending human review | FR-06, QR-02 |
 | `POL-PERF-01` | Recovery benchmark and provisional p95 | QR-02 deferred; future provisional target | QR-02 |
 | `POL-MEM-01` | Memory idempotency and lifecycle | D1-required; D2 proposal pending human review | INV-01, FR-04, FR-06 |
 | `POL-FIN-01` | Structured financial facts and metrics | D1 draft; D2 proposal pending human review | FR-07, FR-01, FR-03 |
@@ -55,6 +56,16 @@ Status values:
 | `POL-CTX-02` | Token limits and compression thresholds | work_assumption; provisional | FR-02, FR-08 |
 | `POL-RED-01` | Redaction boundaries and path confinement | D1-required; D2 proposal pending human review | SR-01, FR-05, FR-06 |
 | `POL-CHK-01` | Checkpoint resume matrix | work_assumption | D2 design |
+| `POL-COORD-01` | Coordinator/context scope | design_only | D3-02, QS-10 |
+| `POL-GUARD-01` | Single-process startup/duplicate-start guard | design_only | FR-06 |
+| `POL-ENV-01` | Envelope ownership/version/mutability | design_only | INV-01, INV-02, FR-02 |
+| `POL-DIGEST-01` | Content digest projections and order | design_only | INV-01, FR-02, FR-04 |
+| `POL-STREAM-01` | Intermediate stream/debug handling | design_only | SB-01, SR-01 |
+| `POL-GR-01` | GR-01 Stage A/B reference freeze | pending reference | GR-01 |
+| `POL-SR-02` | Path read/write confinement and platform matrix | design_only | SR-02 |
+| `POL-PR-01` | PR-01 offline paired measurement | provisional | PR-01 |
+| `POL-QR-01` | QR-01 replay-then-live evaluation | blocked; provisional thresholds | QR-01 |
+| `POL-CR-01` | CR-01 contract v2 local cost | blocked; pending prices/target | CR-01 |
 | `POL-PERM-01` | Runtime AI permissions | design_only | SR-01, FR-04, FR-07 |
 | `POL-PERM-02` | Coding-agent permissions | design_only | D2 governance |
 
@@ -104,7 +115,9 @@ Status values:
 ### POL-CACHE-03 — Single-flight and run isolation
 
 - **Status**: D1-required; D2 proposal pending human review.
-- **Rules**: same `data_query_key` has one in-flight `query_execution`; concurrent callers wait; each run has its own run cache; existing vendor caches are recorded separately.
+- **Rules**: same `data_query_key` has one in-flight `query_execution`; concurrent callers join the immutable result; each run has its own run cache; existing vendor caches are recorded separately.
+- **Cancellation/timeout**: a cancelled or timed-out execution releases the single-flight slot and records a terminal/retryable outcome; no permanent lock or leaked in-flight entry.
+- **Retry ownership**: retries performed inside an existing vendor adapter must be reported to and counted by the unified retry/fallback budget; they must not stack as hidden extra retries.
 - **Failure**: inconsistency terminates the run; new `run_id` for diagnosis.
 - **Change impact**: `DataAccessService`, concurrency tests, evidence counters.
 
@@ -113,8 +126,9 @@ Status values:
 - **Status**: D1-required; D2 proposal pending human review.
 - **Critical profile**: `profile_version`, `profile_source`, `contract_version`, `analysis_mode`, `asset_type`, per-requirement/component contracts, and `profile_hash`.
 - **Run clock**: `as_of_date`, `now_utc`, `timezone`, `clock_source`, `analysis_mode`, `mode_source`; fixed at start; resume/replay inherits unless an override is recorded; a future date is rejected.
-- **Coverage snapshot**: `critical_profile_hash`, `snapshot_hash`, `critical_gap_ids`, structured gaps, `provenance_digest`, `computed_by=program`.
-- **Rule**: `coverage_snapshot.critical_profile_hash` must equal `critical_profile.profile_hash`.
+- **Coverage view**: `view_version`, `profile_hash`, executed/missing refs, gaps, sources, status; program-only, monotonic, immutable per version.
+- **Coverage snapshot**: `snapshot_version`, `critical_profile_hash`, `snapshot_hash`, `view_version`, `critical_gap_ids`, structured gaps, `provenance_digest`, `computed_by=program`, `sealed_at`; sealed once before the gate.
+- **Rule**: `coverage_snapshot.critical_profile_hash` must equal `critical_profile.profile_hash`; a late result cannot mutate a used snapshot; the five-role brief records `coverage_view_version`.
 
 ### POL-PRE-01 — Mandatory data preflight
 
@@ -204,13 +218,13 @@ Status values:
 - **Assumptions**:
   - running manifest before model calls;
   - staged publish with atomic per-file writes;
-  - order: running manifest -> analysts/metrics/block -> brief/provisional view -> research/risk debate -> final coverage -> gate/record -> sections -> memory plan/reservation -> recovery snapshot (complete/read-back verified) -> memory idempotent write -> permanent snapshot write/validate -> terminal candidate + INV-01 -> ownership-protected atomic commit -> post-commit read -> cleanup last;
+  - order: running manifest -> analysts/metrics/block -> brief/provisional view -> research/risk debate -> final coverage -> gate/record -> sections -> memory plan/reservation -> recovery envelope (complete/read-back verified) -> memory idempotent write -> permanent snapshot write/validate -> terminal candidate + INV-01 -> ownership-protected atomic commit -> post-commit read -> cleanup last;
   - terminal manifest `run_status=completed` is the unique commit point; no independent marker;
   - permanent-snapshot files are staged/validated outside the lock before commit, then promoted in the short commit critical section; they are authoritative only after commit; the permanent snapshot is never created after cleanup;
   - permanent artifacts form an acyclic hash DAG: `binding.json` contains no terminal-manifest hash; the terminal manifest hashes `publication_ref` files including binding; no file hashed by the manifest contains the manifest hash; an optional `diagnostics/commit_evidence.json` is audit-only;
-  - `record_hash` uses the §9.6.6 field-level projection with `artifact_binding.record_hash` and all result-carrying hashes removed; content digest and file-byte hash are distinct; only specified volatile run timestamps are excluded and risk/provenance evidence timestamps are preserved;
+  - `record_hash` uses the §9.6.9 field-level projection with `artifact_binding.record_hash` and all result-carrying hashes removed; content digest and file-byte hash are distinct; only specified volatile run timestamps are excluded and risk/provenance evidence timestamps are preserved;
   - INV-01 passes on the candidate and on post-commit read;
-  - memory remains pending/unreadable until commit; the allocation ledger appends `reserved` before the recovery snapshot, `failed` on abort before a completed manifest, and a rebuildable `committed` projection only after commit plus read verification; ledger write failure after commit does not block the manifest authority;
+  - memory remains pending/unreadable until commit; the allocation ledger appends `reserved` before the recovery envelope, `failed` on abort before a completed manifest, and a rebuildable `committed` projection only after commit plus read verification; ledger write failure after commit does not block the manifest authority;
   - handled failure before commit uses the failure path;
   - forced termination preserves only the last running manifest;
   - 3 publish attempts with bounded backoff; no model calls; same `run_id`/`record_version`/`record_hash`; no duplicate memory;
@@ -221,43 +235,44 @@ Status values:
 
 - **Status**: D1-required; D2 proposal pending human review.
 - **Rule**: a post-commit read validation failure does not overwrite the committed terminal manifest, does not create a compensating `failed` state, and does not create a second publication. The committed manifest remains immutable evidence.
-- **Handling**: the record is rejected as successful formal output; history/export return `CORRUPT_RECORD` without partial content; an independent diagnostic records the corrupt run, failed check, and artifact references. Manual repair is required.
+- **Handling**: the record is rejected as successful formal output; history returns `CORRUPT_RECORD` without partial content; an independent diagnostic records the corrupt run, failed check, and artifact references. Manual repair is required. Export is deferred.
 - **Change impact**: `ArtifactPublisher`, `PublicationStatusReader`, `HistoryService`, `ExportService`, diagnostics, tests.
 - **Related decision**: ARCH-OD-15.
 
-### POL-SNAP-01 — Permanent/recovery snapshot layout and cleanup dependency
+### POL-SNAP-01 — Permanent/recovery envelope layout and cleanup dependency
 
 - **Status**: D1-required; D2 proposal pending human review.
-- **Layout**: proposed in blueprint §9.6.1. Permanent `publication/` contains record, binding, report/section manifest, final-state, risk, metrics, memory binding, and versions. Temporary `recovery/` contains the self-contained recovery envelope. `locks/` contains `run.lock` and `lease.json`; `diagnostics/` contains independent corruption records.
-- **Dependency**: report, history, export, and memory binding validation depend on `publication/` and the terminal manifest. They do not depend on `recovery/`. The hash DAG is acyclic: `binding.json` has no terminal-manifest hash; the terminal manifest hashes permanent files; no hashed file contains the manifest hash.
-- **Cleanup**: after commit and post-commit validation, `recovery/`, claim, and staging may be cleaned. A terminal `recovery_snapshot_summary` is audit-only.
+- **Layout**: proposed in blueprint §9.6.1. Permanent `publication/` contains record, binding, report/section manifest, final-state, risk, metrics, memory binding, and versions. Temporary `recovery/` contains the self-contained recovery envelope. `guards/` contains `startup.lock`; `locks/run.lock` and `locks/lease.json` are deferred; `diagnostics/` contains independent corruption records.
+- **Dependency**: report, history, and memory binding validation depend on `publication/` and the terminal manifest. They do not depend on `recovery/`. Export is deferred; if reactivated, it must use the same material. The hash DAG is acyclic: `binding.json` has no terminal-manifest hash; the terminal manifest hashes permanent files; no hashed file contains the manifest hash.
+- **Cleanup**: after commit and post-commit validation, `recovery/`, claim, and staging may be cleaned. A terminal `recovery_envelope_summary` is audit-only.
 - **Change impact**: `PublicationSnapshotStore`, `RecoverySnapshotStore`, `ArtifactPublisher`, `HistoryService`, `ExportService`.
 - **Related decision**: ARCH-OD-15/23.
 
-### POL-ARCH-01 — History, section manifest, and export
+### POL-ARCH-01 — History and section manifest (export deferred)
 
 - **Status**: D1 draft; D2 proposal pending human review.
-- **History**: only committed + read-time INV-01; optional ticker/date filters intersect; strict `YYYY-MM-DD`; order analysis_date desc/ticker asc/run_id asc; limit 1-500 default 50; offset >=0 default 0; malformed/boolean/out-of-range -> `INVALID_FILTER`; bounded page with total_matches/returned/truncated/next_offset; corrupt records counted/warned separately.
+- **History**: only committed + read-time INV-01; optional ticker/date filters intersect; strict `YYYY-MM-DD`; order analysis_date desc/ticker asc/run_id asc; limit 1-500 default 50; offset >=0 default 0; malformed/boolean/out-of-range -> `INVALID_FILTER`; bounded page with total_matches/returned/truncated/next_offset; corrupt records counted/warned separately. Prefer on-demand scan of committed publication roots; a rebuildable derived index is optional, non-authoritative, and revalidated on read.
 - **Retrieval**: `get_run` revalidates terminal manifest, binding, complete report, section manifest, and permanent references; unknown -> `NOT_FOUND`; corrupt -> `CORRUPT_RECORD`; no partial content.
 - **Sections**: only permanent publication snapshot + versioned renderer + recorded capability set; only applicable non-empty sections with path/fields/byte size/SHA-256; no foreign/stale/mixed.
-- **Export**: `display_copy` vs `verified_package`; closure for every `reused_decision_ref`; unavailable proof -> `historical_reference_unverified`; non-empty target -> `EXPORT_CONFLICT`; legacy unchanged.
+- **Export (deferred)**: if reactivated, `display_copy` vs `verified_package`; closure for every `reused_decision_ref`; unavailable proof -> `historical_reference_unverified`; non-empty target -> `EXPORT_CONFLICT`; legacy unchanged.
 - **Change impact**: `HistoryService`, `PublicationSnapshotStore`, `ReportSectionManifestBuilder`, `ExportService`, `SecretRedactor`.
 - **Related decision**: ARCH-OD-05 (index strategy).
 
-### POL-REC-01 — Recovery snapshot, claim, fencing, and idempotency
+### POL-REC-01 — Single-process recovery, envelope, and idempotency
 
 - **Status**: D1 draft; D2 proposal pending human review.
-- **First check**: read the terminal manifest and verify the permanent publication before reading `recovery/`. Committed + INV-01 + identity match -> idempotent success (no snapshot required); committed + identity conflict -> `RUN_ID_CONFLICT`; committed + corrupt permanent artifacts -> `CORRUPT_RECORD`; neither overwrites the manifest or auto-republishes.
-- **Continuation order**: only for an uncommitted record, determine the memory reuse/new plan and reserve the version -> write the recovery snapshot containing the plan -> idempotent memory write -> permanent snapshot write/validate -> terminal candidate + INV-01 -> commit -> post-commit read -> cleanup.
-- **Snapshot**: `snapshot_ready` = complete, durable, read-back-verified, self-contained, redacted; includes formal decision/binding, terminal candidate identity, section manifest/fixed render inputs, risk/policy references, original memory identity + reserved version, metric bundle when applicable, and versions; all references resolve internally with digests.
+- **First check**: read the terminal manifest and verify the permanent publication before reading `recovery/`. Committed + INV-01 + identity match -> idempotent success (no envelope required); committed + identity conflict -> `RUN_ID_CONFLICT`; committed + corrupt permanent artifacts -> `CORRUPT_RECORD`; neither overwrites the manifest or auto-republishes.
+- **Continuation order**: only for an uncommitted record, determine the memory reuse/new plan and reserve the version -> write the `RecoveryEnvelope` containing the plan -> idempotent memory write -> permanent files write/validate -> terminal candidate + INV-01 -> commit -> post-commit read -> cleanup.
+- **Envelope**: `snapshot_ready` = complete, durable, read-back-verified, self-contained, redacted; includes formal decision/binding, terminal candidate identity, section manifest/fixed render inputs, risk/policy references, original memory identity + reserved version, metric bundle when applicable, and versions; all references resolve internally with digests.
 - **No model/data**: no LLM, external data, analysis graph, settlement, or reflection.
-- **Claim/fencing**: uses the same `RunOwnershipLock` as normal publication; atomic per `run_id`; owner + fencing token; one active worker; stale lease reclaim increments the token; ownership/fencing is checked in the same critical section as each protected write; lost-lease writes rejected; failure isolated; retries bounded; at most one committed publication. Lock order is run lock then memory lock.
-- **Lock-external preparation**: reads, parsing, rendering, and hashing run outside the locks; staged content is revalidated against current ownership/publication state inside the short critical section before use.
-- **Identity**: terminal manifest first. Completed + matching identity -> idempotent success without `recovery/`; different content -> `RUN_ID_CONFLICT`; committed but permanent artifacts corrupt -> `CORRUPT_RECORD`; only uncommitted/absent continues with the recovery snapshot.
+- **Current guard**: one simple exclusive `StartupRecoveryGuard` and duplicate-start guard with bounded retry; unsupported concurrent/multi-worker recovery is rejected. **No lease/fencing/takeover is current.** Lock order when needed is guard -> memory lock.
+- **Lock-external preparation**: reads, parsing, rendering, and hashing run outside the guard; staged content is revalidated inside the short check-and-write boundary.
+- **Identity**: terminal manifest first. Completed + matching identity -> idempotent success without `recovery/`; different content -> `RUN_ID_CONFLICT`; committed but permanent artifacts corrupt -> `CORRUPT_RECORD`; only uncommitted/absent continues with the recovery envelope.
 - **Memory**: may create the one original planned entry or complete it idempotently; never a different/duplicate entry; memory-disabled stays disabled.
 - **Status**: `analysis_complete`, `snapshot_ready`, `committed`, `failed`, `quarantined`, `corrupt` are distinct; only committed + read-time INV-01 is history. Post-commit corruption preserves the committed manifest and uses an independent diagnostic.
-- **Change impact**: `RecoveryService`, `RecoverySnapshotStore`, `RecoveryClaimStore`, `ArtifactPublisher`, `MemoryService`.
-- **Related decision**: ARCH-OD-06 (lease/retry defaults).
+- **Deferred extension**: `RecoveryClaimStore`, `RunOwnershipLock`, `lease.json`, fencing, takeover, and multi-worker claims. A new ADR/amendment is required.
+- **Change impact**: `RecoveryService`, `StartupRecoveryGuard`, `RecoverySnapshotStore`, `ArtifactPublisher`, `MemoryService`.
+- **Related decision**: ARCH-OD-06 (deferred lease/fencing), ARCH-OD-28 (startup guard).
 
 ### POL-PERF-01 — Recovery benchmark and provisional p95
 
@@ -267,17 +282,13 @@ Status values:
 - **Target**: 2.000 s p95 **provisional** (OQ-13). Correctness and model-free behavior are zero-tolerance; no validation/hash/path/manifest/read-time check may be skipped to meet the target.
 - **Change impact**: `RecoveryService`, benchmark harness, evidence table.
 
-### POL-LOCK-01 — Shared run ownership, lock order, and fencing
+### POL-LOCK-01 — Single-process guard and deferred ownership locking
 
-- **Status**: D1-required; D2 proposal pending human review.
-- **Scope**: normal publication and recovery use the same per-run `RunOwnershipLock`, owner identity, and fencing token. Single-user local filesystem only; no distributed consensus or second commit marker.
-- **OS file lock vs logical lease**: `run.lock` is an OS advisory file lock held only for short critical sections (read lease, update owner/token/expiry, protected write); it is never held for the whole recovery or while waiting. `lease.json` is the logical lease (`owner_id`, `fencing_token`, `lease_expires_at`, status). Lease expiry does not release the OS file lock.
-- **Critical section**: acquire the run file lock, re-read owner/fencing, compare with the caller token, perform the protected write, release. The check and write are in the same critical section; a pre-check outside the write is insufficient.
-- **Order**: run lock -> memory lock. Never acquire the run lock while holding the memory lock. Memory-only operations may hold the memory lock alone; if they need run ownership, acquire the run lock first.
-- **Takeover**: acquire the run file lock first (bounded wait or `LOCK_BUSY`); if acquired and the lease is expired, increment the fencing token and write the new owner. If a paused old process still holds the file lock, wait or return lock busy; never delete the lock file or force-unlock. The old owner rechecks the token on every protected write and is rejected with `LostOwnership`.
-- **Release**: process exit releases the OS file lock if the OS does; the logical lease may remain active until expiry. Retry reacquires and re-checks. Cleanup releases only its own file lock and never removes another owner's claim or permanent records.
-- **Change impact**: `RunOwnershipLock`, `ArtifactPublisher`, `RecoveryService`, `MemoryService`, tests.
-- **Related decision**: ARCH-OD-16.
+- **Status**: current scope: single-process guard; multi-worker ownership is deferred.
+- **Current**: normal publication and recovery share one simple exclusive `StartupRecoveryGuard`; duplicate start is rejected or waits with bounded retry; unsupported concurrent recovery is rejected. Guard order is guard -> memory lock.
+- **Deferred**: `RunOwnershipLock`, `lease.json`, owner/fencing tokens, takeover, stale-lease reclaim, and multi-worker claims. If reactivated, a new ADR/amendment must define the OS file lock vs logical lease distinction, bounded wait/`LOCK_BUSY`, takeover, lost-owner rejection, and release rules.
+- **Change impact**: `StartupRecoveryGuard`, `ArtifactPublisher`, `RecoveryService`, `MemoryService`, tests.
+- **Related decision**: ARCH-OD-16 (deferred), ARCH-OD-28 (current).
 
 ### POL-MEM-01 — Memory idempotency and lifecycle
 
@@ -305,10 +316,10 @@ Status values:
 - **Timing**: facts, metrics, the metric block, and the conflict check occur after the fundamentals report exists and before research debate consumes it; final publication only persists the existing result.
 - **Facts**: each fact separates **disclosure fields** (subject/accession/filing_ref/filed_at/form/source_fact_ref and raw concept/value/unit/currency/period/fiscal/sign) that preserve original evidence from **canonical fields** (fact_id/concept/period/fiscal identity/span/cumulative duration/sign/unit/currency/lineage) that may be validated or derived only by a recorded versioned rule with input evidence and source refs. A filing's fiscal year/quarter is not each historical fact's period identity. Missing/multiple plausible sources return unavailable/ambiguous; never use date proximity, equal value, column order, or a default. CIK never substitutes for accession/filing_ref.
 - **Visibility**: `filed_at <= as_of_date`; latest filed restatement on or before as-of; near dates/equal values/same-day multiple accessions never merged without lineage; ambiguity -> typed n/a.
-- **Metrics**: revenue YoY (quarterly/annual), QoQ, margins, TTM revenue/EPS, fiscal-year P/E and TTM P/E separately, current ratio, liabilities-to-assets, FCF, FCF YoY.
-- **Formulas**: YoY uses prior fiscal year same quarter/span/cumulative duration; QoQ uses immediately preceding quarter; TTM = annual + current YTD - prior matching YTD; no quarter by subtraction; capex normalized positive; zero denominator/non-positive base/negative EPS/missing/currency/unit/period mismatch -> n/a.
+- **Metrics**: current direct metrics only: revenue YoY (quarterly/annual), QoQ, margins, fiscal-year P/E, current ratio, liabilities-to-assets, current-span FCF. **TTM revenue/EPS/P-E, FCF YoY, and quarter-by-subtraction are deferred.**
+- **Formulas**: YoY uses prior fiscal year same quarter/span/cumulative duration; QoQ uses immediately preceding quarter; current-span FCF uses the reported span; no quarter by subtraction; capex normalized positive; zero denominator/non-positive base/negative EPS/missing/currency/unit/period mismatch -> n/a. TTM formulas are deferred.
 - **Authority**: program-appended metric block regardless of tool use; metric block is numeric authority; conflict detection limited to structured metric claims; free-form prose limitation recorded.
-- **Persistence**: `metric_evidence_bundle` in publication/recovery snapshot; recovery never refetches; missing/corrupt bundle blocks metric-dependent publication.
+- **Persistence**: `metric_evidence_bundle` in publication/recovery envelope; recovery never refetches; missing/corrupt bundle blocks metric-dependent publication.
 - **Disablement**: if `FR-07` is not enabled, no metric block requirement; if enabled, the bundle must be persisted.
 - **Related decisions**: OQ-14 (reference manifest), OQ-15 (TTM EPS scope).
 
@@ -333,7 +344,7 @@ Status values:
 - **Measurement**: token measurement uses the selected model/tokenizer; characters auxiliary.
 - **Costs**: added output tokens = brief-generation output; reduced downstream input tokens = full-report input - brief input; added_output_cost = added_output_tokens x output price; reduced_input_cost_saving = reduced_downstream_input_tokens x input price; net_cost = added - reduced; net_tokens = added - reduced; negative means saving; if either price is missing, cost fields are null.
 - **Quality**: record fidelity, key-number/gap preservation, `quality_loss` (positive = degradation), approved `quality_loss_max`, zero safety escapes, latency.
-- **Lifecycle**: `blocked`, `ready`, `accepted`, `failed` with the frozen contract's evidence conditions; no saving claimed before `accepted`; unapproved threshold blocks acceptance.
+- **Lifecycle**: `blocked`, `ready`, `accepted`, `failed` with the frozen contract's evidence conditions; no saving claimed before `accepted`; unapproved threshold blocks CR-01 acceptance. **FR-08 functional acceptance is independent of CR-01.**
 - **Related decision**: OQ-16.
 
 ### POL-CTX-01 — AI context layers
@@ -354,13 +365,13 @@ Status values:
 ### POL-RED-01 — Redaction boundaries and path confinement
 
 - **Status**: D1-required; D2 proposal pending human review.
-- **In-scope**: manifest, final-state, risk input/diagnostic, risk policy, memory entry, report metadata/content, section manifest, metric bundle, archive, history index/responses, recovery snapshot/diagnostics, export diagnostics, logs, preferences, error/gate/availability records, formal API return.
+- **In-scope**: manifest, final-state, risk input/diagnostic, risk policy, memory entry, report metadata/content, section manifest, metric bundle, archive, history index/responses, recovery envelope/diagnostics, export diagnostics, logs, preferences, error/gate/availability records, formal API return.
 - **Out of scope**: vendor/provider logs, shell history, OS/network captures, external service logs.
-- **Checks**: known-secret exact match; versioned pattern rules with version/source/effective_at; per-write `write_scan_status`; final `run_scan_status`; separate counters and scope.
+- **Checks**: known-secret exact match; versioned pattern rules with version/source/effective_at; explicit short/empty-secret rules (empty never treated as a match; too-short values are not scanned as known secrets); per-write `write_scan_status`; final `run_scan_status`; separate counters and scope.
 - **URLs**: audit = scheme/host/path; restore = scheme/host/path + allowlisted non-sensitive query params + `secret_ref` names; no inline userinfo/sensitive query/fragment.
 - **Redaction**: replace only secret values; preserve structure/status/reason codes/counts/timings/source/vendor/ticker/date/model/path; over-redaction forbidden.
 - **Failure**: scanner/sanitizer/rule-version failure or unredactable secret fails closed; dangerous content/formal output blocked; minimal secret-free incident allowed; run failed at security stage.
-- **Path**: history/export/recovery paths confined; traversal/absolute/symlink escape/out-of-root forbidden; non-empty export -> `EXPORT_CONFLICT`.
+- **Path**: history/recovery paths confined; traversal/absolute/symlink escape/out-of-root forbidden. If export is reactivated, a non-empty target -> `EXPORT_CONFLICT`.
 - **Claim limit**: a clean scan proves only the defined scope/rules/fixtures.
 
 ### POL-CHK-01 — Checkpoint resume matrix
@@ -373,6 +384,66 @@ Status values:
 - **Before recovery phase is enabled**: `ResumeRejected(unsupported_phase)`; start a new run; no journal inheritance.
 - **Distinction**: checkpoint resume is not startup publication recovery.
 - **Related decision**: D2-OD-03.
+
+### POL-COORD-01 — Coordinator/context scope
+
+- **Status**: design_only.
+- **Rule**: `RunCoordinator` orders stages/handoffs only; `RunContext` owns identity, fixed clock, versions, paths, dependency references. Neither contains coverage/risk/metric/context/gate/publication policy.
+- **Change impact**: `RunCoordinator`, `RunContext`, all services.
+
+### POL-GUARD-01 — Single-process startup/duplicate-start guard
+
+- **Status**: design_only; current `FR-06`.
+- **Rule**: one exclusive startup guard; duplicate start rejected or bounded wait; unsupported concurrent recovery rejected; no lease/fencing/takeover claim; guard held only for check-and-write.
+- **Change impact**: `StartupRecoveryGuard`, `RecoveryService`, `ArtifactPublisher`, tests.
+
+### POL-ENV-01 — Envelope ownership/version/mutability
+
+- **Status**: design_only.
+- **Rule**: each envelope has one owner, schema version, mutability rule, error contract, and serialization boundary; consumers do not read mutable working objects.
+- **Change impact**: all envelope producers/consumers, publisher, memory, history, context.
+
+### POL-DIGEST-01 — Content digest projections and order
+
+- **Status**: design_only.
+- **Rule**: `proposal_digest`, `decision_digest`, `input_digest`, `policy_digest`, `entry_digest`, `evidence_digest`, and `record_hash` follow blueprint §9.6.9; redaction precedes digesting; self/result hashes excluded; timestamp removal is not blanket.
+- **Change impact**: `Canonicalizer`, `SafetyGate`, `ArtifactPublisher`, `MemoryService`, tests.
+
+### POL-STREAM-01 — Intermediate stream/debug handling
+
+- **Status**: design_only.
+- **Rule**: `stream_run`/debug output is intermediate, unapproved, scanned; no raw model rating is formal; no API/display may present it as the final decision.
+- **Change impact**: `stream_run`, CLI display, API adapters, tests.
+
+### POL-PR-01 — PR-01 offline paired measurement
+
+- **Status**: provisional; measurement plan.
+- **Rule**: fixed offline workload; separate startup/terminal pre-replace samples; 20 enabled/disabled pairs; retain negative differences; report percent and absolute p95 separately. Provisional thresholds do not block FR-08 functional acceptance.
+- **Change impact**: `ArtifactPublisher`, benchmark harness, evidence table.
+
+### POL-QR-01 — Replay-then-live evaluation
+
+- **Status**: blocked pending snapshots/approval; thresholds provisional.
+- **Rule**: fixed replay first; cache A/B keeps risk policy and input fixed; risk-policy A/B separate; live sampling only after replay passes; zero safety escapes.
+- **Change impact**: `DataAccessService`, `SafetyGate`, risk services, evaluation harness.
+
+### POL-CR-01 — Contract v2 local cost
+
+- **Status**: blocked pending prices/targets.
+- **Rule**: contract v2 local-cost formulas; usage/attempt rules; missing price or target -> blocked/null; cost, token, quality, safety, and saving claims separate. FR-08 functional acceptance is independent.
+- **Change impact**: `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness.
+
+### POL-GR-01 — GR-01 reference freeze staging
+
+- **Status**: pending reference; Stage A is implementation-blocking, Stage B is post-implementation.
+- **Rule**: Stage A (reference manifest, companies/periods/sources, independent values) must pass before the first FR-07 application implementation. Stage B verifies implementation timing/version after start. This architecture round is not FR-07 implementation; no reference or approval is invented.
+- **Change impact**: `FinancialFactService`, reference harness, FR-07.
+
+### POL-SR-02 — Path read/write confinement and platform matrix
+
+- **Status**: design_only; acceptance-relevant.
+- **Rule**: confine reads and writes to configured archive/history/recovery roots; reject traversal/absolute paths; handle symlink/junction escapes and operation-time path changes; record the supported platform matrix; an untested platform is not marked passing. Export conflict is deferred.
+- **Change impact**: `PathGuard`, `HistoryService`, `RecoveryService`, tests.
 
 ### POL-PERM-01 — Runtime AI permissions
 
@@ -401,7 +472,7 @@ Key invariants:
 - A handled coverage/risk block is a completed run with a blocked formal decision; a gate exception is a failed run.
 - Recovery never invents approval and never creates a second publication.
 - Brief rejection never changes the full report or formal record.
-- History/export never returns unverified or partial content.
+- History never returns unverified or partial content. Export is deferred.
 - Disabled capabilities have explicit rejection/degradation, not silent bypass.
 
 ---
@@ -419,13 +490,13 @@ If a work assumption changes, revisit:
 | Risk input/policy | `RiskInputValidator`, `RiskPolicyResolver`, `PortfolioRiskEvaluator`, gate | `architecture-blueprint.md`, `invariants.md`, `evaluation-table.md`, `open-decisions.md` |
 | Publish/recovery order | `ArtifactPublisher`, `RecoveryService`, `MemoryService` | `architecture-blueprint.md`, `memory-design.md`, `open-decisions.md` |
 | Portfolio Manager/model proposal source | `PortfolioManagerAdapter`, `SafetyGate` | `architecture-blueprint.md`, `adr/002-full-scope-add-r.md`, `open-decisions.md` |
-| Permanent/recovery snapshot layout | `PublicationSnapshotStore`, `RecoverySnapshotStore`, `HistoryService` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
-| Shared run lock/ownership | `RunOwnershipLock`, `ArtifactPublisher`, `RecoveryService` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
+| Permanent/recovery envelope layout | `PublicationSnapshotStore`, `RecoverySnapshotStore`, `HistoryService` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
+| Single-process guard (multi-worker locking deferred) | `StartupRecoveryGuard`, `ArtifactPublisher`, `RecoveryService` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
 | Post-commit corruption handling | `ArtifactPublisher`, `PublicationStatusReader`, `HistoryService` | `architecture-blueprint.md`, `invariants.md`, `trace-matrix.md` |
 | Memory reservation ledger | `MemoryReservationStore`, `MemoryService` | `memory-design.md`, `invariants.md`, `open-decisions.md` |
 | Brief replacement/timing/markers | `DownstreamBriefBuilder`, `ContextAssembler` | `architecture-blueprint.md`, `permission-model.md`, `open-decisions.md` |
 | Financial adapter/graph placement | `FinancialFactService`, `SecEdgarAdapter`, `FundamentalsAdapter` | `architecture-blueprint.md`, `permission-model.md`, `open-decisions.md` |
-| History/export semantics | `HistoryService`, `PublicationSnapshotStore`, `ExportService` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
+| History semantics (export deferred) | `HistoryService`, `PublicationSnapshotStore` | `architecture-blueprint.md`, `invariants.md`, `open-decisions.md` |
 | Metric formulas/periods | `FinancialFactService`, `FinancialMetricService` | `architecture-blueprint.md`, `invariants.md`, `evaluation-table.md`, `open-decisions.md` |
 | Brief budgets/token/quality | `DownstreamBriefBuilder`, `ContextAssembler`, `TokenCounter` | `architecture-blueprint.md`, `evaluation-table.md`, `open-decisions.md` |
 | Token limits/compression | `ContextAssembler`, prompts, cost metrics | `architecture-blueprint.md`, `evaluation-table.md`, `open-decisions.md` |
@@ -438,8 +509,9 @@ If a work assumption changes, revisit:
 
 | Class | Items | Effect |
 |---|---|---|
-| Implementation-start blockers | Risk input source (OQ-09), risk policy locator/approval record (ARCH-OD-03), shared lock/lease format (ARCH-OD-16), permanent/recovery layout (ARCH-OD-15/23), record_hash projection (ARCH-OD-24), memory reservation format/authority (ARCH-OD-20), SEC query contract (ARCH-OD-19), PM adapter/model-proposal source (ARCH-OD-21), uncommitted-memory status protocol (ARCH-OD-22), tokenizer/model (ARCH-OD-04) | Must be decided before the affected module starts; not a claim of approval. |
-| Acceptance-only | Risk 30%/5% approved thresholds (OQ-10 approved-policy claims), future QR-02 2.000 s/platform (OQ-13; deferred), brief budgets/quality/cost thresholds and claim boundary (OQ-16), behavior-eval snapshots (D2-OD-09), manifest overhead (OQ-05) | Do not block starting implementation; block acceptance/completion claims. |
+| Implementation-start blockers | Risk input source (OQ-09), risk policy locator/approval record (ARCH-OD-03), permanent/recovery layout (ARCH-OD-15/23), digest projection (ARCH-OD-24/27), memory reservation format/authority (ARCH-OD-20), SEC query contract (ARCH-OD-19), PM adapter/model-proposal source (ARCH-OD-21), uncommitted-memory status protocol (ARCH-OD-22), tokenizer/model (ARCH-OD-04), component mapping (ARCH-OD-25), envelope contract (ARCH-OD-26), startup guard (ARCH-OD-28) | Must be decided before the affected module starts; not a claim of approval. |
+| Acceptance-only | Risk 30%/5% approved thresholds (OQ-10 approved-policy claims), future QR-02 2.000 s/platform (OQ-13; deferred), brief budgets/quality/cost thresholds and claim boundary (OQ-16), behavior-eval snapshots (D2-OD-09), manifest overhead (OQ-05), risk-policy evaluation (OQ-12) | Do not block starting implementation; block acceptance/completion claims. |
+| Deferred scope | Multi-worker lease/fencing/takeover, export, TTM/FCF YoY, QR-02 | Not current acceptance; requires a new ADR/amendment. |
 | Evidence/CI status | Unretained personal-proposal source (ARCH-OD-01) resolved; validator dependencies present locally but CI declaration remains (ARCH-OD-02) | Current `--check` passes; clean CI still needs dependency declaration. |
 
 ## 7. Status
@@ -447,4 +519,5 @@ If a work assumption changes, revisit:
 - Policies are classified as D1-required, D2 architecture proposals, provisional parameters, or design-only; none of the D2 additions is approved.
 - No policy is implemented; human review of D2 remains pending.
 - No threshold is measured unless it is a baseline observation.
-- D1 v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
+- D1 v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D2 v0.3 Round 3: logical components; single-process startup guard; lease/fencing/takeover/export/TTM/FCF YoY/QR-02 deferred.

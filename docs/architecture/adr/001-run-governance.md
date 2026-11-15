@@ -1,11 +1,12 @@
 # ADR 001 — Run Governance Architecture: Lean A Extended
 
-Status: **v0.2 — ADD-R round 2 draft / pending human review**  
-Decision status: **proposed**  
-Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
-Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
-Supersedes: ADR 001 v0.1 (D1 v1.9.0, 6 requirements)  
+Status: **v0.2 — amended by ADR 003 (ADD-R round 3)**
+Decision status: **proposed**
+Amendment note: ADR 003 introduces `RunCoordinator`, keeps `RunContext` to identity/clock/versions/paths/dependencies, treats components as logical responsibilities, and replaces current lease/fencing/takeover/multi-worker recovery with a single-process startup guard. TTM/FCF YoY/export remain deferred. ADR 001 remains the historical Lean A decision; where it says lease/fencing is current, ADR 003 governs the current scope.
+Date: 2026-11-11
+D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
+Supersedes: ADR 001 v0.1 (D1 v1.9.0, 6 requirements)
 Implementation status: **design only; no application code changed**
 
 ---
@@ -43,17 +44,17 @@ Retain **Lean A** and extend it with bounded capability services:
 - `AvailabilityIndex` produces the only critical profile and coverage snapshot.
 - The original terminal Portfolio Manager remains and is wrapped by `PortfolioManagerAdapter`; it consumes full reports, plans, risk debate, and past memory, and produces the unapproved `ModelProposal` with `source=portfolio_manager`. Trader/risk-debater output is never promoted to the final model proposal.
 - `SafetyGate` is the only formal decision authority and the **only caller** of `RiskInputValidator`, `RiskPolicyResolver`, and `PortfolioRiskEvaluator`; applicability runs once inside the gate and an applicable result is recorded even when coverage blocks. The evaluator is pure and has no writer, persistence, memory, or decision path.
-- `ArtifactPublisher` is the only formal publication writer. It determines the memory plan/reservation, writes/verifies the recovery snapshot before promising recovery, writes the original memory entry idempotently, persists/validates the permanent-snapshot files before the terminal commit, validates the terminal candidate, atomically commits, reads back, and cleans temporary material last. Recovery first checks the terminal manifest: committed+verified+identity match is idempotent success without `recovery/`; committed conflict/corruption returns a typed result without overwrite or republish; only uncommitted records proceed with the recovery snapshot. Recovery drives the same publisher and commit; it has no separate transaction or marker.
+- `ArtifactPublisher` is the only formal publication writer. It determines the memory plan/reservation, writes/verifies the recovery envelope before promising recovery, writes the original memory entry idempotently, persists/validates the permanent-snapshot files before the terminal commit, validates the terminal candidate, atomically commits, reads back, and cleans temporary material last. Recovery first checks the terminal manifest: committed+verified+identity match is idempotent success without `recovery/`; committed conflict/corruption returns a typed result without overwrite or republish; only uncommitted records proceed with the recovery envelope. Recovery drives the same publisher and commit; it has no separate transaction or marker.
 - Post-commit read failure keeps the committed terminal manifest immutable, rejects the record as success, and records an independent corruption diagnostic. It does not replace the committed manifest with `failed`.
 - `PublicationSnapshotStore` holds permanent committed records. `RecoverySnapshotStore` holds temporary pending envelopes. History and export read the permanent snapshot and revalidate on every read. Permanent artifacts form an acyclic hash DAG: `binding.json` has no terminal-manifest hash; the manifest hashes permanent files; no hashed file contains the manifest hash. `record_hash` is a canonical content digest with `artifact_binding.record_hash` and result-carrying hashes excluded; file-byte hashes are separate.
 - Only `DataAccessService` calls vendor adapters. `FinancialFactService` requests structured facts through it and normalizes the returned payload; the existing SEC statement capability is connected through an explicit SEC adapter boundary with shared cache, counters, and provenance. `FinancialMetricService` is pure; the metric block is computed before research debate and persisted in a `metric_evidence_bundle`.
 - `ContextAssembler` remains the only context entry. `DownstreamBriefBuilder` generates/reuses the five-role brief before context delivery, using the program coverage view and its version; for those roles the brief replaces the four full analyst reports. It does not mutate full/formal/history/recovery artifacts.
-- `MemoryService` remains the only memory writer. `MemoryReservationStore` provides a persistent, append-only allocation history with a high-water mark over all historical allocations, including failed; a failed version is never reissued; retries/recovery reuse their own reservation; `committed` is a derived projection, not a second commit condition. The reuse/new plan is fixed before the recovery snapshot.
-- Normal publication and recovery share one `RunOwnershipLock`, owner identity, and fencing token. The OS file lock is short-lived; the logical lease records activity. Ownership is checked in the same critical section as the protected write; takeover acquires the file lock and increments fencing; lease expiry does not release the file lock. The lock order is run lock then memory lock. Recovery reads/parses/renders outside the locks; staged content is revalidated against current ownership/publication state before use.
+- `MemoryService` remains the only memory writer. `MemoryReservationStore` provides a persistent, append-only allocation history with a high-water mark over all historical allocations, including failed; a failed version is never reissued; retries/recovery reuse their own reservation; `committed` is a derived projection, not a second commit condition. The reuse/new plan is fixed before the recovery envelope.
+- Current normal publication and recovery share one simple exclusive `StartupRecoveryGuard` and a duplicate-start guard with bounded retry. The guard is held only for the check-and-write/commit boundary; unsupported concurrent recovery is rejected. `RunOwnershipLock`, `lease.json`, owner/fencing tokens, and takeover are a deferred multi-worker extension, not current `FR-06`. The lock order, when needed, is guard then memory lock. Recovery reads/parses/renders outside the guard; staged content is revalidated before use.
 - All formal display, persistence, memory, history, export, and scoring consume `FinalizedRunRecord` or a verified committed publication.
 - Old writers are wrapped, made private, or require a finalized record; `propagate` keeps its `(final_state, signal)` return shape after publication.
 - The terminal manifest `run_status=completed` plus read-time `INV-01` is the only commit condition.
-- Implementation is phased: foundations; core closed loop + Portfolio Manager/model proposal + minimum memory identity/idempotency + FR-02-required section manifest/permanent snapshot/recovery snapshot; memory enhancements; financial metrics; history/startup scan/export/benchmark; brief/context; behavior evaluation. FR-02/INV-01/SB-01 obligations remain draft and are reviewed with the whole registry.
+- Implementation is phased: foundations; core closed loop + Portfolio Manager/model proposal + minimum memory identity/idempotency + FR-02-required section manifest/permanent snapshot/recovery envelope; memory enhancements; financial metrics; history/startup scan/export/benchmark; brief/context; behavior evaluation. FR-02/INV-01/SB-01 obligations remain draft and are reviewed with the whole registry.
 - Disabled capabilities reject or degrade explicitly; a disabled phase is not evidence that the requirement is satisfied.
 - `FR-02` recovery-snapshot generation, section manifest, terminal manifest, and binding; `INV-01` binding/read-time verification; and `SB-01` risk-branch behavior remain obligations in the draft registry. Draft status limits completion/acceptance claims.
 
@@ -61,7 +62,7 @@ Retain **Lean A** and extend it with bounded capability services:
 
 1. Full-scope drivers, constraints, and retain/adjust assessment.
 2. Risk: pure evaluator inside the shared gate (chosen over a separate risk gate, model-assisted risk, or pre-model filter).
-3. Publication lifecycle: extend the publisher with permanent/recovery snapshots and a single-process duplicate-start guard; multi-worker claim/fencing is deferred (chosen over a separate archive transaction, graph re-run, or directory-scan history).
+3. Publication lifecycle: extend the publisher with permanent/recovery envelopes and a single-process duplicate-start guard; multi-worker claim/fencing is deferred (chosen over a separate archive transaction, graph re-run, or directory-scan history).
 4. Financial metrics: deterministic fact/metric service through the unified data access (chosen over model arithmetic, a direct vendor path, or subtraction-derived quarters).
 5. Brief: a budgeted view inside the existing context assembler (chosen over a second assembler, character truncation, or an unchecked model brief).
 6. Integration, compatibility, phasing, and evidence review.
@@ -174,7 +175,7 @@ Before final implementation approval, each candidate must implement the same thi
 - one stock Buy with a passed risk evaluation and one with an over-limit/invalid input;
 - one gate block, one gate error, and one failure record;
 - one terminal manifest commit and read-time INV-01;
-- one recovery snapshot, a single-process duplicate-start guard, and model-free completion; multi-worker claim/fencing is deferred;
+- one recovery envelope, a single-process duplicate-start guard, and model-free completion; multi-worker claim/fencing is deferred;
 - one history retrieval and one export-conflict case;
 - one write/run secret scan;
 - one same-day memory reuse and one versioned decision.
@@ -251,4 +252,4 @@ Re-open this ADR if any of the following occurs:
 - Tests: **not started**.
 - Monitoring: **not implemented**.
 - Benefits: **not measured** except the baseline facts.
-- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
+- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.

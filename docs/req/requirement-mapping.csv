@@ -1,134 +1,259 @@
-original_requirement,original_fit_criterion,destination_requirement,destination_fit_criterion,disposition,note
-FR-01,FR-01-AC1,FR-01,FR-01-AC1,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC2,FR-01,FR-01-AC2,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC3,FR-01,FR-01-AC3,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC4,FR-01,FR-01-AC4,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC5,FR-01,FR-01-AC5,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC6,FR-01,FR-01-AC6,retained,same ID; field renamed to fit_criterion
-FR-01,FR-01-AC7,FR-01,FR-01-AC6;QR-01-AC1;QR-01-AC2;QR-01-AC3;QR-01-AC5,merged/split,deterministic obligation merged and live quality split
-FR-02,FR-02-AC1,FR-02,FR-02-AC1,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC2,FR-02,FR-02-AC2,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC3,FR-02,FR-02-AC3,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC4,FR-02,FR-02-AC4,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC5,FR-02,FR-02-AC5,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC6,FR-02,FR-02-AC6,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC7,FR-02,FR-02-AC7,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC8,PR-01,PR-01-AC1;PR-01-AC2;PR-01-AC3;PR-01-AC4,split,obligation split across destination fit criteria
-FR-02,FR-02-AC9,FR-02,FR-02-AC9,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC10,FR-02,FR-02-AC10,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC11,FR-02,FR-02-AC11,retained,same ID; field renamed to fit_criterion
-FR-02,FR-02-AC12,FR-05,FR-05-AC3,merged,obligation merged into destination fit criterion
-FR-02,FR-02-AC13,INV-01,INV-01-AC12,merged,obligation merged into destination fit criterion
-FR-02,FR-02-AC14,FR-06,FR-06-AC7,moved,obligation moved to destination requirement
-FR-02,FR-02-AC15,FR-02,FR-02-AC15,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC1,FR-03,FR-03-AC1,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC2,FR-03,FR-03-AC2,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC3,FR-03,FR-03-AC3,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC4,FR-03,FR-03-AC4,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC5,FR-03,FR-03-AC5,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC6,FR-03,FR-03-AC6,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC7,FR-03,FR-03-AC7,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC8,FR-03,FR-03-AC8,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC9,FR-03,FR-03-AC9,retained,same ID; field renamed to fit_criterion
-FR-03,FR-03-AC10,FR-03,FR-03-AC10,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC1,FR-04,FR-04-AC1,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC2,FR-04,FR-04-AC2,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC3,FR-04,FR-04-AC3,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC4,FR-04,FR-04-AC4,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC5,FR-04,FR-04-AC5,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC6,FR-04,FR-04-AC6,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC7,FR-04,FR-04-AC7,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC8,FR-04,FR-04-AC8,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC9,FR-04,FR-04-AC9,retained,same ID; field renamed to fit_criterion
-FR-04,FR-04-AC10,INV-02,INV-02-AC5,merged,obligation merged into destination fit criterion
-FR-04,FR-04-AC11,QR-01,QR-01-AC4,moved,obligation moved to destination requirement
-FR-05,FR-05-AC1,FR-05,FR-05-AC1,retained,same ID; field renamed to fit_criterion
-FR-05,FR-05-AC2,FR-05,FR-05-AC2,retained,same ID; field renamed to fit_criterion
-FR-05,FR-05-AC3,FR-05,FR-05-AC3,retained,same ID; field renamed to fit_criterion
-FR-05,FR-05-AC4,,deferred,deferred,deferred from current acceptance
-FR-06,FR-06-AC1,FR-06,FR-06-AC1,retained,same ID; field renamed to fit_criterion
-FR-06,FR-06-AC2,FR-06,FR-06-AC2,retained,same ID; field renamed to fit_criterion
-FR-06,FR-06-AC3,,deferred,deferred,deferred from current acceptance
-FR-06,FR-06-AC4,FR-06,FR-06-AC4,retained,same ID; field renamed to fit_criterion
-FR-06,FR-06-AC5,FR-06,FR-06-AC5,retained,same ID; field renamed to fit_criterion
-FR-06,FR-06-AC6,FR-06,FR-06-AC6,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC1,FR-07,FR-07-AC1,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC2,FR-07,FR-07-AC2,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC3,FR-07,FR-07-AC3,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC4,FR-07,FR-07-AC4,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC5,FR-07,FR-07-AC5,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC6,FR-07,FR-07-AC6,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC7,FR-07,FR-07-AC7,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC8,FR-07,FR-07-AC8,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC9,FR-07,FR-07-AC9,retained,same ID; field renamed to fit_criterion
-FR-07,FR-07-AC10,GR-01,GR-01-AC1;GR-01-AC2;GR-01-AC3;GR-01-AC4;GR-01-AC5;GR-01-AC6,split,obligation split across destination fit criteria
-FR-07,FR-07-AC11,FR-07,FR-07-AC11,retained,same ID; field renamed to fit_criterion
-FR-08,FR-08-AC1,FR-08,FR-08-AC1,retained,same ID; field renamed to fit_criterion
-FR-08,FR-08-AC2,FR-08,FR-08-AC2,retained,same ID; field renamed to fit_criterion
-FR-08,FR-08-AC3,FR-08,FR-08-AC3,retained,same ID; field renamed to fit_criterion
-FR-08,FR-08-AC4,FR-08,FR-08-AC4,retained,same ID; field renamed to fit_criterion
-FR-08,FR-08-AC5,CR-01,CR-01-AC1;CR-01-AC2;CR-01-AC3;CR-01-AC4;CR-01-AC5,split,obligation split across destination fit criteria
-QR-02,QR-02-AC1,QR-02,QR-02-AC1,retained,same ID; field renamed to fit_criterion
-QR-02,QR-02-AC2,QR-02,QR-02-AC2,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC1,SB-01,SB-01-AC1,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC2,SB-01,SB-01-AC2,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC3,SB-01,SB-01-AC3,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC4,SB-01,SB-01-AC4,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC5,SB-01,SB-01-AC5,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC6,SB-01,SB-01-AC6,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC7,SB-01,SB-01-AC7,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC8,SB-01,SB-01-AC8,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC9,SB-01,SB-01-AC9,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC10,SB-01,SB-01-AC10,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC11,SB-01,SB-01-AC11,retained,same ID; field renamed to fit_criterion
-SB-01,SB-01-AC12,SB-01,SB-01-AC12,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC1,INV-01,INV-01-AC1,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC2,INV-01,INV-01-AC2,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC3,INV-01,INV-01-AC3,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC4,INV-01,INV-01-AC4,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC5,INV-01,INV-01-AC5,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC6,INV-01,INV-01-AC6,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC7,INV-01,INV-01-AC7,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC8,INV-01,INV-01-AC8,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC9,INV-01,INV-01-AC9,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC10,INV-01,INV-01-AC10,retained,same ID; field renamed to fit_criterion
-INV-01,INV-01-AC11,FR-05,FR-05-AC3,merged,obligation merged into destination fit criterion
-INV-01,INV-01-AC12,INV-01,INV-01-AC12,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC1,INV-02,INV-02-AC1,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC2,INV-02,INV-02-AC2,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC3,INV-02,INV-02-AC3,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC4,INV-02,INV-02-AC4,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC5,INV-02,INV-02-AC5,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC6,INV-02,INV-02-AC6,retained,same ID; field renamed to fit_criterion
-INV-02,INV-02-AC7,QR-01,QR-01-AC4,moved,obligation moved to destination requirement
-SR-01,SR-01-AC1,SR-01,SR-01-AC1,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC2,SR-01,SR-01-AC2,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC3,SR-01,SR-01-AC3,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC4,SR-01,SR-01-AC4,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC5,SR-01,SR-01-AC5,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC6,SR-01,SR-01-AC6,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC7,SR-01,SR-01-AC7,retained,same ID; field renamed to fit_criterion
-SR-01,SR-01-AC8,SR-02,SR-02-AC1;SR-02-AC2,split,obligation split across destination fit criteria
-SR-01,SR-01-AC9,,deferred,deferred,deferred from current acceptance
-,FR-02-AC8,PR-01,PR-01-AC1,added,new fit criterion from split/move
-,FR-02-AC8,PR-01,PR-01-AC2,added,new fit criterion from split/move
-,FR-02-AC8,PR-01,PR-01-AC3,added,new fit criterion from split/move
-,FR-02-AC8,PR-01,PR-01-AC4,added,new fit criterion from split/move
-,FR-08-AC5,CR-01,CR-01-AC1,added,new fit criterion from split/move
-,FR-08-AC5,CR-01,CR-01-AC2,added,new fit criterion from split/move
-,FR-08-AC5,CR-01,CR-01-AC3,added,new fit criterion from split/move
-,FR-08-AC5,CR-01,CR-01-AC4,added,new fit criterion from split/move
-,FR-08-AC5,CR-01,CR-01-AC5,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC1,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC2,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC3,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC4,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC5,added,new fit criterion from split/move
-,FR-07-AC10,GR-01,GR-01-AC6,added,new fit criterion from split/move
-,FR-01-AC7,QR-01,QR-01-AC1,added,new fit criterion from split/move
-,FR-01-AC7,QR-01,QR-01-AC2,added,new fit criterion from split/move
-,FR-01-AC7,QR-01,QR-01-AC3,added,new fit criterion from split/move
-,FR-04-AC11,QR-01,QR-01-AC4,added,new fit criterion from split/move
-,FR-01-AC7,QR-01,QR-01-AC5,added,new fit criterion from split/move
-,SR-01-AC8,SR-02,SR-02-AC1,added,new fit criterion from split/move
-,SR-01-AC8,SR-02,SR-02-AC2,added,new fit criterion from split/move
+source_version,original_requirement,original_fit_criterion,destination_requirement,destination_fit_criterion,disposition,note
+pre-1.23.0,FR-01,FR-01-AC1,FR-01,FR-01-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC2,FR-01,FR-01-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC3,FR-01,FR-01-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC4,FR-01,FR-01-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC5,FR-01,FR-01-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC6,FR-01,FR-01-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-01,FR-01-AC7 (v1.20.0),FR-01,FR-01-AC6;QR-01-AC1;QR-01-AC2;QR-01-AC3;QR-01-AC5,merged/split,historical v1.20.0 mapping; the v1.21.0 FR-01-AC7 is a distinct new criterion
+pre-1.23.0,FR-01,(new in v1.21.0),FR-01,FR-01-AC7,added,invalid request and execution-policy negatives
+pre-1.23.0,FR-01,(new in v1.21.0),FR-01,FR-01-AC8,added,checkpoint inheritance validation and fixed reject/requery
+pre-1.23.0,FR-01,(new in v1.21.0),FR-01,FR-01-AC9,added,real entry-point coverage and bypass sentinel
+pre-1.23.0,FR-02,FR-02-AC1,FR-02,FR-02-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC2,FR-02,FR-02-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC3,FR-02,FR-02-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC4,FR-02,FR-02-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC5,FR-02,FR-02-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC6,FR-02,FR-02-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC7,FR-02,FR-02-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC8,PR-01,PR-01-AC1;PR-01-AC2;PR-01-AC3;PR-01-AC4,split,obligation split across destination fit criteria
+pre-1.23.0,FR-02,FR-02-AC9,FR-02,FR-02-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC10,FR-02,FR-02-AC10,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC11,FR-02,FR-02-AC11,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-02,FR-02-AC12,FR-05,FR-05-AC3,merged,obligation merged into destination fit criterion
+pre-1.23.0,FR-02,FR-02-AC13,INV-01,INV-01-AC12,merged,obligation merged into destination fit criterion
+pre-1.23.0,FR-02,FR-02-AC14,FR-06,FR-06-AC7,moved,obligation moved to destination requirement
+pre-1.23.0,FR-02,FR-02-AC15,FR-02,FR-02-AC15,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC1,FR-03,FR-03-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC2,FR-03,FR-03-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC3,FR-03,FR-03-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC4,FR-03,FR-03-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC5,FR-03,FR-03-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC6,FR-03,FR-03-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC7,FR-03,FR-03-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC8,FR-03,FR-03-AC8,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC9,FR-03,FR-03-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-03,FR-03-AC10,FR-03,FR-03-AC10,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC1,FR-04,FR-04-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC2,FR-04,FR-04-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC3,FR-04,FR-04-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC4,FR-04,FR-04-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC5,FR-04,FR-04-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC6,FR-04,FR-04-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC7,FR-04,FR-04-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC8,FR-04,FR-04-AC8,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC9,FR-04,FR-04-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-04,FR-04-AC10,INV-02,INV-02-AC5,merged,obligation merged into destination fit criterion
+pre-1.23.0,FR-04,FR-04-AC11,QR-01,QR-01-AC4,moved,obligation moved to destination requirement
+pre-1.23.0,FR-05,FR-05-AC1,FR-05,FR-05-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-05,FR-05-AC2,FR-05,FR-05-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-05,FR-05-AC3,FR-05,FR-05-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-05,FR-05-AC4,,deferred,deferred,deferred from current acceptance
+pre-1.23.0,FR-06,FR-06-AC1,FR-06,FR-06-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-06,FR-06-AC2,FR-06,FR-06-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-06,FR-06-AC3,,deferred,deferred,deferred from current acceptance
+pre-1.23.0,FR-06,FR-06-AC4,FR-06,FR-06-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-06,FR-06-AC5,FR-06,FR-06-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-06,FR-06-AC6,FR-06,FR-06-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC1,FR-07,FR-07-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC2,FR-07,FR-07-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC3,FR-07,FR-07-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC4,FR-07,FR-07-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC5,FR-07,FR-07-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC6,FR-07,FR-07-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC7,FR-07,FR-07-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC8,FR-07,FR-07-AC8,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC9,FR-07,FR-07-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-07,FR-07-AC10,GR-01,GR-01-AC1;GR-01-AC2;GR-01-AC3;GR-01-AC4;GR-01-AC5;GR-01-AC6,split,obligation split across destination fit criteria
+pre-1.23.0,FR-07,FR-07-AC11,FR-07,FR-07-AC11,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-08,FR-08-AC1,FR-08,FR-08-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-08,FR-08-AC2,FR-08,FR-08-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-08,FR-08-AC3,FR-08,FR-08-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-08,FR-08-AC4,FR-08,FR-08-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,FR-08,FR-08-AC5,CR-01,CR-01-AC1;CR-01-AC2;CR-01-AC3;CR-01-AC4;CR-01-AC5,split,obligation split across destination fit criteria
+pre-1.23.0,QR-02,QR-02-AC1,QR-02,QR-02-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,QR-02,QR-02-AC2,QR-02,QR-02-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC1,SB-01,SB-01-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC2,SB-01,SB-01-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC3,SB-01,SB-01-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC4,SB-01,SB-01-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC5,SB-01,SB-01-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC6,SB-01,SB-01-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC7,SB-01,SB-01-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC8,SB-01,SB-01-AC8,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC9,SB-01,SB-01-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC10,SB-01,SB-01-AC10,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC11,SB-01,SB-01-AC11,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SB-01,SB-01-AC12,SB-01,SB-01-AC12,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC1,INV-01,INV-01-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC2,INV-01,INV-01-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC3,INV-01,INV-01-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC4,INV-01,INV-01-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC5,INV-01,INV-01-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC6,INV-01,INV-01-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC7,INV-01,INV-01-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC8,INV-01,INV-01-AC8,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC9,INV-01,INV-01-AC9,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC10,INV-01,INV-01-AC10,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-01,INV-01-AC11,FR-05,FR-05-AC3,merged,obligation merged into destination fit criterion
+pre-1.23.0,INV-01,INV-01-AC12,INV-01,INV-01-AC12,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC1,INV-02,INV-02-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC2,INV-02,INV-02-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC3,INV-02,INV-02-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC4,INV-02,INV-02-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC5,INV-02,INV-02-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC6,INV-02,INV-02-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,INV-02,INV-02-AC7,QR-01,QR-01-AC4,moved,obligation moved to destination requirement
+pre-1.23.0,SR-01,SR-01-AC1,SR-01,SR-01-AC1,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC2,SR-01,SR-01-AC2,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC3,SR-01,SR-01-AC3,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC4,SR-01,SR-01-AC4,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC5,SR-01,SR-01-AC5,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC6,SR-01,SR-01-AC6,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC7,SR-01,SR-01-AC7,retained,same ID; field renamed to fit_criterion
+pre-1.23.0,SR-01,SR-01-AC8,SR-02,SR-02-AC1;SR-02-AC2,split,obligation split across destination fit criteria
+pre-1.23.0,SR-01,SR-01-AC9,,deferred,deferred,deferred from current acceptance
+pre-1.23.0,,FR-02-AC8,PR-01,PR-01-AC1,added,new fit criterion from split/move
+pre-1.23.0,,FR-02-AC8,PR-01,PR-01-AC2,added,new fit criterion from split/move
+pre-1.23.0,,FR-02-AC8,PR-01,PR-01-AC3,added,new fit criterion from split/move
+pre-1.23.0,,FR-02-AC8,PR-01,PR-01-AC4,added,new fit criterion from split/move
+pre-1.23.0,,FR-08-AC5,CR-01,CR-01-AC1,added,new fit criterion from split/move
+pre-1.23.0,,FR-08-AC5,CR-01,CR-01-AC2,added,new fit criterion from split/move
+pre-1.23.0,,FR-08-AC5,CR-01,CR-01-AC3,added,new fit criterion from split/move
+pre-1.23.0,,FR-08-AC5,CR-01,CR-01-AC4,added,new fit criterion from split/move
+pre-1.23.0,,FR-08-AC5,CR-01,CR-01-AC5,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC1,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC2,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC3,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC4,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC5,added,new fit criterion from split/move
+pre-1.23.0,,FR-07-AC10,GR-01,GR-01-AC6,added,new fit criterion from split/move
+pre-1.23.0,,FR-01-AC7,QR-01,QR-01-AC1,added,new fit criterion from split/move
+pre-1.23.0,,FR-01-AC7,QR-01,QR-01-AC2,added,new fit criterion from split/move
+pre-1.23.0,,FR-01-AC7,QR-01,QR-01-AC3,added,new fit criterion from split/move
+pre-1.23.0,,FR-04-AC11,QR-01,QR-01-AC4,added,new fit criterion from split/move
+pre-1.23.0,,FR-01-AC7,QR-01,QR-01-AC5,added,new fit criterion from split/move
+pre-1.23.0,,SR-01-AC8,SR-02,SR-02-AC1,added,new fit criterion from split/move
+pre-1.23.0,,SR-01-AC8,SR-02,SR-02-AC2,added,new fit criterion from split/move
+1.23.0,FR-01,FR-01-AC1,FR-01,FR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC2,FR-01,FR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC3,FR-01,FR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC4,FR-01,FR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC5,FR-01,FR-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC6,FR-01,FR-01-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC7,FR-01,FR-01-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC8,FR-01,FR-01-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-01,FR-01-AC9,FR-01,FR-01-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC1,FR-02,FR-02-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC2,FR-02,FR-02-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC3,FR-02,FR-02-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC4,FR-02,FR-02-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC5,FR-02,FR-02-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC6,FR-02,FR-02-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC7,FR-02,FR-02-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC9,FR-02,FR-02-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC10,FR-02,FR-02-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC11,FR-02,FR-02-FC10,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-02,FR-02-AC15,FR-02,FR-02-FC11,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC1,FR-03,FR-03-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC2,FR-03,FR-03-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC3,FR-03,FR-03-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC4,FR-03,FR-03-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC5,FR-03,FR-03-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC6,FR-03,FR-03-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC7,FR-03,FR-03-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC8,FR-03,FR-03-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC9,FR-03,FR-03-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-03,FR-03-AC10,FR-03,FR-03-FC10,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC1,FR-04,FR-04-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC2,FR-04,FR-04-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC3,FR-04,FR-04-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC4,FR-04,FR-04-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC5,FR-04,FR-04-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC6,FR-04,FR-04-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC7,FR-04,FR-04-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC8,FR-04,FR-04-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-04,FR-04-AC9,FR-04,FR-04-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-05,FR-05-AC1,FR-05,FR-05-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-05,FR-05-AC2,FR-05,FR-05-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-05,FR-05-AC3,FR-05,FR-05-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC1,FR-06,FR-06-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC2,FR-06,FR-06-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC4,FR-06,FR-06-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC5,FR-06,FR-06-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC6,FR-06,FR-06-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-06,FR-06-AC7,FR-06,FR-06-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC1,FR-07,FR-07-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC2,FR-07,FR-07-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC3,FR-07,FR-07-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC4,FR-07,FR-07-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC5,FR-07,FR-07-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC6,FR-07,FR-07-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC7,FR-07,FR-07-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC8,FR-07,FR-07-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC9,FR-07,FR-07-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-07,FR-07-AC11,FR-07,FR-07-FC10,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-08,FR-08-AC1,FR-08,FR-08-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-08,FR-08-AC2,FR-08,FR-08-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-08,FR-08-AC3,FR-08,FR-08-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,FR-08,FR-08-AC4,FR-08,FR-08-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,PR-01,PR-01-AC1,PR-01,PR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,PR-01,PR-01-AC2,PR-01,PR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,PR-01,PR-01-AC3,PR-01,PR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,PR-01,PR-01-AC4,PR-01,PR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,CR-01,CR-01-AC1,CR-01,CR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,CR-01,CR-01-AC2,CR-01,CR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,CR-01,CR-01-AC3,CR-01,CR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,CR-01,CR-01-AC4,CR-01,CR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,CR-01,CR-01-AC5,CR-01,CR-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC1,GR-01,GR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC2,GR-01,GR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC3,GR-01,GR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC4,GR-01,GR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC5,GR-01,GR-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,GR-01,GR-01-AC6,GR-01,GR-01-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-01,QR-01-AC1,QR-01,QR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-01,QR-01-AC2,QR-01,QR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-01,QR-01-AC3,QR-01,QR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-01,QR-01-AC4,QR-01,QR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-01,QR-01-AC5,QR-01,QR-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-02,QR-02-AC1,QR-02,QR-02-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,QR-02,QR-02-AC2,QR-02,QR-02-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC1,SB-01,SB-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC2,SB-01,SB-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC3,SB-01,SB-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC4,SB-01,SB-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC5,SB-01,SB-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC6,SB-01,SB-01-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC7,SB-01,SB-01-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC8,SB-01,SB-01-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC9,SB-01,SB-01-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC10,SB-01,SB-01-FC10,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC11,SB-01,SB-01-FC11,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SB-01,SB-01-AC12,SB-01,SB-01-FC12,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC1,INV-01,INV-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC2,INV-01,INV-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC3,INV-01,INV-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC4,INV-01,INV-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC5,INV-01,INV-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC6,INV-01,INV-01-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC7,INV-01,INV-01-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC8,INV-01,INV-01-FC08,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC9,INV-01,INV-01-FC09,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC10,INV-01,INV-01-FC10,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-01,INV-01-AC12,INV-01,INV-01-FC11,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC1,INV-02,INV-02-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC2,INV-02,INV-02-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC3,INV-02,INV-02-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC4,INV-02,INV-02-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC5,INV-02,INV-02-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,INV-02,INV-02-AC6,INV-02,INV-02-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC1,SR-01,SR-01-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC2,SR-01,SR-01-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC3,SR-01,SR-01-FC03,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC4,SR-01,SR-01-FC04,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC5,SR-01,SR-01-FC05,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC6,SR-01,SR-01-FC06,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-01,SR-01-AC7,SR-01,SR-01-FC07,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-02,SR-02-AC1,SR-02,SR-02-FC01,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved
+1.23.0,SR-02,SR-02-AC2,SR-02,SR-02-FC02,renumbered,v1.24.0 FC identifier normalization; content unchanged; approved active or deferred status preserved

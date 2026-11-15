@@ -13,6 +13,7 @@ the current files. Human review is never inferred by this script.
 from __future__ import annotations
 
 import copy
+import csv
 import hashlib
 import json
 import re
@@ -164,7 +165,7 @@ def policy_projection(risk: dict) -> dict:
 
 
 def stabilize_hashes(m: dict) -> None:
-    proposal = {k: m["model_proposal"][k] for k in ("rating", "decision_text", "proposal_status")}
+    proposal = {k: m["model_proposal"][k] for k in ("rating", "decision_text", "proposal_status", "validation_status")}
     m["model_proposal"]["proposal_digest"] = canonical_hash(proposal)
     m["critical_profile"]["profile_hash"] = canonical_hash(profile_projection(m))
     m["provenance_digest"] = canonical_hash(provenance_projection(m))
@@ -237,14 +238,15 @@ def manifest_sample() -> dict:
         "critical_profile": {"profile_version": "d1-default-v1", "profile_source": "default", "analysis_mode": "historical", "asset_type": "stock", "contract_version": "1", "requirements": [{"requirement_id": "market_price", "capability": "market_price", "components": [{"component": "stock_data", "window_rule": "requested_window", "min_record_count": 1, "point_in_time_rule": "strict_as_of", "required": True}], "query_rule": "all", "min_successful_components": 1, "min_record_count": 1, "fallback_policy": "same_capability_only", "criticality": "critical"}, financial], "profile_hash": SHA},
         "coverage_snapshot": {"snapshot_version": "1", "snapshot_hash": SHA, "critical_profile_hash": SHA, "computed_at": "2026-11-09T04:00:00+00:00", "computed_by": "program", "coverage_status": "complete", "critical_gaps": [], "critical_gap_ids": [], "provenance_digest": SHA, "run_id": "r1"},
         "provenance_digest": SHA,
-        "model_proposal": {"rating": "Hold", "decision_text": "Hold decision", "proposal_status": "unapproved", "proposal_digest": SHA},
+        "model_proposal": {"rating": "Hold", "decision_text": "Hold decision", "proposal_status": "unapproved", "validation_status": "valid", "proposal_digest": SHA},
         "config": {"tradingagents_version": "0.7.0", "llm_provider": "p", "deep_think_provider": "p", "quick_think_provider": "p", "deep_think_llm": "m", "quick_think_llm": "m", "analysts": ["market", "fundamentals"], "max_debate_rounds": 1, "max_risk_discuss_rounds": 1, "output_language": "English", "data_vendors": {"x": "y"}, "tool_vendors": {}},
-        "timing": {"started_at": "2026-11-09T12:00:00+08:00", "analysis_finished_at": "2026-11-09T12:03:14+08:00", "finished_at": "2026-11-09T12:03:15+08:00", "duration_seconds": 195.0, "analysis_seconds": 194.4, "publish_seconds": 0.6, "manifest_write_seconds": 0.02, "startup_manifest_write_seconds": 0.01},
+        "execution_policy": {"policy_id": "fr01-execution-policy", "policy_version": "1.0.0", "policy_digest": SHA, "retry_budget": 1, "fallback_budget": 1, "request_timeout_seconds": 30, "execution_deadline_seconds": 120, "waiter_timeout_seconds": 120, "run_cache_capacity_queries": 512, "status_actions": {"success": "terminal", "unavailable": "retry_same_vendor_then_fallback"}},
+        "timing": {"started_at": "2026-11-09T12:00:00+08:00", "observed_until": "2026-11-09T12:03:14.960000+08:00", "analysis_finished_at": "2026-11-09T12:03:14.410000+08:00", "finished_at": "2026-11-09T12:03:14.960000+08:00", "duration_seconds": 194.96, "startup_phase_seconds": 0.01, "analysis_seconds": 194.4, "publish_seconds": 0.55, "publish_prepare_seconds": 0.55, "observed_duration_seconds": 194.96, "manifest_write_seconds": None, "startup_manifest_write_seconds": None},
         "counts": {"llm_calls": 1, "tool_calls": 4, "prefetch_calls": 0, "reflection_llm_calls": 0, "retry_attempts": 0, "fallback_attempts": 0, "query_executions": 4, "external_requests": 4, "vendor_cache_hits": 0, "run_cache_hits": 0, "llm_error_count": 0, "tool_error_count": 0},
-        "tokens": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2, "status": "complete", "llm_calls_with_usage": 1, "llm_calls_without_usage": 0},
+        "tokens": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2, "status": "complete", "llm_calls_with_usage": 1, "llm_calls_without_usage": 0, "reported_call_count": 1, "unknown_call_count": 0, "field_coverage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 1, "complete_calls": 1}, "aggregation_source": "authoritative_usage"},
         "data_source_status": [{"record_kind": "executed", "data_query_key": "q1", "supports": [{"requirement_id": "market_price", "capability": "market_price", "component": "stock_data", "criticality": "critical"}], "attempts": [{"source": "Yahoo Finance", "status": "success", "reason_code": None, "reason": None, "record_count": 1, "http_request_count": 1, "cache_kind": "none", "started_at": "2026-11-09T12:00:00+08:00", "ended_at": "2026-11-09T12:00:01+08:00"}], "tool": "get_stock_data", "category": "market", "capability": "market_price", "component": "stock_data", "requirement_id": "market_price", "criticality": "critical", "source": "Yahoo Finance", "serving_source": "Yahoo Finance", "attempted_sources": ["Yahoo Finance"], "requested_window": "2026-10-19", "observed_window": "2026-10-19", "status": "success", "reason_code": None, "reason": None, "record_count": 1, "vendor": "yfinance", "fallback_used": False, "vendor_cache_hit": False, "run_cache_hit": False}] + records,
-        "safety_gate": {"status": "passed", "reason_codes": [], "primary_reason_code": None, "coverage_status": "complete", "critical_gap_ids": [], "profile_version": "d1-default-v1", "snapshot_hash": SHA, "gate_version": "1.0", "input_hash": SHA, "run_id": "r1", "evaluated_at": "2026-11-09T12:03:15+08:00", "portfolio_risk": {"evaluation_status": "not_applicable", "risk_reason_codes": [], "policy_snapshot": None, "input_ref": None, "input_digest": None, "diagnostic_ref": None, "valuation_time": None, "valuation_cutoff": None, "currency": None, "projected_weight": None, "stop_distance": None, "effective_order_value": None, "evaluated_at": "2026-11-09T12:03:15+08:00"}},
-        "security": {"scan_status": "clean", "write_scan_status": "clean", "run_scan_status": "clean", "known_secret_match_count": 0, "pattern_match_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest", "final_state", "memory", "report", "logs", "preferences", "gate", "availability"], "failure_reason": None},
+        "safety_gate": {"status": "passed", "reason_codes": [], "primary_reason_code": None, "coverage_status": "complete", "critical_gap_ids": [], "profile_version": "d1-default-v1", "snapshot_hash": SHA, "gate_version": "1.0", "input_hash": SHA, "run_id": "r1", "evaluated_at": "2026-11-09T12:03:14.900000+08:00", "portfolio_risk": {"evaluation_status": "not_applicable", "risk_reason_codes": [], "policy_snapshot": None, "input_ref": None, "input_digest": None, "diagnostic_ref": None, "valuation_time": None, "valuation_cutoff": None, "currency": None, "projected_weight": None, "stop_distance": None, "effective_order_value": None, "evaluated_at": "2026-11-09T12:03:15+08:00"}},
+        "security": {"scan_status": "clean", "write_scan_status": "clean", "run_scan_status": "clean", "known_secret_detected_count": 0, "pattern_detected_count": 0, "known_secret_match_count": 0, "pattern_match_count": 0, "residual_secret_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest", "final_state", "memory", "report", "logs", "preferences", "gate", "availability"], "failure_reason": None},
         "memory": {"enabled": True, "status": "written", "commit_status": "committed", "entry_version": 1, "entry_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": SHA, "trade_date": "2026-10-19", "ticker": "NVDA"}, "entry_digest": SHA, "evidence_digest": SHA, "reused_decision_ref": None, "supersedes": None, "retention_status": "retained", "same_day_rerun": False},
         "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": SHA, "gate_status": "passed", "formal_decision_status": "approved", "final_rating": "Hold", "coverage_status": "complete", "critical_gap_ids": [], "coverage_snapshot_hash": SHA, "record_hash": SHA},
         "formal_decision": {"status": "approved", "final_rating": "Hold", "decision_text": "Hold decision", "review_class": "none"},
@@ -258,6 +260,15 @@ def manifest_sample() -> dict:
 def cross_field_errors(m: dict) -> list:
     errors = []
     b, g, f, c = m["artifact_binding"], m["safety_gate"], m["formal_decision"], m["coverage_snapshot"]
+    mp = m.get("model_proposal")
+    if m.get("run_status") == "completed":
+        if not isinstance(mp, dict):
+            errors.append("completed run requires a model_proposal object (rating may be null)")
+        elif mp.get("rating") is None:
+            if mp.get("validation_status") not in {"invalid_rating", "missing"}:
+                errors.append("null completed rating requires validation_status invalid_rating or missing")
+        elif mp.get("validation_status") != "valid":
+            errors.append("non-null completed rating requires validation_status valid")
     checks = [
         ("binding.run_id", b.get("run_id"), m.get("run_id")),
         ("binding.gate_status", b.get("gate_status"), g.get("status")),
@@ -281,9 +292,11 @@ def cross_field_errors(m: dict) -> list:
     decision = {k: f[k] for k in ("status", "final_rating", "decision_text")}
     if canonical_hash(decision) != b.get("decision_digest"):
         errors.append("decision_digest does not match formal decision content")
-    proposal = {k: m["model_proposal"][k] for k in ("rating", "decision_text", "proposal_status")}
-    if canonical_hash(proposal) != m["model_proposal"].get("proposal_digest"):
-        errors.append("proposal_digest does not match model proposal content")
+    mp = m.get("model_proposal")
+    if isinstance(mp, dict):
+        proposal = {k: mp[k] for k in ("rating", "decision_text", "proposal_status", "validation_status")}
+        if canonical_hash(proposal) != mp.get("proposal_digest"):
+            errors.append("proposal_digest does not match model proposal content")
     risk = g.get("portfolio_risk")
     risk_input_digest = risk.get("input_digest") if isinstance(risk, dict) else None
     diagnostic = risk.get("diagnostic_ref") if isinstance(risk, dict) else None
@@ -423,12 +436,83 @@ def cross_field_errors(m: dict) -> list:
     return errors
 
 
+
+def timing_token_semantic_errors(m: dict) -> list:
+    errors = []
+    t = m.get("timing") or {}
+    c = m.get("counts") or {}
+    tok = m.get("tokens") or {}
+    required_t = ("started_at", "observed_until", "analysis_finished_at", "finished_at", "duration_seconds", "startup_phase_seconds", "analysis_seconds", "publish_seconds", "publish_prepare_seconds", "observed_duration_seconds", "manifest_write_seconds", "startup_manifest_write_seconds")
+    if any(k not in t for k in required_t):
+        errors.append("timing is missing a required v1.21 field")
+    if m.get("run_status") == "completed":
+        vals = [t.get(k) for k in ("startup_phase_seconds", "analysis_seconds", "publish_prepare_seconds", "observed_duration_seconds")]
+        if any(v is None for v in vals):
+            errors.append("completed timing requires all phase values")
+        else:
+            if abs((t["startup_phase_seconds"] + t["analysis_seconds"] + t["publish_prepare_seconds"]) - t["observed_duration_seconds"]) > 1e-6:
+                errors.append("completed timing phase sum does not match observed_duration_seconds")
+            if t.get("finished_at") != t.get("observed_until"):
+                errors.append("finished_at must project observed_until")
+            if t.get("duration_seconds") != t.get("observed_duration_seconds"):
+                errors.append("duration_seconds must project observed_duration_seconds")
+            if t.get("publish_seconds") != t.get("publish_prepare_seconds"):
+                errors.append("publish_seconds must project publish_prepare_seconds")
+            if t.get("manifest_write_seconds") is not None:
+                errors.append("manifest_write_seconds must be null in the manifest; use WriteEvidence")
+        try:
+            started = datetime.fromisoformat(t["started_at"])
+            analysis_end = datetime.fromisoformat(t["analysis_finished_at"])
+            observed = datetime.fromisoformat(t["observed_until"])
+            gate_at = datetime.fromisoformat(m["safety_gate"]["evaluated_at"])
+            if not (started <= analysis_end <= gate_at <= observed):
+                errors.append("completed event order must satisfy started <= analysis_finished <= gate.evaluated_at <= observed_until")
+        except (KeyError, TypeError, ValueError):
+            errors.append("completed timing has an invalid or missing event timestamp")
+    if m.get("run_status") in {"running", "failed"}:
+        if t.get("observed_until") is not None and t.get("analysis_finished_at") is not None:
+            if datetime.fromisoformat(t["analysis_finished_at"]) > datetime.fromisoformat(t["observed_until"]):
+                errors.append("failed/running event is after observed_until")
+    # token coverage
+    req_tok = ("reported_call_count", "unknown_call_count", "field_coverage", "aggregation_source")
+    if any(k not in tok for k in req_tok):
+        errors.append("tokens is missing a required v1.21 coverage field")
+        return errors
+    calls = c.get("llm_calls")
+    fc = tok.get("field_coverage") or {}
+    for k in ("input_tokens", "output_tokens", "total_tokens", "complete_calls"):
+        if k not in fc:
+            errors.append(f"field_coverage missing {k}")
+    if tok.get("reported_call_count") + tok.get("unknown_call_count") != calls:
+        errors.append("reported+unknown call counts must equal llm_calls")
+    if tok.get("reported_call_count") != tok.get("llm_calls_with_usage"):
+        errors.append("reported_call_count must equal llm_calls_with_usage")
+    if tok.get("unknown_call_count") != tok.get("llm_calls_without_usage"):
+        errors.append("unknown_call_count must equal llm_calls_without_usage")
+    for k in ("input_tokens", "output_tokens", "total_tokens", "complete_calls"):
+        v = fc.get(k)
+        if not isinstance(v, int) or v < 0 or v > calls:
+            errors.append(f"field_coverage.{k} must be 0..llm_calls")
+    if isinstance(fc.get("complete_calls"), int) and isinstance(fc.get("input_tokens"), int):
+        if fc["complete_calls"] > min(fc["input_tokens"], fc["output_tokens"], fc["total_tokens"]):
+            errors.append("complete_calls cannot exceed any field coverage")
+    if calls == 0:
+        if tok.get("status") != "complete" or any(tok.get(k) != 0 for k in ("input_tokens", "output_tokens", "total_tokens")):
+            errors.append("zero calls must be complete with real zero totals")
+    if tok.get("status") == "complete" and calls > 0:
+        if fc.get("complete_calls") != calls:
+            errors.append("complete status requires complete_calls == llm_calls")
+    if tok.get("status") == "unavailable":
+        if any(tok.get(k) is not None for k in ("input_tokens", "output_tokens", "total_tokens")):
+            errors.append("unavailable usage requires null token totals")
+    return errors
+
 def manifest_checks(schema: dict) -> dict:
     v = Draft202012Validator(schema)
     completed = manifest_sample()
     stabilize_hashes(completed)
     running = copy.deepcopy(completed)
-    running.update({"run_status": "running", "timing": {"started_at": "2026-11-09T12:00:00+08:00", "analysis_finished_at": None, "finished_at": None, "duration_seconds": None, "analysis_seconds": None, "publish_seconds": None, "manifest_write_seconds": None, "startup_manifest_write_seconds": 0.01}, "data_source_status": [], "safety_gate": {"status": "not_run", "reason_codes": [], "primary_reason_code": None, "coverage_status": None, "critical_gap_ids": [], "profile_version": None, "snapshot_hash": None, "gate_version": "1.0", "input_hash": SHA, "run_id": None, "evaluated_at": None}, "security": {"scan_status": "not_run", "write_scan_status": "clean", "run_scan_status": "not_run", "known_secret_match_count": 0, "pattern_match_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest"], "failure_reason": None}, "memory": {"enabled": True, "status": "not_available", "commit_status": "not_applicable", "entry_version": 1, "entry_binding": None, "entry_digest": None, "evidence_digest": None, "reused_decision_ref": None, "supersedes": None, "retention_status": "not_applicable", "same_day_rerun": False}, "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": None, "gate_status": "not_run", "formal_decision_status": "pending", "final_rating": None, "coverage_status": None, "critical_gap_ids": [], "coverage_snapshot_hash": None, "record_hash": None}, "formal_decision": {"status": "pending", "final_rating": None, "decision_text": None, "review_class": "none"}, "artifacts": [], "error": None})
+    running.update({"run_status": "running", "timing": {"started_at": "2026-11-09T12:00:00+08:00", "observed_until": None, "analysis_finished_at": None, "finished_at": None, "duration_seconds": None, "startup_phase_seconds": 0.01, "analysis_seconds": None, "publish_seconds": None, "publish_prepare_seconds": None, "observed_duration_seconds": None, "manifest_write_seconds": None, "startup_manifest_write_seconds": 0.01}, "data_source_status": [], "safety_gate": {"status": "not_run", "reason_codes": [], "primary_reason_code": None, "coverage_status": None, "critical_gap_ids": [], "profile_version": None, "snapshot_hash": None, "gate_version": "1.0", "input_hash": SHA, "run_id": None, "evaluated_at": None}, "security": {"scan_status": "not_run", "write_scan_status": "clean", "run_scan_status": "not_run", "known_secret_detected_count": 0, "pattern_detected_count": 0, "known_secret_match_count": 0, "pattern_match_count": 0, "residual_secret_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest"], "failure_reason": None}, "memory": {"enabled": True, "status": "not_available", "commit_status": "not_applicable", "entry_version": 1, "entry_binding": None, "entry_digest": None, "evidence_digest": None, "reused_decision_ref": None, "supersedes": None, "retention_status": "not_applicable", "same_day_rerun": False}, "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": None, "gate_status": "not_run", "formal_decision_status": "pending", "final_rating": None, "coverage_status": None, "critical_gap_ids": [], "coverage_snapshot_hash": None, "record_hash": None}, "formal_decision": {"status": "pending", "final_rating": None, "decision_text": None, "review_class": "none"}, "artifacts": [], "error": None})
     failed = copy.deepcopy(completed)
     failed.update({"run_status": "failed", "error": {"stage": "gate", "type": "GateError", "message": "gate unavailable"}, "safety_gate": {"status": "error", "reason_codes": ["gate_internal_error"], "primary_reason_code": "gate_internal_error", "coverage_status": "partial", "critical_gap_ids": [], "profile_version": "d1-default-v1", "snapshot_hash": SHA, "gate_version": "1.0", "input_hash": SHA, "run_id": "r1", "evaluated_at": "2026-11-09T12:03:15+08:00"}, "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": None, "gate_status": "error", "formal_decision_status": "blocked_for_review", "final_rating": "REVIEW", "coverage_status": "partial", "critical_gap_ids": [], "coverage_snapshot_hash": SHA, "record_hash": None}, "formal_decision": {"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Gate unavailable; manual review required.", "review_class": "gate_system_error"}})
     stabilize_hashes(failed)
@@ -436,7 +520,7 @@ def manifest_checks(schema: dict) -> dict:
     mem_off["memory"] = {"enabled": False, "status": "disabled", "commit_status": "disabled", "entry_version": 1, "entry_binding": None, "entry_digest": None, "evidence_digest": None, "reused_decision_ref": None, "supersedes": None, "retention_status": "disabled", "same_day_rerun": False}
     mem_off["artifacts"] = [a for a in mem_off["artifacts"] if a["kind"] != "memory"]
     failed_startup = copy.deepcopy(completed)
-    failed_startup.update({"run_status": "failed", "critical_profile": None, "coverage_snapshot": None, "provenance_digest": canonical_hash([]), "data_source_status": [], "safety_gate": {"status": "not_run", "reason_codes": [], "primary_reason_code": None, "coverage_status": None, "critical_gap_ids": [], "profile_version": None, "snapshot_hash": None, "gate_version": "1.0", "input_hash": canonical_hash({"snapshot_hash": None, "model_proposal": {k: completed["model_proposal"][k] for k in ("rating", "decision_text", "proposal_status")}, "portfolio_risk_input_digest": None, "portfolio_risk_diagnostic_digest": None, "portfolio_risk_policy_digest": None, "gate_version": "1.0"}), "run_id": None, "evaluated_at": None}, "security": {"scan_status": "clean", "write_scan_status": "clean", "run_scan_status": "not_run", "known_secret_match_count": 0, "pattern_match_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest"], "failure_reason": None}, "memory": {"enabled": True, "status": "not_available", "commit_status": "not_applicable", "entry_version": 1, "entry_binding": None, "entry_digest": None, "evidence_digest": None, "reused_decision_ref": None, "supersedes": None, "retention_status": "not_applicable", "same_day_rerun": False}, "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": canonical_hash({"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Run failed before formal decision; manual review required."}), "gate_status": "not_run", "formal_decision_status": "blocked_for_review", "final_rating": "REVIEW", "coverage_status": None, "critical_gap_ids": [], "coverage_snapshot_hash": None, "record_hash": None}, "formal_decision": {"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Run failed before formal decision; manual review required.", "review_class": "input_invalid"}, "artifacts": [], "error": {"stage": "startup", "type": "ConfigError", "message": "startup failed"}})
+    failed_startup.update({"run_status": "failed", "critical_profile": None, "coverage_snapshot": None, "provenance_digest": canonical_hash([]), "data_source_status": [], "safety_gate": {"status": "not_run", "reason_codes": [], "primary_reason_code": None, "coverage_status": None, "critical_gap_ids": [], "profile_version": None, "snapshot_hash": None, "gate_version": "1.0", "input_hash": canonical_hash({"snapshot_hash": None, "model_proposal": {k: completed["model_proposal"][k] for k in ("rating", "decision_text", "proposal_status", "validation_status")}, "portfolio_risk_input_digest": None, "portfolio_risk_diagnostic_digest": None, "portfolio_risk_policy_digest": None, "gate_version": "1.0"}), "run_id": None, "evaluated_at": None}, "security": {"scan_status": "clean", "write_scan_status": "clean", "run_scan_status": "not_run", "known_secret_detected_count": 0, "pattern_detected_count": 0, "known_secret_match_count": 0, "pattern_match_count": 0, "residual_secret_count": 0, "redaction_count": 0, "rule_version": "1.0", "scope": ["manifest"], "failure_reason": None}, "memory": {"enabled": True, "status": "not_available", "commit_status": "not_applicable", "entry_version": 1, "entry_binding": None, "entry_digest": None, "evidence_digest": None, "reused_decision_ref": None, "supersedes": None, "retention_status": "not_applicable", "same_day_rerun": False}, "artifact_binding": {"run_id": "r1", "decision_id": "d1", "record_version": "1", "decision_digest": canonical_hash({"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Run failed before formal decision; manual review required."}), "gate_status": "not_run", "formal_decision_status": "blocked_for_review", "final_rating": "REVIEW", "coverage_status": None, "critical_gap_ids": [], "coverage_snapshot_hash": None, "record_hash": None}, "formal_decision": {"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Run failed before formal decision; manual review required.", "review_class": "input_invalid"}, "artifacts": [], "error": {"stage": "startup", "type": "ConfigError", "message": "startup failed"}})
     resumed = copy.deepcopy(completed)
     resumed["inheritance"] = {"inherited": True, "origin_run_id": "r0", "origin_attempt_id": "attempt-0", "inherited_counters": {"query_executions": 2, "http_requests": 3, "vendor_cache_hits": 1, "retry_attempts": 1, "fallback_attempts": 1, "llm_calls": 4, "tool_calls": 2}, "inherited_evidence_digest": SHA, "snapshot_rebound_from": SHA}
     blocked = copy.deepcopy(completed)
@@ -457,13 +541,14 @@ def manifest_checks(schema: dict) -> dict:
     version_switch["memory"]["entry_binding"]["decision_id"] = "d2"
     stabilize_hashes(version_switch)
     policy = {
-        "policy_version": "portfolio-risk-policy-v1",
-        "policy_ref": "run://risk/policy-snapshot.json",
+        "policy_version": "portfolio-risk-policy-v2",
+        "policy_ref": "portfolio-risk-policy-v2",
+        "policy_file_ref": "docs/req/fixtures/portfolio_risk_policy_v2.json",
         "policy_digest": SHA,
-        "max_projected_weight": "0.30",
+        "max_projected_weight": "0.3",
         "max_stop_distance": "0.05",
         "max_valuation_age_seconds": 900,
-        "precision_rule": "input<=12dp;internal>=28sd;exact_compare;display=6dp_half_up",
+        "precision_rule": "input<=12dp;internal=exact_cross_product;exact_compare;display=6dp_half_up",
         "threshold_status": "provisional",
         "human_approval_ref": None,
     }
@@ -586,8 +671,20 @@ def manifest_checks(schema: dict) -> dict:
         "critical_gap_ids": ["financial_statements"],
     })
     stabilize_hashes(risk_error_with_gap)
+    completed_invalid_rating = copy.deepcopy(completed)
+    completed_invalid_rating["model_proposal"].update({"rating": None, "validation_status": "invalid_rating", "proposal_digest": None})
+    completed_invalid_rating["safety_gate"].update({"status": "blocked", "reason_codes": ["invalid_model_rating"], "primary_reason_code": "invalid_model_rating"})
+    completed_invalid_rating["formal_decision"] = {"status": "blocked_for_review", "final_rating": "REVIEW", "decision_text": "Invalid model rating; manual review required.", "review_class": "model_rating_invalid"}
+    completed_invalid_rating["artifact_binding"].update({"gate_status": "blocked", "formal_decision_status": "blocked_for_review", "final_rating": "REVIEW"})
+    running_null_proposal = copy.deepcopy(running)
+    running_null_proposal["model_proposal"] = None
+    failed_null_proposal = copy.deepcopy(failed)
+    failed_null_proposal["model_proposal"] = None
     samples = (
         ("running", running), ("completed", completed), ("blocked", blocked),
+        ("completed_invalid_rating", completed_invalid_rating),
+        ("running_null_proposal", running_null_proposal),
+        ("failed_null_proposal", failed_null_proposal),
         ("failed_gate", failed), ("failed_startup", failed_startup),
         ("completed_memory_disabled", mem_off), ("resumed", resumed),
         ("retry_recovered", retry_recovered), ("memory_reuse", memory_reuse),
@@ -599,6 +696,8 @@ def manifest_checks(schema: dict) -> dict:
         errs = list(v.iter_errors(obj))
         if errs:
             fail(f"manifest sample {name}: {errs[0].message}")
+    if completed_invalid_rating["formal_decision"]["final_rating"] != "REVIEW" or completed_invalid_rating["artifact_binding"]["gate_status"] != "blocked":
+        fail("completed invalid rating must block with REVIEW, not pass")
     for name, obj in (("blocked", blocked), ("failed_gate", failed), ("failed_startup", failed_startup)):
         if obj["formal_decision"]["status"] != "blocked_for_review" or obj["formal_decision"]["final_rating"] != "REVIEW":
             fail(f"{name} must carry a blocked_for_review/REVIEW formal state")
@@ -622,11 +721,20 @@ def manifest_checks(schema: dict) -> dict:
         ("missing_financial_statements", lambda o: o.__setitem__("data_source_status", [r for r in o["data_source_status"] if r["requirement_id"] != "financial_statements"])),
         ("missing_report_section_manifest", lambda o: o.__setitem__("report_section_manifest", None)),
         ("duplicate_section_path", lambda o: o["report_section_manifest"]["sections"].append(copy.deepcopy(o["report_section_manifest"]["sections"][0]))),
+        ("completed_null_proposal", lambda o: o.__setitem__("model_proposal", None)),
+        ("completed_invalid_rating_as_valid", lambda o: (o["model_proposal"].update({"rating": None, "validation_status": "valid"}))),
+        ("timing_sum_mismatch", lambda o: o["timing"].__setitem__("observed_duration_seconds", 1.0)),
+        ("event_after_observed", lambda o: (o["timing"].__setitem__("finished_at", "2026-11-09T12:03:15+08:00"))),
+        ("timing_alias_mismatch", lambda o: o["timing"].__setitem__("duration_seconds", 1.0)),
+        ("manifest_write_not_null", lambda o: o["timing"].__setitem__("manifest_write_seconds", 0.01)),
+        ("token_reported_mismatch", lambda o: o["tokens"].__setitem__("reported_call_count", 0)),
+        ("token_complete_calls_mismatch", lambda o: o["tokens"]["field_coverage"].__setitem__("complete_calls", 0)),
+        ("zero_call_fake_usage", lambda o: (o["counts"].__setitem__("llm_calls", 0), o["tokens"].update({"input_tokens": 1}))),
     ]
     for name, mutate in negatives:
         obj = copy.deepcopy(completed)
         mutate(obj)
-        if not list(v.iter_errors(obj)) and not cross_field_errors(obj):
+        if not list(v.iter_errors(obj)) and not cross_field_errors(obj) and not timing_token_semantic_errors(obj):
             fail(f"completed negative {name} unexpectedly passed")
     risk_negatives = [
         ("risk_blocked_but_approved", risk_blocked, lambda o: (o["formal_decision"].update({"status": "approved", "final_rating": "Buy", "decision_text": "Buy decision", "review_class": "none"}), o["artifact_binding"].update({"formal_decision_status": "approved", "final_rating": "Buy"}))),
@@ -643,6 +751,8 @@ def manifest_checks(schema: dict) -> dict:
         mutate(obj)
         if not list(v.iter_errors(obj)) and not cross_field_errors(obj):
             fail(f"risk negative {name} unexpectedly passed")
+    if timing_token_semantic_errors(completed):
+        fail(f"completed timing/token errors: {timing_token_semantic_errors(completed)}")
     if cross_field_errors(completed):
         fail(f"completed cross-field errors: {cross_field_errors(completed)}")
     for name, obj in (("risk_pass", risk_pass), ("risk_blocked", risk_blocked), ("risk_invalid", risk_invalid), ("risk_error", risk_error), ("risk_error_with_gap", risk_error_with_gap)):
@@ -682,26 +792,36 @@ def manifest_checks(schema: dict) -> dict:
 
 
 def eval_contract_checks() -> dict:
-    files = [
+    required_files = [
         EVAL_DIR / "eval-set-v1.json", EVAL_DIR / "rubric-v1.json",
-        EVAL_DIR / "behavior-eval-contract-v1.json", EVAL_DIR / "config-v1.json",
-        EVAL_DIR / "prompt-v1.0.yaml", EVAL_DIR / "snapshots-v1.json",
+        EVAL_DIR / "behavior-eval-contract-v1.json", EVAL_DIR / "behavior-eval-contract-v2.json",
+        EVAL_DIR / "config-v1.json", EVAL_DIR / "prompt-v1.0.yaml", EVAL_DIR / "snapshots-v1.json",
     ]
-    missing = [str(p.relative_to(ROOT)) for p in files if not p.exists()]
+    missing = [str(p.relative_to(ROOT)) for p in required_files if not p.exists()]
     if missing:
         fail(f"missing behavior evaluation files: {missing}")
-    eval_set = load(files[0])
-    rubric = load(files[1])
-    contract = load(files[2])
-    snapshots = load(files[5])
-    fixed = contract.get("fixed_inputs", {})
-    for name in ("config", "prompt", "snapshots"):
-        item = fixed.get(name, {})
-        ref = item.get("ref")
-        if not ref or not (ROOT / ref).exists():
-            fail(f"behavior contract {name} ref missing or nonexistent")
-        if item.get("digest") != digest(ROOT / ref):
-            fail(f"behavior contract {name} digest does not match {ref}")
+    eval_set = load(EVAL_DIR / "eval-set-v1.json")
+    rubric = load(EVAL_DIR / "rubric-v1.json")
+    v1 = load(EVAL_DIR / "behavior-eval-contract-v1.json")
+    v2 = load(EVAL_DIR / "behavior-eval-contract-v2.json")
+    snapshots = load(EVAL_DIR / "snapshots-v1.json")
+    if v1.get("status") != "frozen_contract":
+        fail("behavior v1 must remain the frozen historical contract")
+    if v2.get("status") != "revision_draft":
+        fail("behavior v2 must be a revision draft, not a frozen approval")
+    if v2.get("rubric_version") != rubric.get("rubric_version"):
+        fail("behavior v2 must retain the frozen rubric version")
+    if v2.get("human_approved") is not False:
+        fail("behavior v2 cannot claim human approval")
+    for contract, label in ((v1, "v1"), (v2, "v2")):
+        fixed = contract.get("fixed_inputs", {})
+        for name in ("config", "prompt", "snapshots"):
+            item = fixed.get(name, {})
+            ref = item.get("ref")
+            if not ref or not (ROOT / ref).exists():
+                fail(f"behavior {label} contract {name} ref missing or nonexistent")
+            if item.get("digest") != digest(ROOT / ref):
+                fail(f"behavior {label} contract {name} digest does not match {ref}")
     snapshot_cases = {c["case_id"]: c for c in snapshots.get("cases", [])}
     if set(snapshot_cases) != {c["case_id"] for c in eval_set["cases"]}:
         fail("snapshot manifest cases do not match eval set")
@@ -709,18 +829,46 @@ def eval_contract_checks() -> dict:
         fail("eval set must contain at least 10 cases")
     if len(rubric.get("dimensions", [])) != 5:
         fail("rubric must contain exactly 5 dimensions")
-    status = contract.get("acceptance_status")
+    status = v2.get("acceptance_status")
     allowed = {"blocked_until_snapshots_and_human_approval", "ready_for_acceptance", "accepted", "failed"}
     if status not in allowed:
-        fail(f"unknown behavior acceptance status: {status}")
+        fail(f"unknown behavior v2 acceptance status: {status}")
     pending = [c for c in snapshots["cases"] if c.get("status") == "pending_capture" or not c.get("digest")]
     if status == "blocked_until_snapshots_and_human_approval":
-        if not pending and contract.get("human_approved"):
+        if not pending and v2.get("human_approved"):
             fail("blocked behavior evaluation cannot already have every snapshot and human approval")
-    if status in {"ready_for_acceptance", "accepted"}:
-        if pending or not contract.get("human_approved"):
-            fail(f"{status} requires all snapshots, fixed config/prompt digests, and human approval")
-    return {"cases": len(eval_set["cases"]), "dimensions": len(rubric["dimensions"]), "acceptance_status": contract["acceptance_status"]}
+    scoring = v2.get("scoring_rules", {})
+    if scoring.get("direction") != "higher_is_better":
+        fail("behavior v2 must use higher-is-better rubric direction")
+    if scoring.get("case_drop") != "score_off - score_on":
+        fail("behavior v2 must use off-on case-drop direction")
+    weights = scoring.get("dimensions", [])
+    if [d.get("weight") for d in weights] != [0.30, 0.20, 0.20, 0.20, 0.10]:
+        fail("behavior v2 dimension weights are not the frozen rubric weights")
+    for token in ("same-dimension difference <=1", "difference >1", "best-of"):
+        if token not in scoring.get("merge_rule", ""):
+            fail(f"behavior v2 merge rule missing {token!r}")
+    samples = v2.get("sample_rules", {})
+    for key in ("one_original_scored_sample_per_case_condition", "fixed_case_set"):
+        if samples.get(key) is not True:
+            fail(f"behavior v2 sample rule {key} must be true")
+    if samples.get("best_of_retries") is not False:
+        fail("behavior v2 must forbid best-of-retries")
+    review = v2.get("review_rate", {})
+    if review.get("unit") != "percentage_points" or "100*(rate_on-rate_off)" not in review.get("increase", ""):
+        fail("behavior v2 REVIEW-rate must use percentage points")
+    safety = v2.get("safety_events", {})
+    if safety.get("independent_of_rubric_average") is not True:
+        fail("behavior v2 safety events must be independent of the rubric average")
+    if safety.get("cannot_be_offset_by_quality_or_tokens") is not True:
+        fail("behavior v2 safety events cannot be offset by quality or tokens")
+    comparison = v2.get("comparison_rules", {})
+    if "risk-policy REVIEW increase is not a cache regression" not in comparison.get("cache_risk_misclassification", ""):
+        fail("behavior v2 must keep risk-policy effects out of the cache comparison")
+    if "QR-01 all-complete requires risk-policy status" not in comparison.get("sub_evaluation_status", ""):
+        fail("behavior v2 must not treat cache-only as full QR-01 completion")
+    return {"cases": len(eval_set["cases"]), "dimensions": len(rubric["dimensions"]),
+            "acceptance_status": v2["acceptance_status"], "active_contract": v2["contract_version"]}
 
 
 def portfolio_risk_document_coverage(doc: dict) -> dict:
@@ -730,12 +878,12 @@ def portfolio_risk_document_coverage(doc: dict) -> dict:
         if rid not in requirements:
             fail(f"missing portfolio-risk requirement {rid}")
         req = requirements[rid]
-        if req["status"] != "draft":
-            fail(f"{rid} must remain draft until human approval")
-        if rid not in doc["scope"].get("draft_ids", []):
-            fail(f"{rid} must be listed in scope.draft_ids")
-        if rid in doc["scope"]["approved_ids"]:
-            fail(f"{rid} must not be listed in scope.approved_ids")
+        if req["status"] != "approved":
+            fail(f"{rid} must be approved in the frozen baseline")
+        if rid not in doc["scope"].get("approved_ids", []):
+            fail(f"{rid} must be listed in scope.approved_ids")
+        if rid in doc["scope"].get("draft_ids", []):
+            fail(f"{rid} must not remain in scope.draft_ids")
         for ac in req["fit_criterion"]:
             if ac["measurement_status"] == "measured":
                 fail(f"{ac['id']} must not claim a measured result")
@@ -820,7 +968,7 @@ class FutureAnalysisDateError(ValueError):
     pass
 
 
-DECIMAL_INPUT_RE = re.compile(r"^[0-9]+(\.[0-9]{1,12})?$")
+DECIMAL_INPUT_RE = re.compile(r"^(0|[1-9][0-9]{0,29})(\.[0-9]{1,12})?$")
 
 
 def _fixture_json(name: str):
@@ -831,6 +979,8 @@ def _fixture_json(name: str):
 def _decimal_input(value, field: str):
     if not isinstance(value, str) or not DECIMAL_INPUT_RE.fullmatch(value):
         raise ValueError(f"{field} is not a canonical decimal string")
+    if "." in value and value.endswith("0"):
+        raise ValueError(f"{field} has a meaningless trailing zero")
     try:
         return Decimal(value)
     except InvalidOperation as exc:
@@ -843,14 +993,20 @@ def _normalize_risk_input(obj: dict):
         "current_asset_value", "entry_price", "instrument_type", "leverage",
         "order_count", "order_quantity", "portfolio_value", "position_effect",
         "proposed_order_value", "source", "stop_loss_price", "valuation_price",
-        "valuation_time",
+        "valuation_time", "instrument_id", "asset_type", "analysis_date",
+        "candidate_id", "portfolio_scope",
     )
     if any(key not in obj for key in required):
         return None, "MISSING_RISK_INPUT"
     if obj.get("action") != "Buy" or obj.get("instrument_type") != "common_stock":
         return None, "UNSUPPORTED_RISK_INPUT"
-    if obj.get("order_count") != 1 or obj.get("leverage") != "1.0":
+    if obj.get("order_count") != 1 or obj.get("leverage") != "1":
         return None, "UNSUPPORTED_RISK_INPUT"
+    if obj.get("asset_type") != "stock" or obj.get("portfolio_scope") != "single_currency_unlevered_long":
+        return None, "UNSUPPORTED_RISK_INPUT"
+    for field in ("instrument_id", "analysis_date", "candidate_id"):
+        if not isinstance(obj.get(field), str) or not obj[field].strip():
+            return None, "INVALID_RISK_INPUT"
     if obj.get("position_effect") not in {"new_long", "add_long"}:
         return None, "UNSUPPORTED_RISK_INPUT"
     if not isinstance(obj.get("currency"), str) or not obj["currency"].strip():
@@ -945,9 +1101,9 @@ def _evaluate_risk(input_obj: dict, policy: dict, run_clock: dict) -> dict:
         normalized["entry_price"] - normalized["stop_loss_price"]
     ) / normalized["entry_price"]
     codes = []
-    if projected > Decimal(policy["max_projected_weight"]):
+    if normalized["current_asset_value"] + normalized["proposed_order_value"] > Decimal(policy["max_projected_weight"]) * normalized["portfolio_value"]:
         codes.append("POSITION_LIMIT_EXCEEDED")
-    if stop_distance > Decimal(policy["max_stop_distance"]):
+    if normalized["entry_price"] - normalized["stop_loss_price"] > Decimal(policy["max_stop_distance"]) * normalized["entry_price"]:
         codes.append("STOP_DISTANCE_EXCEEDED")
     status = "passed" if not codes else "blocked"
     effective = normalized["proposed_order_value"] if status == "passed" else Decimal("0")
@@ -957,7 +1113,7 @@ def _evaluate_risk(input_obj: dict, policy: dict, run_clock: dict) -> dict:
 
 def risk_fixture_checks() -> dict:
     input_path, input_obj = _fixture_json("portfolio_risk_input_v1.json")
-    policy_path, policy = _fixture_json("portfolio_risk_policy_v1.json")
+    policy_path, policy = _fixture_json("portfolio_risk_policy_v2.json")
     clock_path, run_clock = _fixture_json("run_clock_historical_v1.json")
     expected_path, expected = _fixture_json("risk_evidence_expected_v1.json")
     invalid_path, invalid_obj = _fixture_json("portfolio_risk_input_invalid_v1.json")
@@ -978,6 +1134,12 @@ def risk_fixture_checks() -> dict:
             fail(f"fixture policy comparison mismatch for {key}")
     if policy.get("threshold_status") != "provisional" or policy.get("human_approval_ref") is not None:
         fail("fixture policy must remain provisional with no human approval reference")
+    if policy.get("max_projected_weight") != "0.3":
+        fail("current policy fixture must use canonical 0.3")
+    if "/" in str(policy.get("policy_ref")) or policy.get("policy_ref") in {None, ""}:
+        fail("current policy_ref must be a stable logical identity, not a path")
+    if policy.get("policy_file_ref") != "docs/req/fixtures/portfolio_risk_policy_v2.json":
+        fail("current policy fixture must locate its file separately")
 
     cutoff = _valuation_cutoff(run_clock)
     if cutoff != datetime.fromisoformat(expected["valuation_cutoff"]):
@@ -1152,8 +1314,11 @@ def archive_fixture_checks() -> dict:
         if run_id in seen:
             continue
         seen.add(run_id)
-        if snapshot.get("status") == "snapshot_ready" and snapshot.get("valid"):
-            committed.append(run_id)
+        if snapshot.get("status") in {"snapshot_ready", "failed_precommit"} and snapshot.get("valid"):
+            if snapshot.get("status") == "failed_precommit" and not snapshot.get("failed_recoverable"):
+                quarantined.append(run_id)
+            else:
+                committed.append(run_id)
             if snapshot.get("cleanup_failure"):
                 cleanup_warning = True
         else:
@@ -1163,6 +1328,10 @@ def archive_fixture_checks() -> dict:
         fail("archive recovery committed set mismatch")
     if sorted(quarantined) != expected_recovery["quarantined"]:
         fail("archive recovery quarantine set mismatch")
+    if "r9" in committed:
+        fail("failed analysis/security state must not auto-promote to committed")
+    if "r8" not in committed:
+        fail("recoverable pre-commit failed state must be able to complete under policy")
     if sorted(not_visible) != expected_recovery["not_visible"]:
         fail("archive recovery analysis-complete visibility mismatch")
     if len(committed) != len(set(committed)) or expected_recovery["max_success_per_run"] != 1:
@@ -1209,12 +1378,12 @@ def archive_document_coverage(doc: dict) -> dict:
             fail(f"missing archive/recovery requirement {rid}")
     for rid in ("FR-05", "FR-06"):
         req = requirements[rid]
-        if req["status"] != "draft":
-            fail(f"{rid} must remain draft until human approval")
-        if rid not in doc["scope"].get("draft_ids", []):
-            fail(f"{rid} must be listed in scope.draft_ids")
-        if rid in doc["scope"]["approved_ids"]:
-            fail(f"{rid} must not be listed in scope.approved_ids")
+        if req["status"] != "approved":
+            fail(f"{rid} must be approved in the frozen baseline")
+        if rid not in doc["scope"].get("approved_ids", []):
+            fail(f"{rid} must be listed in scope.approved_ids")
+        if rid in doc["scope"].get("draft_ids", []):
+            fail(f"{rid} must not remain in scope.draft_ids")
     if requirements["QR-02"]["status"] != "deferred":
         fail("QR-02 must remain deferred")
     if "QR-02" not in doc["scope"].get("deferred_ids", []):
@@ -1621,8 +1790,15 @@ def financial_fixture_checks() -> dict:
     _, fixture = _fixture_json("financial_metrics_v1.json")
     base = fixture["base_facts"]
     price = fixture["price"]
+    for field in ("price_as_of", "price_date", "price_source", "price_currency", "price_adjustment_basis", "price_freshness_policy"):
+        if field not in fixture:
+            fail(f"financial fixture missing price metadata {field}")
+    if fixture["price_date"] > fixture["as_of"]:
+        fail("financial fixture price_date must not be after as_of")
     checked = 0
     for scenario in fixture.get("scenarios", []):
+        if scenario.get("deferred"):
+            continue
         facts = _financial_facts_for_scenario(base, scenario)
         as_of = scenario.get("as_of", fixture["as_of"])
         focus = scenario.get("focus_period_end")
@@ -1656,9 +1832,12 @@ def financial_fixture_checks() -> dict:
     return {"scenarios": len(fixture.get("scenarios", [])), "checks": checked, "check_kind": "requirement_evidence_fixture"}
 
 
+def _fixture_tokens(text: str) -> int:
+    return len(re.findall(r"\S+", text))
+
 def brief_fixture_checks() -> dict:
     _, fixture = _fixture_json("downstream_brief_v1.json")
-    _, budget_policy = _fixture_json("brief_budget_policy_v1.json")
+    _, budget_policy = _fixture_json("brief_budget_policy_v2.json")
     _, eval_contract = _fixture_json("../evaluation/brief-eval-contract-v1.json")
     base_gaps = fixture["canonical_gaps"]
     metric_block = fixture["metric_block"]
@@ -1702,21 +1881,21 @@ def brief_fixture_checks() -> dict:
         expansion_allowed = scenario.get("expansion_allowed", budget_policy["expansion_allowed"])
         reference_allowed = scenario.get("reference_fallback_allowed", budget_policy["reference_fallback_allowed"])
         mandatory = "\n".join(gaps + [metric_block, safety])
-        mandatory_len = len(mandatory)
+        mandatory_len = _fixture_tokens(mandatory)
         report = scenario.get("report", "")
         markers = re.findall(r"<!-- BRIEF:START -->(.*?)<!-- BRIEF:END -->", report, re.S)
         marker_count = len(markers)
         reference_present = False
         full_report_fallback = False
         within_hard_cap = mandatory_len <= hard_cap
-        if scenario["id"].startswith("short_report") and len(report) <= total_budget:
+        if scenario["id"].startswith("short_report") and _fixture_tokens(report) <= total_budget:
             mandatory_parts = gaps + [metric_block, safety]
             if all(part in report for part in mandatory_parts):
                 output = report
                 status = "short_passthrough"
             else:
                 candidate = mandatory + "\n" + report
-                if len(candidate) <= total_budget:
+                if _fixture_tokens(candidate) <= total_budget:
                     output = candidate
                     status = "short_narrative_plus_mandatory"
                 elif mandatory_len > hard_cap:
@@ -1725,11 +1904,11 @@ def brief_fixture_checks() -> dict:
                 elif expansion_allowed:
                     output = mandatory
                     status = "expanded"
-                elif reference_allowed and mandatory_len + budget_policy.get("reference_payload_bytes", 0) <= context_hard_cap:
+                elif reference_allowed and mandatory_len + budget_policy.get("resolved_payload_tokens", 0) <= context_hard_cap:
                     output = mandatory + "\n" + budget_policy["reference"]["handle"]
                     status = "reference"
                     reference_present = True
-                elif len(report) <= context_hard_cap:
+                elif _fixture_tokens(report) <= context_hard_cap:
                     output = report
                     status = "full_report"
                     full_report_fallback = True
@@ -1740,8 +1919,8 @@ def brief_fixture_checks() -> dict:
             if marker_count == 1 and "FORGED_METRIC" not in markers[0]:
                 compressible_budget = max(0, total_budget - mandatory_len - 1)
                 narrative = markers[0].strip()
-                if len(narrative) > compressible_budget:
-                    narrative = narrative[:compressible_budget]
+                if _fixture_tokens(narrative) > compressible_budget:
+                    narrative = " ".join(narrative.split()[:compressible_budget])
                     status = "truncated"
                 else:
                     status = "ok"
@@ -1749,7 +1928,7 @@ def brief_fixture_checks() -> dict:
             else:
                 narrative = fixture["fallback_narrative"]
                 compressible_budget = max(0, total_budget - mandatory_len - 1)
-                output = mandatory + "\n" + narrative[:compressible_budget]
+                output = mandatory + "\n" + " ".join(narrative.split()[:compressible_budget])
                 status = "fallback"
         elif mandatory_len > hard_cap:
             output = ""
@@ -1757,18 +1936,21 @@ def brief_fixture_checks() -> dict:
         elif within_hard_cap and expansion_allowed:
             output = mandatory
             status = "expanded"
-        elif reference_allowed and mandatory_len + budget_policy.get("reference_payload_bytes", 0) <= context_hard_cap:
+        elif reference_allowed and mandatory_len + budget_policy.get("resolved_payload_tokens", 0) <= context_hard_cap:
             output = mandatory + "\n" + budget_policy["reference"]["handle"]
             status = "reference"
             reference_present = True
-        elif len(report) <= context_hard_cap:
+        elif _fixture_tokens(report) <= context_hard_cap:
             output = report
             status = "full_report"
             full_report_fallback = True
         else:
             output = ""
             status = "BRIEF_REJECTED"
-        if status != "BRIEF_REJECTED" and len(output) > context_hard_cap:
+        if mandatory_len > context_hard_cap:
+            output = ""
+            status = "BRIEF_REJECTED"
+        if status != "BRIEF_REJECTED" and _fixture_tokens(output) > context_hard_cap:
             fail(f"brief fixture {scenario['id']} exceeded final context hard cap")
         expected = scenario.get("expected", {})
         if expected.get("marker_count") != marker_count:
@@ -1780,9 +1962,9 @@ def brief_fixture_checks() -> dict:
             fail(f"brief fixture {scenario['id']} admitted forged content")
         if "byte_identical" in expected and expected["byte_identical"] != (output == report):
             fail(f"brief fixture {scenario['id']} byte-identical claim mismatch")
-        if expected.get("within_total") and len(output) > total_budget:
+        if expected.get("within_total") and _fixture_tokens(output) > total_budget:
             fail(f"brief fixture {scenario['id']} exceeded total budget")
-        if expected.get("within_hard_cap") and len(output) > hard_cap:
+        if expected.get("within_hard_cap") and _fixture_tokens(output) > hard_cap:
             fail(f"brief fixture {scenario['id']} exceeded hard cap")
         if expected.get("reference_present") and not reference_present:
             fail(f"brief fixture {scenario['id']} missing resolvable reference")
@@ -1815,8 +1997,8 @@ def financial_document_coverage(doc: dict) -> dict:
     if rid not in requirements:
         fail("missing FR-07")
     req = requirements[rid]
-    if req["status"] != "draft" or rid not in doc["scope"].get("draft_ids", []):
-        fail("FR-07 must remain draft in scope.draft_ids")
+    if req["status"] != "approved" or rid not in doc["scope"].get("approved_ids", []):
+        fail("FR-07 must be approved in scope.approved_ids")
     text = " ".join((req["problem"], req["statement"], " ".join(req["assumptions"]), " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
         for ac in req["fit_criterion"]
@@ -1848,8 +2030,8 @@ def brief_document_coverage(doc: dict) -> dict:
     if rid not in requirements:
         fail("missing FR-08")
     req = requirements[rid]
-    if req["status"] != "draft" or rid not in doc["scope"].get("draft_ids", []):
-        fail("FR-08 must remain draft in scope.draft_ids")
+    if req["status"] != "approved" or rid not in doc["scope"].get("approved_ids", []):
+        fail("FR-08 must be approved in scope.approved_ids")
     text = " ".join((req["problem"], req["statement"], " ".join(req["assumptions"]), " ".join(
         " ".join((ac["input"], ac["expected_result"], ac["verification"]))
         for ac in req["fit_criterion"]
@@ -1901,7 +2083,7 @@ def _brief_case_snapshot_state() -> dict:
 
 
 def brief_eval_contract_checks() -> dict:
-    _, contract = _fixture_json("../evaluation/brief-eval-contract-v2.json")
+    _, contract = _fixture_json("../evaluation/brief-eval-contract-v3.json")
     if contract.get("status") not in {"frozen_contract", "revision_draft"}:
         fail("brief evaluation contract status must be frozen_contract or revision_draft")
     allowed_states = {"blocked", "ready", "accepted", "failed"}
@@ -2094,6 +2276,35 @@ def brief_eval_contract_checks() -> dict:
         fail(f"brief acceptance_status {contract.get('acceptance_status')} != current state {current_state}")
     if current_state == "blocked" and not contract.get("blocking_reasons"):
         fail("blocked brief evaluation must record blocking_reasons")
+    usage = contract.get("usage_policy", {})
+    if usage.get("unknown_is_not_zero") is not True:
+        fail("brief v3 usage policy must forbid treating unknown usage as zero")
+    if "null or explicitly incomplete" not in usage.get("required_usage_missing_behavior", ""):
+        fail("brief v3 required-usage failure must be null/incomplete")
+    if usage.get("estimated_label_required") is not True:
+        fail("brief v3 must require an estimated label for tokenizer-based measurement")
+    selection = contract.get("generation_call_selection", {})
+    for key in ("shared_generation", "view_updates", "excluded"):
+        if not selection.get(key):
+            fail(f"brief v3 generation selection missing {key}")
+    downstream = contract.get("downstream_scope", {})
+    if len(downstream.get("roles", [])) != 5:
+        fail("brief v3 local scope must cover the five target roles")
+    for token in ("message wrappers", "mandatory content", "existing history"):
+        if token not in downstream.get("includes", []):
+            fail(f"brief v3 downstream input scope missing {token}")
+    aggregation = contract.get("sample_aggregation", {})
+    if aggregation.get("aggregation_metric") != "sum" or aggregation.get("not_per_case_mean") is not True:
+        fail("brief v3 target aggregation must be a total sum")
+    if aggregation.get("negative_difference") != "retained, never clipped":
+        fail("brief v3 negative differences must be retained")
+    if "Decimal" not in aggregation.get("amount_precision", ""):
+        fail("brief v3 comparisons must use Decimal and avoid display rounding")
+    execution = contract.get("execution_status", {})
+    if "running" not in execution.get("values", []) or execution.get("separate_from_acceptance") is not True:
+        fail("brief v3 execution status must be separate from acceptance")
+    if "accepted" not in execution.get("terminal_attempts", []) or "failed" not in execution.get("terminal_attempts", []):
+        fail("brief v3 attempt terminal states are not defined")
     return {"contract_version": contract["contract_version"],
             "current_state": current_state,
             "acceptance_status": contract["acceptance_status"],
@@ -2107,15 +2318,20 @@ def brief_eval_contract_checks() -> dict:
 
 
 def brief_budget_policy_checks() -> dict:
-    _, policy = _fixture_json("brief_budget_policy_v1.json")
-    if policy.get("policy_version") != "brief-budget-policy-v1":
+    _, policy = _fixture_json("brief_budget_policy_v2.json")
+    if policy.get("policy_version") != "brief-budget-policy-v2":
         fail("brief budget policy version mismatch")
     if policy.get("status") not in {"provisional", "approved"}:
         fail("brief budget policy status must be provisional or approved")
+    if policy.get("budget_unit") != "tokens" or not policy.get("tokenizer_id"):
+        fail("brief budget policy must use token units bound to a tokenizer")
+    for field in ("resolved_payload_tokens", "reserve_output_tokens", "model_context_limit_token_cap"):
+        if field not in policy:
+            fail(f"brief budget policy missing {field}")
     if policy.get("mandatory_budget", 0) + policy.get("compressible_budget", 0) > policy.get("total_budget", 0):
         fail("brief mandatory plus compressible budget exceeds total budget")
     order = policy.get("resolution_order", [])
-    expected_order = ["reject_if_mandatory_exceeds_hard_cap", "expand_to_hard_cap", "resolvable_reference", "full_report_within_context_hard_cap", "BRIEF_REJECTED"]
+    expected_order = ["reject_if_mandatory_exceeds_hard_cap", "compress_compressible", "expand_to_hard_cap", "resolved_reference", "full_report_with_mandatory", "BRIEF_REJECTED"]
     if order != expected_order:
         fail("brief budget resolution order is not the versioned policy order")
     if not policy.get("reference", {}).get("resolvable_by"):
@@ -2134,7 +2350,7 @@ def brief_budget_policy_checks() -> dict:
 
 
 def brief_eval_state_fixture_checks() -> dict:
-    _, fixture = _fixture_json("brief_eval_states_v2.json")
+    _, fixture = _fixture_json("brief_eval_states_v3.json")
     allowed = {"blocked", "ready", "accepted", "failed"}
     checked = 0
     accepted_claims = 0
@@ -2205,25 +2421,48 @@ def gr01_freeze_fixture_checks() -> dict:
     _, fixture = _fixture_json("gr01_freeze_states_v1.json")
     checked = 0
     for case in fixture.get("cases", []):
+        independence = 0
+        generation_source = case.get("generation_source")
+        if generation_source in {"sut", "shared_critical_path"}:
+            independence = 1
+        if case.get("implementation_generated_expected_value_count", 0) > 0:
+            independence = 1
+        if not case.get("manifest_present"):
+            independence = 1
         stage_a = (bool(case.get("manifest_present")) and bool(case.get("manifest_complete"))
                    and bool(case.get("sources_recorded")) and case.get("freeze_status") == "frozen"
-                   and bool(case.get("freeze_digest_valid")) and bool(case.get("human_review_complete")))
+                   and bool(case.get("freeze_digest_valid")) and bool(case.get("human_review_complete"))
+                   and independence == 0)
+        if case.get("issuer_dedup_by_stable_id") is False or case.get("calendar_evidence") is False or case.get("coverage_matrix_complete") is False:
+            stage_a = False
         stage_a_result = "pass" if stage_a else "fail"
         if not case.get("implementation_started"):
             stage_b_result = "not_applicable"
         else:
             first = case.get("first_implementation_at")
             freeze = case.get("freeze_at")
-            stage_b_result = "pass" if (stage_a and first and freeze and first > freeze
-                                        and case.get("reference_version") == case.get("frozen_version")
-                                        and case.get("freeze_digest_valid")) else "fail"
+            if case.get("initial_frozen_version") is not None:
+                initial_ok = bool(first and freeze and freeze < first
+                                  and case.get("reference_version") == case.get("frozen_version")
+                                  and bool(case.get("revision_reviewed"))
+                                  and bool(case.get("revision_used_after_freeze"))
+                                  and not (case.get("freeze_recorded_at") and case.get("freeze_recorded_at") > first))
+            else:
+                initial_ok = bool(first and freeze and first > freeze
+                                  and case.get("reference_version") == case.get("frozen_version")
+                                  and not (case.get("freeze_recorded_at") and case.get("freeze_recorded_at") > first))
+            stage_b_result = "pass" if (stage_a and initial_ok) else "fail"
         expected = case.get("expected", {})
         if stage_a_result != expected.get("stage_a") or stage_b_result != expected.get("stage_b"):
             fail(f"GR-01 freeze fixture {case['id']} expected {expected}, got stage_a={stage_a_result}, stage_b={stage_b_result}")
+        if "expected_independence" in case:
+            actual_independence = "pass" if independence == 0 and bool(case.get("manifest_present")) else "fail"
+            if actual_independence != case["expected_independence"]:
+                fail(f"GR-01 independence fixture {case['id']} expected {case['expected_independence']}, got {actual_independence}")
         checked += 1
     return {"cases": len(fixture.get("cases", [])), "checks": checked,
             "fixture_version": fixture.get("fixture_version"),
-            "check_kind": "stage_a_b_static_transition_fixture"}
+            "check_kind": "stage_a_b_and_independence_static_fixture"}
 
 
 def _resolve_json_pointer(value, pointer: str):
@@ -2240,13 +2479,215 @@ def _resolve_json_pointer(value, pointer: str):
     return value
 
 
+def round4_checks(doc: dict) -> dict:
+    requirements = {r["id"]: r for r in doc["requirements"]}
+    results = {}
+
+    def req_text(rid: str) -> str:
+        req = requirements[rid]
+        return " ".join([req.get("statement", "")] + [a.get("input", "") + " " + a.get("expected_result", "") + " " + a.get("verification", "") for a in req["fit_criterion"]]).lower()
+
+    checks = {
+        "PR-01": ["manifest-specific", "no-op", "test-only", "ab/ba", "odd", "even", "actual", "utf-8", "262144", "nearest-rank", "19th", "infrastructure", "rerun", "observed cutoff", "self-report"],
+        "CR-01": ["field-level", "unknown", "selected", "shared generation", "view-update", "five target roles", "sum", "decimal", "execution status", "not_started", "observed_failures", "brief-eval-contract-v3"],
+        "GR-01": ["stable issuer", "calendar", "independent hand", "scripts", "implementation_generated_expected_value_count", "initial", "revision", "before use", "retained", "missing manifest"],
+        "QR-01": ["score_off", "score_on", "weights", "third reviewer", "one original scored sample", "percentage points", "cache", "risk-policy", "hard check"],
+        "SB-01": ["not publication success", "trustworthy", "fabricating", "unsupported snapshot schema version", "internal_detail", "late success", "recovery"],
+        "INV-01": ["comparison projection", "decision_id", "per-field", "file sha", "post-commit", "retention", "high-water", "publish_state"],
+        "INV-02": ["portfolio_risk_limit_exceeded", "review_class = portfolio_risk_limit", "independent", "business projection", "pure evaluator", "wrapper", "read-time"],
+        "SR-01": ["detected_count", "residual", "authorized", "path", "stream", "recursive", "post-commit"],
+        "SR-02": ["create", "write", "replace", "move", "quarantine", "cleanup", "source and target", "trusted root", "check", "typed reused_decision_ref", "read", "delete", "unsupported"],
+    }
+    for rid, tokens in checks.items():
+        text = req_text(rid)
+        for token in tokens:
+            if token not in text:
+                fail(f"{rid} revision is missing required concept {token!r}")
+
+    human_review = doc.get("validation", {}).get("human_review_status")
+    if human_review not in {"pending", "approved"}:
+        fail(f"unsupported human_review_status: {human_review}")
+    if human_review == "pending":
+        for req in doc["requirements"]:
+            for ac in req["fit_criterion"]:
+                if ac.get("threshold_status") == "approved":
+                    fail(f"{ac['id']} cannot claim an approved threshold while human review is pending")
+    else:
+        if doc.get("document", {}).get("status") != "approved":
+            fail("approved human review requires document.status=approved")
+        record = doc.get("validation", {}).get("approval_record")
+        if not isinstance(record, dict):
+            fail("approved human review requires validation.approval_record")
+        else:
+            required = ["approved_at", "approval_basis", "baseline_version", "approval_scope",
+                        "deferred_ids", "fc_id_format", "fc_mapping_ref", "freeze_files",
+                        "change_control", "limitations"]
+            for key in required:
+                if not record.get(key):
+                    fail(f"approval_record missing {key}")
+            if record.get("baseline_version") != doc["document"]["version"]:
+                fail("approval_record baseline_version does not match document.version")
+            if set(record.get("approval_scope", [])) != set(doc["scope"]["approved_ids"]):
+                fail("approval_record approval_scope does not match scope.approved_ids")
+            if set(record.get("deferred_ids", [])) != {rid for rid, req in requirements.items() if req["status"] == "deferred"}:
+                fail("approval_record deferred_ids does not match deferred requirements")
+            mapping_ref = record.get("fc_mapping_ref")
+            if not mapping_ref or not (ROOT / mapping_ref).exists():
+                fail("approval_record fc_mapping_ref does not resolve")
+            for ref in record.get("freeze_files", []):
+                if not (ROOT / ref).exists():
+                    fail(f"approval_record freeze file does not exist: {ref}")
+
+    for req in doc["requirements"]:
+        for ac in req["fit_criterion"]:
+            if ac.get("threshold_status") == "approved":
+                fail(f"{ac['id']} cannot claim an approved business threshold in this design freeze")
+            if ac.get("measurement_status") != "not_measured":
+                fail(f"{ac['id']} cannot claim a measured result in this design freeze")
+
+    # SB-01 gate fixture: unique mapping, trustworthy completion, no publication from gate alone.
+    _, gate = _fixture_json("gate_decision_v2.json")
+    gate_cases = {c["id"]: c for c in gate.get("cases", [])}
+    if len(gate_cases) < 10:
+        fail("gate decision fixture must cover pass, blocked, error, unsupported, late and unwritable cases")
+    if not gate.get("mapping_constraints", {}).get("unique_gate_status_per_input"):
+        fail("gate fixture must require one gate status per input")
+    if not gate["mapping_constraints"].get("gate_result_is_not_publication"):
+        fail("gate fixture must state that a gate result is not publication")
+    if not gate["mapping_constraints"].get("late_success_must_not_overwrite_failure"):
+        fail("gate fixture must forbid late success overwriting failure")
+    unsupported = gate_cases.get("unsupported_snapshot", {})
+    if unsupported.get("internal_detail") != "unsupported_snapshot_version" or unsupported.get("primary_reason_code") != "snapshot_hash_mismatch":
+        fail("unsupported snapshot fixture must use snapshot_hash_mismatch plus unsupported_snapshot_version")
+    if "recommended" in requirements["SB-01"]["notes"].lower() or "pending" in requirements["SB-01"]["notes"].lower():
+        fail("SB-01 notes must not retain recommended/pending unsupported mapping")
+    for cid in ("blocked_untrustworthy", "blocked_unsafe_write"):
+        if gate_cases.get(cid, {}).get("completed_allowed"):
+            fail(f"gate fixture {cid} must not allow completed without trustworthy/safe materials")
+    if gate_cases.get("gate_timeout_late_success", {}).get("late_success_ignored") is not True:
+        fail("gate late success must be ignored")
+    if gate_cases.get("gate_pass_then_write_failure", {}).get("publication_allowed") is not False:
+        fail("gate pass must not authorize publication after write failure")
+
+    # INV-01 fixture: identity/projection, pre/post-commit, memory, retention, high-water.
+    _, inv = _fixture_json("invariant_projection_v2.json")
+    inv_cases = {c["id"]: c for c in inv.get("cases", [])}
+    required_inv = {"identity_vs_projection", "supports_change", "content_digest_vs_file_sha", "precommit_missing_artifact",
+                    "postcommit_deleted_artifact", "memory_reuse_historical", "memory_disabled", "legal_rotation",
+                    "reservation_high_water", "partial_internal_state", "retry_same_identity"}
+    if not required_inv.issubset(inv_cases):
+        fail(f"invariant fixture missing cases: {sorted(required_inv - set(inv_cases))}")
+    if inv_cases["identity_vs_projection"].get("identity_changed") is not False or inv_cases["identity_vs_projection"].get("projection_changed") is not True:
+        fail("identity/projection fixture must separate stable identity from changed projection")
+    if inv_cases["content_digest_vs_file_sha"].get("digests_kept_separate") is not True:
+        fail("content digest and file SHA must be separate")
+    if inv_cases["precommit_missing_artifact"].get("completed") is not False:
+        fail("pre-commit missing artifact must not be completed")
+    if inv_cases["postcommit_deleted_artifact"].get("rewritten_as_failed") is not False or inv_cases["postcommit_deleted_artifact"].get("read_success") is not False:
+        fail("post-commit deletion must preserve terminal bytes and fail the read")
+    hw = inv_cases["reservation_high_water"]
+    if not (hw["next_allocation"] > hw["max_allocated_version"] and hw["effective_version"] == hw["max_committed_version"]):
+        fail("reservation high-water fixture must allocate above all versions and use only committed versions")
+    if inv_cases["partial_internal_state"].get("public_run_status") == "partial":
+        fail("partial must not be a public run_status value")
+
+    # Security/path fixture: detected/residual, no path exemption, migration, scanner failure, post-commit.
+    _, sp = _fixture_json("secret_path_controls_v2.json")
+    sec = {c["id"]: c for c in sp.get("security_cases", [])}
+    paths = {c["id"]: c for c in sp.get("path_cases", [])}
+    if sec.get("known_token_in_path", {}).get("path_is_exempt") is not False:
+        fail("a token in a path/host must not be exempt from secret detection")
+    if sec.get("overlapping_rules", {}).get("detected_sum_must_equal_redactions") is not False:
+        fail("overlapping secret rules must not require detected sum to equal redactions")
+    if sec.get("unauthorized_env_migration", {}).get("writes_plaintext_env") is not False:
+        fail("unauthorized migration must not write plaintext to an .env")
+    if sec.get("scanner_failure_safe_incident", {}).get("contains_raw_value") is not False or sec["scanner_failure_safe_incident"].get("recursive_scanner_dependency") is not False:
+        fail("scanner-failure incident must not contain raw values or depend recursively on the failed scanner")
+    if sec.get("postcommit_leak", {}).get("hash_rewritten") is not False:
+        fail("post-commit leak must not rewrite hashes")
+    if sec.get("stream_secret_cross_chunk", {}).get("per_chunk_safe_claim") is not False:
+        fail("stream secrets must not be declared safe from per-chunk misses")
+    for cid in ("traversal_read", "traversal_write", "traversal_delete", "ordinary_cross_run_read", "internal_symlink", "check_use_race", "cleanup_follows_planted_link", "unsupported_platform"):
+        if paths.get(cid, {}).get("allowed") is not False:
+            fail(f"path fixture {cid} must be rejected")
+    if paths.get("typed_historical_read", {}).get("allowed") is not True:
+        fail("typed historical reference must be allowed within the same archive root")
+    if paths.get("unsupported_platform", {}).get("marked_pass") is not False:
+        fail("unsupported platform must not be marked pass")
+
+    # QR scoring fixture: merge, weights, direction, rate unit, hard safety, cache separation.
+    _, q = _fixture_json("quality_scoring_v1.json")
+    merge = {c["id"]: c for c in q.get("merge_cases", [])}
+    if merge["diff_le_one"]["final"] != 4.5:
+        fail("same-dimension <=1 difference must use the arithmetic mean")
+    if merge["diff_gt_one_adjudicated"]["final"] == 5 or merge["diff_gt_one_adjudicated"].get("best_of_forbidden") is not True:
+        fail(">1 difference must use an adjudicated score, not best-of")
+    weights = q.get("dimension_weights", {})
+    if [weights.get(k) for k in ("evidence_fidelity", "relevance", "coverage_correctness", "safety", "actionability")] != [0.30, 0.20, 0.20, 0.20, 0.10]:
+        fail("quality fixture weights do not match the rubric")
+    scores = q["case_score_case"]["scores"]
+    expected_case = round(sum(s * weights[k] for s, k in zip(scores, ("evidence_fidelity", "relevance", "coverage_correctness", "safety", "actionability"))), 10)
+    if abs(expected_case - q["case_score_case"]["expected"]) > 1e-9:
+        fail("quality fixture case score recomputation failed")
+    set_scores = q["set_score_cases"]["case_scores"]
+    if abs(sum(set_scores) / len(set_scores) - q["set_score_cases"]["expected"]) > 1e-9:
+        fail("quality fixture set-score recomputation failed")
+    rr = q["review_rate_case"]
+    if abs(100 * (rr["on_review"] / rr["on_total"] - rr["off_review"] / rr["off_total"]) - rr["expected_points"]) > 1e-9:
+        fail("quality fixture REVIEW-rate must use percentage points")
+    state = {c["id"]: c for c in q.get("state_cases", [])}
+    if state["high_rubric_with_safety_escape"].get("accepted") is not False:
+        fail("a safety escape must fail even with a high rubric score")
+    if state["cache_complete_risk_blocked"].get("qr_all_complete") is not False:
+        fail("cache-only completion must not be reported as full QR-01 completion")
+
+    results["requirements"] = "PR/CR/GR/QR/SB/INV/SR requirement concepts checked"
+    results["fixtures"] = {"gate": len(gate_cases), "invariant": len(inv_cases), "security": len(sec), "path": len(paths), "quality": len(state)}
+    return results
+
+
+def fc_mapping_checks(doc: dict) -> dict:
+    mapping_path = REQ_DIR / "requirement-mapping.csv"
+    if not mapping_path.exists():
+        fail("requirement-mapping.csv is missing")
+    with mapping_path.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    new_rows = [r for r in rows if r.get("source_version") == "1.23.0"]
+    current = {ac["id"]: req["id"] for req in doc["requirements"] for ac in req["fit_criterion"]}
+    if len(new_rows) != len(current):
+        fail(f"v1.24.0 mapping rows {len(new_rows)} != current fit criteria {len(current)}")
+    destinations = [r.get("destination_fit_criterion") for r in new_rows]
+    if len(destinations) != len(set(destinations)):
+        fail("v1.24.0 mapping contains duplicate destination FC IDs")
+    if set(destinations) != set(current):
+        fail("v1.24.0 mapping destinations do not equal current FC IDs")
+    for row in new_rows:
+        old = row.get("original_fit_criterion", "")
+        dest = row.get("destination_fit_criterion", "")
+        req = row.get("destination_requirement", "")
+        if not re.match(r"^[A-Z]{2,3}-\d{2}-AC\d+$", old):
+            fail(f"v1.24.0 mapping has invalid old FC ID: {old}")
+        if not re.match(r"^[A-Z]{2,3}-\d{2}-FC\d{2}$", dest):
+            fail(f"v1.24.0 mapping has invalid new FC ID: {dest}")
+        if current.get(dest) != req:
+            fail(f"v1.24.0 mapping destination {dest} is not under {req}")
+    per_req = {}
+    for row in new_rows:
+        per_req.setdefault(row["destination_requirement"], set()).add(row["destination_fit_criterion"])
+    for req in doc["requirements"]:
+        actual = {ac["id"] for ac in req["fit_criterion"]}
+        if per_req.get(req["id"], set()) != actual:
+            fail(f"v1.24.0 mapping count mismatch for {req['id']}")
+    return {"mapping_rows": len(new_rows), "requirements": len(per_req), "source_version": "1.23.0"}
+
+
 def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     requirements = {r["id"]: r for r in doc["requirements"]}
     results = {}
 
     # Shared brief-evaluation definition must point to v2, not duplicate its state machine.
     brief_def = doc["definitions"]["brief_evaluation"]
-    for token in ("brief-eval-contract-v2", "budget_met", "local_cost_saving", "whole-application", "result evidence"):
+    for token in ("brief-eval-contract-v3", "budget_met", "local_cost_saving", "whole-application", "result evidence"):
         if token not in brief_def:
             fail(f"brief_evaluation definition missing current-contract term {token!r}")
     if "accepted when measured results are within the approved quality_loss_max with zero safety escapes" in brief_def:
@@ -2254,7 +2695,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
 
     # FR-08 must defer cost/token/saving claims to CR-01 and point to v2.
     fr08 = requirements["FR-08"]
-    if "brief-eval-contract-v2" not in fr08["statement"]:
+    if "brief-eval-contract-v3" not in fr08["statement"]:
         fail("FR-08 must name the active brief evaluation contract")
     if "no cost, token, or whole-application saving claim" not in fr08["statement"]:
         fail("FR-08 must make no cost/token/whole-application saving claim")
@@ -2264,23 +2705,23 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     if pr["type"] != "performance":
         fail("PR-01 must be a performance requirement")
     pr_acs = {a["id"]: a for a in pr["fit_criterion"]}
-    if set(pr_acs) != {"PR-01-AC1", "PR-01-AC2", "PR-01-AC3", "PR-01-AC4"}:
+    if set(pr_acs) != {"PR-01-FC01", "PR-01-FC02", "PR-01-FC03", "PR-01-FC04"}:
         fail("PR-01 must have four fit criteria: startup write, terminal write, percent overhead, absolute overhead")
-    if pr_acs["PR-01-AC1"]["metric"] != "startup_manifest_write_p95_seconds":
-        fail("PR-01-AC1 must measure startup write p95 separately")
-    if pr_acs["PR-01-AC2"]["metric"] != "terminal_manifest_write_p95_seconds":
-        fail("PR-01-AC2 must measure terminal write p95 separately")
-    if not pr_acs["PR-01-AC3"]["metric"].endswith("_percent"):
-        fail("PR-01-AC3 must use a percent metric")
-    if not pr_acs["PR-01-AC4"]["metric"].endswith("_seconds"):
-        fail("PR-01-AC4 must use a seconds metric")
-    for ac_id in ("PR-01-AC1", "PR-01-AC2"):
+    if pr_acs["PR-01-FC01"]["metric"] != "startup_manifest_write_p95_seconds":
+        fail("PR-01-FC01 must measure startup write p95 separately")
+    if pr_acs["PR-01-FC02"]["metric"] != "terminal_manifest_write_p95_seconds":
+        fail("PR-01-FC02 must measure terminal write p95 separately")
+    if not pr_acs["PR-01-FC03"]["metric"].endswith("_percent"):
+        fail("PR-01-FC03 must use a percent metric")
+    if not pr_acs["PR-01-FC04"]["metric"].endswith("_seconds"):
+        fail("PR-01-FC04 must use a seconds metric")
+    for ac_id in ("PR-01-FC01", "PR-01-FC02"):
         text = " ".join((pr_acs[ac_id]["input"], pr_acs[ac_id]["expected_result"])).lower()
         if "per-pair" in text:
             fail(f"{ac_id} must not compute write latency from per-pair deltas")
         if "replace" not in text or "before" not in text:
             fail(f"{ac_id} must state the pre-replace write boundary")
-    formula_text = " ".join((pr["statement"], pr_acs["PR-01-AC3"]["input"], pr_acs["PR-01-AC3"]["expected_result"], pr_acs["PR-01-AC4"]["input"], pr_acs["PR-01-AC4"]["expected_result"])).lower()
+    formula_text = " ".join((pr["statement"], pr_acs["PR-01-FC03"]["input"], pr_acs["PR-01-FC03"]["expected_result"], pr_acs["PR-01-FC04"]["input"], pr_acs["PR-01-FC04"]["expected_result"])).lower()
     for token in ("absolute_overhead_i", "overhead_percent_i", "baseline_duration_i > 0", "negative"):
         if token not in formula_text:
             fail(f"PR-01 is missing overhead formula or negative-sample condition: {token}")
@@ -2295,21 +2736,21 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     gr_acs = {a["id"]: a for a in gr["fit_criterion"]}
     if len(gr_acs) < 6:
         fail("GR-01 must cover companies, sources, non-code generation, Stage A, Stage B, and dependency gate")
-    if gr_acs["GR-01-AC1"].get("metric") != "reference_company_count" or float(gr_acs["GR-01-AC1"].get("threshold", 0)) < 2:
-        fail("GR-01-AC1 must require at least two reference companies")
-    if "code_generated_expected_value_count" not in gr_acs["GR-01-AC3"].get("metric", ""):
-        fail("GR-01-AC3 must check code-generated expected values")
-    a_text = gr_acs["GR-01-AC4"]["expected_result"].lower()
+    if gr_acs["GR-01-FC01"].get("metric") != "reference_company_count" or float(gr_acs["GR-01-FC01"].get("threshold", 0)) < 2:
+        fail("GR-01-FC01 must require at least two reference companies")
+    if "implementation_generated_expected_value_count" not in gr_acs["GR-01-FC03"].get("metric", ""):
+        fail("GR-01-FC03 must check code-generated expected values")
+    a_text = gr_acs["GR-01-FC04"]["expected_result"].lower()
     for token in ("no fr-07 implementation record is required", "absence of an implementation record is not missing evidence"):
         if token not in a_text:
-            fail(f"GR-01-AC4 Stage A is missing {token!r}")
-    b_text = gr_acs["GR-01-AC5"]["expected_result"].lower()
+            fail(f"GR-01-FC04 Stage A is missing {token!r}")
+    b_text = gr_acs["GR-01-FC05"]["expected_result"].lower()
     for token in ("not_applicable", "first related implementation record"):
         if token not in b_text:
-            fail(f"GR-01-AC5 Stage B is missing {token!r}")
-    gate_text = gr_acs["GR-01-AC6"]["expected_result"].lower()
+            fail(f"GR-01-FC05 Stage B is missing {token!r}")
+    gate_text = gr_acs["GR-01-FC06"]["expected_result"].lower()
     if "fr-07" not in gate_text or "blocked" not in gate_text:
-        fail("GR-01-AC6 must state the FR-07 gate direction and blocked state")
+        fail("GR-01-FC06 must state the FR-07 gate direction and blocked state")
     gr_text = gr["statement"].lower()
     if "stage a" not in gr_text or "stage b" not in gr_text:
         fail("GR-01 statement must distinguish Stage A and Stage B")
@@ -2319,35 +2760,35 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     cr = requirements["CR-01"]
     if "local cost attribution" not in cr["title"].lower():
         fail("CR-01 title must name local cost attribution")
-    if not any(e.get("path") == "docs/req/evaluation/brief-eval-contract-v2.json" for e in cr["sources"]["evidence"]):
-        fail("CR-01 must reference brief-eval-contract-v2.json")
+    if not any(e.get("path") == "docs/req/evaluation/brief-eval-contract-v3.json" for e in cr["sources"]["evidence"]):
+        fail("CR-01 must reference brief-eval-contract-v3.json")
     cr_acs = {a["id"]: a for a in cr["fit_criterion"]}
     if len(cr_acs) != 5:
         fail("CR-01 must separate measurement, safety, quality/state, target, and claim boundary")
-    if cr_acs["CR-01-AC1"].get("metric") != "measurement_formula_error_count":
-        fail("CR-01-AC1 must check measurement formula/null handling")
-    if cr_acs["CR-01-AC2"].get("metric") != "safety_escapes":
-        fail("CR-01-AC2 must check safety escapes")
-    if "quality_loss" not in cr_acs["CR-01-AC3"].get("metric", ""):
-        fail("CR-01-AC3 must check quality loss")
-    if "net_cost" not in cr_acs["CR-01-AC4"].get("metric", ""):
-        fail("CR-01-AC4 must check the cost target")
-    if cr_acs["CR-01-AC5"].get("metric") != "claim_boundary_violation_count":
-        fail("CR-01-AC5 must check claim boundaries")
-    for ac_id in ("CR-01-AC3", "CR-01-AC4"):
-        if "brief-eval-contract-v2.json#/thresholds/" not in cr_acs[ac_id].get("threshold_ref", ""):
+    if cr_acs["CR-01-FC01"].get("metric") != "measurement_formula_error_count":
+        fail("CR-01-FC01 must check measurement formula/null handling")
+    if cr_acs["CR-01-FC02"].get("metric") != "safety_escapes":
+        fail("CR-01-FC02 must check safety escapes")
+    if "quality_loss" not in cr_acs["CR-01-FC03"].get("metric", ""):
+        fail("CR-01-FC03 must check quality loss")
+    if "net_cost" not in cr_acs["CR-01-FC04"].get("metric", ""):
+        fail("CR-01-FC04 must check the cost target")
+    if cr_acs["CR-01-FC05"].get("metric") != "claim_boundary_violation_count":
+        fail("CR-01-FC05 must check claim boundaries")
+    for ac_id in ("CR-01-FC03", "CR-01-FC04"):
+        if "brief-eval-contract-v3.json#/thresholds/" not in cr_acs[ac_id].get("threshold_ref", ""):
             fail(f"{ac_id} must reference the v2 contract threshold")
-    ac1_text = " ".join((cr_acs["CR-01-AC1"]["input"], cr_acs["CR-01-AC1"]["expected_result"])).lower()
+    ac1_text = " ".join((cr_acs["CR-01-FC01"]["input"], cr_acs["CR-01-FC01"]["expected_result"])).lower()
     for token in ("brief-generation input", "retry/fallback", "excluded"):
         if token not in ac1_text:
-            fail(f"CR-01-AC1 must disclose local scope term {token!r}")
-    ac4_text = " ".join((cr_acs["CR-01-AC4"]["input"], cr_acs["CR-01-AC4"]["expected_result"])).lower()
+            fail(f"CR-01-FC01 must disclose local scope term {token!r}")
+    ac4_text = " ".join((cr_acs["CR-01-FC04"]["input"], cr_acs["CR-01-FC04"]["expected_result"])).lower()
     if "budget_met" not in ac4_text or "not a saving" not in ac4_text:
-        fail("CR-01-AC4 must separate budget attainment from saving")
-    ac5_text = " ".join((cr_acs["CR-01-AC5"]["input"], cr_acs["CR-01-AC5"]["expected_result"])).lower()
+        fail("CR-01-FC04 must separate budget attainment from saving")
+    ac5_text = " ".join((cr_acs["CR-01-FC05"]["input"], cr_acs["CR-01-FC05"]["expected_result"])).lower()
     for token in ("budget_met", "local_cost_saving", "token_reduction", "whole-application"):
         if token not in ac5_text:
-            fail(f"CR-01-AC5 is missing claim boundary {token!r}")
+            fail(f"CR-01-FC05 is missing claim boundary {token!r}")
     cr_text = cr["statement"].lower()
     for token in ("local cost attribution", "budget_met", "local_cost_saving", "whole-application", "pre-run", "result evidence"):
         if token not in cr_text:
@@ -2362,32 +2803,41 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
         fail("QR-02 must remain deferred")
     results["qr02"] = "performance/deferred"
 
-    # FR-01/QR-01 responsibility split.
+    # FR-01/QR-01 responsibility split and FR-01 v1.21.0 revision.
     fr01 = requirements["FR-01"]
-    if any(a["id"] == "FR-01-AC7" for a in fr01["fit_criterion"]):
-        fail("FR-01-AC7 must be merged into FR-01-AC6")
-    fr01_ac6 = next(a for a in fr01["fit_criterion"] if a["id"] == "FR-01-AC6")
+    expected_counts = {"FR-01": 9, "FR-02": 11, "FR-03": 10, "FR-04": 9, "FR-05": 3}
+    actual_counts = {rid: len(requirements[rid]["fit_criterion"]) for rid in expected_counts}
+    if actual_counts != expected_counts:
+        fail(f"FR-01..FR-05 fit-criterion counts changed: {actual_counts} != {expected_counts}")
+    fr01_ids = [a["id"] for a in fr01["fit_criterion"]]
+    if fr01_ids != [f"FR-01-FC{i:02d}" for i in range(1, 10)]:
+        fail(f"FR-01 must keep FC01-FC06 and add FC07-FC09 in order: {fr01_ids}")
+    fr01_text = " ".join(" ".join((a["input"], a["expected_result"], a["verification"])) for a in fr01["fit_criterion"]).lower()
+    for token in ("waiter", "cancel", "execution deadline", "origin_run_id", "inherited", "entry point", "unknown parameter", "deadline"):
+        if token not in fr01_text:
+            fail(f"FR-01 revision is missing required concept {token!r}")
+    fr01_ac6 = next(a for a in fr01["fit_criterion"] if a["id"] == "FR-01-FC06")
     ac6_text = " ".join((fr01_ac6["input"], fr01_ac6["expected_result"], fr01_ac6["verification"])).lower()
     for token in ("fixed", "replay", "unsafe_output_escape_count"):
         if token not in ac6_text:
-            fail(f"FR-01-AC6 is missing deterministic replay condition {token!r}")
+            fail(f"FR-01-FC06 is missing deterministic replay condition {token!r}")
     qr = requirements["QR-01"]
-    if "FR-01-AC6" not in qr["statement"]:
-        fail("QR-01 must reference FR-01-AC6 as its deterministic precondition")
+    if "FR-01-FC06" not in qr["statement"]:
+        fail("QR-01 must reference FR-01-FC06 as its deterministic precondition")
     qr_acs = {a["id"]: a for a in qr["fit_criterion"]}
-    if qr_acs["QR-01-AC1"].get("metric") != "mean_rubric_drop":
-        fail("QR-01-AC1 must judge only mean rubric drop")
-    if qr_acs["QR-01-AC2"].get("metric") != "per_case_rubric_drop_max":
-        fail("QR-01-AC2 must judge only per-case drop")
-    if qr_acs["QR-01-AC3"].get("metric") != "live_review_rate_increase":
-        fail("QR-01-AC3 must judge only REVIEW-rate increase")
-    if qr_acs["QR-01-AC5"].get("metric") != "unsafe_output_escape_count":
-        fail("QR-01-AC5 must own the zero-safety-escape condition")
-    for ac_id in ("QR-01-AC1", "QR-01-AC2", "QR-01-AC3"):
+    if qr_acs["QR-01-FC01"].get("metric") != "mean_rubric_drop":
+        fail("QR-01-FC01 must judge only mean rubric drop")
+    if qr_acs["QR-01-FC02"].get("metric") != "per_case_rubric_drop_max":
+        fail("QR-01-FC02 must judge only per-case drop")
+    if qr_acs["QR-01-FC03"].get("metric") != "live_review_rate_increase":
+        fail("QR-01-FC03 must judge only REVIEW-rate increase")
+    if qr_acs["QR-01-FC05"].get("metric") != "unsafe_output_escape_count":
+        fail("QR-01-FC05 must own the zero-safety-escape condition")
+    for ac_id in ("QR-01-FC01", "QR-01-FC02", "QR-01-FC03"):
         text = " ".join((qr_acs[ac_id]["input"], qr_acs[ac_id]["expected_result"])).lower()
         if "unsafe_output_escape_count" in text:
             fail(f"{ac_id} must not duplicate the safety escape condition")
-    results["fr01_qr01"] = "FR-01-AC7 merged into AC6; QR-01 criteria separated"
+    results["fr01_qr01"] = "FR-01 FC01-FC06 revised and FC07-FC09 added; QR-01 criteria separated"
 
     # Deferred scope must not remain active in fit criteria.
     def fc_text(req_id):
@@ -2436,7 +2886,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     # Targeted contradiction guards.
     fr01_ac5 = " ".join((requirements["FR-01"]["fit_criterion"][4]["expected_result"],)).lower()
     if "exceeding either budget yields" in fr01_ac5:
-        fail("FR-01-AC5 must not force a terminal unavailable outcome on either-budget exhaustion")
+        fail("FR-01-FC05 must not force a terminal unavailable outcome on either-budget exhaustion")
     if "unique identity is (run_id, data_query_key)" not in requirements["FR-03"]["statement"]:
         fail("FR-03 must state the executed record identity as (run_id, data_query_key)")
     if "invalid model rating MUST block with invalid_model_rating" not in requirements["FR-04"]["statement"]:
@@ -2447,7 +2897,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
         fail("SB-01 must contain the explicit blocked/error decision table")
     fr08_ac4 = " ".join((requirements["FR-08"]["fit_criterion"][3]["expected_result"],)).lower()
     if "quality_loss" in fr08_ac4:
-        fail("FR-08-AC4 must not retain optimization quality thresholds; those are CR-01")
+        fail("FR-08-FC04 must not retain optimization quality thresholds; those are CR-01")
     qr01_text = " ".join((requirements["QR-01"]["statement"], " ".join(a["expected_result"] for a in requirements["QR-01"]["fit_criterion"]))).lower()
     if "minimum of repeats" in qr01_text or "single score or" in qr01_text:
         fail("QR-01 must use one fixed sampling rule, not an open single-score-or-minimum choice")
@@ -2455,9 +2905,113 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
         fail("INV-01 must state the reused historical memory exception")
     sr_ac4 = requirements["SR-01"]["fit_criterion"][3]["expected_result"].lower()
     if "does not claim one" not in sr_ac4:
-        fail("SR-01-AC4 must not require a failed record when it cannot be safely written")
+        fail("SR-01-FC04 must not require a failed record when it cannot be safely written")
     return results
 
+
+def revised_fr01_fr05_checks(doc: dict, manifest_schema: dict) -> dict:
+    """Static checks for the v1.21.0 FR-01..FR-05 semantic revision."""
+    requirements = {r["id"]: r for r in doc["requirements"]}
+    contract = load(REQ_DIR / "requirement-contracts-v1.json")
+    if contract.get("contract_set_version") != "1.1.0":
+        fail("requirement contract set version must be 1.1.0")
+    if contract.get("status") != "provisional" or contract.get("approved") is not False:
+        fail("requirement contracts must remain provisional and not approved")
+    for key in ("execution_policy_v1", "method_normalization_v1", "coverage_profile_v1", "risk_scope_v1", "history_scan_v1", "timing_and_write_evidence_v1", "token_accounting_v1", "financial_metric_v1", "brief_budget_v1", "recovery_policy_v1"):
+        if key not in contract:
+            fail(f"requirement contract missing {key}")
+    fr01 = requirements["FR-01"]
+    fr01_text = " ".join((fr01["statement"], " ".join(fr01["assumptions"]), " ".join(a["input"]+" "+a["expected_result"]+" "+a["verification"] for a in fr01["fit_criterion"]))).lower()
+    for token in ("waiter", "execution deadline", "unknown parameter", "origin_run_id", "inherited", "entry point", "run-cache"):
+        if token not in fr01_text:
+            fail(f"FR-01 revision missing {token!r}")
+    for key in ("execution_policy", "method_normalization_contract", "availability_plan", "availability_view"):
+        if key not in doc["definitions"]:
+            fail(f"definitions missing {key}")
+    fr02_text = " ".join((requirements["FR-02"]["statement"], " ".join(requirements["FR-02"]["assumptions"]))).lower()
+    for token in ("observed_until", "writeevidence", "call_id", "validation_status", "partial"):
+        if token not in fr02_text:
+            fail(f"FR-02 revision missing {token!r}")
+    fr03_text = " ".join((requirements["FR-03"]["statement"], " ".join(requirements["FR-03"]["assumptions"]))).lower()
+    for token in ("availability_plan", "supports", "sealed", "view_version", "period slot"):
+        if token not in fr03_text:
+            fail(f"FR-03 revision missing {token!r}")
+    fr04_text = " ".join((requirements["FR-04"]["statement"], " ".join(requirements["FR-04"]["assumptions"]))).lower()
+    for token in ("instrument_id", "candidate_id", "portfolio_scope", "exact cross", "diagnostic", "effective_order_value"):
+        if token not in fr04_text:
+            fail(f"FR-04 revision missing {token!r}")
+    fr05_text = " ".join((requirements["FR-05"]["statement"], " ".join(requirements["FR-05"]["assumptions"]))).lower()
+    for token in ("list_publications", "get_run", "history_read_failed", "scan_budget_exceeded", "validated buffer", "sr-02", "rotation"):
+        if token not in fr05_text:
+            fail(f"FR-05 revision missing {token!r}")
+    if "SR-02" not in requirements["FR-05"]["constraint_relations"]:
+        fail("FR-05 must list SR-02 as a constraint relation")
+    mp = manifest_schema["properties"]["model_proposal"]
+    if not any("null" in branch.get("type", "") for branch in mp.get("oneOf", [])):
+        fail("manifest model_proposal must allow null for running/failed")
+    timing = manifest_schema["properties"]["timing"]["properties"]
+    if "observed_until" not in timing:
+        fail("manifest timing must support observed_until")
+    tokens = manifest_schema["properties"]["tokens"]["properties"]
+    for key in ("reported_call_count", "unknown_call_count", "field_coverage", "aggregation_source"):
+        if key not in tokens:
+            fail(f"manifest tokens must support {key}")
+    return {
+        "contract_set_version": contract["contract_set_version"],
+        "contract_status": contract["status"],
+        "fr01_acs": len(fr01["fit_criterion"]),
+        "fr02_acs": len(requirements["FR-02"]["fit_criterion"]),
+        "fr03_acs": len(requirements["FR-03"]["fit_criterion"]),
+        "fr04_acs": len(requirements["FR-04"]["fit_criterion"]),
+        "fr05_acs": len(requirements["FR-05"]["fit_criterion"]),
+        "check_kind": "static_requirement_contract_check",
+    }
+
+
+
+def revised_fr06_fr08_checks(doc: dict, manifest_schema: dict) -> dict:
+    requirements = {r["id"]: r for r in doc["requirements"]}
+    fr06 = requirements["FR-06"]
+    fr06_text = " ".join((fr06["statement"], " ".join(fr06["assumptions"]), " ".join(a["input"]+" "+a["expected_result"]+" "+a["verification"] for a in fr06["fit_criterion"]))).lower()
+    for token in ("recover_pending", "no-task", "root", "failed_precommit", "terminal-first", "run_id_conflict", "corrupt_record", "restored", "new_entry", "reuse_existing", "disabled"):
+        if token not in fr06_text:
+            fail(f"FR-06 revision missing {token!r}")
+    fr07 = requirements["FR-07"]
+    fr07_text = " ".join((fr07["statement"], " ".join(fr07["assumptions"]), " ".join(a["input"]+" "+a["expected_result"]+" "+a["verification"] for a in fr07["fit_criterion"]))).lower()
+    for token in ("fiscal position", "date-level", "price_date", "computed", "not_supported", "metric_evidence_bundle", "complete n/a", "recalculat", "approximate"):
+        if token not in fr07_text:
+            fail(f"FR-07 revision missing {token!r}")
+    fr08 = requirements["FR-08"]
+    fr08_text = " ".join((fr08["statement"], " ".join(fr08["assumptions"]), " ".join(a["input"]+" "+a["expected_result"]+" "+a["verification"] for a in fr08["fit_criterion"]))).lower()
+    for token in ("token", "tokenizer", "full-request", "resolver", "replaces the four full analyst reports", "view_version", "brief_rejected", "invalid_marker", "context_audit_metadata", "independent of cr-01"):
+        if token not in fr08_text:
+            fail(f"FR-08 revision missing {token!r}")
+    timing_req = set(manifest_schema["properties"]["timing"]["required"])
+    for key in ("observed_until", "startup_phase_seconds", "publish_prepare_seconds", "observed_duration_seconds"):
+        if key not in timing_req:
+            fail(f"manifest timing must require {key}")
+    token_req = set(manifest_schema["properties"]["tokens"]["required"])
+    for key in ("reported_call_count", "unknown_call_count", "field_coverage", "aggregation_source"):
+        if key not in token_req:
+            fail(f"manifest tokens must require {key}")
+    pol = manifest_schema["$defs"]["portfolio_risk_policy_snapshot"]["properties"]
+    if "policy_file_ref" not in pol:
+        fail("manifest policy schema must support policy_file_ref")
+    budget = load(FIXTURE_DIR / "brief_budget_policy_v2.json")
+    if budget.get("budget_unit") != "tokens" or budget.get("policy_version") != "brief-budget-policy-v2":
+        fail("brief budget v2 must use token units and version v2")
+    if "resolved_payload_tokens" not in budget:
+        fail("brief budget v2 must declare resolved_payload_tokens")
+    recovery = load(FIXTURE_DIR / "archive_recovery_v1.json")
+    if not any(s.get("status") == "failed_precommit" and s.get("failed_recoverable") for s in recovery.get("snapshots", [])):
+        fail("archive recovery fixture must include a recoverable failed_precommit case")
+    return {
+        "fr06_acs": len(fr06["fit_criterion"]),
+        "fr07_acs": len(fr07["fit_criterion"]),
+        "fr08_acs": len(fr08["fit_criterion"]),
+        "brief_budget_version": budget["policy_version"],
+        "check_kind": "static_requirement_contract_check",
+    }
 
 def main() -> None:
     started = time.monotonic()
@@ -2480,9 +3034,13 @@ def main() -> None:
     if len(ac_ids) != len(set(ac_ids)):
         fail("duplicate fit-criterion IDs")
     for req in doc["requirements"]:
+        actual = [ac["id"] for ac in req["fit_criterion"]]
+        expected = [f"{req['id']}-FC{i:02d}" for i in range(1, len(actual) + 1)]
+        if actual != expected:
+            fail(f"{req['id']} fit criteria are not continuous {req['id']}-FCnn: {actual}")
         for ac in req["fit_criterion"]:
-            if not ac["id"].startswith(req["id"] + "-AC"):
-                fail(f"fit criterion {ac['id']} does not match requirement {req['id']}")
+            if "-AC" in ac["id"]:
+                fail(f"fit criterion {ac['id']} retains the retired AC identifier")
 
     approved_ids = set(doc["scope"]["approved_ids"])
     draft_ids = set(doc["scope"].get("draft_ids", []))
@@ -2554,15 +3112,20 @@ def main() -> None:
     brief_budget_summary = brief_budget_policy_checks()
     brief_state_summary = brief_eval_state_fixture_checks()
     spec_summary = pr_gr_cr_consistency_checks(doc)
+    revised_summary = revised_fr01_fr05_checks(doc, manifest_schema)
+    revised_678_summary = revised_fr06_fr08_checks(doc, manifest_schema)
     gr01_freeze_summary = gr01_freeze_fixture_checks()
+    round4_summary = round4_checks(doc)
+    mapping_summary = fc_mapping_checks(doc)
 
     input_paths = [REQUIREMENTS, REQ_SCHEMA, MANIFEST_SCHEMA, Path(__file__),
                    EVAL_DIR / "eval-set-v1.json", EVAL_DIR / "rubric-v1.json",
-                   EVAL_DIR / "behavior-eval-contract-v1.json", EVAL_DIR / "config-v1.json",
+                   EVAL_DIR / "behavior-eval-contract-v1.json", EVAL_DIR / "behavior-eval-contract-v2.json", EVAL_DIR / "config-v1.json",
                    EVAL_DIR / "prompt-v1.0.yaml", EVAL_DIR / "snapshots-v1.json",
                    FIXTURE_DIR / "portfolio_risk_input_v1.json",
                    FIXTURE_DIR / "portfolio_risk_input_invalid_v1.json",
                    FIXTURE_DIR / "portfolio_risk_policy_v1.json",
+                   FIXTURE_DIR / "portfolio_risk_policy_v2.json",
                    FIXTURE_DIR / "run_clock_historical_v1.json",
                    FIXTURE_DIR / "run_clock_future_v1.json",
                    FIXTURE_DIR / "risk_evidence_expected_v1.json",
@@ -2572,10 +3135,19 @@ def main() -> None:
                    FIXTURE_DIR / "downstream_brief_v1.json",
                    EVAL_DIR / "brief-eval-contract-v1.json",
                    EVAL_DIR / "brief-eval-contract-v2.json",
+                   EVAL_DIR / "brief-eval-contract-v3.json",
                    FIXTURE_DIR / "brief_budget_policy_v1.json",
+                   FIXTURE_DIR / "brief_budget_policy_v2.json",
                    FIXTURE_DIR / "brief_eval_states_v1.json",
                    FIXTURE_DIR / "brief_eval_states_v2.json",
-                   FIXTURE_DIR / "gr01_freeze_states_v1.json"]
+                   FIXTURE_DIR / "brief_eval_states_v3.json",
+                   FIXTURE_DIR / "gate_decision_v2.json",
+                   FIXTURE_DIR / "invariant_projection_v2.json",
+                   FIXTURE_DIR / "secret_path_controls_v2.json",
+                   FIXTURE_DIR / "quality_scoring_v1.json",
+                   FIXTURE_DIR / "gr01_freeze_states_v1.json",
+                   REQ_DIR / "requirement-contracts-v1.json",
+                   REQ_DIR / "requirement-mapping.csv"]
     hashes = {str(p.relative_to(ROOT)): digest(p) for p in input_paths}
     old = load(RESULTS) if RESULTS.exists() else {}
     if "--check" in sys.argv:
@@ -2583,16 +3155,23 @@ def main() -> None:
             fail("validation results are stale: input hashes changed")
         print("PASS: validation results match current inputs")
         return
-    default_human = {"status": "pending", "reviewer": None, "reviewed_at": None,
-                     "notes": "Machine checks passed; human review remains pending.",
-                     "bound_input_hashes": hashes, "bound_document_version": doc["document"]["version"]}
-    human = old.get("human_review", default_human)
-    if old and old.get("input_hashes") != hashes:
-        human = dict(default_human)
-        human["notes"] = "Human approval reset to pending because validated inputs changed."
+    human_review_status = doc.get("validation", {}).get("human_review_status")
+    approval = doc.get("validation", {}).get("approval_record") or {}
+    if human_review_status == "approved":
+        human = {
+            "status": "approved",
+            "reviewer": None,
+            "reviewed_at": approval.get("approved_at"),
+            "notes": "Approval recorded in requirements.yaml validation.approval_record; the user explicitly authorized approval of the requirement design. No named reviewer, signature, meeting, application test, or live evaluation is claimed.",
+            "approval_record_ref": "docs/req/requirements.yaml#/validation/approval_record",
+            "baseline_version": doc["document"]["version"],
+            "bound_input_hashes": hashes,
+            "bound_document_version": doc["document"]["version"],
+        }
     else:
-        human.setdefault("bound_input_hashes", hashes)
-        human.setdefault("bound_document_version", doc["document"]["version"])
+        human = {"status": "pending", "reviewer": None, "reviewed_at": None,
+                 "notes": "Machine checks passed; human review remains pending.",
+                 "bound_input_hashes": hashes, "bound_document_version": doc["document"]["version"]}
     elapsed = time.monotonic() - started
     result = {
         "document": "requirements.yaml",
@@ -2625,7 +3204,13 @@ def main() -> None:
             {"id": "brief_budget_policy", "result": "pass", "details": brief_budget_summary},
             {"id": "brief_eval_state_fixture", "result": "pass", "details": brief_state_summary},
             {"id": "spec_consistency", "result": "pass", "details": spec_summary},
+            {"id": "revised_fr01_fr05_contracts", "result": "pass", "details": revised_summary},
+            {"id": "revised_fr06_fr08_contracts", "result": "pass", "details": revised_678_summary},
             {"id": "gr01_freeze_fixture", "result": "pass", "details": gr01_freeze_summary},
+            {"id": "round4_requirement_and_fixture_consistency", "result": "pass", "details": round4_summary},
+            {"id": "fc_identifier_normalization", "result": "pass", "details": {"total": len(ac_ids), "format": "<requirement-id>-FCnn", "continuous": True}},
+            {"id": "approval_freeze_record", "result": "pass", "details": {"human_review_status": human_review_status, "baseline_version": doc["document"]["version"], "approved_scope": len(approved_ids), "deferred": sorted(deferred_ids)}},
+            {"id": "fc_mapping_complete", "result": "pass", "details": mapping_summary},
         ],
         "human_review": human,
         "limitations": [
@@ -2633,14 +3218,20 @@ def main() -> None:
             "portfolio_risk_document_coverage checks required case concepts in acceptance text; it is a document coverage check, not behavior verification.",
             "archive_document_coverage checks required archive/recovery/benchmark concepts in acceptance text; it is a document coverage check, not behavior verification.",
             "financial_metrics_document_coverage and downstream_brief_document_coverage check required concepts and expected fixture values in acceptance text; they are document coverage checks, not behavior verification.",
-            "Behavioral evaluation is blocked until snapshots and human approval are complete; the frozen v1 eval files are unchanged.",
+            "Behavioral evaluation is blocked until snapshots and the applicable contract/threshold approval are complete; requirement-design approval does not satisfy those conditions. The frozen v1 eval files are unchanged.",
             "Risk evidence, archive, financial, and brief fixtures recompute local requirement evidence and negatives; they are requirement-evidence checks, not application tests.",
             "archive_static_fixture, downstream_brief_fixture, brief_budget_policy, brief_evaluation_contract, and brief_eval_state_fixture are static checks. Process concurrency, lease fencing, lost-lease rejection, zero-external-call behavior, live model brief-following, and live token/quality evaluation still require process-level, dependency-sentinel, and live evaluation tests that were not executed.",
             "spec_consistency verifies document/contract relationships (PR-01 statistics, GR-01 direction, CR-01 separation, FR-01/QR-01 split, QR-02 type, deferred active scope). It does not prove application behavior.",
-            "threshold_ref resolution treats a null target as unresolved/blocked, never as an approved numeric threshold; CR-01-AC3 and CR-01-AC4 currently resolve to null targets.",
-            "brief-eval-contract-v2 is a revision draft; brief-eval-contract-v1 and the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
-            "gr01_freeze_fixture covers Stage A without implementation, missing material, post-implementation timing, version mismatch, and retroactive freeze; it is a static fixture, not an implementation test.",
+            "revised_fr01_fr05_contracts checks the v1.21.0 requirement contracts, required concepts, manifest schema support, and the provisional contract set; it is a static document/contract check, not an application test.",
+            "revised_fr06_fr08_contracts checks FR-06/07/08 concept closure, required manifest timing/token fields, policy file ref, token budget v2, and recoverable failed fixture; it is a static consistency check, not an application test.",
+            "threshold_ref resolution treats a null target as unresolved/blocked, never as an approved numeric threshold; CR-01-FC03 and CR-01-FC04 currently resolve to null targets.",
+            "brief-eval-contract-v3 and behavior-eval-contract-v2 are active revision drafts; v2/v1 brief contracts and behavior v1 plus the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
+            "gr01_freeze_fixture covers Stage A without implementation, missing material, issuer/calendar/coverage negatives, independent-script versus implementation-generated expectations, post-implementation reviewed revision, unreviewed revision, version mismatch, and retroactive/backdated freeze; it is a static fixture, not an implementation test.",
             "brief_eval_state_fixture covers blocked/ready/accepted/failed and budget/local-saving/token/whole-application claim boundaries; it is a static fixture, not a live evaluation.",
+            "round4_requirement_and_fixture_consistency checks SB-01 gate/publication separation, INV-01 identity/projection and retention high-water, INV-02 reason mapping and current/historical evidence, SR-01 detected/residual and credential-store boundaries, SR-02 operation/path confinement, and QR scoring/REVIEW/safety separation. These are static document/fixture checks, not application, OS-race, secret, live-quality, cost, or live-performance tests.",
+            "FC identifiers are normalized to <requirement-id>-FCnn; the complete v1.23.0-to-v1.24.0 mapping is recorded in requirement-mapping.csv and checked against the current registry.",
+            "A separate pre/post normalized comparison found no changes to the 122 FC contents or to requirement statements, titles, problems, or tradeoffs after ID normalization; this comparison is recorded in the freeze notes, not recomputed by this validator.",
+            "Approval covers requirement design only. Application implementation, application tests, live model/vendor/broker evaluations, provisional threshold approvals, external GR-01 evidence, and deferred capabilities remain outside this approval.",
             "No application implementation or application test was executed in this requirements-validation pass.",
         ],
     }
@@ -2660,8 +3251,10 @@ def main() -> None:
     print("PASS: brief eval state fixture checks")
     print("PASS: PR/GR/CR/QR specification consistency")
     print("PASS: GR-01 Stage A/B freeze fixture")
+    print("PASS: round-4 requirement and fixture consistency")
+    print("PASS: FC identifier mapping complete and consistent")
     print(f"WROTE: {RESULTS.relative_to(ROOT)}")
-    print("HUMAN REVIEW: pending")
+    print(f"HUMAN REVIEW: {human['status']}")
 
 
 if __name__ == "__main__":

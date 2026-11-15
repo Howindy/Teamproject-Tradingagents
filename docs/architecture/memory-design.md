@@ -1,9 +1,10 @@
 # D2 Memory Design
 
-Status: **v0.2 — ADD-R round 2 draft / pending human review**  
-Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.20.0
-Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
+Status: **v0.3 — ADD-R round 3 draft / pending human review**
+Date: 2026-11-15
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`
+D1 basis: `docs/req/requirements.yaml` v1.24.0
+Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
 ---
@@ -22,6 +23,14 @@ This design defines:
 
 The existing `TradingMemoryLog` remains the storage substrate. `MemoryService` becomes the only public writer/reader for finalized records.
 
+### 1.1 Round 3 revisions
+
+- Memory keeps **stable decision content** (`entry_digest`) separate from **current-run evidence** (`evidence_digest`). Identical content may reference a committed historical entry; current risk evidence is not written back.
+- The reservation ledger owns allocation and derived status only; it is not a second commit condition.
+- Current recovery is **single-process**: one exclusive startup guard and duplicate-start guard with bounded retry; unsupported concurrent recovery is rejected. Lease/fencing/takeover is deferred.
+- Recovery uses `RecoveryEnvelope`; the old `snapshot` wording is retained only as a synonym in historical text.
+- Waiting for another run's pending entry holds neither the startup guard nor the memory lock.
+
 ---
 
 ## 2. Existing baseline
@@ -29,8 +38,8 @@ The existing `TradingMemoryLog` remains the storage substrate. `MemoryService` b
 Existing code:
 
 - `TradingAgents/tradingagents/memory/log.py:32` `store_decision`
-- `TradingAgents/tradingagents/memory/log.py:78` `settling`
-- `TradingAgents/tradingagents/memory/log.py:106` `get_past_context`
+- `TradingAgents/tradingagents/memory/log.py:62` `settling`
+- `TradingAgents/tradingagents/memory/log.py:93` `get_past_context`
 - `TradingAgents/tradingagents/memory/settlement.py`
 - `TradingAgents/tradingagents/memory/reflection.py`
 
@@ -55,7 +64,8 @@ These are preserved as the substrate, not replaced by a new database.
 - Runtime agents cannot read the memory file directly, another run's records, or raw proposals.
 - Memory stores only the formal decision and its binding; it never stores a model proposal as the decision. `PortfolioManagerAdapter` produces the unapproved `ModelProposal`; Trader or risk-debater output is not the final model proposal.
 - Memory is not a formal publication authority; the terminal manifest plus read-time `INV-01` decides visibility.
-- `MemoryRecoveryCoordinator` coordinates an uncommitted same-decision entry owned by another run; it never transfers ownership.
+- `MemoryRecoveryCoordinator` coordinates an uncommitted same-decision entry owned by another run; it never transfers ownership. Current recovery is single-process under `StartupRecoveryGuard`; lease/fencing/takeover is deferred.
+- `RunCoordinator` orders stages; `RunContext` owns identity/clock/versions/paths. Neither writes memory or decides a decision.
 
 ---
 
@@ -145,23 +155,23 @@ The write is atomic under the existing lock. A crash after append but before the
 
 ## 7. Version reservation and effective version
 
-1. `MemoryReservationStore` is a persistent, append-only, lock-protected allocation history. It records ticker/date, decision_id, entry_version, owner run_id, status (`reserved`, `committed`, `failed`), and fencing token.
+1. `MemoryReservationStore` is a persistent, append-only, lock-protected allocation history. It records ticker/date, decision_id, entry_version, owner run_id, and status (`reserved`, `committed`, `failed`). A fencing token is a deferred multi-worker extension, not a current field.
 2. The allocator keeps a persistent high-water mark over **every historical allocation, including failed reservations**. The next version is `high_water + 1`; a failed reservation permanently occupies its version and is never reissued.
-3. Before the recovery snapshot is written, `MemoryService` determines the plan: reuse a committed entry, reuse its own uncommitted reservation, or reserve a new version. A retry/recovery reuses its own reservation; a different run gets a higher version.
-4. The reserved version and the planned decision identity are recorded in the recovery snapshot, the permanent snapshot binding, and the terminal manifest.
+3. Before the recovery envelope is written, `MemoryService` determines the plan: reuse a committed entry, reuse its own uncommitted reservation, or reserve a new version. A retry/recovery reuses its own reservation; a different run gets a higher version.
+4. The reserved version and the planned decision identity are recorded in the recovery envelope, the permanent snapshot binding, and the terminal manifest.
 5. State transitions:
-   - `reserved`: before the recovery snapshot; durable and version-occupying.
+   - `reserved`: before the recovery envelope; durable and version-occupying.
    - `failed`: publish/memory write aborts before a completed terminal manifest; the version remains occupied forever.
    - `committed`: a derived projection, true only when the terminal manifest is `completed` and read-time `INV-01` passes. A ledger commit mark is an audit/cache aid, not a second commit condition; if missing, rebuild it from the terminal manifest.
 6. Effective version = the highest `entry_version` whose source terminal manifest is `completed` and binds the entry.
 7. Ledger replay/repair replays the append-only allocation records to reconstruct the high-water mark including failed versions, and rebuilds `committed` projections from terminal manifests. Do not derive allocation history solely from committed manifests. If the allocation history is missing/corrupt, stop new allocation, restore from a durable backup or operator-approved reconstruction, and never silently reset the watermark or reissue a failed version.
 8. No post-commit write to an older entry is required; superseded entries remain for audit but are excluded from lessons/statistics.
 9. Legal rotation of resolved entries removes them under policy and records `retention_status=rotated` or `not_available`, not a binding mismatch.
-10. The order is fixed: plan/reservation -> recovery snapshot containing the plan -> idempotent memory write -> permanent snapshot -> terminal candidate -> commit. Recovery follows the recorded plan.
+10. The order is fixed: plan/reservation -> recovery envelope containing the plan -> idempotent memory write -> permanent snapshot -> terminal candidate -> commit. Recovery follows the recorded plan.
 
 | Ledger state | Written when | Interruption behavior | Retry/recovery |
 |---|---|---|---|
-| `reserved` | Before the recovery snapshot; durable allocation history | Remains reserved; version stays occupied | Original run/retry reuses it; no new version |
+| `reserved` | Before the recovery envelope; durable allocation history | Remains reserved; version stays occupied | Original run/retry reuses it; no new version |
 | `failed` | Publish aborts before a completed terminal manifest, or memory write fails | Remains failed; version stays occupied forever | Original run/retry may reuse the same reservation; other runs get higher versions |
 | `committed` projection | After terminal commit plus read-time `INV-01`; audit/cache aid only | Missing/failed ledger write does not change the manifest authority; rebuild from manifest | Repair rebuilds projection; never changes allocation high-water mark |
 
@@ -246,15 +256,15 @@ Settlement uses a separate append-only protocol from the current decision commit
 
 Recovery is not graph resume and does not change memory policy.
 
-- The memory plan is determined before the recovery snapshot; a valid snapshot records the original required memory decision identity and the reserved `entry_version`.
+- The memory plan is determined before the recovery envelope; a valid snapshot records the original required memory decision identity and the reserved `entry_version`.
 - If the interruption happened before the first write, recovery creates exactly the one original planned entry.
 - If a partial write exists, recovery completes that same entry idempotently.
 - Recovery never creates a different decision entry or an additional duplicate of the original planned entry.
 - Memory-disabled originals remain disabled; settlement and reflection calls are 0.
-- Recovery first reads the terminal manifest and verifies the permanent publication. A committed, verified, identity-matching publication is idempotent success without requiring `recovery/`; a committed identity conflict is `RUN_ID_CONFLICT`; committed permanent-artifact corruption is `CORRUPT_RECORD`; neither overwrites the manifest or auto-republishes. Only an uncommitted record continues with the recovery snapshot.
-- Recovery uses the same per-run `RunOwnershipLock`, owner, and fencing token as normal publication; ownership/fencing is checked in the same critical section as the protected memory/publication write.
-- The recovery snapshot is temporary. After successful commit and post-commit validation, `recovery/` may be cleaned; history reads, memory binding validation, and export rely on the permanent `publication/` snapshot, not the temporary file. A terminal `recovery_snapshot_summary` is audit-only.
-- Lock order is run lock then memory lock; a worker that lost its lease is rejected without writing. A cleanup failure after commit is a warning; it does not change memory or history.
+- Recovery first reads the terminal manifest and verifies the permanent publication. A committed, verified, identity-matching publication is idempotent success without requiring `recovery/`; a committed identity conflict is `RUN_ID_CONFLICT`; committed permanent-artifact corruption is `CORRUPT_RECORD`; neither overwrites the manifest or auto-republishes. Only an uncommitted record continues with the recovery envelope.
+- Recovery uses the same single-process `StartupRecoveryGuard` as normal publication; the check-and-write boundary is protected. Lease/fencing/takeover is deferred and is not claimed.
+- The recovery envelope is temporary. After successful commit and post-commit validation, `recovery/` may be cleaned; history reads, memory binding validation, and export rely on the permanent `publication/` snapshot, not the temporary file. A terminal `recovery_envelope_summary` is audit-only.
+- Lock order is startup guard then memory lock; a duplicate start is rejected or waits with bounded retry. A cleanup failure after commit is a warning; it does not change memory or history.
 
 ---
 
@@ -272,18 +282,18 @@ Recovery is not graph resume and does not change memory policy.
 
 - Memory writes are serialized by the existing memory lock. `MemoryService` re-checks idempotency inside the lock.
 - `MemoryReservationStore` allocates versions under the same lock from a persistent high-water mark over every historical allocation, including failed reservations. Two concurrent runs cannot receive the same version; a failed version is never reissued.
-- Normal publication and recovery share the per-run `RunOwnershipLock`; lock order is run lock -> memory lock. Ownership/fencing is checked in the same critical section as the protected write.
+- Normal publication and recovery share the single-process `StartupRecoveryGuard`; lock order is guard -> memory lock. The check-and-write boundary is protected. Lease/fencing/takeover is deferred.
 - Two runs for the same ticker/date with different decision_ids are serialized; each reserves a distinct version; the highest committed version is effective.
 - A failed publication does not supersede the old entry or make the provisional version effective; a retry reuses its reservation.
 - Same decision_id with a different entry_digest is a conflict/tamper and is not versioned.
 - If a concurrent run finds the same decision_id/entry_digest reserved or written but uncommitted, `MemoryRecoveryCoordinator` applies the deterministic protocol:
-  1. owner A active/lease valid: B waits bounded without holding run or memory locks; on timeout returns `MEMORY_PENDING_RETRYABLE`; no entry/version write by B;
-  2. A invalid with a valid recovery snapshot: recovery runs under A's original run_id, original reservation, and original snapshot; ownership is never transferred to B;
+  1. owner A active/guard valid: B waits bounded without holding the startup guard or memory lock; on timeout returns `MEMORY_PENDING_RETRYABLE`; no entry/version write by B;
+  2. A invalid with a valid recovery envelope: recovery runs under A's original run_id, original reservation, and original snapshot; ownership is never transferred to B;
   3. A invalid without a valid snapshot: `MEMORY_RECOVERY_UNAVAILABLE`; B rejects, no substitute entry;
   4. recovery of A fails: `MEMORY_RECOVERY_FAILED` (retryable/manual);
   5. binding conflict (same decision_id/different entry_digest, inconsistent owner/version): `MEMORY_CONFLICT`; never overwrite.
   After A commits and validates, B may reuse through `reused_decision_ref`; B never treats the uncommitted entry as success, never creates a duplicate entry, and never allocates a second version.
-- The OS file lock is short-lived. The logical lease in `lease.json` identifies the active publisher; lease expiry does not release the file lock. If A is paused while holding the file lock, B waits bounded or returns `LOCK_BUSY`; it must not delete the lock file. Takeover acquires the file lock, increments the fencing token, and A is rejected on its next protected write.
+- The startup guard is short-lived. Multi-worker `lease.json`/fencing/takeover is a deferred extension; current code must not claim it. A duplicate startup is rejected or waits with bounded retry.
 - Two runs for different tickers/dates may append concurrently under the lock.
 - Backtest memory is isolated per backtest run, not the live memory log.
 
@@ -305,11 +315,12 @@ Recovery is not graph resume and does not change memory policy.
 ## 16. Open decisions
 
 - D2-OD-06: structured sidecar versus Markdown metadata line.
-- ARCH-OD-06: recovery lease TTL, takeover, retry, and quarantine layout.
+- ARCH-OD-06: recovery retry/quarantine layout (single-process current); lease/fencing/takeover is deferred.
 - ARCH-OD-20: reservation ledger storage/authority.
 - ARCH-OD-21: Portfolio Manager adapter/model-proposal source.
 - ARCH-OD-22: uncommitted same-decision coordination statuses/timeouts.
 - ARCH-OD-23: permanent/recovery layout and cleanup dependency.
+- ARCH-OD-28: single-process startup guard mechanism and bounded retry.
 - OQ-02: memory retention/rotation policy.
 - OQ-08: concurrent memory/manifest locking policy.
 - OQ-09/OQ-10: risk input source and policy approval (affect the risk summary, not the memory identity).
@@ -324,5 +335,7 @@ See `docs/architecture/open-decisions.md`.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Existing memory substrate preserved.
-- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
-- D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.
+- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D2: v0.3 ADD-R round 3 draft; all architecture decisions proposed, not approved.
+- Current recovery is single-process; lease/fencing/takeover/multi-worker/export/TTM/FCF YoY/QR-02 are deferred.
+- Stable content and current evidence are separate; the reservation ledger is not a second commit condition.

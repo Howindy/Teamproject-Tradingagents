@@ -1,0 +1,79 @@
+{
+  "fixture_version": "quality-scoring-v1",
+  "contract_ref": "docs/req/evaluation/behavior-eval-contract-v2.json",
+  "merge_cases": [
+    {
+      "id": "diff_le_one",
+      "a": 4,
+      "b": 5,
+      "final": 4.5
+    },
+    {
+      "id": "diff_gt_one_adjudicated",
+      "a": 3,
+      "b": 5,
+      "adjudicated": 4,
+      "final": 4,
+      "best_of_forbidden": true
+    }
+  ],
+  "dimension_weights": {
+    "evidence_fidelity": 0.3,
+    "relevance": 0.2,
+    "coverage_correctness": 0.2,
+    "safety": 0.2,
+    "actionability": 0.1
+  },
+  "case_score_case": {
+    "scores": [
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "expected": 3.4
+  },
+  "set_score_cases": {
+    "case_scores": [
+      3.4,
+      4.2
+    ],
+    "expected": 3.8
+  },
+  "drop_case": {
+    "off": 4.0,
+    "on": 3.0,
+    "expected": 1.0
+  },
+  "review_rate_case": {
+    "on_review": 3,
+    "on_total": 10,
+    "off_review": 2,
+    "off_total": 10,
+    "expected_points": 10.0
+  },
+  "state_cases": [
+    {
+      "id": "missing_required_sample",
+      "accepted": false,
+      "incomplete": true
+    },
+    {
+      "id": "retry_replaces_original",
+      "allowed": false,
+      "original_retained": true
+    },
+    {
+      "id": "high_rubric_with_safety_escape",
+      "accepted": false,
+      "safety_hard_failure": true
+    },
+    {
+      "id": "cache_complete_risk_blocked",
+      "cache_accepted_possible": true,
+      "qr_all_complete": false,
+      "risk_is_not_cache_failure": true
+    }
+  ]
+}

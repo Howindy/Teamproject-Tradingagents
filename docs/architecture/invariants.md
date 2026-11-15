@@ -1,9 +1,10 @@
 # D2 Invariants
 
-Status: **v0.2 — ADD-R round 2 draft / pending human review**  
-Date: 2026-11-11  
-D1 basis: `docs/req/requirements.yaml` v1.20.0 — 18 requirements, 119 fit criteria
-Status basis: 17 requirements are draft pending human review; `QR-02` is deferred and outside current acceptance
+Status: **v0.3 — ADD-R round 3 draft / pending human review**
+Date: 2026-11-15
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`
+D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
 ---
@@ -20,7 +21,7 @@ Each invariant has:
 
 Unless stated otherwise, these invariants are **zero-tolerance** (one violation fails). `QR-02` performance is provisional and not zero-tolerance, but its correctness/model-free conditions are.
 
-All requirements are draft, so every invariant is a design proposal, not an approved requirement. `QR-02` is deferred and its performance target is outside current acceptance.
+The 17 active requirements are approved as a requirement-design baseline; the architecture invariants remain design proposals until implementation and verification. `QR-02` is deferred and its performance target is outside current acceptance.
 
 ---
 
@@ -28,15 +29,15 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 | ID | Invariant | Source | Enforcement | Verification | Fallback | Status |
 |---|---|---|---|---|---|---|
-| INV-A-01 | Only `FinalizedRunRecord` or a verified committed publication may feed formal display, persistence, memory, history, export, and scoring. | `INV-01`, `SB-01`, `FR-05` | `SafetyGate`, `ArtifactPublisher`, `PublicationSnapshotStore`, `MemoryService`, CLI/backtest adapters | Writer audit + integration test | Block publication; mark failed; never show/store a model proposal as final | Design only |
+| INV-A-01 | Only `FinalizedRunRecord` or a verified committed publication may feed formal display, persistence, memory, history, and scoring; future export, if reactivated, must do the same. | `INV-01`, `SB-01`, `FR-05` | `SafetyGate`, `ArtifactPublisher`, `PublicationSnapshotStore`, `MemoryService`, CLI/backtest adapters | Writer audit + integration test | Block publication; mark failed; never show/store a model proposal as final | Design only |
 | INV-A-02 | Model proposal and final decision are separate; the final decision is immutable. | `SB-01` | `SafetyGate`, record schema | Schema/mutation tests | Reject record; produce REVIEW; do not publish | Design only |
-| INV-A-03 | The gate runs before formal read/display/persistence/memory/history/export and the terminal manifest, but not before the running startup manifest or independent failure record. | `SB-01`, `FR-05` | Entry points, `ArtifactPublisher` | Bypass tests on CLI/programmatic/backtest/recovery | Abort publish; mark failed; no success claim | Design only |
+| INV-A-03 | The gate runs before formal read/display/persistence/memory/history (and future export if reactivated) and the terminal manifest, but not before the running startup manifest or independent failure record. | `SB-01`, `FR-05` | Entry points, `ArtifactPublisher` | Bypass tests on CLI/programmatic/backtest/recovery | Abort publish; mark failed; no success claim | Design only |
 | INV-A-04 | A fallback clears a critical gap only when it satisfies the same coverage contract. | `FR-03`, `SB-01` | `DataAccessService`, `AvailabilityIndex` | Contract fixtures | Keep gap; gate REVIEW | Design only |
 | INV-A-05 | Logical queries, physical requests, retries, fallbacks, cache hits, and tool rounds are counted separately. | `FR-01` | `DataAccessService`, `RunEvidenceStore` | Counter reconciliation | Terminate run; new run_id for diagnosis | Design only |
 | INV-A-06 | No run-scoped query result is reused across runs except recorded checkpoint inheritance. | `FR-01` | `DataAccessService`, `RunContext` | Two-run isolation | Terminate run; new run_id | Design only |
 | INV-A-07 | Partial publication never claims success; completion requires terminal manifest commit and read-time INV-01. Post-commit read failure keeps the committed manifest immutable and is rejected as success. | `FR-02`, `INV-01`, `FR-06` | `ArtifactPublisher`, `PublicationStatusReader` | Failure injection; post-commit tamper | Pre-commit: running/failed; post-commit: immutable manifest + independent corruption diagnostic | Design only |
 | INV-A-08 | Memory writes are idempotent, versioned, and conflict-safe; version allocation is persistent, lock-protected, and monotonic over every historical allocation, including failed reservations. | `INV-01`, `FR-06` | `MemoryService`, `MemoryReservationStore` | Duplicate/version/conflict/reservation tests | No-op for same key; new reserved version for changed decision; reuse reservation on retry; conflict on same decision_id/different digest | Design only |
-| INV-A-09 | No known secret or unredacted pattern match appears in any in-scope app-controlled record boundary, including archive/history/recovery/export diagnostics; paths stay in-root. | `SR-01`, `FR-05`, `FR-06` | `SecretRedactor`, all writers, `ExportService` | Known-value/pattern/path/over-redaction tests | Fail closed; quarantine; block publish; minimal incident record | Design only |
+| INV-A-09 | No known secret or unredacted pattern match appears in any in-scope app-controlled record boundary, including archive/history/recovery diagnostics and future export diagnostics if reactivated; paths stay in-root. | `SR-01`, `FR-05`, `FR-06` | `SecretRedactor`, all writers; `ExportService` future | Known-value/pattern/path/over-redaction tests; future export diagnostics | Fail closed; quarantine; block publish; minimal incident record | Design only |
 | INV-A-10 | Context compression never removes L0/L1/L2/L5 and re-injects constraints. | D2 design | `ContextAssembler` | Token/compression fixture | Reject compressed prompt; deterministic truncation; log event | Design only |
 | INV-A-11 | Checkpoint resume is allowed only for supported state and compatible versions. | D2 design | `CheckpointCoordinator` | Resume matrix | Refuse resume; start new run | Design only |
 | INV-A-12 | Runtime AI has no file/system/network authority outside registered tools. | D2 design, `SR-01` | Tool registry, `RunContext` | Permission test + tool audit | Stop run; disable tool; security review | Design only |
@@ -56,19 +57,25 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 | INV-A-26 | History returns only committed publications that pass read-time INV-01; pending/failed/quarantined are not successful history. | `FR-05`, `FR-06`, `INV-01` | `HistoryService`, `PublicationSnapshotStore` | Status/history visibility tests | Exclude; return NOT_FOUND/CORRUPT_RECORD | Design only |
 | INV-A-27 | Committed report sections come only from the permanent publication snapshot and recorded capability set; no foreign/stale/mixed sections. | `FR-05`, `INV-01` | `ReportSectionManifestBuilder`, `PublicationSnapshotStore` | Section isolation/tamper tests | Fail read as CORRUPT_RECORD | Design only |
 | INV-A-28 | Publication recovery checks the terminal manifest first: committed+verified+identity match is idempotent success without `recovery/`; conflict/corrupt are typed; only uncommitted records use saved recovery records; at most one committed publication. | `FR-06` | `RecoveryService`, `ArtifactPublisher` | Terminal-first/model-free/duplicate/retry/corrupt tests | Quarantine; no publish; no overwrite; bounded retry | Design only |
-| INV-A-29 | A recovery snapshot is complete, durable, read-back-verified, internally referenced, and versioned before recovery guarantees begin. | `FR-06` | `RecoverySnapshotStore` | Snapshot reference/digest/fault tests | Quarantine; retain valid material | Design only |
+| INV-A-29 | A recovery envelope is complete, durable, read-back-verified, internally referenced, and versioned before recovery guarantees begin. | `FR-06` | `RecoverySnapshotStore` | Snapshot reference/digest/fault tests | Quarantine; retain valid material | Design only |
 | INV-A-30 | Financial facts and metrics use structured identity and as-of visibility; the metric block is the numeric authority. | `FR-07` | `FinancialFactService`, `FinancialMetricService`, `MetricConflictDetector` | Fact/period/formula/conflict tests | n/a with typed reason; disclose conflict | Design only |
 | INV-A-31 | Mandatory brief content is never truncated; the brief is generated before the five roles, uses a versioned program view, replaces the four full reports for those roles, and never mutates full/formal/history/recovery artifacts. | `FR-08` | `DownstreamBriefBuilder`, `ContextAssembler` | Budget/replacement/view-version/non-mutation tests | `BRIEF_REJECTED`; fail closed; no bypass | Design only |
 | INV-A-32 | The final model request obeys the token budget; characters/bytes are auxiliary. | `FR-08`, D2 context design | `TokenCounter`, `ContextAssembler` | Tokenizer fixture | Reject/compress; fail closed | Design only |
-| INV-A-33 | A `verified_package` export either proves every followed history reference or is labeled `historical_reference_unverified`; a non-empty target is never overwritten. | `FR-05`, `SR-01` | `ExportService` | Closure/conflict tests | Label limitation; return EXPORT_CONFLICT | Design only |
+| INV-A-33 | If export is reactivated, a `verified_package` either proves every followed history reference or is labeled `historical_reference_unverified`; a non-empty target is never overwritten. | `FR-05`, `SR-01` (deferred export) | `ExportService` (deferred) | Future closure/conflict tests | Label limitation; return EXPORT_CONFLICT | Deferred |
 | INV-A-34 | A post-commit read failure never overwrites the committed terminal manifest; the record is rejected as success and an independent diagnostic records the corruption. | `FR-02`, `INV-01`, `FR-05` | `ArtifactPublisher`, `PublicationStatusReader`, `HistoryService` | Post-commit tamper tests | Keep immutable manifest; `CORRUPT_RECORD`; no second publication | Design only |
-| INV-A-35 | Normal publication and recovery share one per-run ownership lock/fencing token; ownership is checked in the same critical section as the protected write; OS file lock and logical lease are distinct. | `FR-02`, `FR-06` | `RunOwnershipLock`, `ArtifactPublisher`, `RecoveryService` | Concurrent publisher/recovery, stale takeover, lost-owner, paused-lock tests | Reject lost owner; one winner; no duplicate write; `LOCK_BUSY` when file lock held | Design only |
+| INV-A-35 | Current normal publication and recovery share one simple exclusive single-process startup guard and a duplicate-start guard with bounded retry; the check-and-write boundary is protected; unsupported concurrent recovery is rejected. Lease/fencing/takeover is deferred. | `FR-02`, `FR-06` | `StartupRecoveryGuard`, `ArtifactPublisher`, `RecoveryService` | Duplicate startup, bounded wait, concurrency rejection, guard-release tests | Reject/retry; one winner; no duplicate write | Design only |
 | INV-A-36 | The final model proposal is produced by the Portfolio Manager adapter, not by the Trader or a risk debater; it carries source and unapproved status. | `SB-01`, `INV-01` | `PortfolioManagerAdapter`, `SafetyGate` | Source-field/source-promotion audit | Reject proposal; no formal decision | Design only |
-| INV-A-37 | Temporary recovery material may be cleaned after commit/validation; formal reads and export depend only on the permanent publication snapshot; a terminal recovery summary is audit-only. | `FR-02`, `FR-05`, `FR-06`, `INV-01` | `ArtifactPublisher`, `PublicationSnapshotStore`, `HistoryService`, `ExportService` | Cleanup-then-read/memory/export tests | Reject temporary-file dependency; keep permanent records | Design only |
+| INV-A-37 | Temporary recovery material may be cleaned after commit/validation; formal reads depend only on the permanent publication snapshot; future export, if reactivated, must use the same material; a terminal recovery summary is audit-only. | `FR-02`, `FR-05`, `FR-06`, `INV-01` | `ArtifactPublisher`, `PublicationSnapshotStore`, `HistoryService`; `ExportService` future | Cleanup-then-read/memory tests; future export check | Reject temporary-file dependency; keep permanent records | Design only |
 | INV-A-38 | Brief failure states are distinct: disabled uses normal full input; full-report fallback requires explicit policy permission and hard-cap compliance; final `BRIEF_REJECTED` is terminal and cannot re-enter normal input or generic compression. | `FR-08` | `DownstreamBriefBuilder`, `ContextAssembler` | Disabled/fallback/rejection/bypass tests | Fail closed at context stage; no bypass | Design only |
 | INV-A-39 | A same-decision uncommitted entry is never reused or ownership-transferred; B waits bounded or triggers recovery under A's original run_id/reservation/snapshot; missing snapshot/failure/conflict are typed. Failed reservations permanently occupy their versions. | `INV-01`, `FR-06`, `INV-02` | `MemoryRecoveryCoordinator`, `MemoryService`, `RecoveryService` | Active/expired/missing-snapshot/failed/conflict tests | Retryable/unavailable/failed/conflict; no duplicate | Design only |
 | INV-A-40 | Permanent artifacts form an acyclic hash DAG; `binding.json` never contains the terminal-manifest hash, and no file hashed by the terminal manifest contains that hash. | `FR-02`, `INV-01`, `FR-05` | `ArtifactPublisher`, `PublicationSnapshotStore`, `MemoryService` | Hash-DAG ordering/cycle tests | Reject cyclic candidate; no commit | Design only |
 | INV-A-41 | `record_hash` is computed from a canonical content projection that excludes `artifact_binding.record_hash` and every result-carrying hash; content digest and file-byte hash are separate; only specified volatile run fields are excluded and risk/provenance timestamps are preserved. | `INV-01`, `FR-02`, `FR-04` | `SafetyGate`, `ArtifactPublisher`, `Canonicalizer` | Self-exclusion/retry/timestamp/file-hash tests | Reject self-referential or unstable record hash | Design only |
+| INV-A-42 | `RunCoordinator` only coordinates stages and hands off failure/publication; `RunContext` only owns identity, fixed clock, versions, paths, and dependency references. Neither contains gate, risk, metric, context, or publication policy. | D3-02, QS-10 | `RunCoordinator`, `RunContext` | Symbol/behavior audit; policy sentinel tests | Reject policy in coordinator/context; manual review | Design only |
+| INV-A-43 | Each envelope (`PublicationEnvelope`, `RecoveryEnvelope`, `ModelProposal`, `CoverageView`, `CoverageSnapshot`, `RiskEvaluation`, `MetricEvidenceBundle`, `ContextAuditMetadata`) has exactly one owner, an explicit version and mutability rule, a typed error contract, and a serialization boundary; consumers do not read mutable working objects. | D3-08, QS-13 | Owners per §9.6.8 | Envelope contract/ownership/serialization tests | Reject contract violation; fail closed | Design only |
+| INV-A-44 | `decision_digest`, `record_hash`, `proposal_digest`, `input_digest`, `entry_digest`, and `evidence_digest` use the declared field projections and generation order; redaction precedes digesting; content digests and file-byte hashes are distinct; no blanket timestamp removal. | D3-11, `INV-01` | `Canonicalizer`, `SafetyGate`, `ArtifactPublisher`, `MemoryService` | Digest projection/order/self-exclusion/timestamp tests | Reject record; no commit | Design only |
+| INV-A-45 | Current recovery is single-process: one exclusive startup guard, duplicate-start guard with bounded retry, explicit rejection of unsupported concurrent recovery; no lease/fencing/takeover is claimed. | D3-13, `FR-06` | `StartupRecoveryGuard`, `RecoveryService` | Duplicate start/bounded wait/concurrency rejection tests | Reject/retry; no duplicate publication | Design only |
+| INV-A-46 | FR-08 functional acceptance is independent of CR-01 optimization acceptance; TTM/FCF YoY/export/multi-worker recovery/QR-02 are deferred and never used as current completion evidence. | D3-16, D3-18, `FR-07`, `FR-08`, `CR-01` | `DownstreamBriefBuilder`, `FinancialMetricService`, evaluation harness | Scope/deferred/claim-boundary tests | Block false completion/acceptance claims | Design only |
+| INV-A-47 | History uses the verified committed publication as authority; an optional derived index is rebuildable and non-authoritative, and every read revalidates. | D3-14, `FR-05` | `HistoryService`, `PublicationSnapshotStore` | Index rebuild/stale-index/read-revalidation tests | Ignore/rebuild index; return `CORRUPT_RECORD` for bad publication | Design only |
 
 ---
 
@@ -94,7 +101,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-03 — Gate before formal effects
 
-- **Statement**: The safety gate must run before any formal display, persistence, memory, history/export visibility, API return, backtest scoring, or terminal manifest. No formal entry point may bypass it. The running startup manifest and the independent failed-run record are explicit exceptions; intermediate streaming/debug/staging/checkpoint output may show the proposal only when marked intermediate or unapproved.
+- **Statement**: The safety gate must run before any formal display, persistence, memory, history visibility, API return, backtest scoring, or terminal manifest. Future export, if reactivated, is also a formal effect subject to the gate. No formal entry point may bypass it. The running startup manifest and the independent failed-run record are explicit exceptions; intermediate streaming/debug/staging/checkpoint output may show the proposal only when marked intermediate or unapproved.
 - **Source**: `SB-01`, `FR-05`.
 - **Enforcement**: CLI, programmatic, backtest, checkpoint, and headless entry adapters; `ArtifactPublisher` requires a passed/blocked/error gate result and a formal decision.
 - **Verification**: entry-point bypass matrix; static writer audit; formal/intermediate consumer audit.
@@ -139,7 +146,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-08 — Memory idempotency
 
-- **Statement**: Memory append is keyed by `(decision_id, entry_digest)` plus the existing `(trade_date, ticker)` guard. The readable criterion is the completed terminal manifest plus read-time INV-01. Same key is a no-op; a different decision_id creates a new committed version; only same decision_id with a different entry_digest is a conflict. Reused historical entries use `reused_decision_ref` and keep the current artifact run_id. Version allocation is persistent and lock-protected, and the next version is `high_water + 1` over every historical allocation, including failed reservations. Retries and recovery reuse their own reservation; a failed version permanently occupies the high-water mark and is never reissued. `reserved` is appended before the recovery snapshot, `failed` on abort before a completed manifest, and `committed` is a derived projection appended only after terminal commit plus read-time INV-01; a missing/failed projection write is rebuilt from the terminal manifest and is not a second commit condition. An uncommitted entry is never treated as reusable success; `MemoryRecoveryCoordinator` applies bounded wait/`MEMORY_PENDING_RETRYABLE`, recovery under the original run identity/reservation/snapshot, and typed unavailable/failed/conflict statuses; it never transfers ownership. Settlement/reflection is append-only; legal rotation is recorded as `not_available`, not a binding mismatch.
+- **Statement**: Memory append is keyed by `(decision_id, entry_digest)` plus the existing `(trade_date, ticker)` guard. The readable criterion is the completed terminal manifest plus read-time INV-01. Same key is a no-op; a different decision_id creates a new committed version; only same decision_id with a different entry_digest is a conflict. Reused historical entries use `reused_decision_ref` and keep the current artifact run_id. Version allocation is persistent and lock-protected, and the next version is `high_water + 1` over every historical allocation, including failed reservations. Retries and recovery reuse their own reservation; a failed version permanently occupies the high-water mark and is never reissued. `reserved` is appended before the recovery envelope, `failed` on abort before a completed manifest, and `committed` is a derived projection appended only after terminal commit plus read-time INV-01; a missing/failed projection write is rebuilt from the terminal manifest and is not a second commit condition. An uncommitted entry is never treated as reusable success; `MemoryRecoveryCoordinator` applies bounded wait/`MEMORY_PENDING_RETRYABLE`, recovery under the original run identity/reservation/snapshot, and typed unavailable/failed/conflict statuses; it never transfers ownership. Settlement/reflection is append-only; legal rotation is recorded as `not_available`, not a binding mismatch.
 - **Source**: `INV-01`, `FR-06`.
 - **Enforcement**: `MemoryService`, `MemoryReservationStore`.
 - **Verification**: duplicate/conflict/crash/retry/reservation/uncommitted-entry/settlement/rotation tests.
@@ -148,10 +155,10 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-09 — Secret-free boundaries and path confinement
 
-- **Statement**: No known secret and no unredacted versioned-pattern match appears in an in-scope app-controlled boundary, including manifest, final-state, risk input/diagnostic, policy snapshot, memory entry, report metadata/content, section manifest, archive, history responses, recovery snapshot/diagnostics, export diagnostics, logs, preferences, error/gate/availability records, and formal API return. Audit endpoints are scheme/host/path only; restore endpoints may keep non-sensitive query parameters and secret references, never inline sensitive values. Paths derived from prose, filters, run_id, or export target remain within the configured root; traversal, absolute-path injection, symlink/junction escape, and out-of-root writes are forbidden. A non-empty export target returns `EXPORT_CONFLICT` and is not modified.
+- **Statement**: No known secret and no unredacted versioned-pattern match appears in an in-scope app-controlled boundary, including manifest, final-state, risk input/diagnostic, policy snapshot, memory entry, report metadata/content, section manifest, archive, history responses, recovery envelope/diagnostics, logs, preferences, error/gate/availability records, and formal API return. Future export diagnostics, if reactivated, are also in scope. Audit endpoints are scheme/host/path only; restore endpoints may keep non-sensitive query parameters and secret references, never inline sensitive values. Paths derived from prose, filters, or run_id remain within the configured root; traversal, absolute-path injection, symlink/junction escape, and out-of-root writes are forbidden. If export is reactivated, a target path is confined and a non-empty export target returns `EXPORT_CONFLICT` and is not modified.
 - **Source**: `SR-01`, `FR-05`, `FR-06`.
 - **Enforcement**: `SecretRedactor`, all writers, `ExportService`.
-- **Verification**: known-value/pattern scans; boundary matrix; path/link escape; over-redaction; export conflict.
+- **Verification**: known-value/pattern scans; boundary matrix; path/link escape; over-redaction; future export conflict if reactivated.
 - **Fallback**: fail closed; block record/formal output; minimal secret-free incident record; no evidence deletion.
 - **Status**: design only.
 
@@ -184,7 +191,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-13 — Coding-agent default deny
 
-- **Statement**: Coding agents have no permissions by default. Each role receives only the paths/actions in its whitelist. ADD-R round 2 may write only `architecture-blueprint.md` and `docs/architecture/**`.
+- **Statement**: Coding agents have no permissions by default. Each role receives only the paths/actions in its whitelist. Round 3 may write only `architecture-blueprint.md`, `docs/architecture/**`, and the new ADR 003.
 - **Source**: D2 permission model.
 - **Enforcement**: permission model and agent runtime.
 - **Verification**: per-role/path allow/deny matrix; audit log.
@@ -310,7 +317,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-27 — Section isolation and permanent references
 
-- **Statement**: Every committed report section derives from the permanent publication snapshot, the versioned renderer, and the recorded capability set. The section manifest lists only applicable non-empty sections with path, agent/state fields, byte size, and SHA-256. Foreign, stale, or old-run files are forbidden. Retrieval and export revalidate the manifest and digests on read.
+- **Statement**: Every committed report section derives from the permanent publication snapshot, the versioned renderer, and the recorded capability set. The section manifest lists only applicable non-empty sections with path, agent/state fields, byte size, and SHA-256. Foreign, stale, or old-run files are forbidden. Retrieval revalidates the manifest and digests on read; future export, if reactivated, must do the same.
 - **Source**: `FR-05`, `INV-01`, `FR-02`.
 - **Enforcement**: `ReportSectionManifestBuilder`, `PublicationSnapshotStore`, `HistoryService`.
 - **Verification**: exact section sets; digest/byte-size; foreign/stale plants; changed path; tamper.
@@ -326,21 +333,21 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 - **Fallback**: quarantine invalid snapshots; bounded retry; no publish on conflict.
 - **Status**: design only.
 
-### INV-A-29 — Recovery snapshot integrity and fencing
+### INV-A-29 — Recovery envelope integrity and single-process guard
 
-- **Statement**: Recovery guarantee begins only at a complete, durable, read-back-verified, redacted `snapshot_ready` snapshot. It contains the formal decision/binding, terminal-manifest candidate identity, section manifest and fixed render inputs, risk input/policy references, original required memory identity and reserved version, metric bundle when applicable, and versions. Every reference resolves inside the snapshot with a validated digest. Each task is claimed atomically per `run_id` with owner and fencing token; lost-lease writes are rejected; stale takeover increments the fencing token; failure is isolated and retries are bounded.
+- **Statement**: Recovery guarantee begins only at a complete, durable, read-back-verified, redacted `snapshot_ready` envelope. It contains the formal decision/binding, terminal-manifest candidate identity, section manifest and fixed render inputs, risk input/policy references, original required memory identity and reserved version, metric bundle when applicable, and versions. Every reference resolves inside the envelope with a validated digest. Current `FR-06` uses a single-process exclusive startup guard and duplicate-start guard with bounded retry; unsupported concurrent recovery is rejected. Lease/fencing/takeover/multi-worker claims are deferred, not current. Failure is isolated and retries are bounded.
 - **Source**: `FR-06`.
 - **Enforcement**: `RecoverySnapshotStore`, `RecoveryClaimStore`, `RecoveryService`.
-- **Verification**: snapshot reference/digest/fault; two workers; stale takeover; lost-lease commit; failure isolation.
-- **Fallback**: quarantine; retain valid material; reject lost-lease write.
+- **Verification**: envelope reference/digest/fault; duplicate startup; unsupported concurrency rejection; bounded retry; failure isolation.
+- **Fallback**: quarantine; retain valid material; reject duplicate/concurrent recovery.
 - **Status**: design only.
 
 ### INV-A-30 — Financial fact and metric determinism
 
-- **Statement**: Derived metrics use per-fact structured records. **Disclosure fields** (subject, accession/disclosure identifier, filing reference, filed-at, form, source fact reference, raw concept/value/unit/currency/period/fiscal/sign, explicit restatement/supersession identifiers) preserve original evidence. **Canonical fields** (fact_id, canonical concept/period/fiscal identity, span, cumulative duration, canonical sign/unit/currency, explicit lineage) may be validated or derived only by a recorded versioned rule, with input evidence and source references retained. A filing's fiscal year/quarter is not each historical fact's period identity. Missing or multiple plausible sources return unavailable/ambiguous; never use date proximity, equal value, column order, or a default. The fact fetch, metric computation, block append, and conflict check occur after the fundamentals report exists and before research debate consumes it; final publication only persists the existing result. Only facts filed on or before as-of are visible. Formulas are explicit and versioned; TTM uses annual + current YTD - prior matching YTD and never derives a quarter by subtraction. The program-appended metric block is the numeric authority; conflicts with structured claims are disclosed and the contradicted claim is labeled unverified.
+- **Statement**: Derived metrics use per-fact structured records. **Disclosure fields** (subject, accession/disclosure identifier, filing reference, filed-at, form, source fact reference, raw concept/value/unit/currency/period/fiscal/sign, explicit restatement/supersession identifiers) preserve original evidence. **Canonical fields** (fact_id, canonical concept/period/fiscal identity, span, cumulative duration, canonical sign/unit/currency, explicit lineage) may be validated or derived only by a recorded versioned rule, with input evidence and source references retained. A filing's fiscal year/quarter is not each historical fact's period identity. Missing or multiple plausible sources return unavailable/ambiguous; never use date proximity, equal value, column order, or a default. The fact fetch, metric computation, block append, and conflict check occur after the fundamentals report exists and before research debate consumes it; final publication only persists the existing result. Only facts filed on or before as-of are visible. Current formulas cover direct metrics only; **TTM metrics, FCF YoY, and single-quarter subtraction are deferred**. The program-appended metric block is the numeric authority; conflicts with recognizable structured claims are disclosed and the contradicted claim is labeled unverified.
 - **Source**: `FR-07`.
 - **Enforcement**: `FinancialFactService`, `FinancialMetricService`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector`.
-- **Verification**: fact/period/restatement/as-of; TTM continuity; formula arithmetic; n/a reasons; program block without tool use; conflict scope; bundle persistence/recovery; no direct vendor.
+- **Verification**: fact/period/restatement/as-of; direct-metric formula arithmetic; n/a reasons; program block without tool use; conflict scope; bundle persistence/recovery; no direct vendor; deferred TTM/FCF YoY absent.
 - **Fallback**: n/a with typed reason; disclose conflict; block metric-dependent recovery when the bundle is missing/corrupt.
 - **Status**: design only.
 
@@ -373,19 +380,19 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-34 — Post-commit corruption immutability
 
-- **Statement**: A failure during post-commit read validation never overwrites the committed terminal manifest with `failed` or any other status. The committed manifest remains immutable evidence. The record is rejected as a successful formal result, history/export return `CORRUPT_RECORD`, and an independent diagnostic records the anomaly. No second publication or compensating terminal state is created.
+- **Statement**: A failure during post-commit read validation never overwrites the committed terminal manifest with `failed` or any other status. The committed manifest remains immutable evidence. The record is rejected as a successful formal result, history returns `CORRUPT_RECORD`, and an independent diagnostic records the anomaly. No second publication or compensating terminal state is created. Export is deferred; if reactivated, it must return the same typed result.
 - **Source**: `FR-02`, `INV-01`, `FR-05`.
 - **Enforcement**: `ArtifactPublisher`, `PublicationStatusReader`, `HistoryService`, `ExportService`.
-- **Verification**: tamper each bound artifact after commit; assert manifest bytes unchanged, diagnostic present, history/export rejected, no second commit.
+- **Verification**: tamper each bound artifact after commit; assert manifest bytes unchanged, diagnostic present, history rejected, no second commit; export check is deferred.
 - **Fallback**: quarantine/corrupt status; manual repair; never claim success.
 - **Status**: design only.
 
 ### INV-A-35 — Shared run ownership critical section
 
-- **Statement**: Normal publication and recovery use one per-run OS file lock (`run.lock`), a logical lease record (`lease.json`), owner identity, and fencing token. The file lock is held only for short ownership/token update/protected writes, never for the whole recovery or while waiting. Lease expiry does not release the OS file lock. A paused old process holding the file lock can only be waited on or reported as `LOCK_BUSY`; the lock file is never deleted. Takeover acquires the file lock, increments the fencing token, and the old owner rechecks the token on every protected write. Lock order is run lock then memory lock; a lost owner cannot write publication, memory, cleanup, or owner diagnostics.
+- **Statement**: Current normal publication and recovery use one simple exclusive **single-process startup guard** and a duplicate-start guard with bounded retry. The guard is held only for the check-and-write/commit boundary, never across model work or while waiting. Duplicate startup is rejected or waits; unsupported concurrent/multi-worker recovery is rejected. Lease (`lease.json`), fencing tokens, takeover, stale-lease reclaim, and multi-worker claims are a **deferred extension** and must not be claimed by current code/tests. Lock order, when a memory write is needed, is guard then memory lock; never acquire the guard while holding the memory lock.
 - **Source**: `FR-02`, `FR-06`.
-- **Enforcement**: `RunOwnershipLock`, `ArtifactPublisher`, `RecoveryService`, `MemoryService`.
-- **Verification**: duplicate publisher/recovery, stale takeover, lost-owner write, lock-order, release/retry tests.
+- **Enforcement**: `StartupRecoveryGuard`, `ArtifactPublisher`, `RecoveryService`, `MemoryService`.
+- **Verification**: duplicate startup, unsupported concurrency, check-and-write boundary, release/retry tests. Lease/fencing/takeover is deferred and not tested as current.
 - **Fallback**: reject lost owner; one winner; no duplicate write; bounded retry.
 - **Status**: design only.
 
@@ -400,10 +407,10 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-37 — Recovery cleanup versus permanent reads
 
-- **Statement**: Temporary recovery material may be cleaned after successful commit and post-commit validation. Formal report reads, history `get_run`, memory binding validation, and `verified_package` export depend only on the permanent publication snapshot and terminal manifest. A terminal `recovery_snapshot_summary` is audit-only; readers must not require the temporary recovery file.
+- **Statement**: Temporary recovery material may be cleaned after successful commit and post-commit validation. Formal report reads, history `get_run`, and memory binding validation depend only on the permanent publication snapshot and terminal manifest; future export, if reactivated, must use the same material. A terminal `recovery_envelope_summary` is audit-only; readers must not require the temporary recovery file.
 - **Source**: `FR-02`, `FR-05`, `FR-06`, `INV-01`.
 - **Enforcement**: `ArtifactPublisher`, `PublicationSnapshotStore`, `HistoryService`, `ExportService`, `MemoryService`.
-- **Verification**: commit -> validate -> cleanup -> history read + memory binding + export; missing recovery file must not fail the formal read.
+- **Verification**: commit -> validate -> cleanup -> history read + memory binding; missing recovery file must not fail the formal read; export check is deferred.
 - **Fallback**: reject any temporary-file dependency; keep permanent records.
 - **Status**: design only.
 
@@ -418,7 +425,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-39 — Uncommitted same-decision memory coordination
 
-- **Statement**: A same-decision entry with no committed terminal manifest is not reusable success. Run B never takes ownership. If A is active, B waits bounded without holding run/memory locks and returns `MEMORY_PENDING_RETRYABLE` on timeout. If A is invalid with a valid recovery snapshot, recovery runs under A's original `run_id`, original reservation, and original snapshot; ownership is never transferred. Missing snapshot -> `MEMORY_RECOVERY_UNAVAILABLE`; recovery failure -> `MEMORY_RECOVERY_FAILED`; binding conflict -> `MEMORY_CONFLICT`. B may reuse A only after A commits and validates, through `reused_decision_ref`. A failed reservation permanently occupies its version; a retry/recovery of A reuses it, while any new run receives a higher version.
+- **Statement**: A same-decision entry with no committed terminal manifest is not reusable success. Run B never takes ownership. If A is active, B waits bounded without holding run/memory locks and returns `MEMORY_PENDING_RETRYABLE` on timeout. If A is invalid with a valid recovery envelope, recovery runs under A's original `run_id`, original reservation, and original snapshot; ownership is never transferred. Missing snapshot -> `MEMORY_RECOVERY_UNAVAILABLE`; recovery failure -> `MEMORY_RECOVERY_FAILED`; binding conflict -> `MEMORY_CONFLICT`. B may reuse A only after A commits and validates, through `reused_decision_ref`. A failed reservation permanently occupies its version; a retry/recovery of A reuses it, while any new run receives a higher version.
 - **Source**: `INV-01`, `FR-06`, `INV-02`.
 - **Enforcement**: `MemoryRecoveryCoordinator`, `MemoryService`, `RecoveryService`.
 - **Verification**: active/expired/missing-snapshot/recovery-failure/binding-conflict; no locks held while waiting; no ownership transfer; no duplicate entry/version.
@@ -427,7 +434,7 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 
 ### INV-A-40 — Acyclic permanent hash DAG
 
-- **Statement**: Permanent artifacts form a directed acyclic hash graph. `record_hash` is computed first; `binding.json` covers `artifact_binding` plus `record_hash` but excludes the terminal-manifest hash, its own file hash, the recovery digest, and commit-evidence hash. Section/final-state/risk/metric/memory files are hashed next. The recovery snapshot may carry terminal-candidate identity but not the final terminal-manifest hash. The terminal manifest covers `publication_ref` hashes (including `binding.json`) and may hold a `recovery_snapshot_summary` as audit-only; it never hashes itself. An optional `diagnostics/commit_evidence.json` may record the terminal-manifest hash after commit but is outside the permanent hashed set and is not a commit authority.
+- **Statement**: Permanent artifacts form a directed acyclic hash graph. `record_hash` is computed first; `binding.json` covers `artifact_binding` plus `record_hash` but excludes the terminal-manifest hash, its own file hash, the recovery digest, and commit-evidence hash. Section/final-state/risk/metric/memory files are hashed next. The recovery envelope may carry terminal-candidate identity but not the final terminal-manifest hash. The terminal manifest covers `publication_ref` hashes (including `binding.json`) and may hold a `recovery_envelope_summary` as audit-only; it never hashes itself. An optional `diagnostics/commit_evidence.json` may record the terminal-manifest hash after commit but is outside the permanent hashed set and is not a commit authority.
 - **Source**: `FR-02`, `INV-01`, `FR-05`.
 - **Enforcement**: `ArtifactPublisher`, `PublicationSnapshotStore`, `MemoryService`.
 - **Verification**: compute in the declared order; assert no cycle and no file hashed by the terminal manifest contains its hash; assert binding has no terminal-manifest hash.
@@ -443,6 +450,60 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 - **Fallback**: reject record; no commit; manual review.
 - **Status**: design only.
 
+### INV-A-42 — Coordinator and context scope
+
+- **Statement**: `RunCoordinator` orders stages, invokes services, and hands off failures/publication; it contains no coverage/risk/metric/context/gate/publication policy. `RunContext` owns identity, fixed clock, versions, run-scoped paths, and dependency references only. A policy test that injects a fake gate/risk decision must not be able to route it through either object.
+- **Source**: D3-02, QS-10.
+- **Enforcement**: `RunCoordinator`, `RunContext`.
+- **Verification**: symbol/behavior audit; policy sentinel tests; dependency graph review.
+- **Fallback**: reject the design/implementation; move policy to its owner; manual review.
+- **Status**: design only.
+
+### INV-A-43 — Envelope ownership and immutability
+
+- **Statement**: Each envelope has one owner, one schema version, one mutability rule, one error contract, and one serialization boundary. A consumer receives an immutable/versioned envelope, not a mutable working object. A required-field change is a version change.
+- **Source**: D3-08, QS-13.
+- **Enforcement**: envelope owners in §9.6.8; `ArtifactPublisher`/`PublicationSnapshotStore` for published envelopes.
+- **Verification**: owner/version/mutability matrix; mutation attempt; missing/extra field; cross-envelope reference mismatch.
+- **Fallback**: reject the envelope/record; fail closed; no partial publication.
+- **Status**: design only.
+
+### INV-A-44 — Digest projection and order
+
+- **Statement**: `decision_digest`, `record_hash`, `proposal_digest`, `input_digest`, `entry_digest`, and `evidence_digest` use the declared projections and generation order; redaction precedes digesting; self/result hashes are excluded; content digests and file-byte hashes are distinct; filing/evidence/risk timestamps are preserved.
+- **Source**: D3-11, `INV-01`.
+- **Enforcement**: `Canonicalizer`, `SafetyGate`, `ArtifactPublisher`, `MemoryService`.
+- **Verification**: projection fixtures; order/self-exclusion; retry stability; risk/filing timestamp preservation; scan-before-digest.
+- **Fallback**: reject record; no commit; no overwrite.
+- **Status**: design only.
+
+### INV-A-45 — Single-process recovery guard
+
+- **Statement**: Current recovery is single-process. One exclusive startup guard and a duplicate-start guard with bounded retry are required; unsupported concurrent recovery is rejected; lease/fencing/takeover is deferred and not claimed.
+- **Source**: D3-13, `FR-06`.
+- **Enforcement**: `StartupRecoveryGuard`, `RecoveryService`.
+- **Verification**: duplicate startup; bounded wait; unsupported concurrency; guard release on failure; no takeover claim.
+- **Fallback**: typed busy/unsupported; no duplicate publication; manual retry.
+- **Status**: design only.
+
+### INV-A-46 — Scope and claim honesty
+
+- **Statement**: FR-08 functional acceptance is independent of CR-01 optimization acceptance. TTM/FCF YoY/export/multi-worker recovery/QR-02 are deferred and are never used as current completion evidence. Cost, token, quality, safety, and saving claims are separate.
+- **Source**: D3-16, D3-18, `FR-07`, `FR-08`, `CR-01`.
+- **Enforcement**: `DownstreamBriefBuilder`, `FinancialMetricService`, evaluation harness, document review.
+- **Verification**: scope audit; deferred-scope grep; claim-boundary fixtures; FR-08 functional run with unresolved CR-01 thresholds.
+- **Fallback**: block false completion/acceptance claims; mark deferred.
+- **Status**: design only.
+
+### INV-A-47 — History authority
+
+- **Statement**: The verified committed publication is the only history authority. An optional derived index is rebuildable and non-authoritative; every read revalidates. Pending/failed/quarantined/corrupt records are not successful history.
+- **Source**: D3-14, `FR-05`.
+- **Enforcement**: `HistoryService`, `PublicationSnapshotStore`, `PublicationStatusReader`.
+- **Verification**: index rebuild, stale index ignored, read revalidation, status exclusion, corrupt/tamper.
+- **Fallback**: ignore/rebuild index; return `NOT_FOUND`/`CORRUPT_RECORD`; no partial content.
+- **Status**: design only.
+
 ---
 
 ## 4. Planned verification summary
@@ -453,12 +514,14 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 | Writer bypass audit | INV-A-01, INV-A-03 |
 | Coverage/fallback fixtures | INV-A-04, INV-A-15 |
 | Query counter and run isolation | INV-A-05, INV-A-06 |
-| Publish/recovery failure injection | INV-A-07, INV-A-14, INV-A-28, INV-A-29, INV-A-34, INV-A-35 |
+| Publish/recovery failure injection | INV-A-07, INV-A-14, INV-A-28, INV-A-29, INV-A-34, INV-A-35, INV-A-45 |
 | Memory duplicate/conflict/version/reservation | INV-A-08, INV-A-16 |
-| Secret/path/export scan | INV-A-09, INV-A-18, INV-A-33 |
+| Secret/path scan (future export) | INV-A-09, INV-A-18, INV-A-33 |
 | Context compression/token budget/replacement | INV-A-10, INV-A-31, INV-A-32 |
 | Resume matrix | INV-A-11, INV-A-19 |
 | Permission matrix | INV-A-12, INV-A-13 |
+| Coordinator/context/envelope/digest audit | INV-A-42, INV-A-43, INV-A-44 |
+| Scope/deferred/history authority | INV-A-46, INV-A-47 |
 | Review-class priority | INV-A-17 |
 | Evidence links/HTTP counts | INV-A-20 |
 | Timing boundary | INV-A-21 |
@@ -476,7 +539,10 @@ All requirements are draft, so every invariant is a design proposal, not an appr
 | Uncommitted same-decision coordination | INV-A-39 |
 | Permanent hash DAG | INV-A-40 |
 | record_hash projection | INV-A-41 |
-| Shared run ownership | INV-A-35 |
+| Single-process startup guard | INV-A-35, INV-A-45 |
+| Coordinator/context scope | INV-A-42 |
+| Envelope/digest contracts | INV-A-43, INV-A-44 |
+| Scope/deferred/history authority | INV-A-46, INV-A-47 |
 
 All test status: **not started**. No implementation or monitoring exists.
 
@@ -487,5 +553,7 @@ All test status: **not started**. No implementation or monitoring exists.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Monitoring: **not implemented**.
-- D1: v1.20.0; 17 requirements are draft and QR-02 is deferred; human review pending.
-- D2: v0.2 ADD-R draft; all architecture decisions proposed, not approved.
+- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D2: v0.3 ADD-R round 3 draft; all architecture decisions proposed, not approved.
+- Current recovery is single-process; lease/fencing/takeover/multi-worker/export/TTM/FCF YoY/QR-02 are deferred.
+- Envelope and digest contracts are proposed in blueprint §9.6.8/§9.6.9.

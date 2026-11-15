@@ -1,0 +1,179 @@
+{
+  "fixture_version": "gate-decision-v2",
+  "requirement": "SB-01",
+  "cases": [
+    {
+      "id": "pass_after_all_preconditions",
+      "gate_status": "passed",
+      "primary_reason_code": null,
+      "review_class": "none",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": true,
+      "note": "gate pass still requires later publication checks"
+    },
+    {
+      "id": "blocked_trustworthy",
+      "gate_status": "blocked",
+      "primary_reason_code": "critical_gap",
+      "review_class": "data_insufficient",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    },
+    {
+      "id": "blocked_untrustworthy",
+      "gate_status": "blocked",
+      "primary_reason_code": "critical_gap",
+      "review_class": "data_insufficient",
+      "trustworthy_materials": false,
+      "safe_write": true,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "failed",
+      "public_tradeable": false
+    },
+    {
+      "id": "blocked_unsafe_write",
+      "gate_status": "blocked",
+      "primary_reason_code": "critical_gap",
+      "review_class": "data_insufficient",
+      "trustworthy_materials": true,
+      "safe_write": false,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "typed_error",
+      "public_tradeable": false
+    },
+    {
+      "id": "unsupported_profile",
+      "gate_status": "blocked",
+      "primary_reason_code": "invalid_critical_profile",
+      "review_class": "input_invalid",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    },
+    {
+      "id": "unsupported_snapshot",
+      "gate_status": "blocked",
+      "primary_reason_code": "snapshot_hash_mismatch",
+      "review_class": "gate_system_error",
+      "internal_detail": "unsupported_snapshot_version",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    },
+    {
+      "id": "gate_timeout_late_success",
+      "gate_status": "error",
+      "primary_reason_code": "gate_internal_error",
+      "review_class": "gate_system_error",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "failed",
+      "late_success_received": true,
+      "late_success_ignored": true,
+      "public_tradeable": false
+    },
+    {
+      "id": "gate_pass_then_write_failure",
+      "gate_status": "passed",
+      "primary_reason_code": null,
+      "review_class": "none",
+      "trustworthy_materials": true,
+      "safe_write": false,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "failed",
+      "public_tradeable": false,
+      "note": "gate pass does not clear later write failure"
+    },
+    {
+      "id": "risk_limit",
+      "gate_status": "blocked",
+      "primary_reason_code": "portfolio_risk_limit_exceeded",
+      "review_class": "portfolio_risk_limit",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    },
+    {
+      "id": "risk_input_invalid",
+      "gate_status": "blocked",
+      "primary_reason_code": "portfolio_risk_input_invalid",
+      "review_class": "input_invalid",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    },
+    {
+      "id": "risk_evaluator_exception",
+      "gate_status": "error",
+      "primary_reason_code": "portfolio_risk_evaluator_error",
+      "review_class": "gate_system_error",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "failed",
+      "public_tradeable": false
+    },
+    {
+      "id": "combined_gap_and_risk_exception",
+      "gate_status": "error",
+      "primary_reason_code": "portfolio_risk_evaluator_error",
+      "review_class": "gate_system_error",
+      "secondary_reason_codes": [
+        "critical_gap"
+      ],
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": false,
+      "publication_allowed": false,
+      "run_outcome": "failed",
+      "public_tradeable": false
+    },
+    {
+      "id": "invalid_model_rating",
+      "gate_status": "blocked",
+      "primary_reason_code": "invalid_model_rating",
+      "review_class": "model_rating_invalid",
+      "trustworthy_materials": true,
+      "safe_write": true,
+      "completed_allowed": true,
+      "publication_allowed": true,
+      "run_outcome": "completed",
+      "public_tradeable": false
+    }
+  ],
+  "mapping_constraints": {
+    "unique_gate_status_per_input": true,
+    "blocked_error_not_interchangeable": true,
+    "unsupported_profile": "blocked/invalid_critical_profile/input_invalid",
+    "unsupported_snapshot": "blocked/snapshot_hash_mismatch/gate_system_error with internal_detail=unsupported_snapshot_version",
+    "no_recommended_or_pending_alternative": true,
+    "gate_result_is_not_publication": true,
+    "late_success_must_not_overwrite_failure": true
+  }
+}
