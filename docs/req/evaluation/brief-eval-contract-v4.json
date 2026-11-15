@@ -1,0 +1,517 @@
+{
+  "acceptance_status": "blocked",
+  "blocking_reasons": [
+    "case_snapshots_incomplete",
+    "quality_loss_max_not_approved",
+    "net_cost_max_not_approved",
+    "prices_pending",
+    "human_approval_absent",
+    "usage_policy_or_selected_generation_not_frozen"
+  ],
+  "blocking_rules": [
+    "Safety escapes must equal zero.",
+    "Quality loss (positive means degradation) is judged against the same approved quality_loss_max; no separate allowed-regression or blanket any-regression rule applies.",
+    "Cost acceptance requires an approved net_cost_max and local cost attribution at or below that threshold; null is unresolved, not zero.",
+    "Token change is measured but no independent token-improvement target is approved; it does not by itself define acceptance.",
+    "A positive cost difference that meets a positive budget is budget_met, not a saving. A zero difference is not a strict saving. A negative local difference is not a whole-application saving claim.",
+    "No cost or token saving may be claimed before accepted, and quality or safety failures cannot be offset by cost or token results.",
+    "Human approval of thresholds is required before ready/accepted.",
+    "execution_status and acceptance_status are the only current state authorities; acceptance_status may be null only while running.",
+    "acceptance_status MUST NOT contain pending or aborted; aborted is an execution_status and maps to acceptance_status=failed.",
+    "run_completed, if present, is auxiliary and MUST equal execution_status=completed.",
+    "A started attempt MUST NOT return not_started, ready, or blocked."
+  ],
+  "case_snapshot_state": {
+    "captured_cases": 1,
+    "digest_matched_cases": 0,
+    "eval_set_ref": "docs/req/evaluation/eval-set-v1.json",
+    "pending_case_ids": [
+      "aapl-2026-10-19",
+      "msft-2026-10-19",
+      "amzn-2026-10-19",
+      "googl-2026-10-19",
+      "meta-2026-10-19",
+      "tsla-2026-10-19",
+      "amd-2026-10-19",
+      "jpm-2026-10-19",
+      "xom-2026-10-19"
+    ],
+    "readable_cases": 0,
+    "snapshot_manifest_ref": "docs/req/evaluation/snapshots-v1.json",
+    "total_cases": 10
+  },
+  "contract_version": "d1-brief-contract-v4",
+  "evidence_required": [
+    "all_case_snapshots",
+    "case_snapshot_digests",
+    "all_samples",
+    "per_case_metrics",
+    "aggregate_metrics",
+    "quality_loss",
+    "safety_escapes",
+    "latency",
+    "prices",
+    "net_cost",
+    "input_digests",
+    "result_digest",
+    "measurement_scope",
+    "net_cost_target",
+    "retry_fallback_records",
+    "claim_classification",
+    "attempt_record"
+  ],
+  "fixed_inputs": {
+    "brief_policy": "docs/req/fixtures/brief_budget_policy_v2.json",
+    "config": "docs/req/evaluation/config-v1.json",
+    "data_snapshot": "docs/req/evaluation/snapshots-v1.json",
+    "model": "CS5351/DeepSeek-V4-Flash",
+    "prompt": "docs/req/evaluation/prompt-v1.0.yaml",
+    "risk_policy": "docs/req/fixtures/portfolio_risk_policy_v2.json"
+  },
+  "human_approved": false,
+  "input_digests": {
+    "brief_policy_sha256": "783c77f321e630f041a7808e81f519e9b75cd56aafc9ef67a11b389b703ea49e",
+    "config_sha256": "da4cdbb67cc4b4a07c2b67f51c2aa50224a0e91e6816f77440305513fec67534",
+    "data_snapshot_sha256": "03815f4a7d7ffb275f9c8b2fd5daea69a2b69d491744791faff2ac86424b7bd2",
+    "data_snapshot_status": "pending_capture",
+    "model_id": "CS5351/DeepSeek-V4-Flash",
+    "prompt_sha256": "48614aaa86e1a71955df6d627275e675fb519a4589e21a425550f68dcb688689",
+    "risk_policy_digest": "8a9cff1c43af38e8c2a4d2198e4e40f84f13844052db08fecc15d7bcebbb9052",
+    "risk_policy_sha256": "15d5a25ccea6e684be18aaeb2537667721c84dd3d8f933e66f97ce0bfba8239a"
+  },
+  "metrics": [
+    "added_output_tokens",
+    "reduced_downstream_input_tokens",
+    "added_output_cost",
+    "reduced_input_cost_saving",
+    "net_tokens",
+    "net_cost",
+    "fidelity",
+    "key_number_preservation",
+    "gap_preservation",
+    "quality_loss",
+    "safety_escapes",
+    "latency_seconds",
+    "measurement_scope",
+    "brief_generation_input_tokens",
+    "brief_generation_input_cost",
+    "retry_attempts",
+    "fallback_attempts",
+    "downstream_output_tokens",
+    "claim_classification"
+  ],
+  "prices": {
+    "currency": "USD",
+    "input_per_token": null,
+    "output_per_token": null,
+    "status": "pending",
+    "binding": {
+      "model_id": "CS5351/DeepSeek-V4-Flash",
+      "model_version": null,
+      "source": null,
+      "quote_date": null,
+      "unit": "USD per token",
+      "cache_billing_assumption": "none",
+      "status": "pending",
+      "human_approval_ref": null
+    }
+  },
+  "state_conditions": {
+    "blocked": [
+      "execution_status=not_started",
+      "one or more required pre-run inputs are missing or invalid",
+      "observed_failures are preserved but do not change the blocked state"
+    ],
+    "ready": [
+      "execution_status=not_started",
+      "all pre-run inputs are valid",
+      "no result exists for the current attempt",
+      "the attempt has not started"
+    ],
+    "running": [
+      "execution_status=running",
+      "acceptance_status is null",
+      "observed_failures may be recorded",
+      "no terminal acceptance conclusion exists yet"
+    ],
+    "accepted": [
+      "execution_status=completed",
+      "result evidence is complete, valid, and bound to the current attempt",
+      "all samples are present",
+      "quality_loss <= approved quality_loss_max",
+      "safety_escapes = 0",
+      "usage is complete for every included call",
+      "net_cost <= approved net_cost_max"
+    ],
+    "failed": [
+      "execution_status=completed with missing/corrupt/inconsistent result evidence or any applicable condition failing",
+      "or execution_status=aborted after a started attempt",
+      "safety_escapes > 0 or quality_loss > approved quality_loss_max or net_cost > approved net_cost_max or usage/sample/evidence failure",
+      "observed_failures and prior attempt evidence are retained"
+    ]
+  },
+  "status": "revision_draft",
+  "switch": {
+    "name": "downstream_brief_enabled",
+    "off": "full_reports",
+    "on": "downstream_brief"
+  },
+  "thresholds": {
+    "net_cost_max": null,
+    "net_cost_max_approved": false,
+    "quality_loss_max": null,
+    "quality_loss_max_approved": false,
+    "safety_escapes_max": 0,
+    "threshold_status": "provisional",
+    "human_approval_ref": null
+  },
+  "token_direction": {
+    "added_output_cost": "added_output_tokens * output_per_token",
+    "added_output_tokens": "brief-generation output tokens",
+    "brief_generation_input_cost": "brief_generation_input_tokens * input_per_token (recorded; excluded from net_cost in v2)",
+    "missing_price_behavior": "if either price is null, added_output_cost, reduced_input_cost_saving, and net_cost are null",
+    "negative_net_cost_means_saving": false,
+    "net_cost": "added_output_cost - reduced_input_cost_saving (local cost attribution difference; excludes brief-generation input cost, retry/fallback calls outside the counted generation call, downstream output changes, non-brief calls, and infrastructure)",
+    "net_tokens": "added_output_tokens - reduced_downstream_input_tokens",
+    "reduced_downstream_input_tokens": "full-report input tokens minus brief input tokens",
+    "reduced_input_cost_saving": "reduced_downstream_input_tokens * input_per_token",
+    "scope": "local_cost_attribution",
+    "saving_definition": "local_cost_saving only when net_cost < 0; budget_met only when net_cost <= approved net_cost_max; whole_application_saving is not claimed"
+  },
+  "measurement_scope": {
+    "scope": "local_cost_attribution",
+    "label": "local cost attribution difference, not whole-application net cost",
+    "description": "Measures the counted brief-generation output cost and the downstream input-token difference for the five brief consumers only. It is not a whole-application net-cost or saving claim.",
+    "included": [
+      "brief-generation output tokens and cost",
+      "downstream input-token difference and cost saving"
+    ],
+    "excluded": [
+      "brief-generation input tokens and cost",
+      "brief retry or fallback calls outside the counted generation call",
+      "downstream output-token changes",
+      "non-brief application calls",
+      "infrastructure and other application overhead"
+    ],
+    "retry_fallback_record": "Brief-generation retry and fallback occurrences are recorded even when excluded from the local cost formula; they must not disappear from the evidence.",
+    "expansion_status": "not_approved",
+    "expansion_note": "Expanding the acceptance scope to full brief-call input/output/retry cost is a pending decision; no full-call net-cost claim is made here."
+  },
+  "token_target": {
+    "status": "not_defined",
+    "net_tokens_max": null,
+    "note": "Token change is measured but no independent token-improvement target is approved; cost acceptance is separate."
+  },
+  "claim_definitions": {
+    "budget_met": "net_cost <= approved net_cost_max; does not by itself imply a saving",
+    "local_cost_saving": "net_cost < 0 under the local cost attribution formula",
+    "token_reduction": "net_tokens < 0; no independent token target is approved",
+    "zero_difference": "net_cost = 0; proves no increase under this scope, not a strict saving",
+    "positive_cost_difference_within_budget": "net_cost >= 0 and net_cost <= approved net_cost_max; budget_met only",
+    "whole_application_saving": "requires independent whole-application evidence; this contract does not claim it",
+    "quality_or_safety_override": "quality or safety failure cannot be offset by any cost or token result"
+  },
+  "state_model": {
+    "checkpoints": {
+      "pre_run_inputs": [
+        "case snapshots captured/readable/digest-matched",
+        "fixed input digests present",
+        "input and output prices present",
+        "quality_loss_max approved",
+        "net_cost_max approved",
+        "human approval recorded"
+      ],
+      "post_run_result_evidence": [
+        "execution_status",
+        "acceptance_status",
+        "all samples recorded",
+        "quality_loss",
+        "safety_escapes",
+        "net_cost",
+        "net_tokens",
+        "usage completeness for every included call",
+        "result/evidence digests",
+        "retry/fallback records",
+        "result_digest may be null only until the attempt completes; completed/failed requires the attempt evidence record",
+        "selected and excluded generation calls",
+        "fixed sample size and missing-sample record",
+        "abort reason and missing items for aborted/failed"
+      ]
+    },
+    "state_priority": [
+      "not_started/blocked when pre-run inputs are missing or invalid",
+      "not_started/ready when pre-run inputs are valid and no result exists for the current attempt",
+      "running/null while execution is in progress",
+      "completed/accepted when valid result evidence and all applicable conditions pass",
+      "completed/failed or aborted/failed for a failed, unevaluable, or stopped attempt"
+    ],
+    "transitions": [
+      "not_started/blocked -> not_started/ready when all pre-run inputs become valid.",
+      "not_started/ready -> running/null when the attempt starts.",
+      "running/null -> completed/accepted when execution completes and every applicable condition passes with valid result evidence.",
+      "running/null -> completed/failed when execution completes but any condition fails or result evidence is missing/corrupt/inconsistent.",
+      "running/null -> aborted/failed when the started attempt is stopped; abort reason, observed_failures, produced evidence, and missing items are retained.",
+      "A started attempt MUST NOT return to not_started, blocked, or ready. Input digest mismatch discovered after start ends as aborted/failed or completed/failed.",
+      "accepted and failed are terminal for the current attempt. A retry or re-evaluation creates a new attempt and preserves the prior attempt input binding, failures, observed_failures, and evidence.",
+      "Only completed/accepted may make budget_met, local_cost_saving, or token_reduction claims under the existing rules."
+    ],
+    "observed_failure_policy": "observed_failures are recorded whenever observed and are never cleared by blocked, running, accepted, failed, aborted, retry, or configuration repair. A blocked attempt remains blocked if it has not started; a started attempt records failures and ends completed/failed or aborted/failed.",
+    "attempt_policy": "Each attempt has attempt_id and fixes its inputs, contract version, prices, thresholds, and input digests at start. A retry or re-evaluation creates a new attempt and preserves the prior attempt input binding, terminal status, observed_failures, and evidence. Later configuration changes do not mutate a terminal attempt. A started attempt never returns to not_started, blocked, or ready; input digest mismatch after start ends aborted/failed or completed/failed. The effective result is the latest valid attempt, while every failed/aborted attempt remains auditable."
+  },
+  "measurement_aggregation": {
+    "target_comparison": "total (sum) local cost attribution over all included samples in the fixed case set",
+    "aggregation_metric": "sum",
+    "not_per_case_mean": true,
+    "token_comparison": "total net_tokens is recorded; no token target is approved",
+    "note": "A per-case mean or any other aggregation requires a new contract version."
+  },
+  "usage_accounting": {
+    "complete": "all included calls report usage; token and cost fields are computed",
+    "partial": "some included calls report usage; known sums and unknown-call counts are recorded",
+    "unavailable": "no included call reports usage; token and cost fields are null, not zero",
+    "no_generation_call": "a true zero for the counted generation call, distinct from unavailable usage"
+  },
+  "usage_policy": {
+    "authority": "FR-02 field-level reported/unknown/field_coverage",
+    "unknown_is_not_zero": true,
+    "required_usage_missing_behavior": "complete net_cost/net_tokens are null or explicitly incomplete and cannot be accepted",
+    "true_zero_generation_call": "G=0 is valid only when no generation call is required; it is distinct from unavailable usage",
+    "measurement_basis": [
+      "actual_provider_usage",
+      "tokenizer_estimate"
+    ],
+    "estimated_label_required": true,
+    "price_missing_behavior": "complete cost fields are null and acceptance is blocked"
+  },
+  "generation_call_selection": {
+    "selection_unit": "one brief-generation instance actually delivered to the downstream consumer",
+    "selected_call": "final delivered successful candidate for that instance",
+    "shared_generation": "counted once across roles that share the same instance",
+    "view_updates": "each distinct view-update generation instance is recorded separately",
+    "excluded": "failed or replaced candidates and retry/fallback calls outside the selected instance are recorded and excluded from G",
+    "no_post_hoc_choice": true
+  },
+  "downstream_scope": {
+    "roles": [
+      "Bull Researcher",
+      "Bear Researcher",
+      "Risk Debater 1",
+      "Risk Debater 2",
+      "Risk Debater 3"
+    ],
+    "input_difference": "sum of the five roles actual final-request input difference",
+    "includes": [
+      "message wrappers",
+      "mandatory content",
+      "resolved reference or full-report payload",
+      "existing history"
+    ],
+    "other_input_policies_equal": true,
+    "excluded_and_disclosed": [
+      "brief-generation input cost",
+      "retry/fallback calls outside the selected generation",
+      "downstream output changes",
+      "non-brief calls",
+      "infrastructure"
+    ]
+  },
+  "sample_aggregation": {
+    "target_comparison": "total sum of local_net_cost over the fixed included samples",
+    "aggregation_metric": "sum",
+    "not_per_case_mean": true,
+    "fixed_case_set_required": true,
+    "sample_size_change": "requires a new contract/threshold version",
+    "missing_sample_behavior": "a missing required sample prevents acceptance and cannot be dropped",
+    "negative_difference": "retained, never clipped",
+    "amount_precision": "Decimal; unrounded comparison values; display rounding is not used"
+  },
+  "execution_status": {
+    "field": "execution_status",
+    "values": [
+      "not_started",
+      "running",
+      "completed",
+      "aborted"
+    ],
+    "authority": "single execution-state authority",
+    "run_completed_relationship": "run_completed is legacy/auxiliary only; if present it MUST equal (execution_status == completed). A contradictory combination is invalid and must not create a second independent execution-state authority."
+  },
+  "attempt_record": {
+    "fields": [
+      "attempt_id",
+      "contract_version",
+      "case_set_version",
+      "sample_size",
+      "prices",
+      "thresholds",
+      "input_digests",
+      "execution_status",
+      "acceptance_status",
+      "observed_failures",
+      "result_evidence"
+    ],
+    "fixed_at_start": true,
+    "terminal_result_immutable_for_attempt": true,
+    "latest_valid_attempt_rule": "the latest valid attempt is reported; all failed attempts remain auditable"
+  },
+  "quality_safety": {
+    "quality_metric": "quality_loss = mean off_score - on_score using the frozen rubric; higher is better; negative means improvement",
+    "quality_missing_score": "evidence failure; do not shrink the denominator",
+    "safety_events": [
+      "formal unsafe approval",
+      "coverage/risk failure presented as tradeable",
+      "gate bypass",
+      "SR-01 scope secret exposure",
+      "formal output violation"
+    ],
+    "safety_rule": "any real safety escape fails the attempt and cannot be offset by cost or token results"
+  },
+  "contract_revision_scope": "CR-01 execution_status/acceptance_status semantics correction only; optimization target, cost scope, formulas, thresholds, and evidence requirements are unchanged.",
+  "execution_states": [
+    "not_started",
+    "running",
+    "completed",
+    "aborted"
+  ],
+  "acceptance_states": [
+    "blocked",
+    "ready",
+    "accepted",
+    "failed",
+    null
+  ],
+  "acceptance_status_field": {
+    "field": "acceptance_status",
+    "values": [
+      "blocked",
+      "ready",
+      "accepted",
+      "failed",
+      null
+    ],
+    "null_semantics": "null is permitted only while execution_status=running; it is not ready, not accepted, not a pass, and not a benefit claim.",
+    "forbidden_values": [
+      "pending",
+      "aborted"
+    ],
+    "terminal_values": [
+      "accepted",
+      "failed"
+    ]
+  },
+  "state_table": [
+    {
+      "execution_status": "not_started",
+      "preconditions": "missing or invalid",
+      "acceptance_status": "blocked",
+      "rule": "pre-run inputs, snapshots, prices, approvals, or required material missing/invalid"
+    },
+    {
+      "execution_status": "not_started",
+      "preconditions": "all valid",
+      "acceptance_status": "ready",
+      "rule": "all pre-run conditions valid and no result exists for the current attempt"
+    },
+    {
+      "execution_status": "running",
+      "preconditions": "attempt started",
+      "acceptance_status": null,
+      "rule": "acceptance is null while running; observed_failures may be recorded"
+    },
+    {
+      "execution_status": "completed",
+      "preconditions": "all applicable conditions pass",
+      "acceptance_status": "accepted",
+      "rule": "valid result evidence, all samples, quality/safety/usage/cost conditions pass"
+    },
+    {
+      "execution_status": "completed",
+      "preconditions": "any condition fails or evidence missing/corrupt/inconsistent",
+      "acceptance_status": "failed",
+      "rule": "completed execution with a failed or unevaluable result"
+    },
+    {
+      "execution_status": "aborted",
+      "preconditions": "attempt started then stopped",
+      "acceptance_status": "failed",
+      "rule": "abort reason, observed failures, produced evidence, and missing items are retained"
+    }
+  ],
+  "illegal_state_combinations": [
+    [
+      "not_started",
+      "null"
+    ],
+    [
+      "not_started",
+      "accepted"
+    ],
+    [
+      "not_started",
+      "failed"
+    ],
+    [
+      "running",
+      "blocked"
+    ],
+    [
+      "running",
+      "ready"
+    ],
+    [
+      "running",
+      "accepted"
+    ],
+    [
+      "running",
+      "failed"
+    ],
+    [
+      "completed",
+      "blocked"
+    ],
+    [
+      "completed",
+      "ready"
+    ],
+    [
+      "completed",
+      "null"
+    ],
+    [
+      "aborted",
+      "blocked"
+    ],
+    [
+      "aborted",
+      "ready"
+    ],
+    [
+      "aborted",
+      "accepted"
+    ],
+    [
+      "aborted",
+      "null"
+    ],
+    [
+      "*",
+      "pending"
+    ],
+    [
+      "*",
+      "aborted"
+    ]
+  ],
+  "state_transition_rules": [
+    "not_started/blocked -> not_started/ready when all pre-run inputs become valid.",
+    "not_started/ready -> running/null when the attempt starts.",
+    "running/null -> completed/accepted when execution completes and every applicable condition passes with valid result evidence.",
+    "running/null -> completed/failed when execution completes but any condition fails or result evidence is missing/corrupt/inconsistent.",
+    "running/null -> aborted/failed when the started attempt is stopped; abort reason, observed_failures, produced evidence, and missing items are retained.",
+    "A started attempt MUST NOT return to not_started, blocked, or ready. Input digest mismatch discovered after start ends as aborted/failed or completed/failed.",
+    "accepted and failed are terminal for the current attempt. A retry or re-evaluation creates a new attempt and preserves the prior attempt input binding, failures, observed_failures, and evidence.",
+    "Only completed/accepted may make budget_met, local_cost_saving, or token_reduction claims under the existing rules."
+  ],
+  "brief_eval_state_fixture_ref": "docs/req/fixtures/brief_eval_states_v4.json"
+}

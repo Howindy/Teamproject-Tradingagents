@@ -7,6 +7,7 @@ Status basis: 17 active requirements are approved as a requirement-design baseli
 Decision status: **proposed**
 Amends: ADR 001 (Lean A Extended) and ADR 002 (Full-Scope ADD-R Extension)  
 Implementation status: **design only; no application code changed**
+Revision note: CR-01 state/lifecycle wording in this historical ADR is superseded by `docs/architecture/adr/004-cr01-state-correction.md`; the rest of the Round 3 decision remains historical.
 
 ---
 

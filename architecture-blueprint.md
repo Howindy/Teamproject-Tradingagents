@@ -2,17 +2,17 @@
 
 Status: **v0.3 — ADD-R round 3 draft / pending human review**
 Date: 2026-11-15
-D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+D1 basis: `docs/req/requirements.yaml` v1.25.0 — 18 requirements, 122 fit criteria
 Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 Supersedes: blueprint v0.2 (ADD-R round 2)
-Amends: ADR 001 and ADR 002; Round 3 decisions are recorded in `docs/architecture/adr/003-add-r-round-3.md`
+Amends: ADR 001 and ADR 002; Round 3 decisions are recorded in `docs/architecture/adr/003-add-r-round-3.md`; the later CR-01 state-semantics correction is recorded in `docs/architecture/adr/004-cr01-state-correction.md`
 
 ---
 
 ## 1. Purpose, scope, and authority
 
-This blueprint defines the D2 architecture for the **complete functional scope** of D1 v1.24.0:
+This blueprint defines the D2 architecture for the **complete functional scope** of D1 v1.25.0:
 
 - 17 active requirements are approved: `FR-01`–`FR-08`, `PR-01`, `CR-01`, `GR-01`, `QR-01`, `SB-01`, `INV-01`, `INV-02`, `SR-01`, `SR-02`;
 - `QR-02` is deferred and outside current acceptance;
@@ -72,7 +72,7 @@ There is no current approval-scope coupling because no requirement is approved. 
 15. GR-01 Stage A precedes the first FR-07 application implementation; Stage B is verified after implementation starts. This architecture round is not FR-07 implementation.
 16. FR-07 implements only current direct metrics; TTM, FCF YoY, and single-quarter subtraction are deferred. FR-08 uses deterministic extraction/assembly and its functional acceptance is independent of CR-01 cost acceptance.
 17. SR-01 covers preferences, logs, errors, API returns, and streaming/debug output as well as formal files. SR-02 covers reads and writes, platform/symlink behavior, and operation-time path changes; untested platforms are not marked passing.
-18. PR-01 uses a fixed offline workload, separate startup/terminal pre-replace samples, 20 enabled/disabled pairs retaining negative differences, and separate percent/absolute p95. QR-01 fixes replay before live; CR-01 uses contract v2. QR-02/export/multi-worker recovery/TTM/FCF YoY remain deferred only.
+18. PR-01 uses a fixed offline workload, separate startup/terminal pre-replace samples, 20 enabled/disabled pairs retaining negative differences, and separate percent/absolute p95. QR-01 fixes replay before live; CR-01 uses contract v4 with the two-field execution/acceptance state table. QR-02/export/multi-worker recovery/TTM/FCF YoY remain deferred only.
 19. The phase-only plan is replaced by R0–R8 (§18); every requirement and AC range has first-build, main-owner, and final-acceptance rounds (§19 and `trace-matrix.md` §3.19).
 
 ---
@@ -115,26 +115,26 @@ Round 3 is the current revision. Its decisions are recorded in `docs/architectur
 
 | ID | Type | Status | Title | FCs | Rounds (first build / main owner / final acceptance) |
 |---|---|---|---|---|---|
-| `FR-01` | functional | draft | Single execution per identical logical data query | 6 | R2 / R4 / R8 |
-| `FR-02` | functional | draft | Lifecycle-complete run manifest | 11 | R1 (AC1–FC07), R4 (AC9–FC15) / R4 / R8 |
-| `FR-03` | functional | draft | Canonical data-availability state and critical-gap decision table | 10 | R2 / R4 / R8 |
-| `FR-04` | functional | draft | Deterministic portfolio-risk evaluation before finalization | 9 | R3 / R3 / R8 |
-| `FR-05` | functional | draft | Historical formal publication retrieval | 3 | R6 / R6 / R8 |
-| `FR-06` | functional | draft | Startup recovery of pending formal publication | 6 | R4 (snapshot primitives), R6 (startup scan) / R6 / R8 |
-| `FR-07` | functional | draft | Deterministic derived financial metrics (direct metrics only) | 10 | R5 / R5 / R8 |
-| `FR-08` | functional | draft | Unified downstream analyst-report brief | 4 | R7 / R7 / R8 |
-| `PR-01` | performance | draft | Bounded run-record write and end-to-end overhead | 4 | R4 / R8 / R8 |
-| `CR-01` | cost | draft | Downstream brief local cost attribution and approved target | 5 | R7 / R7 / R8 |
-| `GR-01` | governance | draft | Frozen independent reference set for financial metrics | 6 | R0 (Stage A), R5 (Stage B) / R5 / R8 |
-| `QR-01` | quality | draft | Live cache A/B quality and risk-policy separation | 5 | R2 (data path), R8 (evaluation) / R8 / R8 |
+| `FR-01` | functional | approved | Single execution per identical logical data query | 9 | R2 / R4 / R8 |
+| `FR-02` | functional | approved | Lifecycle-complete run manifest | 11 | R1 (FC01–FC07), R4 (FC08–FC11) / R4 / R8 |
+| `FR-03` | functional | approved | Canonical data-availability state and critical-gap decision table | 10 | R2 / R4 / R8 |
+| `FR-04` | functional | approved | Deterministic portfolio-risk evaluation before finalization | 9 | R3 / R3 / R8 |
+| `FR-05` | functional | approved | Historical formal publication retrieval | 3 | R6 / R6 / R8 |
+| `FR-06` | functional | approved | Startup recovery of pending formal publication | 6 | R4 (snapshot primitives), R6 (startup scan) / R6 / R8 |
+| `FR-07` | functional | approved | Deterministic derived financial metrics (direct metrics only) | 10 | R5 / R5 / R8 |
+| `FR-08` | functional | approved | Unified downstream analyst-report brief | 4 | R7 / R7 / R8 |
+| `PR-01` | performance | approved | Bounded run-record write and end-to-end overhead | 4 | R4 / R8 / R8 |
+| `CR-01` | cost | approved | Downstream brief local cost attribution and approved target | 5 | R7 / R7 / R8 |
+| `GR-01` | governance | approved | Frozen independent reference set for financial metrics | 6 | R0 (Stage A), R5 (Stage B) / R5 / R8 |
+| `QR-01` | quality | approved | Live cache A/B quality and risk-policy separation | 5 | R2 (data path), R8 (evaluation) / R8 / R8 |
 | `QR-02` | performance | deferred | Bounded startup recovery performance | 2 | Deferred; no current round assignment |
-| `SB-01` | invariant | draft | Deterministic fail-closed final-output gate | 12 | R3 / R3 / R8 |
-| `INV-01` | invariant | draft | One bound formal result across artifacts and memory | 11 | R1/R4 (binding), R6 (lifecycle close) / R6 / R8 |
-| `INV-02` | invariant | draft | Deterministic portfolio-risk authority and zero unsafe approvals | 6 | R3 / R3 / R8 |
-| `SR-01` | security | draft | Secret-safe credential records | 7 | R1 / R7 (all new boundaries) / R8 |
-| `SR-02` | security | draft | Path confinement and escape protection | 2 | R1 / R6 (history/recovery read/write integration) / R8 |
+| `SB-01` | invariant | approved | Deterministic fail-closed final-output gate | 12 | R3 / R3 / R8 |
+| `INV-01` | invariant | approved | One bound formal result across artifacts and memory | 11 | R1/R4 (binding), R6 (lifecycle close) / R6 / R8 |
+| `INV-02` | invariant | approved | Deterministic portfolio-risk authority and zero unsafe approvals | 6 | R3 / R3 / R8 |
+| `SR-01` | security | approved | Secret-safe credential records | 7 | R1 / R7 (all new boundaries) / R8 |
+| `SR-02` | security | approved | Path confinement and escape protection | 2 | R1 / R6 (history/recovery read/write integration) / R8 |
 
-Draft total: 17 requirements, 117 fit criteria. Deferred total: 1 requirement, 2 fit criteria. Grand total: 18 requirements, 122 fit criteria.
+Approved total: 17 requirements, 120 fit criteria. Deferred total: 1 requirement, 2 fit criteria. Grand total: 18 requirements, 122 fit criteria.
 
 Out of scope remains: replacing StockTwits, point-in-time SEC company profile, parallel debate execution, a full exchange calendar, multi-user authentication/encryption, portfolio simulation or order execution, a production LLM cache, direct vendor bypass, deriving a quarter by subtraction, and a second context assembler.
 
@@ -170,8 +170,8 @@ Out of scope remains: replacing StockTwits, point-in-time SEC company profile, p
 | C-02 | No new vendor, exchange calendar, portfolio simulator, order execution, slippage, fees, or FX conversion. |
 | C-03 | Existing vendor caches may remain cross-run; the `FR-01` run cache is per-run and never shared. |
 | C-04 | The existing Python/LangGraph graph, agents, tool registry, reporting renderer, and memory substrate remain; the change is a governance extension, not a rewrite. |
-| C-05 | D1 v1.24.0 is the current registry; 17 active requirements are approved as a requirement-design baseline and QR-02 is deferred. No implementation, test, live-evaluation, or threshold approval is inferred. |
-| C-06 | ADD-R Round 3 modified `architecture-blueprint.md` and `docs/architecture/**` and added ADR 003; it did not modify `docs/req/**`. The later D1 v1.24.0 approval/freeze updates only requirement identifiers, approval state, mapping, and necessary cross-references. |
+| C-05 | D1 v1.25.0 is the current registry; 17 active requirements are approved as a requirement-design baseline and QR-02 is deferred. No implementation, test, live-evaluation, or threshold approval is inferred. |
+| C-06 | ADD-R Round 3 modified `architecture-blueprint.md` and `docs/architecture/**` and added ADR 003; it did not modify `docs/req/**`. The later D1 v1.24.0 freeze normalized FC identifiers/approval/mapping, and the v1.25.0 CR-01 correction changes only its state expression and necessary references. |
 | C-07 | Application code, tests, member proposals, transcripts, permissions, governance rules, secrets, and `baseline/**` are not modified. |
 | C-08 | The 30% concentration, 5% stop-distance, freshness window, QR-02 2.000 s, and brief thresholds remain provisional until human approval. A passed risk check is not a loss guarantee. |
 | C-09 | History and recovery paths are confined to configured roots; export is deferred and, if reactivated, must not overwrite a non-empty target. |
@@ -1451,7 +1451,7 @@ The former phase-only plan is replaced by rounds with explicit entry/exit eviden
 - **Goal**: freeze the reviewable contracts before implementation starts.
 - **Components**: `PolicyCatalog`, `Canonicalizer`, envelope schemas (§9.6.8), digest definitions (§9.6.9), trace/round map, evaluation harness skeleton.
 - **Entry points**: none executable; documentation and schema review only.
-- **Prerequisites**: D1 v1.24.0 approved registry, `req-schema.json`, `run-manifest-schema.json`, current evaluation contracts.
+- **Prerequisites**: D1 v1.25.0 approved registry, `req-schema.json`, `run-manifest-schema.json`, current evaluation contracts.
 - **Inputs**: requirements, baseline evidence, ADR 001–003, open decisions.
 - **Entry criteria**: architecture review accepts the Round 3 contracts as proposed.
 - **Exit evidence**: component/interface/round trace; envelope/digest review notes; GR-01 Stage A freeze readiness record.
@@ -1582,7 +1582,7 @@ The former phase-only plan is replaced by rounds with explicit entry/exit eviden
 - **Prerequisites**: R0–R7 implemented and testable; frozen snapshots/approvals where required.
 - **Inputs**: fixed replay data, eval set/rubric/contracts, paired PR-01 runs, prices/thresholds if available.
 - **Entry criteria**: R7 exit accepted; no unresolved implementation blocker for the measured path.
-- **Exit evidence**: QR-01 replay then live; cache A/B with fixed risk policy/input; risk-policy A/B separate; CR-01 contract v2 local cost with usage/attempt rules; PR-01 20 pairs percent/absolute p95; full regression; claim ledger separating cost/token/quality/safety/savings.
+- **Exit evidence**: QR-01 replay then live; cache A/B with fixed risk policy/input; risk-policy A/B separate; CR-01 contract v4 local cost with usage/attempt rules; PR-01 20 pairs percent/absolute p95; full regression; claim ledger separating cost/token/quality/safety/savings.
 - **Positive tests**: fixed replay zero regression; live thresholds when approved; PR-01 paired samples; CR-01 null prices -> blocked; claim boundaries respected.
 - **Negative tests**: live sampling before replay; risk policy varied inside cache A/B; missing prices treated as zero; negative PR-01 samples dropped; safety escape; quality drop beyond approved threshold.
 - **Regression**: entire existing suite plus new suites.
@@ -1612,7 +1612,7 @@ The former phase-only plan is replaced by rounds with explicit entry/exit eviden
 | `FR-07` | `FinancialFactService`, `FinancialMetricService`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector`, `SecEdgarAdapter` | Fact identity, as-of, restatement, ambiguity, direct metrics, fiscal-year P/E, current-span FCF, n/a reasons, block before research debate, conflict scope, bundle recovery; TTM/FCF YoY deferred | R5 / R5 / R8 | Design only; reference manifest pending (GR-01) |
 | `FR-08` | `ContextAssembler`, `DownstreamBriefBuilder`, `TokenCounter`, `PolicyCatalog`, `BriefAuditStore` | Deterministic extraction, marker handling, mandatory preservation, protected blocks, ordered budget, reference resolution, five-role replacement, view version/reassembly, non-mutation; functional acceptance independent of CR-01 | R7 / R7 / R8 | Design only; budgets pending |
 | `PR-01` | `ArtifactPublisher`, benchmark harness | Separate startup/terminal pre-replace samples; 20 paired enabled/disabled runs retaining negative differences; percent and absolute p95; provisional thresholds do not block functional acceptance | R4 / R8 / R8 | Design only; no benchmark |
-| `CR-01` | `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness | Contract v2 local cost, usage/attempt rules, approved target, separate cost/token/quality/safety/saving claims; blocked until prices/thresholds/human approval | R7 / R7 / R8 | Design only; contract blocked |
+| `CR-01` | `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness | Contract v4 local cost, two-field execution/acceptance state table, usage/attempt rules, approved target, separate cost/token/quality/safety/saving claims; blocked until prices/thresholds/human approval | R7 / R7 / R8 | Design only; contract blocked |
 | `GR-01` | `FinancialFactService`, reference harness | Stage A freeze readiness before first FR-07 implementation; Stage B post-implementation timing/version; no code-generated expected values | R0 (A) / R5 (B) / R8 | Design only; reference pending |
 | `QR-01` | `DataAccessService`, `SafetyGate`, risk services, evaluation harness | Fixed replay first, then live; cache A/B keeps risk policy/input fixed; risk-policy A/B separate; live rubric/REVIEW thresholds | R2 / R8 / R8 | Design only; contract blocked |
 | `QR-02` | `RecoveryService`, benchmark harness | Fixed workload, 30 trials, nearest-rank p95, retained failures; deferred | Deferred | Deferred; target provisional |
@@ -1737,7 +1737,7 @@ Non-blocking decisions: manifest retention, vendor-cache TTL, manifest overhead 
 
 Status:
 
-- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline and QR-02 is deferred; approval does not assert implementation or measured results.
+- D1: v1.25.0; 17 active requirements are approved as a requirement-design baseline and QR-02 is deferred; approval does not assert implementation or measured results.
 - D2: v0.3 ADD-R round 3 draft; all architecture decisions proposed, not approved.
 - Application implementation: **not started**.
 - Tests: **not started**.

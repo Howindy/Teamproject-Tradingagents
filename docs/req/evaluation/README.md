@@ -1,6 +1,6 @@
 # D1 Behavior Evaluation Contract
 
-Status: **requirement design approved (D1 v1.24.0); frozen evaluation inputs; active draft contracts blocked; snapshots pending capture; evaluation/contract approval pending**
+Status: **requirement design approved (D1 v1.25.0); frozen evaluation inputs; active draft contracts blocked; snapshots pending capture; evaluation/contract approval pending**
 
 This directory makes the QR-01 live cache A/B and the CR-01 downstream-brief evaluation executable before behavioral acceptance.
 
@@ -12,7 +12,8 @@ This directory makes the QR-01 live cache A/B and the CR-01 downstream-brief eva
 - `behavior-eval-contract-v2.json` — active revision draft for QR-01 with scoring merge, adjudication, sample completeness, percentage-point REVIEW, hard safety events, and separate cache/risk-policy comparisons; blocked and not human-approved.
 - `brief-eval-contract-v1.json` — historical frozen brief contract; retained unchanged.
 - `brief-eval-contract-v2.json` — historical revision draft for CR-01; retained unchanged.
-- `brief-eval-contract-v3.json` — active revision draft for CR-01; adds field-level usage, selected/shared generation, five-role actual input difference, total-sum aggregation, separate execution status, and claim boundaries; blocked and not human-approved.
+- `brief-eval-contract-v3.json` — historical CR-01 revision draft; retained unchanged.
+- `brief-eval-contract-v4.json` — active revision draft for CR-01; fixes the two-field execution/acceptance state table, forbids pending/aborted acceptance values, preserves the prior cost/quality/safety/evidence rules, and remains blocked and not human-approved.
 - `config-v1.json` — fixed model/provider/config values.
 - `prompt-v1.0.yaml` — fixed behavior-evaluation prompt and parameters.
 - `snapshots-v1.json` — fixed snapshot manifest with per-case status/digest.
@@ -42,9 +43,10 @@ model sampling uses the separate quality thresholds in the contract, including
 the allowed live REVIEW-rate delta. No QR-01 live A/B result may be claimed
 complete before the blocked-state conditions are cleared. CR-01 additionally
 requires an approved net_cost_max and prices; null thresholds are unresolved and
-must not be treated as zero. Contract v3 fixes FR-02 field-level usage,
+must not be treated as zero. Contract v4 fixes the two-field execution/acceptance state table, forbids
+pending/aborted acceptance values, and preserves FR-02 field-level usage,
 selected/shared generation, five-role actual input difference, total-sum
-aggregation, Decimal comparison, and separate execution status. A true
+aggregation, and Decimal comparison. A true
 zero-generation-call result is distinct from missing usage. Its measurement scope is local cost attribution,
 not whole-application net cost. Budget attainment is not a saving claim; local
 saving, token reduction, and whole-application saving are distinct. Token change

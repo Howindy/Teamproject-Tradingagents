@@ -2,8 +2,8 @@
 
 Status: **v0.3 — ADD-R round 3 draft / pending human review**
 Date: 2026-11-15
-Amended by: `docs/architecture/adr/003-add-r-round-3.md`
-D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`; `docs/architecture/adr/004-cr01-state-correction.md`
+D1 basis: `docs/req/requirements.yaml` v1.25.0 — 18 requirements, 122 fit criteria
 Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
@@ -553,7 +553,7 @@ All test status: **not started**. No implementation or monitoring exists.
 - Implementation: **not started**.
 - Tests: **not started**.
 - Monitoring: **not implemented**.
-- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D1: v1.25.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
 - D2: v0.3 ADD-R round 3 draft; all architecture decisions proposed, not approved.
 - Current recovery is single-process; lease/fencing/takeover/multi-worker/export/TTM/FCF YoY/QR-02 are deferred.
 - Envelope and digest contracts are proposed in blueprint §9.6.8/§9.6.9.

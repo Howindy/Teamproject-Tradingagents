@@ -2,8 +2,8 @@
 
 Status: **v0.3 — ADD-R round 3 draft / pending human review**
 Date: 2026-11-15
-Amended by: `docs/architecture/adr/003-add-r-round-3.md`
-D1 basis: `docs/req/requirements.yaml` v1.24.0
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`; `docs/architecture/adr/004-cr01-state-correction.md`
+D1 basis: `docs/req/requirements.yaml` v1.25.0
 Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
@@ -11,7 +11,7 @@ Implementation status: **design only; no application code changed**
 
 ## 1. Purpose and status
 
-This catalog names every runtime policy needed by the full D1 v1.24.0 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
+This catalog names every runtime policy needed by the full D1 v1.25.0 scope, its status, related requirements, and change impact. A policy is not approved just because it appears here.
 
 Status values:
 
@@ -39,19 +39,19 @@ Status values:
 | `POL-GATE-01` | Safety gate, REVIEW, and risk branch | D1-required; D2 proposal pending human review | SB-01, FR-04, INV-01, INV-02 |
 | `POL-PROPOSAL-01` | Portfolio Manager and model proposal source | D1-required; D2 proposal pending human review | SB-01, INV-01 |
 | `POL-SNAP-01` | Permanent/recovery envelope layout and cleanup dependency | D1-required; D2 proposal pending human review | FR-02, FR-05, FR-06, INV-01 |
-| `POL-RISK-01` | Risk input authority and applicability | D1 draft; D2 proposal pending human review | FR-04, INV-02 |
-| `POL-RISK-02` | Risk policy snapshot and exact comparison | D1 draft; provisional values; pending human review | FR-04, INV-02 |
-| `POL-RISK-03` | Risk evidence, input artifact, and memory summary | D1 draft; D2 proposal pending human review | FR-04, INV-01, INV-02 |
+| `POL-RISK-01` | Risk input authority and applicability | D1 requirement design approved; D2 policy proposal pending human review | FR-04, INV-02 |
+| `POL-RISK-02` | Risk policy snapshot and exact comparison | D1 requirement design approved; provisional values; policy pending human review | FR-04, INV-02 |
+| `POL-RISK-03` | Risk evidence, input artifact, and memory summary | D1 requirement design approved; D2 policy proposal pending human review | FR-04, INV-01, INV-02 |
 | `POL-PUB-01` | Publish protocol and retries | D1-required; D2 proposal pending human review | FR-02, INV-01, FR-06 |
 | `POL-PUB-02` | Post-commit corruption and diagnostics | D1-required; D2 proposal pending human review | FR-02, INV-01, FR-05 |
 | `POL-LOCK-01` | Single-process guard; multi-worker locking deferred | D1-required for guard; lease/fencing deferred | FR-02, FR-06, INV-01 |
-| `POL-ARCH-01` | History and section manifest; export deferred | D1 draft; D2 proposal pending human review | FR-05, INV-01, SR-01 |
-| `POL-REC-01` | Single-process recovery envelope and idempotency; claim/fencing deferred | D1 draft; D2 proposal pending human review | FR-06, QR-02 |
+| `POL-ARCH-01` | History and section manifest; export deferred | D1 requirement design approved; D2 policy proposal pending human review | FR-05, INV-01, SR-01 |
+| `POL-REC-01` | Single-process recovery envelope and idempotency; claim/fencing deferred | D1 requirement design approved; D2 policy proposal pending human review | FR-06, QR-02 |
 | `POL-PERF-01` | Recovery benchmark and provisional p95 | QR-02 deferred; future provisional target | QR-02 |
 | `POL-MEM-01` | Memory idempotency and lifecycle | D1-required; D2 proposal pending human review | INV-01, FR-04, FR-06 |
-| `POL-FIN-01` | Structured financial facts and metrics | D1 draft; D2 proposal pending human review | FR-07, FR-01, FR-03 |
-| `POL-BRIEF-01` | Brief mandatory content and ordered budget | D1 draft; provisional budgets | FR-08, FR-03, FR-07 |
-| `POL-BRIEF-02` | Brief token/quality evaluation and lifecycle | D1 draft; provisional thresholds | FR-08, INV-01 |
+| `POL-FIN-01` | Structured financial facts and metrics | D1 requirement design approved; D2 policy proposal pending human review | FR-07, FR-01, FR-03 |
+| `POL-BRIEF-01` | Brief mandatory content and ordered budget | D1 requirement design approved; provisional budgets | FR-08, FR-03, FR-07 |
+| `POL-BRIEF-02` | Brief token/quality evaluation and lifecycle | D1 requirement design approved; policy proposed; provisional thresholds | FR-08, INV-01 |
 | `POL-CTX-01` | AI context layers | work_assumption | FR-02, FR-03, SB-01, FR-08 |
 | `POL-CTX-02` | Token limits and compression thresholds | work_assumption; provisional | FR-02, FR-08 |
 | `POL-RED-01` | Redaction boundaries and path confinement | D1-required; D2 proposal pending human review | SR-01, FR-05, FR-06 |
@@ -65,7 +65,7 @@ Status values:
 | `POL-SR-02` | Path read/write confinement and platform matrix | design_only | SR-02 |
 | `POL-PR-01` | PR-01 offline paired measurement | provisional | PR-01 |
 | `POL-QR-01` | QR-01 replay-then-live evaluation | blocked; provisional thresholds | QR-01 |
-| `POL-CR-01` | CR-01 contract v2 local cost | blocked; pending prices/target | CR-01 |
+| `POL-CR-01` | CR-01 contract v4 local cost | requirement design approved; evaluation blocked pending prices/target/contract approval | CR-01 |
 | `POL-PERM-01` | Runtime AI permissions | design_only | SR-01, FR-04, FR-07 |
 | `POL-PERM-02` | Coding-agent permissions | design_only | D2 governance |
 
@@ -183,7 +183,7 @@ Status values:
 
 ### POL-RISK-01 — Risk input authority and applicability
 
-- **Status**: D1 draft; D2 proposal pending human review.
+- **Status**: D1 requirement design approved; D2 policy proposal pending human review.
 - **Authority**: caller/application supplies canonical decimal strings with provenance; model text, rendered portfolio text, and Markdown are never authoritative.
 - **Single caller**: `SafetyGate.finalize` performs validation, policy resolution, applicability, and evaluation exactly once. No entrypoint/tool/recovery path performs a second applicability check.
 - **Applicability**: `asset_type=stock` and model rating Buy/Overweight; first entry (`new_long`) and add (`add_long`) are in scope; crypto and other non-stock assets or Hold/Underweight/Sell/REVIEW/invalid rating may be `not_applicable`.
@@ -194,7 +194,7 @@ Status values:
 
 ### POL-RISK-02 — Risk policy snapshot and exact comparison
 
-- **Status**: D1 draft; provisional values; pending human review.
+- **Status**: D1 requirement design approved; provisional values; policy pending human review.
 - **Snapshot fields**: `policy_version`, `policy_ref`, `policy_digest`, `max_projected_weight`, `max_stop_distance`, `max_valuation_age_seconds`, precision rule, `threshold_status`, `human_approval_ref`.
 - **Defaults**: 0.30 concentration and 0.05 stop distance are provisional classroom values; not approved financial policy. A valid provisional snapshot MAY be used only with `threshold_status=provisional` and `human_approval_ref=null`, and every result/report MUST label it provisional. An approved snapshot requires a non-null `human_approval_ref`.
 - **Precision**: input <=12 dp; internal >=28 significant digits; exact compare; display 6 dp half-up; display rounding never affects pass/fail.
@@ -205,7 +205,7 @@ Status values:
 
 ### POL-RISK-03 — Risk evidence, input artifact, and memory summary
 
-- **Status**: D1 draft; D2 proposal pending human review.
+- **Status**: D1 requirement design approved; D2 policy proposal pending human review.
 - **Valid input**: a normalized artifact under the run results directory with relative path, SHA-256, `hash_scope=file`, and scan scope; `input_digest = input_ref.sha256`.
 - **Invalid input**: no normalized artifact; `input_ref=null`, `input_digest=null`, a safe `diagnostic_ref` with failure outcome/reason; no raw invalid values.
 - **Artifacts**: risk result in manifest/final-state; report summary; new memory entry risk summary; reused historical entry keeps its own evidence.
@@ -250,7 +250,7 @@ Status values:
 
 ### POL-ARCH-01 — History and section manifest (export deferred)
 
-- **Status**: D1 draft; D2 proposal pending human review.
+- **Status**: D1 requirement design approved; D2 policy proposal pending human review.
 - **History**: only committed + read-time INV-01; optional ticker/date filters intersect; strict `YYYY-MM-DD`; order analysis_date desc/ticker asc/run_id asc; limit 1-500 default 50; offset >=0 default 0; malformed/boolean/out-of-range -> `INVALID_FILTER`; bounded page with total_matches/returned/truncated/next_offset; corrupt records counted/warned separately. Prefer on-demand scan of committed publication roots; a rebuildable derived index is optional, non-authoritative, and revalidated on read.
 - **Retrieval**: `get_run` revalidates terminal manifest, binding, complete report, section manifest, and permanent references; unknown -> `NOT_FOUND`; corrupt -> `CORRUPT_RECORD`; no partial content.
 - **Sections**: only permanent publication snapshot + versioned renderer + recorded capability set; only applicable non-empty sections with path/fields/byte size/SHA-256; no foreign/stale/mixed.
@@ -260,7 +260,7 @@ Status values:
 
 ### POL-REC-01 — Single-process recovery, envelope, and idempotency
 
-- **Status**: D1 draft; D2 proposal pending human review.
+- **Status**: D1 requirement design approved; D2 policy proposal pending human review.
 - **First check**: read the terminal manifest and verify the permanent publication before reading `recovery/`. Committed + INV-01 + identity match -> idempotent success (no envelope required); committed + identity conflict -> `RUN_ID_CONFLICT`; committed + corrupt permanent artifacts -> `CORRUPT_RECORD`; neither overwrites the manifest or auto-republishes.
 - **Continuation order**: only for an uncommitted record, determine the memory reuse/new plan and reserve the version -> write the `RecoveryEnvelope` containing the plan -> idempotent memory write -> permanent files write/validate -> terminal candidate + INV-01 -> commit -> post-commit read -> cleanup.
 - **Envelope**: `snapshot_ready` = complete, durable, read-back-verified, self-contained, redacted; includes formal decision/binding, terminal candidate identity, section manifest/fixed render inputs, risk/policy references, original memory identity + reserved version, metric bundle when applicable, and versions; all references resolve internally with digests.
@@ -276,7 +276,7 @@ Status values:
 
 ### POL-PERF-01 — Recovery benchmark and provisional p95
 
-- **Status**: D1 draft; provisional target.
+- **Status**: D1 requirement design approved; provisional target.
 - **Workload**: 100 committed publications + 10 pending valid snapshots; fixed 12-section report map; one risk evidence object with policy reference; one required memory idempotent write; rendered output and snapshot each <= 1,048,576 bytes; local supported filesystem; no competing writer.
 - **Measurement**: 30 independently reset trials; nearest-rank p95; timing from immediately before claim/scan through final read-time validation, including locks, scans, rendering, risk evidence, publication, memory, cleanup; record platform/OS, CPU/RAM, filesystem/mount, sizes, section count, fixture version, commit, all samples/failures.
 - **Target**: 2.000 s p95 **provisional** (OQ-13). Correctness and model-free behavior are zero-tolerance; no validation/hash/path/manifest/read-time check may be skipped to meet the target.
@@ -311,7 +311,7 @@ Status values:
 
 ### POL-FIN-01 — Structured financial facts and metrics
 
-- **Status**: D1 draft; D2 proposal pending human review.
+- **Status**: D1 requirement design approved; D2 policy proposal pending human review.
 - **Adapter boundary**: only `DataAccessService` calls the vendor. `SecEdgarAdapter` wraps the existing `sec_edgar.py` statement/JSON capability; `FinancialFactService` requests and normalizes facts through `DataAccessService`; `get_income_statement`/`get_balance_sheet`/`get_cashflow` use the same adapter, cache, counters, and provenance. No direct vendor call is allowed.
 - **Timing**: facts, metrics, the metric block, and the conflict check occur after the fundamentals report exists and before research debate consumes it; final publication only persists the existing result.
 - **Facts**: each fact separates **disclosure fields** (subject/accession/filing_ref/filed_at/form/source_fact_ref and raw concept/value/unit/currency/period/fiscal/sign) that preserve original evidence from **canonical fields** (fact_id/concept/period/fiscal identity/span/cumulative duration/sign/unit/currency/lineage) that may be validated or derived only by a recorded versioned rule with input evidence and source refs. A filing's fiscal year/quarter is not each historical fact's period identity. Missing/multiple plausible sources return unavailable/ambiguous; never use date proximity, equal value, column order, or a default. CIK never substitutes for accession/filing_ref.
@@ -325,7 +325,7 @@ Status values:
 
 ### POL-BRIEF-01 — Brief mandatory content and ordered budget
 
-- **Status**: D1 draft; provisional budgets.
+- **Status**: D1 requirement design approved; provisional budgets.
 - **Scope and timing**: Bull Researcher, Bear Researcher, and three risk debaters only. The brief is generated/reused before these roles receive context, uses the program coverage view and its `coverage_view_version`, and is not generated after the final decision.
 - **Replacement**: for the five target roles the brief replaces the four full analyst reports; other roles keep full inputs; full+brief are not injected together.
 - **Mandatory and protected**: program `FR-03` gaps, `FR-07` metric block/sources, safety constraints; reserved first and never truncated; protected markers prevent generic compression from shortening them.
@@ -340,11 +340,11 @@ Status values:
 
 ### POL-BRIEF-02 — Brief token/quality evaluation and lifecycle
 
-- **Status**: D1 draft; provisional thresholds.
+- **Status**: D1 requirement design approved; evaluation contract draft and thresholds provisional.
 - **Measurement**: token measurement uses the selected model/tokenizer; characters auxiliary.
 - **Costs**: added output tokens = brief-generation output; reduced downstream input tokens = full-report input - brief input; added_output_cost = added_output_tokens x output price; reduced_input_cost_saving = reduced_downstream_input_tokens x input price; net_cost = added - reduced; net_tokens = added - reduced; negative means saving; if either price is missing, cost fields are null.
 - **Quality**: record fidelity, key-number/gap preservation, `quality_loss` (positive = degradation), approved `quality_loss_max`, zero safety escapes, latency.
-- **Lifecycle**: `blocked`, `ready`, `accepted`, `failed` with the frozen contract's evidence conditions; no saving claimed before `accepted`; unapproved threshold blocks CR-01 acceptance. **FR-08 functional acceptance is independent of CR-01.**
+- **Lifecycle**: `execution_status` is `not_started`/`running`/`completed`/`aborted`; `acceptance_status` is `blocked`/`ready`/`accepted`/`failed` and `null` only while running. `pending`/`aborted` acceptance values are forbidden. No saving is claimed before `completed/accepted`; unapproved thresholds still block CR-01 acceptance. **FR-08 functional acceptance is independent of CR-01.**
 - **Related decision**: OQ-16.
 
 ### POL-CTX-01 — AI context layers
@@ -427,10 +427,10 @@ Status values:
 - **Rule**: fixed replay first; cache A/B keeps risk policy and input fixed; risk-policy A/B separate; live sampling only after replay passes; zero safety escapes.
 - **Change impact**: `DataAccessService`, `SafetyGate`, risk services, evaluation harness.
 
-### POL-CR-01 — Contract v2 local cost
+### POL-CR-01 — Contract v4 local cost
 
-- **Status**: blocked pending prices/targets.
-- **Rule**: contract v2 local-cost formulas; usage/attempt rules; missing price or target -> blocked/null; cost, token, quality, safety, and saving claims separate. FR-08 functional acceptance is independent.
+- **Status**: CR-01 requirement design approved; evaluation blocked pending prices/targets and human contract approval.
+- **Rule**: contract v4 local-cost formulas; usage/attempt rules; two-field execution/acceptance state table; missing price or target -> blocked/null; cost, token, quality, safety, and saving claims separate. FR-08 functional acceptance is independent.
 - **Change impact**: `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness.
 
 ### POL-GR-01 — GR-01 reference freeze staging
@@ -519,5 +519,5 @@ If a work assumption changes, revisit:
 - Policies are classified as D1-required, D2 architecture proposals, provisional parameters, or design-only; none of the D2 additions is approved.
 - No policy is implemented; human review of D2 remains pending.
 - No threshold is measured unless it is a baseline observation.
-- D1 v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D1 v1.25.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
 - D2 v0.3 Round 3: logical components; single-process startup guard; lease/fencing/takeover/export/TTM/FCF YoY/QR-02 deferred.

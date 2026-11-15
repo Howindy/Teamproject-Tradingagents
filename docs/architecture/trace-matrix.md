@@ -2,8 +2,8 @@
 
 Status: **v0.3 — ADD-R round 3 draft / pending human review**
 Date: 2026-11-15
-Amended by: `docs/architecture/adr/003-add-r-round-3.md`
-D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`; `docs/architecture/adr/004-cr01-state-correction.md`
+D1 basis: `docs/req/requirements.yaml` v1.25.0 — 18 requirements, 122 fit criteria
 Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
@@ -34,24 +34,24 @@ The 17 active requirements are approved as a requirement-design baseline; this t
 
 | Requirement | Status | FCs | Primary components | Secondary components | Rounds (first build / main owner / final acceptance) |
 |---|---|---|---|---|---|
-| `FR-01` | draft | 6 | `DataAccessService`, `RunEvidenceStore` | `RunCoordinator`, `RunContext`, `Canonicalizer` | R2 / R4 / R8 |
-| `FR-02` | draft | 11 | `ArtifactPublisher`, `RunEvidenceStore` | `RunCoordinator`, `RunContext`, `PublicationSnapshotStore` | R1 (AC1–7), R4 (AC9–15) / R4 / R8 |
-| `FR-03` | draft | 10 | `AvailabilityIndex`, `RunEvidenceStore` | `DataAccessService`, `SafetyGate` | R2 / R4 / R8 |
-| `FR-04` | draft | 9 | `SafetyGate` (sole caller), `PortfolioRiskEvaluator`, `RiskPolicyResolver` | `RiskInputValidator`, `RiskEvidenceStore` | R3 / R3 / R8 |
-| `FR-05` | draft | 3 | `HistoryService`, `PublicationSnapshotStore` | `ReportSectionManifestBuilder`, `SecretRedactor` | R6 / R6 / R8 |
-| `FR-06` | draft | 6 | `RecoveryService`, `StartupRecoveryGuard`, `RecoverySnapshotStore` | `ArtifactPublisher`, `MemoryService` | R4 (snapshot), R6 (scan) / R6 / R8 |
-| `FR-07` | draft | 10 | `FinancialFactService`, `FinancialMetricService` | `SecEdgarAdapter`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector` | R5 / R5 / R8 |
-| `FR-08` | draft | 4 | `DownstreamBriefBuilder`, `ContextAssembler` | `TokenCounter`, `BriefAuditStore`, `PolicyCatalog` | R7 / R7 / R8 |
-| `PR-01` | draft | 4 | `ArtifactPublisher`, `RunContext` | benchmark harness | R4 / R8 / R8 |
-| `CR-01` | draft | 5 | `TokenCounter`, `DownstreamBriefBuilder` | evaluation harness | R7 / R7 / R8 |
-| `GR-01` | draft | 6 | `FinancialFactService` | independent reference harness | R0 (A) / R5 (B) / R8 |
-| `QR-01` | draft | 5 | `DataAccessService`, evaluation harness | `SafetyGate`, `PortfolioRiskEvaluator` | R2 / R8 / R8 |
+| `FR-01` | approved | 9 | `DataAccessService`, `RunEvidenceStore` | `RunCoordinator`, `RunContext`, `Canonicalizer` | R2 / R4 / R8 |
+| `FR-02` | approved | 11 | `ArtifactPublisher`, `RunEvidenceStore` | `RunCoordinator`, `RunContext`, `PublicationSnapshotStore` | R1 (FC01–FC07), R4 (FC08–FC11) / R4 / R8 |
+| `FR-03` | approved | 10 | `AvailabilityIndex`, `RunEvidenceStore` | `DataAccessService`, `SafetyGate` | R2 / R4 / R8 |
+| `FR-04` | approved | 9 | `SafetyGate` (sole caller), `PortfolioRiskEvaluator`, `RiskPolicyResolver` | `RiskInputValidator`, `RiskEvidenceStore` | R3 / R3 / R8 |
+| `FR-05` | approved | 3 | `HistoryService`, `PublicationSnapshotStore` | `ReportSectionManifestBuilder`, `SecretRedactor` | R6 / R6 / R8 |
+| `FR-06` | approved | 6 | `RecoveryService`, `StartupRecoveryGuard`, `RecoverySnapshotStore` | `ArtifactPublisher`, `MemoryService` | R4 (snapshot), R6 (scan) / R6 / R8 |
+| `FR-07` | approved | 10 | `FinancialFactService`, `FinancialMetricService` | `SecEdgarAdapter`, `MetricEvidenceBundleBuilder`, `MetricConflictDetector` | R5 / R5 / R8 |
+| `FR-08` | approved | 4 | `DownstreamBriefBuilder`, `ContextAssembler` | `TokenCounter`, `BriefAuditStore`, `PolicyCatalog` | R7 / R7 / R8 |
+| `PR-01` | approved | 4 | `ArtifactPublisher`, `RunContext` | benchmark harness | R4 / R8 / R8 |
+| `CR-01` | approved | 5 | `TokenCounter`, `DownstreamBriefBuilder` | evaluation harness | R7 / R7 / R8 |
+| `GR-01` | approved | 6 | `FinancialFactService` | independent reference harness | R0 (A) / R5 (B) / R8 |
+| `QR-01` | approved | 5 | `DataAccessService`, evaluation harness | `SafetyGate`, `PortfolioRiskEvaluator` | R2 / R8 / R8 |
 | `QR-02` | deferred | 2 | `RecoveryService`, `PublicationSnapshotStore` | `RecoverySnapshotStore`, benchmark harness | Deferred |
-| `SB-01` | draft | 12 | `SafetyGate`, `FinalizedRunRecord` | `PortfolioManagerAdapter`, `ArtifactPublisher` | R3 / R3 / R8 |
-| `INV-01` | draft | 11 | `FinalizedRunRecord`, `ArtifactPublisher` | `MemoryService`, `PublicationSnapshotStore` | R1/R4 / R6 / R8 |
-| `INV-02` | draft | 6 | `SafetyGate`, `PortfolioRiskEvaluator` | `MemoryService`, `ArtifactPublisher` | R3 / R3 / R8 |
-| `SR-01` | draft | 7 | `SecretRedactor` | all writers | R1 / R7 / R8 |
-| `SR-02` | draft | 2 | `PathGuard`, `HistoryService`, `RecoveryService` | `SecretRedactor` | R1 / R6 / R8 |
+| `SB-01` | approved | 12 | `SafetyGate`, `FinalizedRunRecord` | `PortfolioManagerAdapter`, `ArtifactPublisher` | R3 / R3 / R8 |
+| `INV-01` | approved | 11 | `FinalizedRunRecord`, `ArtifactPublisher` | `MemoryService`, `PublicationSnapshotStore` | R1/R4 / R6 / R8 |
+| `INV-02` | approved | 6 | `SafetyGate`, `PortfolioRiskEvaluator` | `MemoryService`, `ArtifactPublisher` | R3 / R3 / R8 |
+| `SR-01` | approved | 7 | `SecretRedactor` | all writers | R1 / R7 / R8 |
+| `SR-02` | approved | 2 | `PathGuard`, `HistoryService`, `RecoveryService` | `SecretRedactor` | R1 / R6 / R8 |
 
 Total: 18 requirements, 122 fit criteria.
 
@@ -60,7 +60,7 @@ Total: 18 requirements, 122 fit criteria.
 
 ## 3. Acceptance-criterion trace
 
-### 3.1 FR-01 — Single execution per identical logical query (6 FCs)
+### 3.1 FR-01 — Single execution per identical logical query (9 FCs)
 
 | AC | Component | Planned test | Monitor | Status |
 |---|---|---|---|---|
@@ -70,6 +70,9 @@ Total: 18 requirements, 122 fit criteria.
 | `FR-01-FC04` | `DataAccessService` | `T-FR01-04` run isolation vs vendor cache | `MON-FR01-04` cache-hit classification | design only; not started |
 | `FR-01-FC05` | `DataAccessService`, `RunEvidenceStore` | `T-FR01-05` retry/fallback budgets | `MON-FR01-05` retry/fallback counters | design only; not started |
 | `FR-01-FC06` | `Canonicalizer`, `RunEvidenceStore` | `T-FR01-06` business-field equivalence | `MON-FR01-06` business/execution diff | design only; not started |
+| `FR-01-FC07` | `DataAccessService`, `RunEvidenceStore` | `T-FR01-07` invalid request/policy rejection | `MON-FR01-07` invalid request/policy acceptance | design only; not started |
+| `FR-01-FC08` | `RunEvidenceStore`, `DataAccessService` | `T-FR01-08` checkpoint inheritance validation and fixed reject/requery | `MON-FR01-08` inherited evidence mismatch | design only; not started |
+| `FR-01-FC09` | entry adapters, `DataAccessService` | `T-FR01-09` real entry-point coverage and bypass sentinel | `MON-FR01-09` uncounted execution/bypass | design only; not started |
 
 ### 3.2 FR-02 — Lifecycle-complete run manifest (11 FCs)
 
@@ -237,7 +240,7 @@ Total: 18 requirements, 122 fit criteria.
 |---|---|---|---|---|
 | `CR-01-FC01` | `TokenCounter`, `DownstreamBriefBuilder`, evaluation harness | `T-CR01-01` local cost attribution formulas, input/output tokens, retry/fallback records | `MON-CR01-01` formula/null/excluded-scope error | design only; contract blocked |
 | `CR-01-FC02` | evaluation harness, safety sentinels | `T-CR01-02` zero safety escapes | `MON-CR01-02` safety escape | design only; contract blocked |
-| `CR-01-FC03` | evaluation harness | `T-CR01-03` quality loss and lifecycle state | `MON-CR01-03` quality/blocked-state mismatch | design only; contract blocked |
+| `CR-01-FC03` | evaluation harness | `T-CR01-03` quality loss and two-field execution/acceptance state table | `MON-CR01-03` quality/state-combination mismatch | design only; contract blocked |
 | `CR-01-FC04` | evaluation harness | `T-CR01-04` approved local cost target boundary | `MON-CR01-04` cost-target miss/unresolved threshold | design only; contract blocked |
 | `CR-01-FC05` | evaluation harness | `T-CR01-05` claim boundary: budget vs local saving vs token vs whole-app | `MON-CR01-05` claim-boundary violation | design only; contract blocked |
 
@@ -277,24 +280,24 @@ Each row assigns every AC in the listed set. Ranges are inclusive; exceptions ar
 
 | Requirement | ACs | First build | Main owner | Final acceptance | Notes |
 |---|---|---|---|---|---|
-| `FR-01` | AC1–FC06 | R2 | R4 | R8 | All six share the R2 data path; entry integration closes at R4; full regression at R8. |
-| `FR-02` | AC1–FC07, AC9–FC11, AC15 | R1 (AC1–FC07), R4 (AC9–FC11, AC15) | R4 | R8 | Manifest foundation R1; publisher/identity/no-overwrite R4. |
-| `FR-03` | AC1–FC10 | R2 | R4 | R8 | Coverage/preflight/view/sealed snapshot; entry integration R4. |
-| `FR-04` | AC1–FC09 | R3 | R3 | R8 | Gate/risk path; invalid rating blocks first; provisional thresholds remain provisional. |
-| `FR-05` | AC1–FC03 | R6 | R6 | R8 | History read/revalidation; export is deferred. |
-| `FR-06` | AC1, AC2, AC4–FC07 | R4 (snapshot primitives), R6 (scan) | R6 | R8 | Single-process guard and model-free recovery; lease/fencing not current. |
-| `FR-07` | AC1–FC09, AC11 | R5 | R5 | R8 | Direct metrics only; TTM/FCF YoY deferred; GR-01 Stage A precedes build. |
-| `FR-08` | AC1–FC04 | R7 | R7 | R8 | Functional acceptance independent of CR-01; OQ-16 blocks cost/threshold claims. |
-| `PR-01` | AC1–FC04 | R4 | R8 | R8 | Starting measurement R4; final 20-pair review R8; provisional thresholds do not block FR-08. |
-| `CR-01` | AC1–FC05 | R7 | R7 | R8 | Contract v2; blocked while prices/thresholds are unresolved. |
-| `GR-01` | AC1–FC06 | R0 (Stage A), R5 (Stage B) | R5 | R8 | No code-generated reference; no retroactive approval. |
-| `QR-01` | AC1–FC05 | R2 (data path) / R8 (evaluation) | R8 | R8 | Fixed replay first, then live; cache A/B keeps risk policy/input fixed; risk-policy A/B separate. |
-| `QR-02` | AC1–FC02 | Deferred | Deferred | Deferred | Not current acceptance. |
-| `SB-01` | AC1–FC12 | R3 | R3 | R8 | Gate before terminal manifest; invalid-rating-first; applicable risk under coverage block. |
-| `INV-01` | AC1–FC10, AC12 | R1/R4 (binding), R6 (lifecycle) | R6 | R8 | Lifecycle closes at R6; later changes regress. |
-| `INV-02` | AC1–FC06 | R3 | R3 | R8 | Zero unsafe approvals; pure evaluator inside gate. |
-| `SR-01` | AC1–FC07 | R1 | R7 | R8 | All new boundaries close at R7: formal files, preferences, logs, errors, API returns, stream/debug. |
-| `SR-02` | AC1–FC02 | R1 | R6 | R8 | Read/write confinement; history/recovery integration closes at R6; platform coverage recorded. |
+| `FR-01` | FC01–FC09 | R2 | R4 | R8 | All nine share the R2 data path; entry integration closes at R4; full regression at R8. |
+| `FR-02` | FC01–FC07, FC08–FC11 | R1 (FC01–FC07), R4 (FC08–FC11) | R4 | R8 | Manifest foundation R1; publisher/identity/no-overwrite R4. |
+| `FR-03` | FC01–FC10 | R2 | R4 | R8 | Coverage/preflight/view/sealed snapshot; entry integration R4. |
+| `FR-04` | FC01–FC09 | R3 | R3 | R8 | Gate/risk path; invalid rating blocks first; provisional thresholds remain provisional. |
+| `FR-05` | FC01–FC03 | R6 | R6 | R8 | History read/revalidation; export is deferred. |
+| `FR-06` | FC01, FC02, FC03–FC06 | R4 (snapshot primitives), R6 (scan) | R6 | R8 | Single-process guard and model-free recovery; lease/fencing not current. |
+| `FR-07` | FC01–FC10 | R5 | R5 | R8 | Direct metrics only; TTM/FCF YoY deferred; GR-01 Stage A precedes build. |
+| `FR-08` | FC01–FC04 | R7 | R7 | R8 | Functional acceptance independent of CR-01; OQ-16 blocks cost/threshold claims. |
+| `PR-01` | FC01–FC04 | R4 | R8 | R8 | Starting measurement R4; final 20-pair review R8; provisional thresholds do not block FR-08. |
+| `CR-01` | FC01–FC05 | R7 | R7 | R8 | Contract v4; two-field execution/acceptance state table; blocked while prices/thresholds are unresolved. |
+| `GR-01` | FC01–FC06 | R0 (Stage A), R5 (Stage B) | R5 | R8 | No code-generated reference; no retroactive approval. |
+| `QR-01` | FC01–FC05 | R2 (data path) / R8 (evaluation) | R8 | R8 | Fixed replay first, then live; cache A/B keeps risk policy/input fixed; risk-policy A/B separate. |
+| `QR-02` | FC01–FC02 | Deferred | Deferred | Deferred | Not current acceptance. |
+| `SB-01` | FC01–FC12 | R3 | R3 | R8 | Gate before terminal manifest; invalid-rating-first; applicable risk under coverage block. |
+| `INV-01` | FC01–FC11 | R1/R4 (binding), R6 (lifecycle) | R6 | R8 | Lifecycle closes at R6; later changes regress. |
+| `INV-02` | FC01–FC06 | R3 | R3 | R8 | Zero unsafe approvals; pure evaluator inside gate. |
+| `SR-01` | FC01–FC07 | R1 | R7 | R8 | All new boundaries close at R7: formal files, preferences, logs, errors, API returns, stream/debug. |
+| `SR-02` | FC01–FC02 | R1 | R6 | R8 | Read/write confinement; history/recovery integration closes at R6; platform coverage recorded. |
 
 ---
 
@@ -302,7 +305,7 @@ Each row assigns every AC in the listed set. Ranges are inclusive; exceptions ar
 
 | Family | Tests | Status |
 |---|---|---|
-| FR-01 | 6 | not started |
+| FR-01 | 9 | not started |
 | FR-02 | 11 | not started |
 | FR-03 | 10 | not started |
 | FR-04 | 9 | not started |
@@ -421,7 +424,7 @@ Each `MON-*` ID corresponds to the fit criterion with the same number. All monit
 | `MON-QR02-*` | p95/failure samples; skipped validation/model-free violation |
 | `MON-SB01-*` | blocked formal rating/text; pass/unchanged; model-review mishandling; coverage/gap mismatch; invalid gate input; snapshot trust/hash; unapproved proposal leak; gate bypass; silent pass; gate-result mismatch; risk bypass/masked failure; wrong primary/review class |
 | `MON-PR01-*` | startup/terminal write p95; relative/absolute overhead p95; retained negative samples; payload size |
-| `MON-CR01-*` | formula/null handling; safety escapes; quality/lifecycle; approved local cost target; claim boundary |
+| `MON-CR01-*` | formula/null handling; safety escapes; quality and two-field state-combination mismatch; approved local cost target; claim boundary |
 | `MON-GR01-*` | reference companies/sources; code-generated value; Stage A readiness; Stage B timing; FR-07 gate |
 | `MON-QR01-*` | live rubric drop; REVIEW-rate increase; safety escape; cache/risk misclassification |
 | `MON-SR02-*` | out-of-root write; traversal; symlink/junction escape; credential sentinel |
@@ -437,9 +440,9 @@ Each `MON-*` ID corresponds to the fit criterion with the same number. All monit
 - All 122 fit criteria are represented with a component, planned test, and planned monitor.
 - No test or monitor has been implemented or executed.
 - 17 active requirements are approved as a requirement-design baseline; 0 draft; 1 (`QR-02`) is deferred.
-- D1 v1.24.0 is the current registry; human review is pending.
+- D1 v1.25.0 is the current approved requirement baseline; QR-02 remains deferred.
 - D2 v0.3 Round 3: components are logical responsibilities; recovery is single-process; lease/fencing/takeover/multi-worker, export, TTM/FCF YoY, and QR-02 are deferred.
-- R0–R8 and §3.19 assign every requirement and AC range a first-build, main-owner, and final-acceptance round.
+- R0–R8 and §3.19 assign every requirement and FC range a first-build, main-owner, and final-acceptance round.
 - Requirements evidence reproducibility is bound to `docs/req/validation-results.json`; the validator `--check` passes. The unretained personal-proposal source is marked in the FR-07/FR-08 notes; the `yhx` path is no longer referenced.
-- No requirement is approved; the former approval-scope coupling no longer applies. All requirements, including PR-01/CR-01/GR-01/QR-01/SR-02, remain pending human review; see ARCH-OD-13/14.
+- The 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred. No implementation, test, threshold, or measured result is approved; see ARCH-OD-13/14.
 - The scenario tests `T-SCEN-01`..`T-SCEN-18` cover normal pass, business block, system exception, pre-commit interruption, post-commit corruption, single-process duplicate recovery, context overflow, history edge cases (export deferred), cleanup-after-read, brief failure modes, uncommitted-memory coordination, Portfolio Manager proposal sourcing, failed-version retry, commit/ledger-update interruption, recovery-after-cleanup, and committed-publication corruption. `T-SCEN-07`/`T-SCEN-13` (multi-worker fencing/takeover) are deferred. They are planned, not executed.

@@ -3,7 +3,7 @@ schema_version: "1.0"
 document:
   id: "D1-REQ"
   title: "D1 Requirements: Data Availability, Safety Gate, Portfolio Risk, Financial Metrics, Downstream Brief, Archive Retrieval, Recovery, and Audit Records"
-  version: "1.24.0"
+  version: "1.25.0"
   status: "approved"
   date: "2026-11-15"
   language: "en"
@@ -13,6 +13,7 @@ document:
     Version 1.22.0 closes the pre-approval gaps for FR-02, FR-04, FR-05, FR-06, FR-07, and FR-08 without adding, deleting, or renumbering ACs: manifest observed-timing arithmetic, lifecycle-required timing/token coverage and semantic negatives; canonical 0.3 policy thresholds, logical policy identity versus file reference, and digest/file-SHA separation; separate limit/offset domains and a controlled cross-run historical proof exception; single-process startup recovery with failed_precommit continuation, terminal-first conflict/corruption handling, original risk-state preservation, restored metrics, and memory new/reuse/disabled modes; fiscal-position/version/date-level/price/completed-close/formula/display/n-a and analyst-off semantics; and token-primary brief budgets, full-request caps, resolved references, five-role replacement, versioned FR-03 views, single terminal BRIEF_REJECTED with invalid_marker reason, audit metadata, and FR-08/CR-01 acceptance separation. No requirement is approved by this revision; all active requirements remain draft and human review remains pending.
     Version 1.23.0 applies the current modification review to all active requirements without adding, deleting, or renumbering ACs. It closes PR-01 enabled/no-op, AB/BA, failure/rerun, payload and acceptance boundaries; CR-01 field-level usage, selected/shared generation, aggregate/target, execution-status and contract-v3 rules; GR-01 independent-source/derivation paths, issuer/calendar evidence, and initial-versus-revision timing; QR-01 scoring merge/adjudication, sample completeness, percentage-point REVIEW, cache/risk separation and hard safety events; SB-01 gate/publication separation, trustworthy blocked-record conditions, unique unsupported mapping, timeout/recovery evidence and nullable risk state; INV-01 identity/projection separation, per-field canonicalization, pre/post-commit failure, retention proof and reservation high-water rules; INV-02 reason/review-class mapping, independent corpus expectations, current/historical evidence, pure/wrapper boundaries and read-time tamper; SR-01 detected/redacted/residual accounting, credential-store exceptions, extended scope, scanner-failure incidents and post-commit handling; and SR-02 all-operation confinement, trusted-root/link policy, check-use races, typed historical references and honest platform limits. No requirement is approved by this revision; all active requirements remain draft and human review remains pending.
     Version 1.24.0 records the user-authorized approval of the active D1 requirement design and freezes the approved baseline. It normalizes every fit criterion to the per-requirement <requirement-id>-FCnn format without adding, deleting, merging, splitting, or semantically rewriting any requirement or FC; preserves 18 requirements and 122 FCs; records the complete mapping in docs/req/requirement-mapping.csv; sets the 17 active requirements to approved; keeps QR-02 deferred; and records the approval basis, scope, freeze files, and limitations in the validation approval record. Provisional thresholds, unmeasured criteria, blocked evaluation inputs, external reference evidence, and implementation prerequisites remain in their prior states and are not made approved or complete by this freeze.
+    Version 1.25.0 applies the user-authorized CR-01 local correction without adding, deleting, or renumbering any requirement or FC. It replaces the previous four-value/overloaded CR-01 state wording with two explicit fields: execution_status (not_started/running/completed/aborted) and acceptance_status (blocked/ready/accepted/failed, with null only while running). It forbids pending/aborted acceptance strings, defines running/null, completed/accepted, completed/failed, and aborted/failed, rejects a started attempt returning to blocked/ready, treats run_completed as auxiliary only, and preserves terminal attempts, observed_failures, retry history, the existing cost formula, quality/safety rules, thresholds, approval conditions, and deferred scope. The active brief evaluation contract becomes brief-eval-contract-v4; v3 and earlier remain historical. No other requirement content is changed except the FR-08 active-contract reference; QR-02 remains deferred.
   baseline_ref: "baseline/runs/baseline-20261020-01"
 
 scope:
@@ -477,23 +478,27 @@ definitions:
     BRIEF_REJECTED. invalid_marker is a rejection_reason under BRIEF_REJECTED,
     not a continuing independent status. truncated applies only to compressible
     content.
-  brief_evaluation: The controlled downstream-brief evaluation. The active authority for state and thresholds is docs/req/evaluation/brief-eval-contract-v3.json;
-    brief-eval-contract-v2 and v1 are historical and must not be used as the current specification. Contract v3 defines
-    the switch, fixed inputs, prices, thresholds, state and execution status, generation-call selection, usage policy,
-    sample aggregation, attempt records, claim definitions, and evidence requirements. The counted local cost attribution
-    difference is added brief-generation output cost minus reduced downstream input cost saving. G is the selected
-    final delivered successful generation instance; shared generation is counted once; distinct view-update instances
-    are separate; excluded retry/fallback calls are recorded. D is the five-role actual final-request input difference
-    including wrappers, mandatory content, resolved references, and history. Brief-generation input cost, excluded
-    retry/fallback calls, downstream output changes, non-brief calls, and infrastructure are excluded and disclosed.
-    A net_cost at or below an approved net_cost_max is budget_met, not necessarily a saving. local_cost_saving requires
-    net_cost < 0 under this local formula. Token change is recorded, but no independent token-improvement target is
-    approved. A whole-application saving is never claimed. Missing pre-run inputs, snapshots, prices, thresholds,
-    or human approval -> blocked; valid pre-run and no result -> ready; running/aborted is execution status, not ready;
-    a completed attempt with missing/corrupt/inconsistent result evidence or any failing quality, safety, or cost
-    condition -> failed; all applicable conditions pass with valid result evidence -> accepted. Execution status is
-    not_started/running/completed/aborted and is separate from acceptance. Quality or safety failures cannot be offset
-    by cost or token results. CR-01 is the active requirement.
+  brief_evaluation: The controlled downstream-brief evaluation. The active authority for state and thresholds is docs/req/evaluation/brief-eval-contract-v4.json;
+    brief-eval-contract-v3, v2, and v1 are historical and must not be used as the current specification. Contract
+    v4 defines the switch, fixed inputs, prices, thresholds, two-field execution/acceptance state table, generation-call
+    selection, usage policy, sample aggregation, attempt records, claim definitions, and evidence requirements. The
+    counted local cost attribution difference is added brief-generation output cost minus reduced downstream input
+    cost saving. G is the selected final delivered successful generation instance; shared generation is counted once;
+    distinct view-update instances are separate; excluded retry/fallback calls are recorded. D is the five-role actual
+    final-request input difference including wrappers, mandatory content, resolved references, and history. Brief-generation
+    input cost, excluded retry/fallback calls, downstream output changes, non-brief calls, and infrastructure are
+    excluded and disclosed. A net_cost at or below an approved net_cost_max is budget_met, not necessarily a saving.
+    local_cost_saving requires net_cost < 0 under this local formula. Token change is recorded, but no independent
+    token-improvement target is approved. A whole-application saving is never claimed. Missing pre-run inputs, snapshots,
+    prices, thresholds, or human approval -> blocked; valid pre-run and no result -> ready; running/aborted is execution
+    status, not ready; a completed attempt with missing/corrupt/inconsistent result evidence or any failing quality,
+    safety, or cost condition -> failed; all applicable conditions pass with valid result evidence -> accepted. Execution
+    status is not_started/running/completed/aborted; acceptance_status is blocked/ready/accepted/failed and null only
+    while running. pending and aborted are forbidden acceptance values. running maps to acceptance null; completed
+    maps to accepted/failed; aborted maps to failed. A started attempt never returns to not_started/ready/blocked.
+    accepted/failed are terminal for the current attempt; retry creates a new attempt and preserves prior evidence
+    and observed_failures. Quality or safety failures cannot be offset by cost or token results. CR-01 is the active
+    requirement.
   recovery_benchmark: >-
     The fixed recovery-performance workload and measurement contract: 100 committed formal publications and 10 pending valid recovery snapshots on a documented supported local filesystem. Each pending snapshot contains the fixed 12-section report map, complete report, section manifest, one risk evidence object with policy reference, and one required memory idempotent write; rendered output is no larger than 1,048,576 bytes and the snapshot is no larger than 1,048,576 bytes. 30 independently reset trials, nearest-rank p95, and a provisional 2.000-second target pending approval. Timing includes claim, scans, fixed rendering, publication, the required memory write, and cleanup attempts. All samples, failures, timeouts, platform/OS, CPU/RAM, filesystem/mount, output sizes, fixture version, and source commit are recorded. Correctness and model-free behavior are zero-tolerance; validation is never skipped to meet the time target.
      QR-02 is deferred in D1 v1.17.0; this benchmark is a future specification and not current acceptance.
@@ -2310,7 +2315,7 @@ requirements:
       Budgets are tokens from the selected tokenizer/model identity, not bytes or characters. The versioned brief_budget_policy declares budget_unit=tokens, tokenizer_id/version, model/context limit, mandatory_budget M, compressible_budget C, initial brief_total_budget T=M+C, brief_hard_cap H>=T, reserve_output_tokens R, and the full-request input cap L. Byte and character counts are auxiliary only and are never added to tokens. Mandatory content is reserved first and MUST NOT be truncated. The brief's own hard cap is not the whole model request cap: system messages, role inputs, history, tool schemas, reference payload, and output reserve are included when checking the final serialized request against L, with R reserved. If the selected tokenizer is missing or cannot measure reliably, return a typed configuration failure; do not fall back to approximate character success. Missing or invalid functional policy rejects. If mandatory content exceeds H, reject with BRIEF_REJECTED without trying a reference. Otherwise the fixed order is: retain narrative within the initial budget; reduce only compressible content in declared order; expand to H when the policy allows and the full request still fits; use a controlled reference whose payload is resolved, verified, and token-measured before the model call and counted against the request cap; use the saved full report only when it fits the full-request cap and canonical mandatory content is added exactly once; otherwise BRIEF_REJECTED.
       A reference is an application-controlled handle, not a path string; the handle is resolvable only when the application-side resolver returns a verified payload. The resolver MUST obtain a payload bound to the source digest, verify it, inject the actual content into the receiving request, and re-measure the complete token budget before the call. If no resolver exists or the payload cannot be resolved/verified, the reference branch is unavailable and the ordered fallback continues; a handle or path alone is never success. A full-report fallback uses saved original report content, adds any missing canonical mandatory content (one authoritative instance), and must obey the full-request cap. Neither reference nor full-report fallback bypasses safety/source checks. BRIEF_REJECTED is the single terminal rejection; an invalid marker is a rejection_reason=invalid_marker under that terminal state, not a separate continuing status. After BRIEF_REJECTED, affected roles receive no model call and no bypass may use missing context to continue a successful formal run; a diagnostic/error record may exist, consistent with FR-02 context-stage failure.
       The brief uses FR-03 CoverageView, not the final sealed coverage snapshot, and records coverage_view_version/profile_hash, source report digests, metric_bundle_digest, mandatory_digest, source summary, policy/tokenizer/model identity, budget decision, omitted compressible identifiers, reference information, and fallback/rejection reason in a separate ContextAuditMetadata. Before each target-role call, the source/view versions are checked; if they changed, the brief is reassembled under the same policy and the new version is recorded. Earlier calls are not rewritten; the final gate still uses the sealed snapshot. The audit record is not a commit authority and MUST NOT mutate full reports, formal records, history, or recovery material. Deterministic extraction/assembly is the default; model summarization, a new retrieval tool, or a Web UI is not required. Marker syntax/IDs and duplicate/forged/overlong handling are fixed by a versioned contract with deterministic fallback. Byte-identical output is claimed only when the complete delivered request needs no normalization/injection/removal and mandatory content is already present; otherwise only specified semantic fields are preserved.
-      FR-08 functional acceptance covers role mapping, mandatory/refs, budget enforcement, ordered fallback, terminal rejection, non-mutation, and audit. It is independent of CR-01 quality/cost optimization: missing prices or unapproved CR-01 thresholds may leave CR-01 blocked but do not block FR-08 functional acceptance. FR-08 makes no cost, token, or whole-application saving claim. The active brief evaluation contract is docs/req/evaluation/brief-eval-contract-v3.json; the frozen evaluation files are unchanged. The frozen evaluation set/rubric/prompt/config/snapshots are not edited to satisfy this requirement.
+      FR-08 functional acceptance covers role mapping, mandatory/refs, budget enforcement, ordered fallback, terminal rejection, non-mutation, and audit. It is independent of CR-01 quality/cost optimization: missing prices or unapproved CR-01 thresholds may leave CR-01 blocked but do not block FR-08 functional acceptance. FR-08 makes no cost, token, or whole-application saving claim. The active brief evaluation contract is docs/req/evaluation/brief-eval-contract-v4.json; the frozen evaluation files are unchanged. The frozen evaluation set/rubric/prompt/config/snapshots are not edited to satisfy this requirement.
     fit_criterion:
       - id: FR-08-FC01
         input: >-
@@ -2559,10 +2564,11 @@ requirements:
     sources:
       origin: Split from FR-08-AC5 (pre-v1.24.0); frozen brief evaluation contract
       evidence:
-      - path: docs/req/evaluation/brief-eval-contract-v3.json
+      - path: docs/req/evaluation/brief-eval-contract-v4.json
         locator: thresholds and token direction
-        description: Revised brief evaluation contract v3; prices, cost threshold, quality threshold, and human approval
-          are absent, so the contract is draft and blocked. v2 is retained unchanged as a historical revision draft.
+        description: Revised brief evaluation contract v4; prices, cost threshold, quality threshold, and human approval
+          are absent, so the contract is draft and blocked. v3, v2, and v1 are retained unchanged as historical revision
+          drafts.
         source_type: document
       - path: baseline/runs/baseline-20261020-01/metrics.json
         locator: tokens_in; tokens_out; llm_calls
@@ -2574,9 +2580,9 @@ requirements:
         source_type: code
     problem: A brief can reduce downstream input tokens while adding generation output tokens. Recording token counts
       does not prove a net cost improvement, and the evaluation contract currently has no approved prices or thresholds.
-    statement: 'Under the local cost attribution brief on/off evaluation governed by docs/req/evaluation/brief-eval-contract-v3.json, with
-      fixed model, configuration, data snapshot, risk policy, case set, and sample size, the controlled comparison MUST
-      keep measurement, quality/safety, execution status, acceptance status, target attainment, and claim classification
+    statement: 'Under the local cost attribution brief on/off evaluation governed by docs/req/evaluation/brief-eval-contract-v4.json,
+      with fixed model, configuration, data snapshot, risk policy, case set, and sample size, the controlled comparison
+      MUST keep measurement, quality/safety, execution status, acceptance status, target attainment, and claim classification
       distinct. Measurement is valid only when formula fields use FR-02 field-level usage: each included call is reported
       or unknown with field coverage; unknown is never zero; a true no-generation-call result with G=0 is distinct from
       missing usage; and tokenizer estimates are labeled estimated rather than actual billable usage. G is the brief-generation
@@ -2589,15 +2595,24 @@ requirements:
       and infrastructure are excluded and disclosed. For sample j, local_net_cost_j = G_j * Pout - D_j * Pin and net_tokens_j
       = G_j - D_j. D may be negative and is never clipped; net_cost is the sum over the fixed included samples, not
       a per-case mean unless a new contract version says otherwise. Amounts use Decimal and unrounded comparison values.
-      Missing pre-run inputs, snapshots, prices, thresholds, approval, or required usage makes complete net_cost/net_tokens null or explicitly incomplete and cannot be
-      accepted. Quality loss uses the frozen rubric with higher-is-better off-on, fixed case/sample equal-weight mean;
-      safety escapes use fixed event definitions and MUST be zero. Acceptance status is blocked, ready, accepted, or
-      failed. Execution status is not_started, running, completed, or aborted and is separate from acceptance. ready
-      is allowed only before execution; once an attempt starts, its result is not ready. A terminal accepted/failed
-      attempt is immutable for that attempt; a retry or re-evaluation creates a new attempt and preserves the prior
-      failed evidence. blocked retains observed_failures and cannot clear them. An accepted attempt requires completed execution, valid result evidence, and all applicable conditions passing. Only an accepted attempt permits budget_met,
-      local_cost_saving, or token_reduction within the local scope; no whole-application saving is claimed. Quality
-      or safety failures cannot be offset by cost or token results.'
+      Missing pre-run inputs, snapshots, prices, thresholds, approval, or required usage makes complete net_cost/net_tokens
+      null or explicitly incomplete and cannot be accepted. Quality loss uses the frozen rubric with higher-is-better
+      off-on, fixed case/sample equal-weight mean; safety escapes use fixed event definitions and MUST be zero. Execution
+      and acceptance are two separate fields with one authority each. execution_status is not_started, running, completed,
+      or aborted. acceptance_status is blocked, ready, accepted, or failed, and null only while running; pending and
+      aborted are forbidden acceptance values. Before start: missing or invalid pre-run material -> not_started/blocked;
+      all preconditions valid and no result -> not_started/ready. While running: running/null; observed_failures are
+      recorded but are not an acceptance conclusion. Completed with valid result evidence bound to the current attempt
+      and all applicable quality, safety, usage, sample, and cost conditions passing -> completed/accepted. Completed
+      with any applicable failure or missing/corrupt/inconsistent evidence -> completed/failed. A started attempt stopped
+      before completion -> aborted/failed, retaining the abort reason, observed_failures, produced evidence, and missing
+      items; it must not fabricate a completed result. A started attempt MUST NOT return to not_started, ready, or blocked;
+      an input digest mismatch after start ends aborted/failed or completed/failed. run_completed, if retained, is auxiliary
+      and MUST equal execution_status=completed; contradictory combinations are invalid. accepted and failed are terminal
+      for the current attempt; a retry or re-evaluation creates a new attempt and preserves the old input binding, failures,
+      observed_failures, and evidence. Only completed/accepted may make budget_met, local_cost_saving, or token_reduction
+      claims under the existing rules; null is not ready, accepted, a pass, or a benefit claim. No whole-application
+      saving is claimed. Quality or safety failures cannot be offset by cost or token results.'
     fit_criterion:
     - id: CR-01-FC01
       input: Controlled brief on/off evaluation under contract v3 with field-level FR-02 usage, selected and excluded
@@ -2636,21 +2651,27 @@ requirements:
       measurement_status: not_measured
       threshold_status: not_applicable
     - id: CR-01-FC03
-      input: Brief evaluation cases covering missing pre-run inputs, pre-run valid with no result, running/aborted execution,
-        completed evidence with missing/corrupt result, input digest mismatch discovered after start, missing quality
-        score, quality pass/fail, and all conditions passing.
-      expected_result: Missing snapshots, prices, thresholds, approval, or required inputs -> blocked; pre-run valid
-        and not yet started -> ready; running/aborted -> acceptance pending or aborted with execution status, not ready;
-        completed missing/corrupt/inconsistent evidence, input digest mismatch after start, or missing required score
-        -> failed. accepted requires execution completed and every applicable condition passing. An attempt fixes its
-        inputs, contract, prices, thresholds, and digests at start; later configuration changes do not mutate a terminal
-        attempt. accepted/failed are terminal for that attempt; a retry creates a new attempt and retains prior failed
-        evidence. blocked preserves observed_failures.
-      verification: 'Contract state-machine check over the fixture and validator: assert blocked/ready/accepted/failed,
-        result-evidence handling, and observed-failure preservation.'
+      input: Brief evaluation cases covering missing/invalid pre-run inputs; valid pre-run with no result; running with
+        acceptance null; running/ready and running/accepted negatives; completed with all conditions passing; completed/failed
+        from quality, cost, safety, missing result, missing sample, missing score, incomplete usage, or corrupt/inconsistent
+        evidence; aborted/failed; aborted/ready and aborted/accepted negatives; not_started/null and completed/null
+        negatives; acceptance pending and acceptance aborted negatives; input digest mismatch discovered after start;
+        and a retry that creates a new attempt while preserving the prior terminal state and observed_failures.
+      expected_result: The case table is evaluated by execution_status and acceptance_status, not by a single four-state
+        value or run_completed flag. Missing/invalid pre-run material -> not_started/blocked; all preconditions valid
+        and no result -> not_started/ready; started attempt -> running/null; completed with valid bound evidence and
+        all conditions passing -> completed/accepted; completed with missing/corrupt/inconsistent evidence, missing
+        required sample/score/usage, safety escape, or any applicable quality/cost failure -> completed/failed; started
+        then stopped -> aborted/failed with abort reason, observed_failures, produced evidence, and missing items retained.
+        running/ready, running/accepted, aborted/ready, aborted/accepted, not_started/null, completed/null, acceptance_status
+        pending, acceptance_status aborted, and contradictory run_completed/execution_status are invalid. Input digest
+        mismatch after start cannot return blocked or ready. accepted/failed are terminal for the attempt; retry creates
+        a new attempt and preserves prior evidence.
+      verification: 'Contract state-table check over brief_eval_states_v4.json and the validator: assert execution/acceptance
+        pairs, invalid-combination rejection, result-evidence handling, and observed-failure/retry preservation.'
       metric: quality_loss
       operator: <=
-      threshold_ref: docs/req/evaluation/brief-eval-contract-v3.json#/thresholds/quality_loss_max
+      threshold_ref: docs/req/evaluation/brief-eval-contract-v4.json#/thresholds/quality_loss_max
       unit: rubric points
       zero_tolerance: false
       measurement_status: not_measured
@@ -2663,14 +2684,14 @@ requirements:
         net_cost_max yields blocked. The target compares the sum of local cost attribution over the fixed included samples;
         the case set, repetition count, and sample size are versioned and a change creates a new target version. Missing
         or excluded samples cannot be dropped to claim a pass. Negative differences are retained. Decimal unrounded
-        values are compared. A positive difference within a positive budget is budget_met only and is not a saving; zero is not a strict
-        saving; a negative local difference is local_cost_saving, never whole-application saving. Token change is separate
-        and cannot substitute for cost.
+        values are compared. A positive difference within a positive budget is budget_met only and is not a saving;
+        zero is not a strict saving; a negative local difference is local_cost_saving, never whole-application saving.
+        Token change is separate and cannot substitute for cost.
       verification: Cost target boundary, blocked-threshold, zero/positive/negative, and token-substitution negatives
-        against contract v2; record net_tokens and net_cost separately.
+        against contract v4; record net_tokens and net_cost separately.
       metric: net_cost_usd
       operator: <=
-      threshold_ref: docs/req/evaluation/brief-eval-contract-v3.json#/thresholds/net_cost_max
+      threshold_ref: docs/req/evaluation/brief-eval-contract-v4.json#/thresholds/net_cost_max
       unit: USD
       zero_tolerance: false
       measurement_status: not_measured
@@ -2710,8 +2731,8 @@ requirements:
     - 'A local attribution can be mistaken for whole-application cost. Resolution: label the scope local, disclose excluded
       terms, and never claim whole-application saving.'
     assumptions:
-    - The active contract is docs/req/evaluation/brief-eval-contract-v3.json, status draft and acceptance blocked; v1
-      and v2 are retained historically and are not rewritten.
+    - The active contract is docs/req/evaluation/brief-eval-contract-v4.json, status draft and acceptance blocked; v1,
+      v2, and v3 are retained historically and are not rewritten.
     - Usage follows the FR-02 field-level reported/unknown/field-coverage definitions; unknown is not zero; tokenizer
       estimates are labeled estimated.
     - G is the selected final delivered generation instance per the frozen selection rule; shared generation is counted
@@ -2721,10 +2742,10 @@ requirements:
       disclosed.
     - The evaluation scope is local cost attribution; whole-application cost and saving are not claimed.
     - Prices and thresholds are unapproved; null is not zero and yields blocked, not pass.
-    notes: 'Historical source: FR-08-AC5 (pre-v1.24.0). Contract v3 is a new revision draft; v2 and v1 are retained unchanged. The
-      contract is blocked; no cost or token benefit is measured or claimed. Expanding to full brief-call cost is a pending
-      business decision, not approved here. FR-08 functional acceptance is independent of CR-01. Execution status is
-      separate from acceptance status.'
+    notes: 'Historical source: FR-08-AC5 (pre-v1.24.0). Contract v4 is a new revision draft; v3, v2, and v1 are retained
+      unchanged. The contract is blocked; no cost or token benefit is measured or claimed. Expanding to full brief-call
+      cost is a pending business decision, not approved here. FR-08 functional acceptance is independent of CR-01. Execution
+      status is separate from acceptance status.'
   - id: GR-01
     type: governance
     title: Frozen independent reference set for financial metrics
@@ -4826,7 +4847,7 @@ traceability:
       - path: TradingAgents/tradingagents/agents/context.py
         locator: report_or_absent
         description: Downstream input boundary affected by the brief.
-      - path: docs/req/evaluation/brief-eval-contract-v3.json
+      - path: docs/req/evaluation/brief-eval-contract-v4.json
         locator: state model, thresholds, measurement scope, generation selection, claim definitions
         description: Active revision-draft brief evaluation contract; v2 and v1 are historical.
     baseline_refs:
@@ -4994,10 +5015,11 @@ validation:
   status: passed
   machine_status: passed
   human_review_status: approved
-  human_review_notes: The user explicitly authorized approval of the current D1 requirement design in this session. This approval
-    covers the 17 active requirements only; QR-02 remains deferred. FC identifiers use the continuous <requirement-id>-FCnn format and the complete mapping is in requirement-mapping.csv; a separate pre/post normalized comparison found no content changes after ID normalization. No application implementation, application test, live model/vendor/broker
-    evaluation, measured performance/cost/quality result, provisional threshold approval, external GR-01 reference, or omitted
-    human business decision is asserted.
+  human_review_notes: The user explicitly authorized approval of the current D1 requirement design in this session, including
+    the local CR-01 execution_status/acceptance_status semantics correction. This approval covers the 17 active requirements
+    only; QR-02 remains deferred. No application implementation, application test, live model/vendor/broker evaluation, measured
+    performance/cost/quality result, provisional threshold approval, external GR-01 reference, or omitted human business decision
+    is asserted.
   schema: docs/req/req-schema.json
   script: docs/req/validate_requirements.py
   command: python3 -m pip install pyyaml jsonschema && python3 docs/req/validate_requirements.py
@@ -5010,7 +5032,7 @@ validation:
       fields are validated.
   - id: schema_validation
     result: pass
-    details: requirements.yaml version 1.24.0 was loaded as YAML and validated against req-schema.json.
+    details: requirements.yaml version 1.25.0 was loaded as YAML and validated against req-schema.json.
   - id: scope_status_consistency
     result: pass
     details: scope.approved_ids lists the 17 active requirements; scope.draft_ids is empty; scope.deferred_ids lists QR-02;
@@ -5022,16 +5044,17 @@ validation:
   - id: fit_criterion_count
     result: pass
     details: 122 fit criteria (FR-01=9, FR-02=11, FR-03=10, FR-04=9, FR-05=3, FR-06=6, FR-07=10, FR-08=4, plus non-functional
-      and deferred criteria); all IDs use <requirement-id>-FCnn; no FC added, removed, merged, split, or semantically rewritten
-      in v1.24.0; the complete mapping is in docs/req/requirement-mapping.csv.
+      and deferred criteria); all IDs use <requirement-id>-FCnn; no FC added, removed, merged, split, or renumbered in v1.25.0;
+      the only content change is the authorized CR-01 state-table correction; the complete mapping is in docs/req/requirement-mapping.csv.
   - id: traceability_paths
     result: pass
     details: All requirement, traceability, and source evidence paths resolve.
-  - id: brief_contract_v3
+  - id: brief_contract_v4
     result: pass
-    details: Contract v3 is the active revision draft; v2 and v1 are retained. It adds FR-02 field-level usage, selected/shared
-      generation and view instances, five-role actual input difference, total-sum aggregation with Decimal comparison, separate
-      execution status, attempt retention, and unapproved null prices/thresholds. The contract remains blocked.
+    details: Contract v4 is the active revision draft; v3, v2, and v1 are retained. It fixes the two-field execution/acceptance
+      state table, forbids pending/aborted acceptance values, treats run_completed as auxiliary, and preserves FR-02 field-level
+      usage, selected/shared generation, five-role input difference, total-sum aggregation, and unapproved null prices/thresholds.
+      The contract remains blocked.
   - id: behavior_contract_v2
     result: pass
     details: Behavior contract v2 is the active revision draft; v1 remains frozen. It fixes the two-rater merge, third-reviewer
@@ -5040,17 +5063,13 @@ validation:
       human approval.
   - id: spec_consistency
     result: pass
-    details: PR-01 enabled/no-op boundary, AB/BA, failure/rerun and payload scope; GR-01 independence/revision timing and Stage
-      A/B direction; CR-01 v3 measurement/execution/attempt/claim separation; QR-01 v2 scoring merge, sample completeness, percentage-point
-      REVIEW and cache/risk separation; SB-01 gate/publication separation, trustworthy blocked records and unique unsupported
-      mapping; INV-01 identity/projection, pre/post-commit, retention proof and high-water rules; INV-02 reason/review-class
-      mapping and current/historical evidence; SR-01 detected/residual accounting, credential-store exception and extended scope;
-      SR-02 all-operation confinement and honest platform limits; FR-01 FC01-FC09, FR-02 timing/token coverage, FR-04 canonical
-      policy/logical identity, FR-05 limit-offset/history proof, FR-06 failed_precommit recovery, FR-07 fiscal/price/n-a/recovery,
-      FR-08 token budget/resolver/terminal rejection; QR-02 performance/deferred; deferred items absent from active fit criteria.
+    details: CR-01 now uses execution_status and acceptance_status as separate authorities with the fixed six-row state table;
+      PR/GR/QR/SB/INV/SR consistency and deferred scope are preserved; FR-01 FC01-FC09, FR-02 timing/token coverage, FR-04 canonical
+      policy, FR-05 limit-offset/history proof, FR-06 failed_precommit recovery, FR-07 fiscal/price/n-a/recovery, and FR-08
+      token budget/resolver/terminal rejection remain unchanged.
   - id: threshold_ref_resolution
     result: pass
-    details: CR-01 threshold refs resolve to contract v3; net_cost_max and quality_loss_max are null/unresolved and are not
+    details: CR-01 threshold refs resolve to contract v4; net_cost_max and quality_loss_max are null/unresolved and are not
       treated as approved numeric targets.
   - id: gr01_freeze_fixture
     result: pass
@@ -5069,18 +5088,26 @@ validation:
       by the pre-freeze sequence.
   - id: approval_freeze_record
     result: pass
-    details: Approval is limited to requirement design; QR-02 remains deferred; provisional thresholds, unmeasured criteria,
-      blocked evaluations, and external evidence remain in their prior states.
-  notes: Machine validation corresponds to the frozen v1.24.0 baseline. The 17 active requirements are approved only as requirement
-    design; QR-02 remains deferred. No application implementation, application test, live model/vendor/broker call, capacity/cost/quality
-    measurement, or approval of provisional business thresholds is claimed. Later substantive requirement or FC changes require
-    a new version, impact analysis, mapping update, and re-approval; the approved baseline is not silently overwritten.
+    details: Approval covers requirement design only, including the CR-01 state-semantics correction; QR-02 remains deferred;
+      provisional thresholds, unmeasured criteria, blocked evaluations, and external evidence remain in their prior states.
+  - id: cr01_state_table
+    result: pass
+    details: CR-01 uses execution_status (not_started/running/completed/aborted) and acceptance_status (blocked/ready/accepted/failed,
+      null only while running); pending/aborted acceptance strings and illegal pairs are rejected; run_completed is auxiliary
+      only.
+  notes: Machine validation corresponds to the frozen v1.25.0 baseline. FC identifiers use the continuous <requirement-id>-FCnn
+    format and the complete mapping is in requirement-mapping.csv. A separate v1.24.0-to-v1.25.0 comparison found no FC ID or count changes.
+    Apart from the CR-01 state-table correction and the FR-08 active-contract reference, other requirement content is unchanged. The
+    17 active requirements are approved only as requirement design; QR-02 remains deferred. No application implementation, application
+    test, live model/vendor/broker call, capacity/cost/quality measurement, or approval of provisional business thresholds is
+    claimed. Later substantive requirement or FC changes require a new version, impact analysis, mapping update, and re-approval;
+    the approved baseline is not silently overwritten.
   approval_record:
     approved_at: '2026-11-15'
-    approval_basis: Explicit user authorization in this session to approve the current D1 requirement design and establish a
-      frozen baseline. No named reviewer, signature, review meeting, application test, live evaluation, or external reference
-      approval is invented.
-    baseline_version: 1.24.0
+    approval_basis: Explicit user authorization in this session to approve the current D1 requirement design, including the
+      local CR-01 state-semantics correction, and establish the v1.25.0 frozen baseline. No named reviewer, signature, review
+      meeting, application test, live evaluation, or external reference approval is invented.
+    baseline_version: 1.25.0
     approval_scope:
     - FR-01
     - FR-02
@@ -5112,18 +5139,21 @@ validation:
     - docs/req/validate_requirements.py
     - docs/req/validation-results.json
     - docs/req/evaluation/behavior-eval-contract-v2.json
-    - docs/req/evaluation/brief-eval-contract-v3.json
+    - docs/req/evaluation/brief-eval-contract-v4.json
     - docs/req/evaluation/
     - docs/req/fixtures/
+    - docs/req/fixtures/brief_eval_states_v4.json
     change_control: Any later substantive requirement or FC change requires a new document version, impact analysis, mapping
-      update, and re-approval. The approved v1.24.0 content is not silently overwritten.
+      update, and re-approval. The approved v1.25.0 content is not silently overwritten.
     limitations:
     - Approval covers requirement design only; application implementation, application tests, live model/vendor/broker evaluations,
       and measured performance, cost, or quality remain not performed.
     - Provisional thresholds, prices, snapshots, external GR-01 reference evidence, and human business approvals that were not
-      provided remain provisional, blocked, or pending.
+      provided remain provisional, blocked, or pending; CR-01 contract v4 remains draft/blocked.
     - QR-02 and all other explicitly deferred capabilities remain outside the current approval scope.
-
+    prior_baseline_version: 1.24.0
+    revision_scope:
+    - CR-01 execution_status/acceptance_status semantics correction and required FR-08 active-contract reference update; no FC count/ID change or other semantic requirement change
 open_questions:
   - id: OQ-02
     question: "How long should run manifests and memory entries be retained after the storage location is fixed?"
@@ -5171,5 +5201,5 @@ open_questions:
     blocking: false
   - id: OQ-16
     question: "What mandatory/compressible brief budgets, quality_loss_max, net_cost_max, prices, and evaluation-contract terms should govern FR-08/CR-01?"
-    impact: "CR-01 local cost evaluation and claim classification, FR-08 brief budgets, and brief-eval-contract-v3; no cost or token saving may be claimed until thresholds are approved and measured."
+    impact: "CR-01 local cost evaluation and claim classification, FR-08 brief budgets, and brief-eval-contract-v4; no cost or token saving may be claimed until thresholds are approved and measured."
     blocking: true

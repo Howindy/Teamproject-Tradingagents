@@ -2083,7 +2083,7 @@ def _brief_case_snapshot_state() -> dict:
 
 
 def brief_eval_contract_checks() -> dict:
-    _, contract = _fixture_json("../evaluation/brief-eval-contract-v3.json")
+    _, contract = _fixture_json("../evaluation/brief-eval-contract-v4.json")
     if contract.get("status") not in {"frozen_contract", "revision_draft"}:
         fail("brief evaluation contract status must be frozen_contract or revision_draft")
     allowed_states = {"blocked", "ready", "accepted", "failed"}
@@ -2140,13 +2140,15 @@ def brief_eval_contract_checks() -> dict:
         if token not in priority:
             fail(f"brief state priority missing {token}")
     transitions = " ".join(model.get("transitions", [])).lower()
-    for token in ("blocked -> ready", "ready -> accepted", "ready -> failed"):
+    for token in ("not_started/blocked -> not_started/ready", "not_started/ready -> running/null",
+                  "running/null -> completed/accepted", "running/null -> completed/failed",
+                  "running/null -> aborted/failed", "must not return to not_started"):
         if token not in transitions:
             fail(f"brief state transitions missing {token!r}")
     if "observed_failures" not in model.get("observed_failure_policy", ""):
         fail("brief observed-failure policy must preserve observed failures")
-    if "attempt_id" not in model.get("attempt_policy", "") or "prior failed evidence" not in model.get("attempt_policy", ""):
-        fail("brief attempt policy must preserve prior failed evidence")
+    if "attempt_id" not in model.get("attempt_policy", "") or "prior attempt input binding" not in model.get("attempt_policy", ""):
+        fail("brief attempt policy must preserve prior attempt evidence")
 
     states = contract.get("state_conditions", {})
     for state in allowed_states:
@@ -2163,17 +2165,21 @@ def brief_eval_contract_checks() -> dict:
     for token in ("pre-run inputs", "missing or invalid", "observed_failures"):
         if token not in blocked_text:
             fail(f"brief blocked state missing {token!r}")
-    for token in ("all pre-run inputs are valid", "no result exists for the current attempt", "not yet been executed"):
+    for token in ("execution_status=not_started", "all pre-run inputs are valid", "no result exists for the current attempt", "has not started"):
         if token not in ready_text:
             fail(f"brief ready state missing {token!r}")
     if "no accepted result" in ready_text:
         fail("brief ready state must not be defined as no accepted result yet")
-    for token in ("evaluation was executed from ready", "all samples", "quality_loss <=", "safety_escapes = 0", "net_cost <=", "no applicable"):
+    running_text = " ".join(s.lower() for s in states.get("running", []))
+    for token in ("execution_status=running", "acceptance_status is null", "observed_failures may be recorded"):
+        if token not in running_text:
+            fail(f"brief running state missing {token!r}")
+    for token in ("execution_status=completed", "result evidence is complete, valid", "all samples", "quality_loss <=", "safety_escapes = 0", "net_cost <=", "usage is complete"):
         if token not in accepted_text:
             fail(f"brief accepted state missing {token!r}")
     if "ready" in [s.strip() for s in accepted]:
         fail("brief accepted state must not list ready as a circular precondition")
-    for token in ("result evidence is missing", "safety_escapes > 0", "quality_loss >", "net_cost >", "digest mismatch"):
+    for token in ("execution_status=completed", "execution_status=aborted", "safety_escapes > 0", "quality_loss >", "net_cost >", "missing/corrupt/inconsistent"):
         if token not in failed_text:
             fail(f"brief failed state missing {token!r}")
 
@@ -2210,7 +2216,7 @@ def brief_eval_contract_checks() -> dict:
         fail("brief unavailable usage must not be reported as zero")
     if "distinct from unavailable" not in usage.get("no_generation_call", ""):
         fail("brief true-zero generation must be distinct from unavailable usage")
-    attempt_policy = contract.get("state_model", {}).get("attempt_policy", "")
+    attempt_policy = contract.get("state_model", {}).get("attempt_policy", "").lower()
     for token in ("fixes its inputs", "later configuration changes do not mutate a terminal attempt"):
         if token not in attempt_policy:
             fail(f"brief attempt policy missing {token!r}")
@@ -2278,33 +2284,56 @@ def brief_eval_contract_checks() -> dict:
         fail("blocked brief evaluation must record blocking_reasons")
     usage = contract.get("usage_policy", {})
     if usage.get("unknown_is_not_zero") is not True:
-        fail("brief v3 usage policy must forbid treating unknown usage as zero")
+        fail("brief v4 usage policy must forbid treating unknown usage as zero")
     if "null or explicitly incomplete" not in usage.get("required_usage_missing_behavior", ""):
-        fail("brief v3 required-usage failure must be null/incomplete")
+        fail("brief v4 required-usage failure must be null/incomplete")
     if usage.get("estimated_label_required") is not True:
-        fail("brief v3 must require an estimated label for tokenizer-based measurement")
+        fail("brief v4 must require an estimated label for tokenizer-based measurement")
     selection = contract.get("generation_call_selection", {})
     for key in ("shared_generation", "view_updates", "excluded"):
         if not selection.get(key):
-            fail(f"brief v3 generation selection missing {key}")
+            fail(f"brief v4 generation selection missing {key}")
     downstream = contract.get("downstream_scope", {})
     if len(downstream.get("roles", [])) != 5:
-        fail("brief v3 local scope must cover the five target roles")
+        fail("brief v4 local scope must cover the five target roles")
     for token in ("message wrappers", "mandatory content", "existing history"):
         if token not in downstream.get("includes", []):
-            fail(f"brief v3 downstream input scope missing {token}")
+            fail(f"brief v4 downstream input scope missing {token}")
     aggregation = contract.get("sample_aggregation", {})
     if aggregation.get("aggregation_metric") != "sum" or aggregation.get("not_per_case_mean") is not True:
-        fail("brief v3 target aggregation must be a total sum")
+        fail("brief v4 target aggregation must be a total sum")
     if aggregation.get("negative_difference") != "retained, never clipped":
-        fail("brief v3 negative differences must be retained")
+        fail("brief v4 negative differences must be retained")
     if "Decimal" not in aggregation.get("amount_precision", ""):
-        fail("brief v3 comparisons must use Decimal and avoid display rounding")
+        fail("brief v4 comparisons must use Decimal and avoid display rounding")
     execution = contract.get("execution_status", {})
-    if "running" not in execution.get("values", []) or execution.get("separate_from_acceptance") is not True:
-        fail("brief v3 execution status must be separate from acceptance")
-    if "accepted" not in execution.get("terminal_attempts", []) or "failed" not in execution.get("terminal_attempts", []):
-        fail("brief v3 attempt terminal states are not defined")
+    if execution.get("values") != ["not_started", "running", "completed", "aborted"]:
+        fail("brief v4 execution_status values are not the fixed four-value set")
+    if "run_completed" not in execution.get("run_completed_relationship", ""):
+        fail("brief v4 must define run_completed as auxiliary and reject contradictions")
+    acceptance = contract.get("acceptance_status_field", {})
+    if acceptance.get("values") != ["blocked", "ready", "accepted", "failed", None]:
+        fail("brief v4 acceptance_status values are not the fixed set including null")
+    if acceptance.get("forbidden_values") != ["pending", "aborted"]:
+        fail("brief v4 must forbid pending/aborted acceptance strings")
+    table = contract.get("state_table", [])
+    if len(table) != 6:
+        fail("brief v4 state table must contain six canonical rows")
+    pairs = {(row.get("execution_status"), row.get("acceptance_status")) for row in table}
+    if pairs != {("not_started", "blocked"), ("not_started", "ready"), ("running", None),
+                 ("completed", "accepted"), ("completed", "failed"), ("aborted", "failed")}:
+        fail("brief v4 state table pairs are not the legal state set")
+    illegal = contract.get("illegal_state_combinations", [])
+    for pair in (["not_started", "null"], ["running", "ready"], ["running", "accepted"],
+                 ["aborted", "ready"], ["aborted", "accepted"], ["completed", "null"],
+                 ["*", "pending"], ["*", "aborted"]):
+        if pair not in illegal:
+            fail(f"brief v4 illegal state table missing {pair}")
+    transition_rules = " ".join(contract.get("state_transition_rules", []))
+    for token in ("accepted and failed are terminal", "retry or re-evaluation creates a new attempt",
+                  "MUST NOT return to not_started", "budget_met"):
+        if token not in transition_rules:
+            fail(f"brief v4 transition rules missing {token!r}")
     return {"contract_version": contract["contract_version"],
             "current_state": current_state,
             "acceptance_status": contract["acceptance_status"],
@@ -2350,71 +2379,141 @@ def brief_budget_policy_checks() -> dict:
 
 
 def brief_eval_state_fixture_checks() -> dict:
-    _, fixture = _fixture_json("brief_eval_states_v3.json")
-    allowed = {"blocked", "ready", "accepted", "failed"}
+    _, fixture = _fixture_json("brief_eval_states_v4.json")
+    execution_values = {"not_started", "running", "completed", "aborted"}
+    acceptance_values = {"blocked", "ready", "accepted", "failed", None}
+    legal_pairs = {
+        ("not_started", "blocked"), ("not_started", "ready"),
+        ("running", None),
+        ("completed", "accepted"), ("completed", "failed"),
+        ("aborted", "failed"),
+    }
     checked = 0
     accepted_claims = 0
+    invalid_cases = 0
     for case in fixture.get("cases", []):
+        cid = case["id"]
+        execution = case.get("execution_status")
+        acceptance = case.get("acceptance_status")
+        expected_valid = case.get("expected_valid", False)
+
         quality_ok = bool(case.get("quality_loss_max_approved")) and case.get("quality_loss_max") is not None
         cost_ok = bool(case.get("net_cost_max_approved")) and case.get("net_cost_max") is not None
         pre_ok = (bool(case.get("case_snapshots_ready")) and bool(case.get("fixed_input_digests_ready"))
                   and bool(case.get("prices_ready")) and quality_ok and cost_ok
                   and bool(case.get("human_approved")))
         result = case.get("result")
-        if case.get("requested_state") is not None and case["requested_state"] not in allowed:
-            actual = "invalid"
-        elif not pre_ok:
-            actual = "blocked"
-            if result and result.get("safety_escapes", 0) > 0:
-                observed = case.get("observed_failures") or []
-                if "safety_escapes>0" not in observed:
-                    fail(f"brief state fixture {case['id']} hides an observed safety failure behind blocked")
-        elif not case.get("run_completed"):
-            actual = "ready"
-        elif not case.get("result_evidence_valid") or result is None:
-            actual = "failed"
-        elif result.get("safety_escapes", 0) > 0:
-            actual = "failed"
-        elif Decimal(str(result.get("quality_loss"))) > Decimal(str(case.get("quality_loss_max"))):
-            actual = "failed"
-        elif Decimal(str(result.get("net_cost"))) > Decimal(str(case.get("net_cost_max"))):
-            actual = "failed"
-        elif (result.get("all_samples") and result.get("safety_escapes") == 0
-              and Decimal(str(result.get("quality_loss"))) <= Decimal(str(case.get("quality_loss_max")))
-              and Decimal(str(result.get("net_cost"))) <= Decimal(str(case.get("net_cost_max")))):
-            actual = "accepted"
+        invalid_reason = None
+        if execution not in execution_values:
+            invalid_reason = "invalid execution_status"
+        elif acceptance not in acceptance_values:
+            invalid_reason = "invalid acceptance_status"
+        elif acceptance in {"pending", "aborted"}:
+            invalid_reason = "forbidden acceptance_status string"
+        elif (execution, acceptance) not in legal_pairs:
+            invalid_reason = "illegal execution/acceptance pair"
+        if "run_completed" in case and case["run_completed"] != (execution == "completed"):
+            invalid_reason = "run_completed contradicts execution_status"
+        if execution == "aborted" and not case.get("abort_reason"):
+            invalid_reason = "aborted attempt missing abort_reason"
+        if case.get("input_digest_mismatch_after_start") and execution == "not_started":
+            invalid_reason = "started input mismatch cannot be not_started"
+        if case.get("input_digest_mismatch_after_start") and acceptance in {"blocked", "ready"}:
+            invalid_reason = "started input mismatch cannot be blocked/ready"
+
+        actual_execution = execution
+        actual_acceptance = acceptance
+        if expected_valid:
+            if execution is None:
+                fail(f"brief state fixture {cid} is valid but missing execution_status")
+            if execution == "not_started":
+                actual_acceptance = "ready" if pre_ok else "blocked"
+            elif execution == "running":
+                actual_acceptance = None
+            elif execution == "aborted":
+                actual_acceptance = "failed"
+            elif execution == "completed":
+                accepted = bool(case.get("result_evidence_valid")) and result is not None
+                if accepted:
+                    if not result.get("all_samples", False):
+                        accepted = False
+                    if result.get("safety_escapes", 0) != 0:
+                        accepted = False
+                    if result.get("quality_loss") is None or case.get("quality_loss_max") is None:
+                        accepted = False
+                    elif Decimal(str(result.get("quality_loss"))) > Decimal(str(case.get("quality_loss_max"))):
+                        accepted = False
+                    if result.get("net_cost") is None or case.get("net_cost_max") is None:
+                        accepted = False
+                    elif Decimal(str(result.get("net_cost"))) > Decimal(str(case.get("net_cost_max"))):
+                        accepted = False
+                    if result.get("usage_complete", True) is not True:
+                        accepted = False
+                actual_acceptance = "accepted" if accepted else "failed"
+            if invalid_reason is not None:
+                fail(f"brief state fixture {cid} is marked valid but {invalid_reason}")
+            if actual_execution != case.get("expected_execution_status"):
+                fail(f"brief state fixture {cid} expected execution {case.get('expected_execution_status')}, got {actual_execution}")
+            if actual_acceptance != case.get("expected_acceptance_status"):
+                fail(f"brief state fixture {cid} expected acceptance {case.get('expected_acceptance_status')}, got {actual_acceptance}")
+            if acceptance != actual_acceptance:
+                fail(f"brief state fixture {cid} supplied acceptance {acceptance} but computed {actual_acceptance}")
+            if case.get("run_completed") is not None and case["run_completed"] != (execution == "completed"):
+                fail(f"brief state fixture {cid} run_completed contradicts execution_status")
+            if execution == "aborted":
+                if not case.get("abort_reason"):
+                    fail(f"brief state fixture {cid} aborted case lacks abort_reason")
+                if "observed_failures" not in case or "produced_evidence" not in case or "missing_items" not in case:
+                    fail(f"brief state fixture {cid} aborted case lacks preservation evidence")
+            if case.get("attempt_id") and case.get("previous_attempt_id"):
+                if case["attempt_id"] == case["previous_attempt_id"]:
+                    fail(f"brief state fixture {cid} retry reuses the previous attempt_id")
+                if case.get("previous_terminal_status") not in {"accepted", "failed", "aborted"}:
+                    fail(f"brief state fixture {cid} retry does not retain the previous terminal state")
+                if case.get("previous_observed_failures") and not case.get("previous_observed_failures_preserved"):
+                    fail(f"brief state fixture {cid} retry does not preserve observed_failures")
+            if actual_acceptance == "accepted":
+                accepted_claims += 1
+                net_cost = Decimal(str(result.get("net_cost")))
+                net_tokens = Decimal(str(result.get("net_tokens")))
+                cost_max = Decimal(str(case.get("net_cost_max")))
+                claims = []
+                if net_cost <= cost_max:
+                    claims.append("budget_met")
+                if net_cost < 0:
+                    claims.append("local_cost_saving")
+                elif net_cost == 0:
+                    claims.append("no_strict_saving")
+                if net_tokens < 0:
+                    claims.append("token_reduction")
+                claims.append("no_whole_application_saving")
+                expected_claim = ";".join(claims)
+                if case.get("expected_claim") != expected_claim:
+                    fail(f"brief state fixture {cid} claim {case.get('expected_claim')} != {expected_claim}")
         else:
-            actual = "failed"
-        if actual != case.get("expected"):
-            fail(f"brief eval state fixture {case['id']} expected {case.get('expected')}, got {actual}")
-        if actual == "accepted":
-            accepted_claims += 1
-            net_cost = Decimal(str(result.get("net_cost")))
-            net_tokens = Decimal(str(result.get("net_tokens")))
-            cost_max = Decimal(str(case.get("net_cost_max")))
-            claims = []
-            if net_cost <= cost_max:
-                claims.append("budget_met")
-            if net_cost < 0:
-                claims.append("local_cost_saving")
-            elif net_cost == 0:
-                claims.append("no_strict_saving")
-            if net_tokens < 0:
-                claims.append("token_reduction")
-            claims.append("no_whole_application_saving")
-            expected_claim = ";".join(claims)
-            if case.get("expected_claim") != expected_claim:
-                fail(f"brief state fixture {case['id']} claim {case.get('expected_claim')} != {expected_claim}")
+            invalid_cases += 1
+            if invalid_reason is None:
+                fail(f"brief state fixture {cid} is marked invalid but forms a legal state")
+            if case.get("expected_execution_status") is not None or case.get("expected_acceptance_status") is not None:
+                fail(f"brief state fixture {cid} invalid case must not declare expected state values")
         checked += 1
+
     rules = fixture.get("claim_rules", {})
     for key in ("budget_met", "local_cost_saving", "token_reduction", "zero_difference",
                 "positive_within_budget", "whole_application_saving"):
         if key not in rules:
             fail(f"brief state fixture missing claim rule {key}")
+    required_pairs = {
+        ("not_started", "blocked"), ("not_started", "ready"), ("running", None),
+        ("completed", "accepted"), ("completed", "failed"), ("aborted", "failed"),
+    }
+    fixture_pairs = {(c.get("execution_status"), c.get("acceptance_status")) for c in fixture.get("cases", []) if c.get("expected_valid", False)}
+    if not required_pairs.issubset(fixture_pairs):
+        fail(f"brief state fixture missing positive state pairs: {sorted(required_pairs - fixture_pairs)}")
     return {"cases": len(fixture.get("cases", [])), "checks": checked,
-            "accepted_claims": accepted_claims,
+            "accepted_claims": accepted_claims, "invalid_cases": invalid_cases,
             "fixture_version": fixture.get("fixture_version"),
-            "check_kind": "state_transition_and_claim_fixture"}
+            "check_kind": "two_field_state_table_and_claim_fixture"}
 
 
 def gr01_freeze_fixture_checks() -> dict:
@@ -2489,7 +2588,7 @@ def round4_checks(doc: dict) -> dict:
 
     checks = {
         "PR-01": ["manifest-specific", "no-op", "test-only", "ab/ba", "odd", "even", "actual", "utf-8", "262144", "nearest-rank", "19th", "infrastructure", "rerun", "observed cutoff", "self-report"],
-        "CR-01": ["field-level", "unknown", "selected", "shared generation", "view-update", "five target roles", "sum", "decimal", "execution status", "not_started", "observed_failures", "brief-eval-contract-v3"],
+        "CR-01": ["field-level", "unknown", "selected", "shared generation", "view-update", "five target roles", "sum", "decimal", "execution status", "not_started", "observed_failures", "brief-eval-contract-v4"],
         "GR-01": ["stable issuer", "calendar", "independent hand", "scripts", "implementation_generated_expected_value_count", "initial", "revision", "before use", "retained", "missing manifest"],
         "QR-01": ["score_off", "score_on", "weights", "third reviewer", "one original scored sample", "percentage points", "cache", "risk-policy", "hard check"],
         "SB-01": ["not publication success", "trustworthy", "fabricating", "unsupported snapshot schema version", "internal_detail", "late success", "recovery"],
@@ -2687,7 +2786,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
 
     # Shared brief-evaluation definition must point to v2, not duplicate its state machine.
     brief_def = doc["definitions"]["brief_evaluation"]
-    for token in ("brief-eval-contract-v3", "budget_met", "local_cost_saving", "whole-application", "result evidence"):
+    for token in ("brief-eval-contract-v4", "budget_met", "local_cost_saving", "whole-application", "result evidence"):
         if token not in brief_def:
             fail(f"brief_evaluation definition missing current-contract term {token!r}")
     if "accepted when measured results are within the approved quality_loss_max with zero safety escapes" in brief_def:
@@ -2695,7 +2794,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
 
     # FR-08 must defer cost/token/saving claims to CR-01 and point to v2.
     fr08 = requirements["FR-08"]
-    if "brief-eval-contract-v3" not in fr08["statement"]:
+    if "brief-eval-contract-v4" not in fr08["statement"]:
         fail("FR-08 must name the active brief evaluation contract")
     if "no cost, token, or whole-application saving claim" not in fr08["statement"]:
         fail("FR-08 must make no cost/token/whole-application saving claim")
@@ -2760,8 +2859,8 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     cr = requirements["CR-01"]
     if "local cost attribution" not in cr["title"].lower():
         fail("CR-01 title must name local cost attribution")
-    if not any(e.get("path") == "docs/req/evaluation/brief-eval-contract-v3.json" for e in cr["sources"]["evidence"]):
-        fail("CR-01 must reference brief-eval-contract-v3.json")
+    if not any(e.get("path") == "docs/req/evaluation/brief-eval-contract-v4.json" for e in cr["sources"]["evidence"]):
+        fail("CR-01 must reference brief-eval-contract-v4.json")
     cr_acs = {a["id"]: a for a in cr["fit_criterion"]}
     if len(cr_acs) != 5:
         fail("CR-01 must separate measurement, safety, quality/state, target, and claim boundary")
@@ -2776,7 +2875,7 @@ def pr_gr_cr_consistency_checks(doc: dict) -> dict:
     if cr_acs["CR-01-FC05"].get("metric") != "claim_boundary_violation_count":
         fail("CR-01-FC05 must check claim boundaries")
     for ac_id in ("CR-01-FC03", "CR-01-FC04"):
-        if "brief-eval-contract-v3.json#/thresholds/" not in cr_acs[ac_id].get("threshold_ref", ""):
+        if "brief-eval-contract-v4.json#/thresholds/" not in cr_acs[ac_id].get("threshold_ref", ""):
             fail(f"{ac_id} must reference the v2 contract threshold")
     ac1_text = " ".join((cr_acs["CR-01-FC01"]["input"], cr_acs["CR-01-FC01"]["expected_result"])).lower()
     for token in ("brief-generation input", "retry/fallback", "excluded"):
@@ -3136,11 +3235,13 @@ def main() -> None:
                    EVAL_DIR / "brief-eval-contract-v1.json",
                    EVAL_DIR / "brief-eval-contract-v2.json",
                    EVAL_DIR / "brief-eval-contract-v3.json",
+                   EVAL_DIR / "brief-eval-contract-v4.json",
                    FIXTURE_DIR / "brief_budget_policy_v1.json",
                    FIXTURE_DIR / "brief_budget_policy_v2.json",
                    FIXTURE_DIR / "brief_eval_states_v1.json",
                    FIXTURE_DIR / "brief_eval_states_v2.json",
                    FIXTURE_DIR / "brief_eval_states_v3.json",
+                   FIXTURE_DIR / "brief_eval_states_v4.json",
                    FIXTURE_DIR / "gate_decision_v2.json",
                    FIXTURE_DIR / "invariant_projection_v2.json",
                    FIXTURE_DIR / "secret_path_controls_v2.json",
@@ -3210,6 +3311,7 @@ def main() -> None:
             {"id": "round4_requirement_and_fixture_consistency", "result": "pass", "details": round4_summary},
             {"id": "fc_identifier_normalization", "result": "pass", "details": {"total": len(ac_ids), "format": "<requirement-id>-FCnn", "continuous": True}},
             {"id": "approval_freeze_record", "result": "pass", "details": {"human_review_status": human_review_status, "baseline_version": doc["document"]["version"], "approved_scope": len(approved_ids), "deferred": sorted(deferred_ids)}},
+            {"id": "cr01_state_table", "result": "pass", "details": {"contract": "d1-brief-contract-v4", "fixture": "brief-eval-states-v4", "cases": brief_state_summary.get("cases"), "invalid_cases": brief_state_summary.get("invalid_cases")}},
             {"id": "fc_mapping_complete", "result": "pass", "details": mapping_summary},
         ],
         "human_review": human,
@@ -3225,12 +3327,13 @@ def main() -> None:
             "revised_fr01_fr05_contracts checks the v1.21.0 requirement contracts, required concepts, manifest schema support, and the provisional contract set; it is a static document/contract check, not an application test.",
             "revised_fr06_fr08_contracts checks FR-06/07/08 concept closure, required manifest timing/token fields, policy file ref, token budget v2, and recoverable failed fixture; it is a static consistency check, not an application test.",
             "threshold_ref resolution treats a null target as unresolved/blocked, never as an approved numeric threshold; CR-01-FC03 and CR-01-FC04 currently resolve to null targets.",
-            "brief-eval-contract-v3 and behavior-eval-contract-v2 are active revision drafts; v2/v1 brief contracts and behavior v1 plus the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
+            "brief-eval-contract-v4 and behavior-eval-contract-v2 are active revision drafts; brief v3/v2/v1 and behavior v1 plus the frozen eval set/rubric/config/prompt/snapshots are retained unchanged. GR-01 source independence and freeze adequacy still require human review; the script checks presence, locators, digests, Stage A readiness, and Stage B ordering only.",
             "gr01_freeze_fixture covers Stage A without implementation, missing material, issuer/calendar/coverage negatives, independent-script versus implementation-generated expectations, post-implementation reviewed revision, unreviewed revision, version mismatch, and retroactive/backdated freeze; it is a static fixture, not an implementation test.",
-            "brief_eval_state_fixture covers blocked/ready/accepted/failed and budget/local-saving/token/whole-application claim boundaries; it is a static fixture, not a live evaluation.",
+            "brief_eval_state_fixture covers the two-field execution/acceptance table, illegal pairs, forbidden pending/aborted acceptance strings, start-after-input-mismatch, aborted preservation, retry history, evidence/sample/usage failures, and budget/local-saving/token claim boundaries; it is a static fixture, not a live evaluation.",
             "round4_requirement_and_fixture_consistency checks SB-01 gate/publication separation, INV-01 identity/projection and retention high-water, INV-02 reason mapping and current/historical evidence, SR-01 detected/residual and credential-store boundaries, SR-02 operation/path confinement, and QR scoring/REVIEW/safety separation. These are static document/fixture checks, not application, OS-race, secret, live-quality, cost, or live-performance tests.",
-            "FC identifiers are normalized to <requirement-id>-FCnn; the complete v1.23.0-to-v1.24.0 mapping is recorded in requirement-mapping.csv and checked against the current registry.",
-            "A separate pre/post normalized comparison found no changes to the 122 FC contents or to requirement statements, titles, problems, or tradeoffs after ID normalization; this comparison is recorded in the freeze notes, not recomputed by this validator.",
+            "FC identifiers remain <requirement-id>-FCnn; the v1.23.0-to-v1.24.0 mapping is recorded in requirement-mapping.csv, and v1.25.0 changes no FC ID or count.",
+            "A separate v1.24.0-to-v1.25.0 comparison found changes only in CR-01 statement/FC03/FC04 references/assumptions/notes and the FR-08 active-contract reference; all 122 FC IDs, counts, and other requirement/FC contents are unchanged. The comparison is recorded in the freeze notes, not recomputed by this validator.",
+            "CR-01 v1.25.0 uses the two-field execution_status/acceptance_status table with brief-eval-contract-v4 and brief_eval_states_v4; pending/aborted acceptance strings and illegal state pairs are rejected. CR-01 evaluation remains blocked by prices, thresholds, snapshots, and human contract approval.",
             "Approval covers requirement design only. Application implementation, application tests, live model/vendor/broker evaluations, provisional threshold approvals, external GR-01 evidence, and deferred capabilities remain outside this approval.",
             "No application implementation or application test was executed in this requirements-validation pass.",
         ],

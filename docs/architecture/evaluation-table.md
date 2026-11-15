@@ -2,8 +2,8 @@
 
 Status: **v0.3 — ADD-R round 3 draft / pending human review**
 Date: 2026-11-15
-Amended by: `docs/architecture/adr/003-add-r-round-3.md`
-D1 basis: `docs/req/requirements.yaml` v1.24.0 — 18 requirements, 122 fit criteria
+Amended by: `docs/architecture/adr/003-add-r-round-3.md`; `docs/architecture/adr/004-cr01-state-correction.md`
+D1 basis: `docs/req/requirements.yaml` v1.25.0 — 18 requirements, 122 fit criteria
 Status basis: 17 active requirements are approved as a requirement-design baseline; `QR-02` is deferred and outside current acceptance; approval does not assert implementation or measured results
 Implementation status: **design only; no application code changed**
 
@@ -140,7 +140,7 @@ Round 3 retains Lean A Extended. The comparison below is a design judgement, not
 | `INV-01` | Artifact binding, canonical digests, read-time checks, permanent publication snapshot | Design only | Old-writer migration and tests pending |
 | `INV-02` | Pure evaluator authority, zero unsafe approvals, cross-artifact risk evidence | Design only | Thresholds and input source blocking |
 | `PR-01` | Separate startup/terminal pre-replace samples; 20 paired enabled/disabled runs; percent/absolute p95 | Design only | Provisional thresholds; benchmark not run |
-| `CR-01` | Contract v2 local cost; usage/attempt rules; separate claims; blocked while prices/targets missing | Design only | Prices/targets unresolved |
+| `CR-01` | Contract v4 local cost; two-field execution/acceptance state table; usage/attempt rules; separate claims; blocked while prices/targets missing | Design only | Prices/targets unresolved; evaluation contract draft/blocked |
 | `GR-01` | Stage A freeze before first FR-07 implementation; Stage B after start | Design only | Reference manifest not frozen (OQ-14) |
 | `QR-01` | Fixed replay first, then live; cache A/B fixed risk policy/input; risk-policy A/B separate | Design only | Snapshots/approval missing (D2-OD-16) |
 | `SR-01` | Known-value/pattern scan, write/run scans, path confinement, preferences/logs/errors/API/stream | Design only | Full boundary/path tests pending; export deferred |
@@ -350,7 +350,7 @@ Re-open the architecture decision if:
 - Runtime monitoring: **not implemented**.
 - Baseline evidence: **measured**.
 - Design expectations: **not measured**.
-- D1: v1.24.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
+- D1: v1.25.0; 17 active requirements are approved as a requirement-design baseline; QR-02 is deferred; approval does not assert implementation or measured results.
 - D2: v0.3 ADD-R round 3 draft; all architecture decisions proposed, not approved.
 - Current recovery is single-process; lease/fencing/takeover/multi-worker/export/TTM/FCF YoY/QR-02 are deferred.
 - R0–R8 and per-AC ownership are recorded in `architecture-blueprint.md` §18 and `trace-matrix.md` §3.19.
