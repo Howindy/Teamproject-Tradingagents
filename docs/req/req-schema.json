@@ -1,8 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://tradingagents.local/schemas/req-schema.json",
-  "title": "D1 Requirements Registry",
-  "description": "Schema for the D1 requirements registry and product narrative.",
+  "title": "D1 Requirements Registry Schema",
+  "description": "Structural schema for the machine-readable D1 requirements registry. It validates document structure, field shapes, enumerations, and local conditions only. It does not validate application behavior, implementation, test results, runtime manifests, publication protocols, source-path existence, cross-record consistency, or business semantics.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,6 +23,151 @@
       "const": "1.0"
     },
     "document": {
+      "$ref": "#/$defs/document"
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "stakeholders": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stakeholder"
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "baseline_observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/baselineObservation"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/requirement"
+      }
+    },
+    "conflict_resolutions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/conflictResolution"
+      }
+    },
+    "moscow": {
+      "$ref": "#/$defs/moscow"
+    },
+    "traceability": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/traceabilityEntry"
+      }
+    },
+    "validation": {
+      "$ref": "#/$defs/validation"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/openQuestion"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "requirementId": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[0-9]{2}$"
+    },
+    "fcId": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[0-9]{2}-FC[0-9]{2}$"
+    },
+    "dateString": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "versionString": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "documentStatus": {
+      "enum": [
+        "draft",
+        "approved",
+        "superseded"
+      ]
+    },
+    "requirementType": {
+      "enum": [
+        "functional",
+        "invariant",
+        "quality",
+        "performance",
+        "cost",
+        "governance",
+        "security"
+      ]
+    },
+    "priority": {
+      "enum": [
+        "Must",
+        "Should",
+        "Could",
+        "Won't"
+      ]
+    },
+    "requirementStatus": {
+      "enum": [
+        "draft",
+        "approved",
+        "deferred"
+      ]
+    },
+    "sourceType": {
+      "enum": [
+        "code",
+        "document",
+        "measured_baseline"
+      ]
+    },
+    "measurementStatus": {
+      "enum": [
+        "not_measured",
+        "measured"
+      ]
+    },
+    "thresholdStatus": {
+      "enum": [
+        "not_applicable",
+        "undetermined",
+        "provisional",
+        "approved"
+      ]
+    },
+    "comparisonOperator": {
+      "enum": [
+        "==",
+        "!=",
+        "<",
+        "<=",
+        ">",
+        ">="
+      ]
+    },
+    "document": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -38,37 +182,28 @@
       ],
       "properties": {
         "id": {
-          "type": "string",
-          "pattern": "^[A-Z0-9-]+$"
+          "$ref": "#/$defs/nonEmptyString"
         },
         "title": {
-          "type": "string",
-          "minLength": 10
+          "$ref": "#/$defs/nonEmptyString"
         },
         "version": {
-          "type": "string",
-          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          "$ref": "#/$defs/versionString"
         },
         "status": {
-          "enum": [
-            "approved",
-            "draft"
-          ]
+          "$ref": "#/$defs/documentStatus"
         },
         "date": {
-          "type": "string",
-          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          "$ref": "#/$defs/dateString"
         },
         "language": {
-          "const": "en"
+          "$ref": "#/$defs/nonEmptyString"
         },
         "description": {
-          "type": "string",
-          "minLength": 50
+          "$ref": "#/$defs/nonEmptyString"
         },
         "baseline_ref": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },
@@ -77,6 +212,8 @@
       "additionalProperties": false,
       "required": [
         "approved_ids",
+        "draft_ids",
+        "deferred_ids",
         "in_scope",
         "out_of_scope",
         "assumptions"
@@ -84,683 +221,437 @@
       "properties": {
         "approved_ids": {
           "type": "array",
-          "minItems": 0,
           "items": {
-            "$ref": "#/$defs/requirement_id"
-          }
-        },
-        "in_scope": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string",
-            "minLength": 10
-          }
-        },
-        "out_of_scope": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string",
-            "minLength": 10
-          }
-        },
-        "assumptions": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string",
-            "minLength": 10
-          }
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
         },
         "draft_ids": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
-          }
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
         },
         "deferred_ids": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
+        },
+        "in_scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
           }
         }
       }
     },
-    "stakeholders": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "name",
-          "interest"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9_]*$"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 3
-          },
-          "interest": {
-            "type": "string",
-            "minLength": 10
-          }
-        }
-      }
-    },
-    "definitions": {
+    "stakeholder": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "data_query_key",
-        "logical_query",
-        "query_execution",
-        "vendor_cache",
-        "availability_record",
-        "source",
-        "critical_requirement",
-        "record_status",
-        "requirement_status",
-        "critical_gap",
-        "coverage_status",
-        "coverage_snapshot",
-        "gate_input",
-        "gate_result",
-        "model_proposal",
-        "formal_decision",
-        "gate_reason_code",
-        "artifact_binding",
-        "canonicalization",
-        "provenance_digest",
-        "artifact_contract",
-        "publish_state",
-        "invariant_checkpoint",
-        "secret_value",
-        "secret_pattern_rule",
-        "scan_scope",
-        "redaction_policy",
-        "secret_scan_result",
-        "endpoint_audit_record",
-        "endpoint_restore_record",
-        "safety_gate",
-        "zero_tolerance",
-        "run_manifest",
-        "sensitive_url_parameter",
-        "component_missing_record",
-        "decision_digest",
-        "record_hash",
-        "memory_entry_binding",
-        "critical_profile",
-        "run_clock",
-        "evidence_requirement_link",
-        "input_hash",
-        "review_class",
-        "decision_id",
-        "behavior_evaluation_contract",
-        "evaluation_rubric",
-        "eval_set_version",
-        "inheritance_record",
-        "entry_digest",
-        "evidence_digest",
-        "portfolio_risk_input",
-        "candidate_trade",
-        "portfolio_risk_policy_snapshot",
-        "portfolio_risk_result",
-        "risk_reason_code",
-        "risk_input_digest",
-        "risk_input_ref",
-        "risk_behavior_evaluation",
-        "valuation_cutoff",
-        "run_id",
-        "formal_publication",
-        "recovery_snapshot",
-        "recovery_claim",
-        "report_section_manifest",
-        "history_query",
-        "export_target",
-        "recovery_benchmark",
-        "publication_snapshot",
-        "history_reference_closure",
-        "financial_fact",
-        "financial_period",
-        "derived_metric",
-        "metric_block",
-        "metric_conflict",
-        "downstream_brief",
-        "brief_budget_policy",
-        "brief_evaluation",
-        "metric_claim",
-        "metric_evidence_bundle",
-        "context_audit_metadata",
-        "execution_policy",
-        "method_normalization_contract",
-        "availability_plan",
-        "availability_view",
-        "write_evidence",
-        "history_page",
-        "verified_run",
-        "portfolio_scope",
-        "risk_input_diagnostic"
+        "id",
+        "name",
+        "interest"
       ],
       "properties": {
-        "data_query_key": {
-          "type": "string",
-          "minLength": 20
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "logical_query": {
-          "type": "string",
-          "minLength": 20
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "query_execution": {
-          "type": "string",
-          "minLength": 20
+        "interest": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "baselineObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "value",
+        "unit",
+        "measured",
+        "measurement_status",
+        "source",
+        "notes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "vendor_cache": {
-          "type": "string",
-          "minLength": 20
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "availability_record": {
-          "type": "string",
-          "minLength": 20
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "measured": {
+          "type": "boolean"
+        },
+        "measurement_status": {
+          "$ref": "#/$defs/nonEmptyString"
         },
         "source": {
-          "type": "string",
-          "minLength": 20
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "critical_requirement": {
-          "type": "string",
-          "minLength": 20
+        "notes": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "locator",
+        "description",
+        "source_type"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "record_status": {
-          "type": "string",
-          "minLength": 20
+        "locator": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "requirement_status": {
-          "type": "string",
-          "minLength": 20
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "critical_gap": {
-          "type": "string",
-          "minLength": 20
+        "source_type": {
+          "$ref": "#/$defs/sourceType"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "evidence"
+      ],
+      "properties": {
+        "origin": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "coverage_status": {
-          "type": "string",
-          "minLength": 20
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "fitCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "input",
+        "expected_result",
+        "verification",
+        "zero_tolerance",
+        "measurement_status",
+        "threshold_status"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/fcId"
         },
-        "coverage_snapshot": {
-          "type": "string",
-          "minLength": 20
+        "input": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "gate_input": {
-          "type": "string",
-          "minLength": 20
+        "expected_result": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "gate_result": {
-          "type": "string",
-          "minLength": 20
-        },
-        "model_proposal": {
-          "type": "string",
-          "minLength": 20
-        },
-        "formal_decision": {
-          "type": "string",
-          "minLength": 20
-        },
-        "gate_reason_code": {
-          "type": "string",
-          "minLength": 20
-        },
-        "artifact_binding": {
-          "type": "string",
-          "minLength": 20
-        },
-        "canonicalization": {
-          "type": "string",
-          "minLength": 20
-        },
-        "provenance_digest": {
-          "type": "string",
-          "minLength": 20
-        },
-        "artifact_contract": {
-          "type": "string",
-          "minLength": 20
-        },
-        "publish_state": {
-          "type": "string",
-          "minLength": 20
-        },
-        "invariant_checkpoint": {
-          "type": "string",
-          "minLength": 20
-        },
-        "secret_value": {
-          "type": "string",
-          "minLength": 20
-        },
-        "secret_pattern_rule": {
-          "type": "string",
-          "minLength": 20
-        },
-        "scan_scope": {
-          "type": "string",
-          "minLength": 20
-        },
-        "redaction_policy": {
-          "type": "string",
-          "minLength": 20
-        },
-        "secret_scan_result": {
-          "type": "string",
-          "minLength": 20
-        },
-        "endpoint_audit_record": {
-          "type": "string",
-          "minLength": 20
-        },
-        "endpoint_restore_record": {
-          "type": "string",
-          "minLength": 20
-        },
-        "safety_gate": {
-          "type": "string",
-          "minLength": 20
+        "verification": {
+          "$ref": "#/$defs/nonEmptyString"
         },
         "zero_tolerance": {
-          "type": "string",
-          "minLength": 20
+          "type": "boolean"
         },
-        "run_manifest": {
-          "type": "string",
-          "minLength": 20
+        "measurement_status": {
+          "$ref": "#/$defs/measurementStatus"
         },
-        "sensitive_url_parameter": {
-          "type": "string",
-          "minLength": 20
+        "threshold_status": {
+          "$ref": "#/$defs/thresholdStatus"
         },
-        "component_missing_record": {
-          "type": "string",
-          "minLength": 20
+        "metric": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "decision_digest": {
-          "type": "string",
-          "minLength": 20
+        "operator": {
+          "$ref": "#/$defs/comparisonOperator"
         },
-        "record_hash": {
-          "type": "string",
-          "minLength": 20
+        "threshold": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "$comment": "A null threshold marks an undetermined target, such as the deferred PR-01 performance target; it does not mean zero or a pass. A numeric zero can be a zero-tolerance rule, such as CR-01's computation or claim-boundary criteria, rather than a cost-benefit target."
         },
-        "memory_entry_binding": {
-          "type": "string",
-          "minLength": 20
-        },
-        "critical_profile": {
-          "type": "string",
-          "minLength": 20
-        },
-        "run_clock": {
-          "type": "string",
-          "minLength": 20
-        },
-        "evidence_requirement_link": {
-          "type": "string",
-          "minLength": 20
-        },
-        "input_hash": {
-          "type": "string",
-          "minLength": 20
-        },
-        "review_class": {
-          "type": "string",
-          "minLength": 20
-        },
-        "decision_id": {
-          "type": "string",
-          "minLength": 20
-        },
-        "behavior_evaluation_contract": {
-          "type": "string",
-          "minLength": 20
-        },
-        "evaluation_rubric": {
-          "type": "string",
-          "minLength": 20
-        },
-        "eval_set_version": {
-          "type": "string",
-          "minLength": 20
-        },
-        "inheritance_record": {
-          "type": "string",
-          "minLength": 20
-        },
-        "entry_digest": {
-          "type": "string",
-          "minLength": 20
-        },
-        "evidence_digest": {
-          "type": "string",
-          "minLength": 20
-        },
-        "portfolio_risk_input": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Authoritative caller/application-supplied structured portfolio valuation and candidate trade with one currency and valuation time."
-        },
-        "candidate_trade": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Structured new-long stock candidate trade with validated order value, entry, stop, action, position effect, instrument type, leverage, and order count."
-        },
-        "portfolio_risk_result": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Deterministic portfolio-risk result with evaluation status, closed risk reason codes, ratios, effective order value, policy version, threshold status, input digest, valuation time, currency, and evaluation time."
-        },
-        "risk_reason_code": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Closed portfolio-risk reason-code set used by the deterministic evaluator and the shared SafetyGate."
-        },
-        "risk_input_digest": {
-          "type": "string",
-          "minLength": 20,
-          "description": "SHA-256 over the canonical authoritative portfolio-risk input and policy version used by one evaluation."
-        },
-        "portfolio_risk_policy_snapshot": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Locatable policy snapshot with actual concentration and stop thresholds, freshness window, precision rule, threshold status, human approval reference, and digest."
-        },
-        "risk_input_ref": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Run-scoped locatable reference to the canonical stored risk-input artifact with relative path, SHA-256, and file hash scope."
-        },
-        "risk_behavior_evaluation": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Separate cache A/B and risk-policy behavior evaluations with fixed risk policy in cache comparison and a dedicated risk-policy threshold set."
-        },
-        "valuation_cutoff": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Unique timezone-aware risk valuation cutoff derived as min(run_clock.now_utc, end of run_clock.as_of_date in run_clock.timezone); future analysis dates are rejected, never clipped."
-        },
-        "run_id": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Team run invocation identity, unique per invocation, path-safe, preserved across publication retries and recovery; UUIDv4 is not required."
-        },
-        "formal_publication": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Formal publication lifecycle and the rule that terminal manifest completed plus read-time INV-01 is the only commit condition."
-        },
-        "recovery_snapshot": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Complete durably written and read-back-verified redacted formal records and fixed render inputs for model-free startup recovery."
-        },
-        "recovery_claim": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Atomic per-run recovery claim or lease with duplicate-start, stale-claim, isolation, bounded-retry, and single-success rules."
-        },
-        "report_section_manifest": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned-renderer and current-capability section list with section paths, state fields, byte sizes, hashes, and complete-report digest."
-        },
-        "history_query": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Historical publication query with optional ticker/date intersection filters, canonical normalization, deterministic order, bounded results, and typed unknown/corrupt behavior."
-        },
-        "export_target": {
-          "type": "string",
-          "minLength": 20,
-          "description": "User-selected export destination that must not overwrite a non-empty target and does not migrate or modify legacy reports."
-        },
-        "recovery_benchmark": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Fixed recovery performance workload, 30 reset trials, nearest-rank p95, provisional 2-second target, environment metadata, and retained failure samples."
-        },
-        "publication_snapshot": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Permanent formal record set for one committed publication, retained after cleanup and authoritative for history and formal references; distinct from the temporary recovery envelope."
-        },
-        "history_reference_closure": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Transitive source proof for reused historical memory references in a verified export package, or an explicit scope limitation when source proof is unavailable."
-        },
-        "financial_fact": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Structured SEC filing fact with period, unit, currency, filed_at, source, fact identity, sign, and restatement lineage."
-        },
-        "financial_period": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Period identity by start/end, fiscal year/quarter, span, duration, and restatement lineage; near dates are not merged."
-        },
-        "derived_metric": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Deterministic metric with formula, inputs, period, precision, status, source fact IDs, and structured n/a reason."
-        },
-        "metric_block": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Code-generated authoritative numeric metric block with stable IDs, formulas, sources, periods, status, and n/a reasons."
-        },
-        "metric_conflict": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Disclosed narrative-versus-computed-metric mismatch with unverified narrative labeling and no authoritative wrong number."
-        },
-        "downstream_brief": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Bounded downstream context view for the five debate roles, with mandatory gaps/metrics/sources and compressible narrative."
-        },
-        "brief_budget_policy": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned mandatory/compressible budget, overflow rejection or expansion, Unicode, marker, character, and token rules."
-        },
-        "brief_evaluation": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Controlled brief-on/off evaluation measuring added output, reduced input, net token/cost, fidelity, gaps, quality, and safety."
-        },
-        "metric_claim": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Structured model claim with explicit metric_id, period, and parseable value; the only claim scope for deterministic metric-conflict detection."
-        },
-        "metric_evidence_bundle": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Persisted facts, formula/fact/policy versions, metric block, input digest, and result digest stored in permanent and recovery snapshots for model-free recovery."
-        },
-        "context_audit_metadata": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Separate brief audit metadata with source summary, policy version, mandatory digest, omissions, budget decision, fallback reason, and resolvable reference handle."
-        },
-        "execution_policy": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for execution policy."
-        },
-        "method_normalization_contract": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for method normalization contract."
-        },
-        "availability_plan": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for availability plan."
-        },
-        "availability_view": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for availability view."
-        },
-        "write_evidence": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for write evidence."
-        },
-        "history_page": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for history page."
-        },
-        "verified_run": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for verified run."
-        },
-        "portfolio_scope": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for portfolio scope."
-        },
-        "risk_input_diagnostic": {
-          "type": "string",
-          "minLength": 20,
-          "description": "Versioned requirement contract for risk input diagnostic."
+        "unit": {
+          "$ref": "#/$defs/nonEmptyString"
         }
-      }
-    },
-    "baseline_observations": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "statement",
-          "value",
-          "unit",
-          "measured",
-          "measurement_status",
-          "source",
-          "notes"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^BO-[0-9]{2}$"
-          },
-          "statement": {
-            "type": "string",
-            "minLength": 20
-          },
-          "value": {
-            "type": [
-              "string",
-              "number",
-              "integer",
-              "boolean",
-              "null"
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "threshold"
+                ]
+              },
+              {
+                "required": [
+                  "operator"
+                ]
+              },
+              {
+                "required": [
+                  "unit"
+                ]
+              }
             ]
           },
-          "unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "measured": {
-            "type": "boolean"
-          },
-          "measurement_status": {
-            "enum": [
-              "measured",
-              "not_measured",
-              "partially_measured",
-              "not_applicable"
-            ]
-          },
-          "source": {
-            "type": "string",
-            "minLength": 1
-          },
-          "notes": {
-            "type": "string",
-            "minLength": 1
-          },
-          "target": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "target_status": {
-            "enum": [
-              "approved",
-              "provisional",
-              "not_applicable",
-              null
+          "then": {
+            "required": [
+              "metric"
             ]
           }
         }
-      }
+      ],
+      "$comment": "threshold_status is descriptive metadata about the threshold's status. not_applicable does not forbid a threshold field, and a present threshold does not require threshold_status to be approved. Measurement status is independent of threshold status."
     },
-    "requirements": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/requirement"
-      }
-    },
-    "conflict_resolutions": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "requirements",
-          "description",
-          "resolution"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^C-[0-9]{2}$"
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "title",
+        "priority",
+        "status",
+        "stakeholders",
+        "sources",
+        "problem",
+        "statement",
+        "fit_criterion",
+        "tradeoff",
+        "implementation_dependencies",
+        "constraint_relations",
+        "conflicts",
+        "assumptions",
+        "notes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/requirementId"
+        },
+        "type": {
+          "$ref": "#/$defs/requirementType"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "priority": {
+          "$ref": "#/$defs/priority"
+        },
+        "status": {
+          "$ref": "#/$defs/requirementStatus"
+        },
+        "stakeholders": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "sources": {
+          "$ref": "#/$defs/sources"
+        },
+        "problem": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fit_criterion": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/fitCriterion"
+          }
+        },
+        "tradeoff": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "implementation_dependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirementId"
           },
-          "requirements": {
-            "type": "array",
-            "minItems": 2,
-            "items": {
-              "$ref": "#/$defs/requirement_id"
+          "uniqueItems": true
+        },
+        "constraint_relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "notes": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "invariant"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fit_criterion": {
+                "items": {
+                  "properties": {
+                    "zero_tolerance": {
+                      "const": true
+                    }
+                  }
+                }
+              }
             }
-          },
-          "description": {
-            "type": "string",
-            "minLength": 20
-          },
-          "resolution": {
-            "type": "string",
-            "minLength": 20
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "performance"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fit_criterion": {
+                "items": {
+                  "required": [
+                    "metric",
+                    "threshold",
+                    "unit"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "conflictResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requirements",
+        "description",
+        "resolution"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/requirementId"
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resolution": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "wontItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "reason"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },
@@ -778,329 +669,36 @@
         "must": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
-          }
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
         },
         "should": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
-          }
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
         },
         "could": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
-          }
+            "$ref": "#/$defs/requirementId"
+          },
+          "uniqueItems": true
         },
         "wont": {
           "type": "array",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "id",
-              "reason"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 3
-              },
-              "reason": {
-                "type": "string",
-                "minLength": 20
-              }
-            }
+            "$ref": "#/$defs/wontItem"
           }
         },
         "rationale": {
-          "type": "string",
-          "minLength": 20
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },
-    "traceability": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "req_id",
-          "code_refs",
-          "baseline_refs",
-          "notes"
-        ],
-        "properties": {
-          "req_id": {
-            "$ref": "#/$defs/requirement_id"
-          },
-          "code_refs": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "$ref": "#/$defs/ref"
-            }
-          },
-          "baseline_refs": {
-            "type": "array",
-            "minItems": 0,
-            "items": {
-              "$ref": "#/$defs/ref"
-            }
-          },
-          "notes": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
-      }
-    },
-    "validation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "status",
-        "schema",
-        "tool",
-        "checks",
-        "notes",
-        "script",
-        "command",
-        "result_record",
-        "machine_status",
-        "human_review_status"
-      ],
-      "properties": {
-        "status": {
-          "enum": [
-            "pending",
-            "passed",
-            "failed"
-          ]
-        },
-        "schema": {
-          "type": "string",
-          "minLength": 1
-        },
-        "tool": {
-          "type": "string",
-          "minLength": 1
-        },
-        "checks": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "id",
-              "result",
-              "details"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 3
-              },
-              "result": {
-                "enum": [
-                  "pass",
-                  "fail",
-                  "pending"
-                ]
-              },
-              "details": {
-                "type": "string",
-                "minLength": 1
-              }
-            }
-          }
-        },
-        "notes": {
-          "type": "string",
-          "minLength": 1
-        },
-        "script": {
-          "type": "string",
-          "minLength": 1
-        },
-        "command": {
-          "type": "string",
-          "minLength": 1
-        },
-        "result_record": {
-          "type": "string",
-          "minLength": 1
-        },
-        "machine_status": {
-          "enum": [
-            "pending",
-            "passed",
-            "failed"
-          ]
-        },
-        "human_review_status": {
-          "enum": [
-            "pending",
-            "approved",
-            "changes_required",
-            "rejected"
-          ]
-        },
-        "human_review_notes": {
-          "type": "string",
-          "minLength": 1
-        },
-        "approval_record": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "approved_at",
-            "approval_basis",
-            "baseline_version",
-            "approval_scope",
-            "deferred_ids",
-            "fc_id_format",
-            "fc_mapping_ref",
-            "freeze_files",
-            "change_control",
-            "limitations",
-            "prior_baseline_version",
-            "revision_scope"
-          ],
-          "properties": {
-            "approved_at": {
-              "type": "string",
-              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
-            },
-            "approval_basis": {
-              "type": "string",
-              "minLength": 20
-            },
-            "baseline_version": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "approval_scope": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/requirement_id"
-              }
-            },
-            "deferred_ids": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/requirement_id"
-              }
-            },
-            "fc_id_format": {
-              "type": "string",
-              "minLength": 10
-            },
-            "fc_mapping_ref": {
-              "type": "string",
-              "minLength": 1
-            },
-            "freeze_files": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "change_control": {
-              "type": "string",
-              "minLength": 20
-            },
-            "limitations": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string",
-                "minLength": 10
-              }
-            },
-            "prior_baseline_version": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "revision_scope": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string",
-                "minLength": 10
-              }
-            }
-          }
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "human_review_status": {
-                "const": "approved"
-              }
-            },
-            "required": [
-              "human_review_status"
-            ]
-          },
-          "then": {
-            "required": [
-              "approval_record"
-            ]
-          }
-        }
-      ]
-    },
-    "open_questions": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "question",
-          "impact",
-          "blocking"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^OQ-[0-9]{2}$"
-          },
-          "question": {
-            "type": "string",
-            "minLength": 20
-          },
-          "impact": {
-            "type": "string",
-            "minLength": 10
-          },
-          "blocking": {
-            "type": "boolean"
-          }
-        }
-      }
-    }
-  },
-  "$defs": {
-    "requirement_id": {
-      "type": "string",
-      "pattern": "^(FR|INV|QR|PR|CR|GR|SR|SB)-[0-9]{2}$"
-    },
-    "acceptance_id": {
-      "type": "string",
-      "pattern": "^(FR|INV|QR|PR|CR|GR|SR|SB)-[0-9]{2}-FC[0-9]{2}$"
-    },
-    "ref": {
+    "traceRef": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -1110,276 +708,378 @@
       ],
       "properties": {
         "path": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nonEmptyString"
         },
         "locator": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nonEmptyString"
         },
         "description": {
-          "type": "string",
-          "minLength": 10
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },
-    "source_evidence": {
+    "traceabilityEntry": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "path",
-        "locator",
-        "description",
-        "source_type"
+        "req_id",
+        "code_refs",
+        "baseline_refs",
+        "notes"
       ],
       "properties": {
-        "path": {
-          "type": "string",
-          "minLength": 1
+        "req_id": {
+          "$ref": "#/$defs/requirementId"
         },
-        "locator": {
-          "type": "string",
-          "minLength": 1
-        },
-        "description": {
-          "type": "string",
-          "minLength": 10
-        },
-        "source_type": {
-          "enum": [
-            "code",
-            "measured_baseline",
-            "document",
-            "inference",
-            "open_question"
-          ]
-        }
-      }
-    },
-    "acceptance": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "input",
-        "expected_result",
-        "verification",
-        "zero_tolerance",
-        "measurement_status",
-        "threshold_status"
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/acceptance_id"
-        },
-        "input": {
-          "type": "string",
-          "minLength": 15
-        },
-        "expected_result": {
-          "type": "string",
-          "minLength": 15
-        },
-        "verification": {
-          "type": "string",
-          "minLength": 15
-        },
-        "zero_tolerance": {
-          "type": "boolean"
-        },
-        "measurement_status": {
-          "enum": [
-            "measured",
-            "not_measured",
-            "partially_measured",
-            "not_applicable"
-          ]
-        },
-        "threshold_status": {
-          "enum": [
-            "approved",
-            "provisional",
-            "not_applicable"
-          ]
-        },
-        "metric": {
-          "type": "string",
-          "minLength": 3
-        },
-        "operator": {
-          "type": "string",
-          "minLength": 1
-        },
-        "threshold": {
-          "type": [
-            "number",
-            "null"
-          ]
-        },
-        "threshold_ref": {
-          "type": "string",
-          "minLength": 1
-        },
-        "unit": {
-          "type": "string",
-          "minLength": 1
-        },
-        "environment": {
-          "type": "string",
-          "minLength": 1
-        },
-        "sample_size": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "statistical_method": {
-          "type": "string",
-          "minLength": 1
-        },
-        "dataset_version": {
-          "type": "string",
-          "minLength": 1
-        },
-        "measurement_boundary": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
-    "requirement": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "type",
-        "title",
-        "priority",
-        "status",
-        "stakeholders",
-        "sources",
-        "problem",
-        "statement",
-        "fit_criterion",
-        "tradeoff",
-        "conflicts",
-        "assumptions",
-        "notes",
-        "implementation_dependencies",
-        "constraint_relations"
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/requirement_id"
-        },
-        "type": {
-          "enum": [
-            "functional",
-            "invariant",
-            "quality",
-            "performance",
-            "cost",
-            "governance",
-            "security"
-          ]
-        },
-        "title": {
-          "type": "string",
-          "minLength": 8
-        },
-        "priority": {
-          "enum": [
-            "Must",
-            "Should",
-            "Could",
-            "Wont"
-          ]
-        },
-        "status": {
-          "enum": [
-            "approved",
-            "draft",
-            "deferred"
-          ]
-        },
-        "stakeholders": {
+        "code_refs": {
           "type": "array",
-          "minItems": 1,
           "items": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9_]*$"
+            "$ref": "#/$defs/traceRef"
           }
         },
-        "problem": {
-          "type": "string",
-          "minLength": 30
-        },
-        "statement": {
-          "type": "string",
-          "minLength": 50
-        },
-        "tradeoff": {
-          "type": "string",
-          "minLength": 20
-        },
-        "conflicts": {
+        "baseline_refs": {
           "type": "array",
-          "minItems": 0,
           "items": {
-            "type": "string",
-            "minLength": 15
-          }
-        },
-        "assumptions": {
-          "type": "array",
-          "minItems": 0,
-          "items": {
-            "type": "string",
-            "minLength": 15
+            "$ref": "#/$defs/traceRef"
           }
         },
         "notes": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "result",
+        "details"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
         },
-        "implementation_dependencies": {
+        "result": {
+          "enum": [
+            "pass",
+            "fail",
+            "pending"
+          ]
+        },
+        "details": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "approvalRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approved_at",
+        "approval_basis",
+        "baseline_version",
+        "approval_scope",
+        "deferred_ids",
+        "fc_id_format",
+        "fc_mapping_ref",
+        "freeze_files",
+        "change_control",
+        "limitations",
+        "prior_baseline_version",
+        "revision_scope"
+      ],
+      "properties": {
+        "approved_at": {
+          "$ref": "#/$defs/dateString"
+        },
+        "approval_basis": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "baseline_version": {
+          "$ref": "#/$defs/versionString"
+        },
+        "approval_scope": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
+            "$ref": "#/$defs/requirementId"
           }
         },
-        "constraint_relations": {
+        "deferred_ids": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/requirement_id"
+            "$ref": "#/$defs/requirementId"
           }
         },
-        "sources": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "origin",
-            "evidence"
-          ],
-          "properties": {
-            "origin": {
-              "type": "string",
-              "minLength": 5
-            },
-            "evidence": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/source_evidence"
-              }
-            }
+        "fc_id_format": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fc_mapping_ref": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "freeze_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
           }
         },
-        "fit_criterion": {
+        "change_control": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "prior_baseline_version": {
+          "$ref": "#/$defs/versionString"
+        },
+        "revision_scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current",
+        "checks",
+        "history"
+      ],
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/validationCurrent"
+        },
+        "checks": {
           "type": "array",
           "minItems": 1,
           "items": {
-            "$ref": "#/$defs/acceptance"
+            "$ref": "#/$defs/validationCheck"
           }
+        },
+        "history": {
+          "$ref": "#/$defs/validationHistory"
+        }
+      }
+    },
+    "openQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "question",
+        "impact",
+        "blocking"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "question": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "impact": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "blocking": {
+          "type": "boolean"
+        }
+      }
+    },
+    "validationStatus": {
+      "enum": [
+        "pending",
+        "passed",
+        "failed"
+      ]
+    },
+    "humanReviewStatus": {
+      "enum": [
+        "pending",
+        "approved",
+        "changes_required",
+        "rejected"
+      ]
+    },
+    "validationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "method",
+        "result",
+        "details"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "enum": [
+            "command",
+            "one_time"
+          ]
+        },
+        "method": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "result": {
+          "enum": [
+            "pass",
+            "fail",
+            "pending"
+          ]
+        },
+        "details": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "validationCurrent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document",
+        "schema",
+        "structural_status",
+        "consistency_status",
+        "scope",
+        "working_directory",
+        "dependencies",
+        "command",
+        "ci_status",
+        "ci_note",
+        "application_status",
+        "application_note",
+        "design_approval_note",
+        "limitations"
+      ],
+      "properties": {
+        "document": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "schema": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "structural_status": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "consistency_status": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "scope": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "working_directory": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "command": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "ci_status": {
+          "enum": [
+            "not_integrated",
+            "integrated"
+          ]
+        },
+        "ci_note": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "application_status": {
+          "enum": [
+            "not_run",
+            "run"
+          ]
+        },
+        "application_note": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "design_approval_note": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "validationHistory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applicable_version",
+        "status",
+        "machine_status",
+        "human_review_status",
+        "human_review_notes",
+        "schema",
+        "script",
+        "command",
+        "result_record",
+        "tool",
+        "status_note",
+        "checks",
+        "notes",
+        "approval_record"
+      ],
+      "properties": {
+        "applicable_version": {
+          "$ref": "#/$defs/versionString"
+        },
+        "status": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "machine_status": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "human_review_status": {
+          "$ref": "#/$defs/humanReviewStatus"
+        },
+        "human_review_notes": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "schema": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "script": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "command": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "result_record": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "tool": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status_note": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "notes": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "approval_record": {
+          "$ref": "#/$defs/approvalRecord"
         }
       }
     }
