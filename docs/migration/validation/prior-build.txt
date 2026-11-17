@@ -1,0 +1,512 @@
+* Getting build dependencies for sdist...
+running egg_info
+creating src/tradingagents.egg-info
+writing src/tradingagents.egg-info/PKG-INFO
+writing dependency_links to src/tradingagents.egg-info/dependency_links.txt
+writing entry points to src/tradingagents.egg-info/entry_points.txt
+writing requirements to src/tradingagents.egg-info/requires.txt
+writing top-level names to src/tradingagents.egg-info/top_level.txt
+writing manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+reading manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+* Building sdist...
+running sdist
+running egg_info
+writing src/tradingagents.egg-info/PKG-INFO
+writing dependency_links to src/tradingagents.egg-info/dependency_links.txt
+writing entry points to src/tradingagents.egg-info/entry_points.txt
+writing requirements to src/tradingagents.egg-info/requires.txt
+writing top-level names to src/tradingagents.egg-info/top_level.txt
+reading manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+running check
+creating tradingagents-0.7.0
+creating tradingagents-0.7.0/src/cli
+creating tradingagents-0.7.0/src/cli/static
+creating tradingagents-0.7.0/src/tradingagents
+creating tradingagents-0.7.0/src/tradingagents.egg-info
+creating tradingagents-0.7.0/src/tradingagents/agents
+creating tradingagents-0.7.0/src/tradingagents/agents/analysts
+creating tradingagents-0.7.0/src/tradingagents/agents/managers
+creating tradingagents-0.7.0/src/tradingagents/agents/researchers
+creating tradingagents-0.7.0/src/tradingagents/agents/risk_mgmt
+creating tradingagents-0.7.0/src/tradingagents/agents/trader
+creating tradingagents-0.7.0/src/tradingagents/assets
+creating tradingagents-0.7.0/src/tradingagents/dataflows
+creating tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+creating tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+creating tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+creating tradingagents-0.7.0/src/tradingagents/graph
+creating tradingagents-0.7.0/src/tradingagents/llm_clients
+creating tradingagents-0.7.0/src/tradingagents/memory
+copying files to tradingagents-0.7.0...
+copying LICENSE -> tradingagents-0.7.0
+copying README.md -> tradingagents-0.7.0
+copying pyproject.toml -> tradingagents-0.7.0
+copying src/cli/__init__.py -> tradingagents-0.7.0/src/cli
+copying src/cli/display.py -> tradingagents-0.7.0/src/cli
+copying src/cli/main.py -> tradingagents-0.7.0/src/cli
+copying src/cli/models.py -> tradingagents-0.7.0/src/cli
+copying src/cli/prefs.py -> tradingagents-0.7.0/src/cli
+copying src/cli/prompts.py -> tradingagents-0.7.0/src/cli
+copying src/cli/run.py -> tradingagents-0.7.0/src/cli
+copying src/cli/selections.py -> tradingagents-0.7.0/src/cli
+copying src/cli/stats_handler.py -> tradingagents-0.7.0/src/cli
+copying src/cli/updates.py -> tradingagents-0.7.0/src/cli
+copying src/cli/static/welcome.txt -> tradingagents-0.7.0/src/cli/static
+copying src/tradingagents/__init__.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents/backtest.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents/default_config.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents/portfolio.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents/report_html.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents/reporting.py -> tradingagents-0.7.0/src/tradingagents
+copying src/tradingagents.egg-info/PKG-INFO -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents.egg-info/SOURCES.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents.egg-info/dependency_links.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents.egg-info/entry_points.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents.egg-info/requires.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents.egg-info/top_level.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+copying src/tradingagents/agents/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/context.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/post_screen.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/rating.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/schemas.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/state.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/structured.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/tools.py -> tradingagents-0.7.0/src/tradingagents/agents
+copying src/tradingagents/agents/analysts/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/fundamentals_analyst.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/market_analyst.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/news_analyst.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/sentiment_analyst.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/turn.py -> tradingagents-0.7.0/src/tradingagents/agents/analysts
+copying src/tradingagents/agents/managers/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents/managers
+copying src/tradingagents/agents/managers/portfolio_manager.py -> tradingagents-0.7.0/src/tradingagents/agents/managers
+copying src/tradingagents/agents/managers/research_manager.py -> tradingagents-0.7.0/src/tradingagents/agents/managers
+copying src/tradingagents/agents/researchers/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents/researchers
+copying src/tradingagents/agents/researchers/bear_researcher.py -> tradingagents-0.7.0/src/tradingagents/agents/researchers
+copying src/tradingagents/agents/researchers/bull_researcher.py -> tradingagents-0.7.0/src/tradingagents/agents/researchers
+copying src/tradingagents/agents/risk_mgmt/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/aggressive_debator.py -> tradingagents-0.7.0/src/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/conservative_debator.py -> tradingagents-0.7.0/src/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/neutral_debator.py -> tradingagents-0.7.0/src/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/trader/__init__.py -> tradingagents-0.7.0/src/tradingagents/agents/trader
+copying src/tradingagents/agents/trader/trader.py -> tradingagents-0.7.0/src/tradingagents/agents/trader
+copying src/tradingagents/assets/tauric-logo.svg -> tradingagents-0.7.0/src/tradingagents/assets
+copying src/tradingagents/dataflows/__init__.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/config.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/date_window.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/errors.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/files.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/net.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/router.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/symbols.py -> tradingagents-0.7.0/src/tradingagents/dataflows
+copying src/tradingagents/dataflows/vendors/__init__.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/fred.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/polymarket.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/reddit.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/sec_edgar.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/stocktwits.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/alpha_vantage/__init__.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/common.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/indicator.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/news.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/stock.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/yahoo/__init__.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/common.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/fundamentals.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/market.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/news.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/ohlcv.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/snapshot.py -> tradingagents-0.7.0/src/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/graph/__init__.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/analyst_execution.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/checkpointer.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/conditional_logic.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/propagation.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/setup.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/graph/trading_graph.py -> tradingagents-0.7.0/src/tradingagents/graph
+copying src/tradingagents/llm_clients/__init__.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/anthropic_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/api_key_env.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/azure_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/base_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/bedrock_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/capabilities.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/chatgpt_auth.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/factory.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/google_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/model_catalog.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/openai_client.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/validators.py -> tradingagents-0.7.0/src/tradingagents/llm_clients
+copying src/tradingagents/memory/__init__.py -> tradingagents-0.7.0/src/tradingagents/memory
+copying src/tradingagents/memory/log.py -> tradingagents-0.7.0/src/tradingagents/memory
+copying src/tradingagents/memory/reflection.py -> tradingagents-0.7.0/src/tradingagents/memory
+copying src/tradingagents/memory/settlement.py -> tradingagents-0.7.0/src/tradingagents/memory
+copying src/tradingagents.egg-info/SOURCES.txt -> tradingagents-0.7.0/src/tradingagents.egg-info
+Writing tradingagents-0.7.0/setup.cfg
+Creating tar archive
+removing 'tradingagents-0.7.0' (and everything under it)
+* Building wheel from sdist
+* Getting build dependencies for wheel...
+running egg_info
+writing src/tradingagents.egg-info/PKG-INFO
+writing dependency_links to src/tradingagents.egg-info/dependency_links.txt
+writing entry points to src/tradingagents.egg-info/entry_points.txt
+writing requirements to src/tradingagents.egg-info/requires.txt
+writing top-level names to src/tradingagents.egg-info/top_level.txt
+reading manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+* Building wheel...
+running bdist_wheel
+running build
+running build_py
+creating build/lib/cli
+copying src/cli/run.py -> build/lib/cli
+copying src/cli/models.py -> build/lib/cli
+copying src/cli/updates.py -> build/lib/cli
+copying src/cli/__init__.py -> build/lib/cli
+copying src/cli/selections.py -> build/lib/cli
+copying src/cli/display.py -> build/lib/cli
+copying src/cli/prompts.py -> build/lib/cli
+copying src/cli/prefs.py -> build/lib/cli
+copying src/cli/main.py -> build/lib/cli
+copying src/cli/stats_handler.py -> build/lib/cli
+creating build/lib/tradingagents
+copying src/tradingagents/__init__.py -> build/lib/tradingagents
+copying src/tradingagents/default_config.py -> build/lib/tradingagents
+copying src/tradingagents/backtest.py -> build/lib/tradingagents
+copying src/tradingagents/portfolio.py -> build/lib/tradingagents
+copying src/tradingagents/report_html.py -> build/lib/tradingagents
+copying src/tradingagents/reporting.py -> build/lib/tradingagents
+creating build/lib/tradingagents/memory
+copying src/tradingagents/memory/log.py -> build/lib/tradingagents/memory
+copying src/tradingagents/memory/reflection.py -> build/lib/tradingagents/memory
+copying src/tradingagents/memory/settlement.py -> build/lib/tradingagents/memory
+copying src/tradingagents/memory/__init__.py -> build/lib/tradingagents/memory
+creating build/lib/tradingagents/graph
+copying src/tradingagents/graph/analyst_execution.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/checkpointer.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/__init__.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/trading_graph.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/conditional_logic.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/setup.py -> build/lib/tradingagents/graph
+copying src/tradingagents/graph/propagation.py -> build/lib/tradingagents/graph
+creating build/lib/tradingagents/agents
+copying src/tradingagents/agents/post_screen.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/rating.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/tools.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/__init__.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/context.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/schemas.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/structured.py -> build/lib/tradingagents/agents
+copying src/tradingagents/agents/state.py -> build/lib/tradingagents/agents
+creating build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/files.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/config.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/net.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/date_window.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/__init__.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/symbols.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/errors.py -> build/lib/tradingagents/dataflows
+copying src/tradingagents/dataflows/router.py -> build/lib/tradingagents/dataflows
+creating build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/bedrock_client.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/validators.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/base_client.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/azure_client.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/__init__.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/factory.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/google_client.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/model_catalog.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/capabilities.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/api_key_env.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/chatgpt_auth.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/openai_client.py -> build/lib/tradingagents/llm_clients
+copying src/tradingagents/llm_clients/anthropic_client.py -> build/lib/tradingagents/llm_clients
+creating build/lib/tradingagents/agents/researchers
+copying src/tradingagents/agents/researchers/__init__.py -> build/lib/tradingagents/agents/researchers
+copying src/tradingagents/agents/researchers/bull_researcher.py -> build/lib/tradingagents/agents/researchers
+copying src/tradingagents/agents/researchers/bear_researcher.py -> build/lib/tradingagents/agents/researchers
+creating build/lib/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/conservative_debator.py -> build/lib/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/aggressive_debator.py -> build/lib/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/__init__.py -> build/lib/tradingagents/agents/risk_mgmt
+copying src/tradingagents/agents/risk_mgmt/neutral_debator.py -> build/lib/tradingagents/agents/risk_mgmt
+creating build/lib/tradingagents/agents/trader
+copying src/tradingagents/agents/trader/__init__.py -> build/lib/tradingagents/agents/trader
+copying src/tradingagents/agents/trader/trader.py -> build/lib/tradingagents/agents/trader
+creating build/lib/tradingagents/agents/managers
+copying src/tradingagents/agents/managers/__init__.py -> build/lib/tradingagents/agents/managers
+copying src/tradingagents/agents/managers/portfolio_manager.py -> build/lib/tradingagents/agents/managers
+copying src/tradingagents/agents/managers/research_manager.py -> build/lib/tradingagents/agents/managers
+creating build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/turn.py -> build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/market_analyst.py -> build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/__init__.py -> build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/news_analyst.py -> build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/sentiment_analyst.py -> build/lib/tradingagents/agents/analysts
+copying src/tradingagents/agents/analysts/fundamentals_analyst.py -> build/lib/tradingagents/agents/analysts
+creating build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/polymarket.py -> build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/__init__.py -> build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/stocktwits.py -> build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/fred.py -> build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/sec_edgar.py -> build/lib/tradingagents/dataflows/vendors
+copying src/tradingagents/dataflows/vendors/reddit.py -> build/lib/tradingagents/dataflows/vendors
+creating build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/indicator.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/__init__.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/stock.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/common.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+copying src/tradingagents/dataflows/vendors/alpha_vantage/news.py -> build/lib/tradingagents/dataflows/vendors/alpha_vantage
+creating build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/fundamentals.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/market.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/__init__.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/common.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/ohlcv.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/news.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+copying src/tradingagents/dataflows/vendors/yahoo/snapshot.py -> build/lib/tradingagents/dataflows/vendors/yahoo
+running egg_info
+writing src/tradingagents.egg-info/PKG-INFO
+writing dependency_links to src/tradingagents.egg-info/dependency_links.txt
+writing entry points to src/tradingagents.egg-info/entry_points.txt
+writing requirements to src/tradingagents.egg-info/requires.txt
+writing top-level names to src/tradingagents.egg-info/top_level.txt
+reading manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 'src/tradingagents.egg-info/SOURCES.txt'
+creating build/lib/cli/static
+copying src/cli/static/welcome.txt -> build/lib/cli/static
+creating build/lib/tradingagents/assets
+copying src/tradingagents/assets/tauric-logo.svg -> build/lib/tradingagents/assets
+installing to build/bdist.macosx-12.1-arm64/wheel
+running install
+running install_lib
+creating build/bdist.macosx-12.1-arm64/wheel
+creating build/bdist.macosx-12.1-arm64/wheel/cli
+copying build/lib/cli/run.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/models.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/updates.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/selections.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/display.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/prompts.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/prefs.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+creating build/bdist.macosx-12.1-arm64/wheel/cli/static
+copying build/lib/cli/static/welcome.txt -> build/bdist.macosx-12.1-arm64/wheel/./cli/static
+copying build/lib/cli/main.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+copying build/lib/cli/stats_handler.py -> build/bdist.macosx-12.1-arm64/wheel/./cli
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/memory
+copying build/lib/tradingagents/memory/log.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/memory
+copying build/lib/tradingagents/memory/reflection.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/memory
+copying build/lib/tradingagents/memory/settlement.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/memory
+copying build/lib/tradingagents/memory/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/memory
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/graph
+copying build/lib/tradingagents/graph/analyst_execution.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/checkpointer.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/trading_graph.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/conditional_logic.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/setup.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/graph/propagation.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/graph
+copying build/lib/tradingagents/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents/researchers
+copying build/lib/tradingagents/agents/researchers/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/researchers
+copying build/lib/tradingagents/agents/researchers/bull_researcher.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/researchers
+copying build/lib/tradingagents/agents/researchers/bear_researcher.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/researchers
+copying build/lib/tradingagents/agents/post_screen.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+copying build/lib/tradingagents/agents/rating.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents/risk_mgmt
+copying build/lib/tradingagents/agents/risk_mgmt/conservative_debator.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/risk_mgmt
+copying build/lib/tradingagents/agents/risk_mgmt/aggressive_debator.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/risk_mgmt
+copying build/lib/tradingagents/agents/risk_mgmt/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/risk_mgmt
+copying build/lib/tradingagents/agents/risk_mgmt/neutral_debator.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/risk_mgmt
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents/trader
+copying build/lib/tradingagents/agents/trader/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/trader
+copying build/lib/tradingagents/agents/trader/trader.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/trader
+copying build/lib/tradingagents/agents/tools.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents/managers
+copying build/lib/tradingagents/agents/managers/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/managers
+copying build/lib/tradingagents/agents/managers/portfolio_manager.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/managers
+copying build/lib/tradingagents/agents/managers/research_manager.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/managers
+copying build/lib/tradingagents/agents/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+copying build/lib/tradingagents/agents/context.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/turn.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/market_analyst.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/news_analyst.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/sentiment_analyst.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/analysts/fundamentals_analyst.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents/analysts
+copying build/lib/tradingagents/agents/schemas.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+copying build/lib/tradingagents/agents/structured.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+copying build/lib/tradingagents/agents/state.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/agents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/files.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/dataflows/vendors
+copying build/lib/tradingagents/dataflows/vendors/polymarket.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+copying build/lib/tradingagents/dataflows/vendors/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+copying build/lib/tradingagents/dataflows/vendors/stocktwits.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/indicator.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/stock.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/common.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/alpha_vantage/news.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/alpha_vantage
+copying build/lib/tradingagents/dataflows/vendors/fred.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+copying build/lib/tradingagents/dataflows/vendors/sec_edgar.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+copying build/lib/tradingagents/dataflows/vendors/reddit.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/fundamentals.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/market.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/common.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/ohlcv.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/news.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/vendors/yahoo/snapshot.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows/vendors/yahoo
+copying build/lib/tradingagents/dataflows/config.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/net.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/date_window.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/symbols.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/errors.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/dataflows/router.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/dataflows
+copying build/lib/tradingagents/default_config.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+copying build/lib/tradingagents/backtest.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/assets
+copying build/lib/tradingagents/assets/tauric-logo.svg -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/assets
+copying build/lib/tradingagents/portfolio.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/bedrock_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/validators.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/base_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/azure_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/__init__.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/factory.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/google_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/model_catalog.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/capabilities.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/api_key_env.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/chatgpt_auth.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/openai_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/llm_clients/anthropic_client.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents/llm_clients
+copying build/lib/tradingagents/report_html.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+copying build/lib/tradingagents/reporting.py -> build/bdist.macosx-12.1-arm64/wheel/./tradingagents
+running install_egg_info
+Copying src/tradingagents.egg-info to build/bdist.macosx-12.1-arm64/wheel/./tradingagents-0.7.0-py3.14.egg-info
+running install_scripts
+creating build/bdist.macosx-12.1-arm64/wheel/tradingagents-0.7.0.dist-info/WHEEL
+creating '/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/dist/.tmp-63n0llt8/tradingagents-0.7.0-py3-none-any.whl' and adding 'build/bdist.macosx-12.1-arm64/wheel' to it
+adding 'cli/__init__.py'
+adding 'cli/display.py'
+adding 'cli/main.py'
+adding 'cli/models.py'
+adding 'cli/prefs.py'
+adding 'cli/prompts.py'
+adding 'cli/run.py'
+adding 'cli/selections.py'
+adding 'cli/stats_handler.py'
+adding 'cli/updates.py'
+adding 'cli/static/welcome.txt'
+adding 'tradingagents/__init__.py'
+adding 'tradingagents/backtest.py'
+adding 'tradingagents/default_config.py'
+adding 'tradingagents/portfolio.py'
+adding 'tradingagents/report_html.py'
+adding 'tradingagents/reporting.py'
+adding 'tradingagents/agents/__init__.py'
+adding 'tradingagents/agents/context.py'
+adding 'tradingagents/agents/post_screen.py'
+adding 'tradingagents/agents/rating.py'
+adding 'tradingagents/agents/schemas.py'
+adding 'tradingagents/agents/state.py'
+adding 'tradingagents/agents/structured.py'
+adding 'tradingagents/agents/tools.py'
+adding 'tradingagents/agents/analysts/__init__.py'
+adding 'tradingagents/agents/analysts/fundamentals_analyst.py'
+adding 'tradingagents/agents/analysts/market_analyst.py'
+adding 'tradingagents/agents/analysts/news_analyst.py'
+adding 'tradingagents/agents/analysts/sentiment_analyst.py'
+adding 'tradingagents/agents/analysts/turn.py'
+adding 'tradingagents/agents/managers/__init__.py'
+adding 'tradingagents/agents/managers/portfolio_manager.py'
+adding 'tradingagents/agents/managers/research_manager.py'
+adding 'tradingagents/agents/researchers/__init__.py'
+adding 'tradingagents/agents/researchers/bear_researcher.py'
+adding 'tradingagents/agents/researchers/bull_researcher.py'
+adding 'tradingagents/agents/risk_mgmt/__init__.py'
+adding 'tradingagents/agents/risk_mgmt/aggressive_debator.py'
+adding 'tradingagents/agents/risk_mgmt/conservative_debator.py'
+adding 'tradingagents/agents/risk_mgmt/neutral_debator.py'
+adding 'tradingagents/agents/trader/__init__.py'
+adding 'tradingagents/agents/trader/trader.py'
+adding 'tradingagents/assets/tauric-logo.svg'
+adding 'tradingagents/dataflows/__init__.py'
+adding 'tradingagents/dataflows/config.py'
+adding 'tradingagents/dataflows/date_window.py'
+adding 'tradingagents/dataflows/errors.py'
+adding 'tradingagents/dataflows/files.py'
+adding 'tradingagents/dataflows/net.py'
+adding 'tradingagents/dataflows/router.py'
+adding 'tradingagents/dataflows/symbols.py'
+adding 'tradingagents/dataflows/vendors/__init__.py'
+adding 'tradingagents/dataflows/vendors/fred.py'
+adding 'tradingagents/dataflows/vendors/polymarket.py'
+adding 'tradingagents/dataflows/vendors/reddit.py'
+adding 'tradingagents/dataflows/vendors/sec_edgar.py'
+adding 'tradingagents/dataflows/vendors/stocktwits.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/__init__.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/common.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/indicator.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/news.py'
+adding 'tradingagents/dataflows/vendors/alpha_vantage/stock.py'
+adding 'tradingagents/dataflows/vendors/yahoo/__init__.py'
+adding 'tradingagents/dataflows/vendors/yahoo/common.py'
+adding 'tradingagents/dataflows/vendors/yahoo/fundamentals.py'
+adding 'tradingagents/dataflows/vendors/yahoo/market.py'
+adding 'tradingagents/dataflows/vendors/yahoo/news.py'
+adding 'tradingagents/dataflows/vendors/yahoo/ohlcv.py'
+adding 'tradingagents/dataflows/vendors/yahoo/snapshot.py'
+adding 'tradingagents/graph/__init__.py'
+adding 'tradingagents/graph/analyst_execution.py'
+adding 'tradingagents/graph/checkpointer.py'
+adding 'tradingagents/graph/conditional_logic.py'
+adding 'tradingagents/graph/propagation.py'
+adding 'tradingagents/graph/setup.py'
+adding 'tradingagents/graph/trading_graph.py'
+adding 'tradingagents/llm_clients/__init__.py'
+adding 'tradingagents/llm_clients/anthropic_client.py'
+adding 'tradingagents/llm_clients/api_key_env.py'
+adding 'tradingagents/llm_clients/azure_client.py'
+adding 'tradingagents/llm_clients/base_client.py'
+adding 'tradingagents/llm_clients/bedrock_client.py'
+adding 'tradingagents/llm_clients/capabilities.py'
+adding 'tradingagents/llm_clients/chatgpt_auth.py'
+adding 'tradingagents/llm_clients/factory.py'
+adding 'tradingagents/llm_clients/google_client.py'
+adding 'tradingagents/llm_clients/model_catalog.py'
+adding 'tradingagents/llm_clients/openai_client.py'
+adding 'tradingagents/llm_clients/validators.py'
+adding 'tradingagents/memory/__init__.py'
+adding 'tradingagents/memory/log.py'
+adding 'tradingagents/memory/reflection.py'
+adding 'tradingagents/memory/settlement.py'
+adding 'tradingagents-0.7.0.dist-info/licenses/LICENSE'
+adding 'tradingagents-0.7.0.dist-info/METADATA'
+adding 'tradingagents-0.7.0.dist-info/WHEEL'
+adding 'tradingagents-0.7.0.dist-info/entry_points.txt'
+adding 'tradingagents-0.7.0.dist-info/top_level.txt'
+adding 'tradingagents-0.7.0.dist-info/RECORD'
+removing build/bdist.macosx-12.1-arm64/wheel
+Successfully built tradingagents-0.7.0.tar.gz and tradingagents-0.7.0-py3-none-any.whl

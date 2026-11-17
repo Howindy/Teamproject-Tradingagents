@@ -114,8 +114,8 @@ def main() -> int:
 
     invocation = (
         "zsh -c 'source ~/.zshrc && use_ta_cityu && cd "
-        f"{PROJECT_ROOT / 'TradingAgents'} && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD\" "
-        "/opt/miniconda3/envs/tradingagents/bin/python -B ../scripts/run_baseline.py "
+        f"{PROJECT_ROOT} && PYTHONDONTWRITEBYTECODE=1 "
+        "/opt/miniconda3/envs/tradingagents/bin/python -B scripts/run_baseline.py "
         f"--run-id {args.run_id} --ticker NVDA --date 2026-10-19 "
         "--analysts market,social,news,fundamentals --language English "
         "--debate-rounds 1 --risk-rounds 1'"
@@ -124,10 +124,10 @@ def main() -> int:
 set -euo pipefail
 source ~/.zshrc
 use_ta_cityu
-cd {PROJECT_ROOT / 'TradingAgents'}
+cd {PROJECT_ROOT}
 RUN_ID="${{1:-{args.run_id}-repro}}"
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /opt/miniconda3/envs/tradingagents/bin/python -B \\
-  ../scripts/run_baseline.py \\
+PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python -B \\
+  scripts/run_baseline.py \\
   --run-id "$RUN_ID" --ticker NVDA --date 2026-10-19 \\
   --analysts market,social,news,fundamentals --language English \\
   --debate-rounds 1 --risk-rounds 1
@@ -196,7 +196,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /opt/miniconda3/envs/tradingagents/b
         invocation,
         "```",
         "",
-        f"- Working directory: `{PROJECT_ROOT / 'TradingAgents'}`",
+        f"- Working directory: `{PROJECT_ROOT}`",
         f"- stdout/stderr: {environment.get('stdout_stderr_mode')}",
         "",
         "## Preflight",

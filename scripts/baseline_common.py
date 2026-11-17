@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = PROJECT_ROOT / "TradingAgents"
+SOURCE_ROOT = PROJECT_ROOT / "src"
 BASELINE_ROOT = PROJECT_ROOT / "baseline"
 SCRIPTS_ROOT = PROJECT_ROOT / "scripts"
 

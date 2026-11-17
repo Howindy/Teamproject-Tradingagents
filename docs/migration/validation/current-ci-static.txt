@@ -1,0 +1,15 @@
+CI static inspection
+path: .github/workflows/ci.yml
+triggers: {'push': None, 'pull_request': None}
+jobs: ['test', 'smoke-install', 'lint']
+[test] runs-on=ubuntu-latest
+  matrix= {'python-version': ['3.11', '3.12', '3.13', '3.14'], 'include': [{'python-version': '3.12', 'tz': 'America/New_York'}]}
+  run: python -m pip install --upgrade pip | pip install -e ".[dev]"
+  run: pytest -q
+[smoke-install] runs-on=ubuntu-latest
+  matrix= None
+  run: python -m pip install --upgrade pip | pip install . | # Catches undeclared runtime deps (e.g. #994 python-dotenv): a bare | # install must import the package and the CLI module. | python -c "import tradingagents, cli.main; print('clean-install import OK')"
+[lint] runs-on=ubuntu-latest
+  matrix= None
+  run: pip install "ruff>=0.16"
+  run: ruff check .

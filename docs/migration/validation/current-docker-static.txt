@@ -1,0 +1,96 @@
+Docker static inspection
+--- Dockerfile ---
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /build
+COPY . .
+RUN pip install --no-cache-dir .
+
+FROM python:3.13-slim
+
+# TRADINGAGENTS_IN_DOCKER lets an update notice name the rebuild command.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TRADINGAGENTS_IN_DOCKER=1
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN useradd --create-home appuser \
+ && install -d -m 0755 -o appuser -g appuser /home/appuser/.tradingagents
+USER appuser
+WORKDIR /home/appuser/app
+
+COPY --from=builder --chown=appuser:appuser /build .
+
+ENTRYPOINT ["tradingagents"]
+--- docker-compose.yml ---
+services:
+  tradingagents:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
+    tty: true
+    stdin_open: true
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    profiles:
+      - ollama
+
+  tradingagents-ollama:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - TRADINGAGENTS_LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+    volumes:
+      - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
+    depends_on:
+      - ollama
+    tty: true
+    stdin_open: true
+    profiles:
+      - ollama
+
+volumes:
+  tradingagents_data:
+  ollama_data:
+--- .dockerignore ---
+.git
+.venv
+.env
+.env.enterprise
+.claude
+.idea
+.vscode
+.DS_Store
+__pycache__
+*.egg-info
+build
+dist
+results
+reports
+.pytest_cache
+.mypy_cache
+.ruff_cache
+test
+tests
+docs
+baseline
+transcripts
+scripts
+.github
+Dockerfile
+docker-compose.yml

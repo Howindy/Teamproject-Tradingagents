@@ -1,0 +1,353 @@
+// CS5351 D3 project permission configuration, English; target: OpenCode 1.19.3 (V1 syntax).
+// Source inputs: AGENTS.md, docs/architecture/permission-model.md,
+// docs/code-governance/mcp-tool-manifest.md, and D4 verification constraints.
+// Course-required location: .opencode/permissions.jsonc. This name is NOT auto-loaded.
+// Explicit launch from the application root (not executed by this authoring task):
+// OPENCODE_CONFIG="$PWD/.opencode/permissions.jsonc" opencode
+// Source: https://github.com/anomalyco/opencode/blob/v1.19.3/packages/opencode/src/config/config.ts
+// V1 rule schema: packages/core/src/v1/config/permission.ts in the same tag.
+// Do not substitute V2 permissions/shell/subagent syntax into this V1 configuration.
+// The moving official schema URL is editor guidance, not proof of V1 compatibility.
+//
+// Fail-closed initial state: no approved round plan, no shell execution, no discovery,
+// no external access, network tools, skill loading, delegation, or MCP grants.
+// Explicit absolute project paths avoid ambiguous relative-read matching. OpenCode's
+// simple wildcard '*' includes separators; this is not a gitignore '**' protocol.
+// Read allowances are role maxima, not permission to consume unrelated evidence.
+// Read AGENTS/governance explicitly; leave secrets and version-control metadata denied.
+// Edit 'ask' is a confirmation point inside the D2 role maximum, NEVER standing write
+// authorization. Approve only exact files in an approved task; do not save broad
+// Allow-always grants. Plan has no plan-file write grant. This file does not create
+// docs/plans/round-01.md or approve tests, OQ-07, or security-critical implementation.
+//
+// Before a development round, a human must select/confirm the role, narrow edit/read
+// paths to the approved task, and add only required discovery/command/output rules.
+// glob/grep permission resources are not reliable file-read allowlists; they remain
+// denied here rather than falsely claiming content-search confinement. Use direct
+// allowed reads initially. Shell remains denied because it can bypass file rules;
+// approved test commands need reviewed environment, output and side-effect bounds.
+// Global/project/agent config and saved permissions may merge with this file.
+// Review effective merged policy before claiming activation. No runtime permission
+// check or effective-config dump was executed here (to avoid incidental writes or
+// secret disclosure). JSON syntax/static rule checks are not an enforcement test.
+//
+// Enforce canonical project ownership at tool/OS boundaries; wildcard rules alone
+// do not prove symlink confinement, command isolation, or all-tool coverage. Unknown
+// tool actions remain denied. No OS sandbox, branch protection, CI gate, provider
+// transport restriction, or approval timestamp is established by this document.
+// Creating this file is authorized; agents must not later self-edit it to expand access.
+// First-round plan read is explicitly whitelisted; its existence, write permission,
+// approval and implementation are separate. Later round paths must be declared.
+// No shell or edit grant is added by this read-only plan reference.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "permission": {
+    "*": "deny",
+    "read": {
+      "*": "deny",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/plans/round-01.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/goal.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/D2.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/permissions.jsonc": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/rules.md": "allow",
+      "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/rules.md": "allow",
+      "*/.env": "deny",
+      "*/.env.*": "deny",
+      ".env": "deny",
+      ".env.*": "deny",
+      "*/.git/*": "deny",
+      ".git/*": "deny",
+      "*credentials*": "deny",
+      "*.pem": "deny",
+      "*.key": "deny"
+    },
+    "edit": "deny",
+    "bash": "deny",
+    "glob": "deny",
+    "grep": "deny",
+    "list": "deny",
+    "external_directory": "deny",
+    "task": "deny",
+    "skill": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "lsp": "deny",
+    "question": "allow",
+    "todowrite": "allow"
+  },
+  "agent": {
+    "plan": {
+      "description": "CS5351 plan responsibility; OQ-07 role deployment remains pending.",
+      "mode": "primary",
+      "permission": {
+        "read": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/plans/round-01.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/goal.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/D2.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/permissions.jsonc": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/summary.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/metrics*.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/report-consistency.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/data-availability.csv": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/source-integrity.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/probe-manifest.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/README.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/scripts/*": "allow",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny"
+        },
+        "edit": "deny",
+        "bash": "deny",
+        "task": "deny",
+        "external_directory": "deny"
+      },
+      "prompt": "Read AGENTS.md and the explicitly selected approved round plan. This profile is not plan/test approval. Do not change controls to expand access. Ask-only edit maxima require exact task authorization. If commands or discovery are required, request a human-maintained, narrow round configuration; do not bypass denied tools."
+    },
+    "architecture": {
+      "description": "CS5351 architecture responsibility; OQ-07 role deployment remains pending.",
+      "mode": "primary",
+      "permission": {
+        "read": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/plans/round-01.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/goal.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/D2.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/permissions.jsonc": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/summary.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/metrics*.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/report-consistency.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/data-availability.csv": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/source-integrity.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/probe-manifest.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/README.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/scripts/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "allow",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny"
+        },
+        "edit": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "ask",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "ask",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/permission-model.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+        },
+        "bash": "deny",
+        "task": "deny",
+        "external_directory": "deny"
+      },
+      "prompt": "Read AGENTS.md and the explicitly selected approved round plan. This profile is not plan/test approval. Do not change controls to expand access. Ask-only edit maxima require exact task authorization. If commands or discovery are required, request a human-maintained, narrow round configuration; do not bypass denied tools."
+    },
+    "implementation": {
+      "description": "CS5351 implementation responsibility; OQ-07 role deployment remains pending.",
+      "mode": "primary",
+      "permission": {
+        "read": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/plans/round-01.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/goal.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/D2.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/permissions.jsonc": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/summary.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/metrics*.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/report-consistency.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/data-availability.csv": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/source-integrity.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/probe-manifest.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/README.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/static/*": "allow",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny"
+        },
+        "edit": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "ask",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "ask",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "ask",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "ask",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "ask",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/permission-model.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+        },
+        "bash": "deny",
+        "task": "deny",
+        "external_directory": "deny"
+      },
+      "prompt": "Read AGENTS.md and the explicitly selected approved round plan. This profile is not plan/test approval. Do not change controls to expand access. Ask-only edit maxima require exact task authorization. If commands or discovery are required, request a human-maintained, narrow round configuration; do not bypass denied tools."
+    },
+    "verification": {
+      "description": "CS5351 verification responsibility; OQ-07 role deployment remains pending.",
+      "mode": "primary",
+      "permission": {
+        "read": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/plans/round-01.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/goal.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/D2.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/architecture-blueprint.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/permissions.jsonc": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/rules.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/summary.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/metrics*.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/report-consistency.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/data-availability.csv": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/source-integrity.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/probe-manifest.json": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*/README.md": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/static/*": "allow",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "allow",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny"
+        },
+        "edit": {
+          "*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "ask",
+          "*/.env": "deny",
+          "*/.env.*": "deny",
+          ".env": "deny",
+          ".env.*": "deny",
+          "*/.git/*": "deny",
+          ".git/*": "deny",
+          "*credentials*": "deny",
+          "*.pem": "deny",
+          "*.key": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/architecture/permission-model.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/req/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/docs/code-governance/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/AGENTS.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/Prompt.md": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.opencode/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/.agent/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/baseline/*": "deny",
+          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+        },
+        "bash": "deny",
+        "task": "deny",
+        "external_directory": "deny"
+      },
+      "prompt": "Read AGENTS.md and the explicitly selected approved round plan. This profile is not plan/test approval. Do not change controls to expand access. Ask-only edit maxima require exact task authorization. If commands or discovery are required, request a human-maintained, narrow round configuration; do not bypass denied tools."
+    }
+  }
+}

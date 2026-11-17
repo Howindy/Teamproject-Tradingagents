@@ -1,0 +1,7 @@
+Processing /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/current-dist/tradingagents-0.7.0-py3-none-any.whl
+Installing collected packages: tradingagents
+  Attempting uninstall: tradingagents
+    Found existing installation: tradingagents 0.4.0
+    Not uninstalling tradingagents at /opt/miniconda3/envs/tradingagents/lib/python3.12/site-packages, outside environment /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/final-wheel-venv
+    Can't uninstall 'tradingagents'. No files were found to uninstall.
+Successfully installed tradingagents-0.7.0

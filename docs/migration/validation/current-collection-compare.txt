@@ -1,0 +1,8 @@
+offline_before 1362
+offline_current 1362
+offline_missing []
+offline_extra []
+live_before 1
+live_current 1
+live_before_nodes ['tests/test_deepseek_reasoning.py::TestDeepSeekLiveStructuredOutput::test_v4_flash_returns_structured_output']
+live_current_nodes ['test/live/test_deepseek_live_structured_output.py::TestDeepSeekLiveStructuredOutput::test_v4_flash_returns_structured_output']

@@ -3,6 +3,29 @@
 __pycache__/
 *.pyc
 
+# Local environments and secrets
+.env
+.env.enterprise
+.venv/
+env/
+venv/
+
+# Packaging and test caches
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated application output
+results/
+reports/
+**/data_cache/
+_tmp_cache/
+
 # Baseline temporary files and regenerable caches
 /baseline/**/tmp/
 /baseline/**/cache/

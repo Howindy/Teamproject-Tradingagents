@@ -2541,11 +2541,16 @@ requirements:
       and Sell. A legal rating continues to the data and applicable-risk checks. A
       model REVIEW, or a missing or invalid rating, produces final REVIEW and gate
       status blocked and states that the rating cannot be confirmed; the check
-      MUST NOT guess Hold or invent a model proposal. A missing model decision
-      body is an invalid required input and produces REVIEW; it MUST NOT be used to
-      fabricate an approved conclusion. An unexpected error in the check itself
-      produces final REVIEW and gate status error and states that the check could
-      not complete.
+      MUST NOT guess Hold or invent a model proposal. The model conclusion MUST be
+      non-whitespace text. A missing, wrong-type, empty-string, or whitespace-only
+      conclusion is not a valid conclusion; it is an ordinary input-condition
+      failure and produces gate status blocked and final rating REVIEW with a
+      program-generated manual-review notice stating the actual reason. It MUST
+      NOT be used to fabricate an approved conclusion, and these input errors are
+      not SB-01 internal errors. No text length, format, content-quality,
+      factual-correctness, or other semantic scoring requirement is added. An
+      unexpected error in the check itself produces final REVIEW and gate status
+      error and states that the check could not complete.
       FR-03 data condition: use the current analysis's program result and do not
       accept a model-provided or model-overridden completeness claim. A complete
       result passes the data condition; incomplete blocks with REVIEW and lists
@@ -2571,11 +2576,11 @@ requirements:
       rules. An FR-04 error means the risk condition cannot be confirmed and the
       check blocks using the existing risk result; it is not relabeled as an SB-01
       internal error.
-      The check passes only when all of the following hold: the model rating and
-      any required conclusion are legal; the FR-03 data condition does not block;
-      and the applicable FR-04 risk condition passes. Any ordinary condition
-      failure is blocked; an unexpected error in the check itself is error. Both
-      blocked and error produce final REVIEW. When several ordinary problems occur,
+      The check passes only when all of the following hold: the model rating is
+      legal and the model conclusion is valid non-whitespace text; the FR-03 data
+      condition does not block; and the applicable FR-04 risk condition passes.
+      Any ordinary condition failure is blocked; an unexpected error in the check
+      itself is error. Both blocked and error produce final REVIEW. When several ordinary problems occur,
       retain a short reason list without a complex primary_reason, review_class, or
       full error-priority system; a fixed check order may be used for display
       without adding an ordering protocol.
@@ -2653,12 +2658,13 @@ requirements:
       threshold_status: not_applicable
     - id: SB-01-FC04
       input: >-
-        Missing or illegal rating, model REVIEW, missing conclusion, missing or illegal FR-03 summary, a basic state
-        contradiction, and an exception raised inside SB-01.
+        Missing or illegal rating, model REVIEW, a missing, wrong-type, empty-string, or whitespace-only conclusion,
+        missing or illegal FR-03 summary, a basic state contradiction, and an exception raised inside SB-01.
       expected_result: >-
-        Final rating is REVIEW with reasons matching the actual case; ordinary condition failures are blocked, and an
-        exception in the check itself is error. No input, proposal, or Hold is fabricated, and no snapshot, hash, or
-        version check is introduced.
+        Final rating is REVIEW with reasons matching the actual case; a missing, wrong-type, empty-string, or
+        whitespace-only conclusion is an ordinary condition failure with gate status blocked and a program-generated
+        manual-review notice; other ordinary condition failures are blocked, and an exception in the check itself is
+        error. No input, proposal, or Hold is fabricated, and no snapshot, hash, or version check is introduced.
       verification: >-
         Finite parameterized negatives and exception injection.
       zero_tolerance: true
@@ -2954,8 +2960,10 @@ requirements:
         and a case where an allowlisted field contains a known test credential.
       expected_result: >-
         The configuration summaries in the manifest, report, and final-state save only allowed fields and contain no
-        credential field. An allowed field that matches a known value is omitted. Normal non-sensitive fields remain,
-        long strings are not indiscriminately removed, and the report body is not scanned.
+        credential field. An allowed field is omitted when a known credential's literal exact string appears anywhere
+        in that field value, including a whole-value match or an occurrence inside a larger value; empty credentials do
+        not participate. No encoding recognition, fuzzy matching, or unknown-credential detection is added. Normal
+        non-sensitive fields remain, long strings are not indiscriminately removed, and the report body is not scanned.
       verification: >-
         Actual configuration output inspection and independent test-secret matching.
       zero_tolerance: true

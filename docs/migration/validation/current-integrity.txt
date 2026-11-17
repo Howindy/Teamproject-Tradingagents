@@ -1,0 +1,6 @@
+application: 84 files, changed_or_missing=0
+cli: 11 files, changed_or_missing=0
+src/tradingagents/assets/tauric-logo.svg: identical
+src/cli/static/welcome.txt: identical
+tests: same=83, intentionally_changed_or_split=5, missing=0
+TradingAgents_exists: False

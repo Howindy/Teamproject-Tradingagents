@@ -1,0 +1,9 @@
+Ruff availability check
+command -v ruff:
+python -m ruff --version:
+/opt/miniconda3/bin/python3: No module named ruff
+vhis ruff:
+zsh:5: no such file or directory: /opt/miniconda3/envs/vhis/bin/ruff
+tradingagents ruff:
+zsh:6: no such file or directory: /opt/miniconda3/envs/tradingagents/bin/ruff
+No local ruff executable/package was found; no installation was attempted.

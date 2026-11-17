@@ -1,0 +1,2 @@
+tradingagents /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/__init__.py 0.7.0
+cli /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/cli/main.py

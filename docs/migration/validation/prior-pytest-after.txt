@@ -1,0 +1,241 @@
+........................................................................ [  5%]
+........................s....FF.F....................................... [ 10%]
+........................................................................ [ 15%]
+........................................................................ [ 21%]
+........................................................................ [ 26%]
+........................................................................ [ 31%]
+............................................................. [ 36%]
+........................................................................ [ 41%]
+........................................................................ [ 46%]
+....................................................... [ 50%]
+........................................................................ [ 56%]
+........................................................................ [ 61%]
+........................................................................ [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 77%]
+........................................................................ [ 82%]
+........................................................................ [ 87%]
+........................................................................ [ 93%]
+........................................................................ [ 98%]
+......................                                                   [100%]Running teardown with pytest sessionfinish...
+
+=================================== FAILURES ===================================
+_____ test_on_windows_the_lock_is_waited_for_while_another_writer_holds_it _____
+
+tmp_path = PosixPath('/private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pytest-of-ichihann/pytest-1/test_on_windows_the_lock_is_wa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11d34e750>
+
+    @pytest.mark.unit
+    def test_on_windows_the_lock_is_waited_for_while_another_writer_holds_it(tmp_path, monkeypatch):
+        import errno
+        import sys
+    
+>       fake, calls = _fake_msvcrt([OSError(errno.EDEADLOCK, "held"), None])
+                                            ^^^^^^^^^^^^^^^
+E       AttributeError: module 'errno' has no attribute 'EDEADLOCK'. Did you mean: 'EDEADLK'?
+
+test/offline/test_cache_writes.py:109: AttributeError
+_ test_on_windows_a_lock_that_cannot_be_taken_is_reported_not_retried_forever __
+
+fd = 12, mode = 2, nbytes = 1
+
+    def locking(fd, mode, nbytes):
+        calls.append(mode)
+        if mode in (1, 2) and results:   # LK_NBLCK, LK_LOCK; unlocking always succeeds
+            error = results.pop(0)
+            if error is not None:
+>               raise error
+E               OSError: [Errno 22] bad handle
+
+test/offline/test_cache_writes.py:99: OSError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pytest-of-ichihann/pytest-1/test_on_windows_a_lock_that_ca0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11d34ea50>
+
+    @pytest.mark.unit
+    def test_on_windows_a_lock_that_cannot_be_taken_is_reported_not_retried_forever(tmp_path, monkeypatch):
+        import errno
+        import sys
+    
+        fake, _ = _fake_msvcrt([OSError(errno.EINVAL, "bad handle")] * 3)
+        monkeypatch.setitem(sys.modules, "msvcrt", fake)
+    
+        with pytest.raises(OSError, match="bad handle"), open(tmp_path / "log.md.lock", "a+b") as handle, \
+>               files._hold_windows(handle):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/offline/test_cache_writes.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/miniconda3/envs/tradingagents/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+handle = <_io.BufferedRandom name='/private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pytest-of-ichihann/pytest-1/test_on_windows_a_lock_that_ca0/log.md.lock'>
+wait = True
+
+    @contextmanager
+    def _hold_windows(handle, wait: bool = True) -> Iterator[bool]:
+        import msvcrt
+    
+        handle.seek(0)
+        while True:
+            try:
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK if wait else msvcrt.LK_NBLCK, 1)
+                break
+            except OSError as exc:
+                if not wait and exc.errno in (errno.EACCES, errno.EDEADLOCK):
+                    yield False   # another writer holds it
+                    return
+                # LK_LOCK gives up after about ten seconds of another writer's hold;
+                # any other failure is not a wait.
+>               if exc.errno != errno.EDEADLOCK:
+                                ^^^^^^^^^^^^^^^
+E               AttributeError: module 'errno' has no attribute 'EDEADLOCK'. Did you mean: 'EDEADLK'?
+
+src/tradingagents/dataflows/files.py:82: AttributeError
+___________ test_on_windows_a_held_lock_is_reported_when_not_waiting ___________
+
+fd = 12, mode = 1, nbytes = 1
+
+    def locking(fd, mode, nbytes):
+        calls.append(mode)
+        if mode in (1, 2) and results:   # LK_NBLCK, LK_LOCK; unlocking always succeeds
+            error = results.pop(0)
+            if error is not None:
+>               raise error
+E               PermissionError: [Errno 13] held
+
+test/offline/test_cache_writes.py:99: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pytest-of-ichihann/pytest-1/test_on_windows_a_held_lock_is0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11d34d4c0>
+
+    @pytest.mark.unit
+    def test_on_windows_a_held_lock_is_reported_when_not_waiting(tmp_path, monkeypatch):
+        import errno
+        import sys
+    
+        fake, calls = _fake_msvcrt([OSError(errno.EACCES, "held")])
+        monkeypatch.setitem(sys.modules, "msvcrt", fake)
+    
+>       with open(tmp_path / "log.md.lock", "a+b") as handle, files._hold_windows(handle, wait=False) as acquired:
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/offline/test_cache_writes.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/miniconda3/envs/tradingagents/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+handle = <_io.BufferedRandom name='/private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pytest-of-ichihann/pytest-1/test_on_windows_a_held_lock_is0/log.md.lock'>
+wait = False
+
+    @contextmanager
+    def _hold_windows(handle, wait: bool = True) -> Iterator[bool]:
+        import msvcrt
+    
+        handle.seek(0)
+        while True:
+            try:
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK if wait else msvcrt.LK_NBLCK, 1)
+                break
+            except OSError as exc:
+>               if not wait and exc.errno in (errno.EACCES, errno.EDEADLOCK):
+                                                            ^^^^^^^^^^^^^^^
+E               AttributeError: module 'errno' has no attribute 'EDEADLOCK'. Did you mean: 'EDEADLK'?
+
+src/tradingagents/dataflows/files.py:77: AttributeError
+=============================== warnings summary ===============================
+test/offline/test_anthropic_effort.py::TestEffortGate::test_unsupported_models_do_not_receive_effort[claude-haiku-5-0]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-haiku-5-0' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_unsupported_models_do_not_receive_effort[claude-haiku-4-7-preview]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-haiku-4-7-preview' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_unsupported_models_do_not_receive_effort[claude-sonnet-4-5]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-sonnet-4-5' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_unsupported_models_do_not_receive_effort[claude-sonnet-4-0]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-sonnet-4-0' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_current_opus_and_sonnet_receive_effort[claude-opus-4-5]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-opus-4-5' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_current_opus_and_sonnet_receive_effort[claude-opus-4-6]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-opus-4-6' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_current_opus_and_sonnet_receive_effort[claude-sonnet-4-6]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-sonnet-4-6' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_future_opus_sonnet_inherit_effort_via_pattern[claude-opus-5-0]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-opus-5-0' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_future_opus_sonnet_inherit_effort_via_pattern[claude-sonnet-5-0]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-sonnet-5-0' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_claude_5_family_receives_effort[claude-mythos-5]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-mythos-5' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_mythos_preview_receives_effort
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-mythos-preview' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_anthropic_effort.py::TestEffortGate::test_unknown_anthropic_model_does_not_receive_effort
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/anthropic_client.py:61: RuntimeWarning: Model 'claude-experimental-x' is not in the known model list for provider 'anthropic'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_google_thinking_level.py::test_latest_alias_remaps_minimal_to_low[gemini-flash-latest]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/google_client.py:46: RuntimeWarning: Model 'gemini-flash-latest' is not in the known model list for provider 'google'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_google_thinking_level.py::test_latest_alias_remaps_minimal_to_low[gemini-pro-latest]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/google_client.py:46: RuntimeWarning: Model 'gemini-pro-latest' is not in the known model list for provider 'google'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_ollama_base_url.py::test_resolver_does_not_affect_other_providers
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/openai_client.py:346: RuntimeWarning: Model 'm' is not in the known model list for provider 'xai'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_ollama_base_url.py::test_resolver_does_not_affect_other_providers
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/openai_client.py:346: RuntimeWarning: Model 'm' is not in the known model list for provider 'deepseek'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_openai_reasoning_effort.py::test_non_reasoning_model_drops_effort
+test/offline/test_temperature_config.py::TestTemperatureForwarding::test_temperature_reaches_client_when_set[openai-gpt-4.1]
+test/offline/test_temperature_config.py::TestTemperatureForwarding::test_temperature_omitted_leaves_provider_default
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/openai_client.py:346: RuntimeWarning: Model 'gpt-4.1' is not in the known model list for provider 'openai'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+test/offline/test_temperature_config.py::TestTemperatureForwarding::test_temperature_reaches_client_when_set[deepseek-deepseek-chat]
+  /Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/src/tradingagents/llm_clients/openai_client.py:346: RuntimeWarning: Model 'deepseek-chat' is not in the known model list for provider 'deepseek'. Continuing anyway.
+    self.warn_if_unknown_model()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+Test 
+test/offline/test_bedrock_provider.py::test_construction_when_extra_installed 
+was skipped. Reason: 
+('/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/test/offline/test_bed
+rock_provider.py', 74, "Skipped: could not import 'langchain_aws': No module 
+named 'langchain_aws'")
+=========================== short test summary info ============================
+SKIPPED [1] test/offline/test_bedrock_provider.py:74: could not import 'langchain_aws': No module named 'langchain_aws'
+FAILED test/offline/test_cache_writes.py::test_on_windows_the_lock_is_waited_for_while_another_writer_holds_it
+FAILED test/offline/test_cache_writes.py::test_on_windows_a_lock_that_cannot_be_taken_is_reported_not_retried_forever
+FAILED test/offline/test_cache_writes.py::test_on_windows_a_held_lock_is_reported_when_not_waiting
+3 failed, 1358 passed, 1 skipped, 1 deselected, 20 warnings, 100 subtests passed in 9.31s

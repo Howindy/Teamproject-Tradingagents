@@ -1,0 +1,4 @@
+tests/test_deepseek_reasoning.py::TestDeepSeekLiveStructuredOutput::test_v4_flash_returns_structured_output
+Running teardown with pytest sessionfinish...
+
+1/1363 tests collected (1362 deselected) in 0.91s

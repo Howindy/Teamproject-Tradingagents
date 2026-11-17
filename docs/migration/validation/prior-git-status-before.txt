@@ -1,0 +1,21 @@
+ D D2.md
+ M architecture-blueprint.md
+ M docs/architecture/adr/001-graph-internal-final-check.md
+ M docs/architecture/evaluation-table.md
+ M docs/architecture/invariants.md
+ M docs/architecture/memory-design.md
+ M docs/architecture/runtime-policy-catalog.md
+ M docs/architecture/trace-matrix.md
+ M docs/req/requirements.yaml
+ M goal.md
+?? .agent/
+?? .opencode/
+?? AGENTS.md
+?? Prompt.md
+?? docs/ai-use-log.yaml
+?? docs/bug-diary.md
+?? docs/code-governance/
+?? docs/debt-register.md
+?? docs/plans/
+?? docs/review-memo.md
+?? transcripts/

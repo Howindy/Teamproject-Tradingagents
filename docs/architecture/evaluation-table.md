@@ -16,8 +16,8 @@ This document compares architecture candidates and key design options. It does n
 | Evidence type | Source | Use |
 |---|---|---|
 | Requirement | `docs/req/requirements.yaml` | Defines required behavior and acceptance |
-| Static code | `TradingAgents/` source paths | Defines existing behavior and constraints |
-| Existing tests | `TradingAgents/tests/` | Shows existing regression assets; no new-behavior pass is claimed |
+| Static code | `src/` source paths | Defines existing behavior and constraints |
+| Existing tests | `test/` | Shows existing regression assets; no new-behavior pass is claimed |
 | Baseline | `baseline/runs/baseline-20261020-01` | Describes old behavior only |
 | Planned | Design-time verification | Not executed |
 
@@ -85,14 +85,14 @@ Medium D1/D2 for A/C reflects entry-boundary placement and orchestration uncerta
 **Candidate A — rejected as the primary design.**
 
 - Pros: smallest graph change; one shared implementation is possible.
-- Cons: it sits outside the approved graph-internal placement; the graph can complete without the entry invoking the check; save/display and checkpoint coordination move to entry orchestration. It need not create multiple authorities or mix cleanup.
+- Cons: it sits outside the selected graph-internal placement; the graph can complete without the entry invoking the check; save/display and checkpoint coordination move to entry orchestration. It need not create multiple authorities or mix cleanup.
 - Evidence: SB-01 requires the check before return/display/save, not a graph node; the current CLI and `propagate()` paths diverge (`cli/run.py:353-389`, `graph/trading_graph.py:372-404`).
 
 **Candidate B — selected.**
 
-- Pros: matches the approved graph-internal decision; every normal graph completion reaches the check; formal fields have one writer; checks are pure and offline-testable.
+- Pros: matches the selected graph-internal decision; every normal graph completion reaches the check; formal values have one decision/generation authority; checks are pure and offline-testable.
 - Cons: adds two nodes; PM output semantics change; checkpoint continuation is not supported, so interrupted analyses re-execute model/data work and may cost more; availability must be snapshotted.
-- Evidence: approved graph-internal placement; existing graph extension point after Portfolio Manager (`graph/setup.py:185`); existing context-scoped config pattern (`dataflows/config.py:44`).
+- Evidence: selected graph-internal placement (ADR 001 remains Proposed for human review; no separate approval record is claimed); existing graph extension point after Portfolio Manager (`graph/setup.py:185`); existing context-scoped config pattern (`dataflows/config.py:44`).
 
 **Candidate C — rejected.**
 
@@ -272,10 +272,10 @@ Rules:
 - FR-04 reasons stay in `portfolio_risk_result.reasons`; top-level `reasons` is SB-01-owned. The risk object is not flattened into the formal fields.
 - SB-01 missing/invalid input or condition failure => complete blocked/REVIEW with actual reasons.
 - SB-01 handled internal exception => complete error/REVIEW with an actual reason.
-- Passed keeps a legal five-tier rating; blocked/error uses REVIEW and a non-empty manual-review notice. Passed may have an empty reason list.
+- Passed keeps a legal five-tier rating; blocked/error uses REVIEW and a non-whitespace manual-review notice. Passed may have an empty reason list.
 - Missing/invalid formal output after the graph, or lost in transfer/merge => execution contract failure, not REVIEW.
 - No text parsing, proposal fallback, consumer-generated REVIEW, or substitute formal text.
-- The contract validates field presence/types, proposal shape, legal gate/rating sets, passed/blocked/error rating consistency, non-empty formal text, and string-list reasons with a blocked/error reason; it does not re-judge data or risk, call model/data, repair, or create a second status.
+- The contract validates field presence/types, proposal shape, legal gate/rating sets, passed/blocked/error rating consistency, a non-whitespace `final_trade_decision` per IF-19, and string-list reasons with a blocked/error reason; it does not re-judge data or risk, call model/data, repair, or create a second status.
 
 ### 3.12 Save and persistence failure classification
 

@@ -16,7 +16,7 @@ from baseline_common import (
     BASELINE_ROOT,
     MODULE_CHECK_CODE,
     PROJECT_ROOT,
-    REPO_ROOT,
+    SOURCE_ROOT,
     classify_output,
     compare_snapshots,
     count_records,
@@ -104,8 +104,7 @@ def parse_args() -> argparse.Namespace:
 
 def build_child_env(run_dir: Path, args: argparse.Namespace) -> dict:
     env = os.environ.copy()
-    previous = env.get("PYTHONPATH")
-    env["PYTHONPATH"] = str(REPO_ROOT) + (os.pathsep + previous if previous else "")
+    env.pop("PYTHONPATH", None)
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
     env["TRADINGAGENTS_RESULTS_DIR"] = str(run_dir / "results")
@@ -130,7 +129,7 @@ def build_child_env(run_dir: Path, args: argparse.Namespace) -> dict:
 def module_check(env: dict, run_dir: Path) -> dict:
     result = subprocess.run(
         [sys.executable, "-B", "-c", MODULE_CHECK_CODE],
-        cwd=str(REPO_ROOT),
+            cwd=str(PROJECT_ROOT),
         env=env,
         capture_output=True,
         text=True,
@@ -177,7 +176,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
         "--project-root", str(PROJECT_ROOT),
     ]
     child_env = build_child_env(run_dir, args)
-    source_before = snapshot_tree(REPO_ROOT)
+    source_before = snapshot_tree(SOURCE_ROOT)
     outside_before = snapshot_project_outside_allowed(PROJECT_ROOT)
     real_home = Path(os.environ.get("HOME", str(Path.home()))).expanduser()
     home_before = snapshot_tree(real_home / ".tradingagents")
@@ -188,8 +187,9 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     env_info = env_summary(child_env)
     env_info["dependencies"] = dependency_report()
     env_info["command"] = command
-    env_info["cwd"] = str(REPO_ROOT)
+    env_info["cwd"] = str(PROJECT_ROOT)
     env_info["project_root"] = str(PROJECT_ROOT)
+    env_info["source_root"] = str(SOURCE_ROOT)
     env_info["python_runtime"] = {
         "executable": sys.executable,
         "version": sys.version,
@@ -201,7 +201,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     write_text(run_dir / "environment.txt", json.dumps(env_info, indent=2, ensure_ascii=False, default=str) + "\n")
 
     parsed = (check.get("parsed") or {})
-    expected_file = str((REPO_ROOT / "tradingagents" / "__init__.py").resolve())
+    expected_file = str((SOURCE_ROOT / "tradingagents" / "__init__.py").resolve())
     if check.get("returncode") != 0 or parsed.get("tradingagents_file") != expected_file:
         finish_without_run(run_dir, args, command, source_before, outside_before, home_before, check)
         return 3
@@ -217,7 +217,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
         "started_at": now_iso(),
         "started_monotonic": monotonic(),
         "command": command,
-        "cwd": str(REPO_ROOT),
+        "cwd": str(PROJECT_ROOT),
         "environment": env_info,
         "paths": {
             "results": str(run_dir / "results"),
@@ -235,7 +235,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     with stdout_path.open("wb") as stdout_handle, stderr_path.open("wb") as stderr_handle:
         proc = subprocess.Popen(
             command,
-            cwd=str(REPO_ROOT),
+        cwd=str(PROJECT_ROOT),
             env=child_env,
             stdout=stdout_handle,
             stderr=stderr_handle,
@@ -245,7 +245,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     total_elapsed = monotonic() - t0
     write_text(run_dir / "logs" / "exit-code.txt", f"{exit_code}\n")
 
-    source_after = snapshot_tree(REPO_ROOT)
+    source_after = snapshot_tree(SOURCE_ROOT)
     outside_after = snapshot_project_outside_allowed(PROJECT_ROOT)
     home_after = snapshot_tree(real_home / ".tradingagents")
     source_integrity = compare_snapshots(source_before, source_after)
@@ -287,7 +287,7 @@ def run_orchestrator(args: argparse.Namespace) -> int:
 
 
 def finish_without_run(run_dir, args, command, source_before, outside_before, home_before, check):
-    source_after = snapshot_tree(REPO_ROOT)
+    source_after = snapshot_tree(SOURCE_ROOT)
     outside_after = snapshot_project_outside_allowed(PROJECT_ROOT)
     real_home = Path(os.environ.get("HOME", str(Path.home()))).expanduser()
     home_after = snapshot_tree(real_home / ".tradingagents")
@@ -309,7 +309,7 @@ def finish_without_run(run_dir, args, command, source_before, outside_before, ho
         "finished_at": now_iso(),
         "exit_code": 3,
         "command": command,
-        "cwd": str(REPO_ROOT),
+        "cwd": str(PROJECT_ROOT),
         "error": "module check failed; formal run was not started",
         "module_check": check,
         "source_integrity": source_integrity,
@@ -658,11 +658,10 @@ def run_inner(args: argparse.Namespace) -> int:
     if not run_dir.exists():
         raise SystemExit(f"run directory does not exist: {run_dir}")
     sys.dont_write_bytecode = True
-    sys.path.insert(0, str(REPO_ROOT))
-    os.chdir(REPO_ROOT)
+    os.chdir(PROJECT_ROOT)
 
     import tradingagents
-    expected = (REPO_ROOT / "tradingagents" / "__init__.py").resolve()
+    expected = (SOURCE_ROOT / "tradingagents" / "__init__.py").resolve()
     if Path(tradingagents.__file__).resolve() != expected:
         raise SystemExit(f"refusing to run: loaded {tradingagents.__file__} instead of {expected}")
 

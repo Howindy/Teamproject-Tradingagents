@@ -153,6 +153,6 @@ The resulting text is inserted into the Portfolio Manager's existing prompt. Thi
 | M-V06 | Manifest best-effort and path-specific state/report/memory failures preserve existing exceptions and do not roll back successful files. | Planned; no manifest implementation exists. |
 | M-V07 | Memory retrieval retains existing same-ticker/cross-ticker limits and point-in-time filtering; no vector/RAG component exists. | Static code review of existing memory log; no new retrieval implementation. |
 
-Pending items that affect implementation: OQ-16 execution-config callback propagation; OQ-12 unverified FR-03 producer branches; OQ-13 shared news executor and research wrapper; OQ-15 ordering, fixtures, and report source. OQ-01, OQ-02, OQ-04, and OQ-08 remain human review choices. These are evidence or interface gaps, not new state or new requirements.
+Pending items that affect implementation: OQ-16 execution-config callback propagation; OQ-12 unverified FR-03 producer branches; OQ-13 shared news executor and research wrapper; OQ-15 ordering, fixtures, and report source. OQ-01 and OQ-04 remain pending before entry implementation; OQ-02 is decided only for the key names `max_projected_weight` and `max_stop_distance`; OQ-08 remains pending technical verification. These are evidence or interface gaps, not new state or new requirements.
 
 No source conflict was found for the state boundaries above. Deferred FR-06/FR-07/PR-01/CR-01 and context budgeting/compression/reinjection remain outside this design.

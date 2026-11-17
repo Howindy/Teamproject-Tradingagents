@@ -1,0 +1,54 @@
+                                                                                
+ Usage: tradingagents [OPTIONS] COMMAND [ARGS]...                               
+                                                                                
+ TradingAgents CLI: Multi-Agents LLM Financial Trading Framework                
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --checkpoint            --no-checkpoint           Enable/disable             │
+│                                                   checkpoint-resume (save    │
+│                                                   state after each node so a │
+│                                                   crashed run can resume).   │
+│                                                   Omit to honor              │
+│                                                   TRADINGAGENTS_CHECKPOINT_… │
+│ --clear-checkpoints                               Delete all saved           │
+│                                                   checkpoints before running │
+│                                                   (force fresh start).       │
+│ --portfolio                                <str>  JSON file with current     │
+│                                                   holdings and cash, so the  │
+│                                                   trader, risk and portfolio │
+│                                                   agents size against your   │
+│                                                   actual position.           │
+│ --ticker                                   <str>  Ticker to analyze, e.g.    │
+│                                                   NVDA or 0700.HK; skips the │
+│                                                   prompt                     │
+│ --date                                     <str>  Analysis date, YYYY-MM-DD; │
+│                                                   skips the prompt           │
+│ --analysts                                 <str>  Comma-separated analysts,  │
+│                                                   e.g. market,news; skips    │
+│                                                   the prompt                 │
+│ --save                  --no-save                 Save the report under      │
+│                                                   results_dir without asking │
+│ --show                  --no-show                 Show the full report at    │
+│                                                   the end without asking     │
+│ --html                  --no-html                 Save the report as one     │
+│                                                   HTML page too,             │
+│                                                   complete_report.html,      │
+│                                                   without asking (default:   │
+│                                                   yes)                       │
+│ --install-completion                              Install completion for the │
+│                                                   current shell.             │
+│ --show-completion                                 Show completion for the    │
+│                                                   current shell, to copy it  │
+│                                                   or customize the           │
+│                                                   installation.              │
+│ --help                                            Show this message and      │
+│                                                   exit.                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ backtest  Score past decisions over a grid of tickers and dates.             │
+│ login     Sign in with your ChatGPT Plus or Pro plan, for the chatgpt        │
+│           provider.                                                          │
+│ logout    Sign out of your ChatGPT plan: revoke this machine's access and    │
+│           forget it.                                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

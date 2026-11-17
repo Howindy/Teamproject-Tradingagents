@@ -43,7 +43,7 @@ The active requirements introduce a deterministic authority boundary:
 
 - Portfolio Manager must produce only a model proposal.
 - FR-04 must evaluate a caller-supplied structured purchase scenario.
-- SB-01 must be the sole producer of `final_rating` and `final_trade_decision`.
+- SB-01 must be the sole decision/generation authority for `final_rating` and `final_trade_decision`; downstream pass-through, merge, copy, and save of unchanged values are allowed.
 - Consumers must not re-parse text into another formal rating.
 - The normal completion path must not bypass SB-01.
 - Checkpointing must not silently skip required checks.
@@ -60,6 +60,7 @@ This is not a greenfield redesign. The graph, agents, vendors, reports, and memo
 - No new database, index, background worker, recovery system, or generic scanner.
 - Offline testability; the suite blocks network by default.
 - No modification of requirements or governance configuration in this task.
+- Module paths in this ADR are relative to `src/` after the approved layout migration; for example `cli/run.py` is `src/cli/run.py`.
 
 ### 1.4 Requirement scope check
 
@@ -145,11 +146,11 @@ Analysis:
 - An independent service is a second orchestration path and risks bypass.
 - Display-only labels do not satisfy SB-01/INV-01.
 
-Decision D-01: graph-internal final check. Portfolio Manager writes only `model_proposal`. SB-01 node writes formal fields.
+Decision D-01: graph-internal final check. Portfolio Manager writes only `model_proposal`. SB-01 alone decides and generates the formal values; entries, reducers, and writers may pass, merge, copy, or save them unchanged, but may not recompute, re-parse, replace, or fabricate them. Such pass-through is not a second authority.
 
-Decision D-02: retain `model_proposal` separately as a nested `{rating, text}` object or `null`; inner values may be `null`, and no `present` boolean or fabricated proposal is added. Consumers never use it for formal fields. SB-01 produces a complete blocked/REVIEW for missing or invalid check inputs and a complete error/REVIEW for its own handled exceptions. A missing or invalid formal output after the graph is an execution contract failure, not a consumer-generated REVIEW and not a text-parsed rating. Top-level `reasons` belongs to SB-01; `portfolio_risk_result.reasons` stays scoped to FR-04 and is not flattened into the formal result.
+Decision D-02: retain `model_proposal` separately as a nested `{rating, text}` object or `null`; inner values may be `null`, and no `present` boolean or fabricated proposal is added. Consumers never use it for formal fields. SB-01 produces a complete blocked/REVIEW for missing or invalid check inputs and a complete error/REVIEW for its own handled exceptions. A missing, wrong-type, empty-string, or whitespace-only model conclusion is an ordinary input-condition failure producing blocked/REVIEW, not an SB-01 internal error. A valid conclusion is preserved unchanged; whitespace stripping may be used only to test non-emptiness. A missing or invalid formal output after the graph is an execution contract failure, not a consumer-generated REVIEW and not a text-parsed rating. Top-level `reasons` belongs to SB-01; `portfolio_risk_result.reasons` stays scoped to FR-04 and is not flattened into the formal result.
 
-Decision D-02a: define a lightweight shared `FormalResultContract` that validates the five top-level fields (`model_proposal`, `gate_status`, `reasons`, `final_rating`, `final_trade_decision`) and their types. It checks that `model_proposal` is a nested `{rating, text}` object or `null`, formal gate and rating sets are legal, passed has a five-tier formal rating, blocked/error has REVIEW, formal text is non-empty, `reasons` is a string list, and blocked/error has at least one actual reason. An illegal proposal rating is SB-01 input, not a contract failure. It returns the result unchanged or reports an execution contract failure. It does not recheck data or risk, call a model/data source, parse text, repair the result, or create a second business status. No `present` field, `gate_reasons` alias, signature, hash, source proof, persistent diagnostic system, or new module/public API is added.
+Decision D-02a: define a lightweight shared `FormalResultContract` that validates the five top-level fields (`model_proposal`, `gate_status`, `reasons`, `final_rating`, `final_trade_decision`) and their types. It checks that `model_proposal` is a nested `{rating, text}` object or `null`, formal gate and rating sets are legal, passed has a five-tier formal rating, blocked/error has REVIEW, `final_trade_decision` is a non-whitespace string, `reasons` is a string list, and blocked/error has at least one actual reason. An illegal proposal rating is SB-01 input, not a contract failure. It returns the result unchanged or reports an execution contract failure. It does not recheck data or risk, call a model/data source, parse text, repair the result, or create a second business status. No `present` field, `gate_reasons` alias, signature, hash, source proof, persistent diagnostic system, or new module/public API is added.
 
 Decision D-03: intermediate surfaces use explicit labels:
 
@@ -259,7 +260,7 @@ Analysis:
 - A structured optional input is minimal and testable.
 - Broker integration is out of scope and would add account-truth claims.
 
-Decision D-11: optional `purchase_scenario` kwarg and CLI `--purchase-scenario <json-file>`. File/JSON parse errors are caller parameter errors; business-invalid fields are FR-04 results. The evaluator receives the current analysis ticker explicitly and uses existing pure ticker normalization (`normalize_symbol`); no network identity lookup, global, report extraction, `PortfolioContext.average_price`, model text, or network fill.
+Decision D-11: optional `purchase_scenario` kwarg and CLI `--purchase-scenario <json-file>`. An explicitly provided file that cannot be read or parsed is a caller parameter error; a not-provided file is distinct and its absence is passed to FR-04. After successful acquisition, business-invalid fields, object/ticker mismatch, and invalid explicit thresholds are FR-04 results, returning structured `blocked` for applicable Buy/Overweight rather than an entry hard failure. The evaluator receives the current analysis ticker explicitly and uses existing pure ticker normalization (`normalize_symbol`); no network identity lookup, global, report extraction, `PortfolioContext.average_price`, model text, or network fill.
 
 The scenario contract is: ticker matching the analysis ticker; `portfolio_value` finite decimal > 0; `current_position_value` finite decimal in [0, portfolio_value]; `proposed_buy_value` finite decimal > 0; `entry_price` > 0; `stop_loss_price` > 0 and < entry_price; non-empty common currency label; `max_projected_weight` finite decimal in (0, 1]; `max_stop_distance` finite decimal in (0, 1). Booleans, NaN, Infinity, missing, and unparseable values are rejected. Ordinary decimal notation is accepted. Defaults 0.30/0.05 apply only when omitted; explicit invalid thresholds do not fall back. A mismatched ticker, each invalid field, or an invalid threshold produces `blocked` with the field/configuration category; no unhandled numeric error escapes. No cash, fee, slippage, liveness, account-truth, completeness, currency-conversion, or order-execution checks are added. No additional fields such as cash, quantity, valuation_price, valuation_time, candidate_id, order_count, or provenance are required; the structure remains one stock, one unlevered purchase/add-long.
 
@@ -348,7 +349,7 @@ Pros:
 
 Cons:
 
-- The approved decision for this ADR is a graph-internal check; candidate A is outside that selected placement.
+- The selected decision for this ADR is a graph-internal check; candidate A is outside that selected placement. The ADR remains Proposed for human review.
 - The graph can finish without the check if entry orchestration is skipped or ordering changes.
 - Save/display and checkpoint boundaries add entry-level coordination.
 - A and C overlap as boundary finalization; A need not create multiple authorities or mix cleanup.
@@ -361,7 +362,7 @@ Strategy: deterministic post-PM nodes own the risk and final checks; a run-scope
 
 Pros:
 
-- It matches the approved graph-internal placement rather than a requirement-mandated architecture.
+- It matches the selected graph-internal placement rather than a requirement-mandated architecture.
 - Every normal graph completion reaches the check.
 - Formal fields come from one node.
 - Deterministic checks are testable pure functions.
@@ -441,11 +442,11 @@ Qualitative comparison; no numeric scores or performance measurements are invent
 | Preserves existing return shapes | High | High | High | Medium | High |
 | Intermediate/formal separation | Medium | High | Medium | High | Low |
 
-A and C can each use one finalizer/service as a single authority; D1/D2 do not by themselves distinguish them from B. RunContext, the per-run stats handler, and query reuse are usable by A/C too, so they are not counted as B-only advantages. The practical distinction is placement and orchestration: B is inside the already approved graph completion path, while A/C are entry-boundary paths that overlap each other.
+A and C can each use one finalizer/service as a single authority; D1/D2 do not by themselves distinguish them from B. RunContext, the per-run stats handler, and query reuse are usable by A/C too, so they are not counted as B-only advantages. The practical distinction is placement and orchestration: B is inside the selected graph completion path, while A/C are entry-boundary paths that overlap each other.
 
 Rationale for B:
 
-- It matches the approved graph-internal decision; the requirement does not itself mandate this placement.
+- It matches the selected graph-internal decision; the requirement does not itself mandate this placement and no additional approval is claimed.
 - It gives one formal-field writer on every normal graph completion.
 - It keeps pure checks independent from entries and persistence.
 - It retains existing checkpoint code/tests outside the flow but does not support new-flow checkpoint continuation; interrupted runs re-execute work.
@@ -548,14 +549,14 @@ SB-01 must return the same five top-level fields on every normal branch:
 | `gate_status` | `passed`, `blocked`, or `error` |
 | `reasons` | Top-level SB-01 string list; passed may be empty; blocked/error has at least one actual reason; no reason codes or priority system |
 | `final_rating` | Five-tier legal rating on passed; REVIEW on blocked/error |
-| `final_trade_decision` | Non-empty formal conclusion; program-generated manual-review notice on blocked/error |
+| `final_trade_decision` | Non-whitespace formal conclusion; program-generated manual-review notice on blocked/error |
 
 Branches:
 
 | Branch | Result |
 |---|---|
 | Passed | Original model rating and conclusion retained; `reasons` may be empty |
-| Missing/invalid input or condition failure | `blocked`; REVIEW; program-generated manual-review notice; actual top-level reasons |
+| Missing/invalid input or condition failure, including a missing, wrong-type, empty-string, or whitespace-only conclusion | `blocked`; REVIEW; program-generated manual-review notice; actual top-level reasons |
 | Handled internal exception | `error`; REVIEW; program-generated manual-review notice; actual safe top-level reason |
 
 A missing or invalid formal output after the graph, or a result lost in transfer or merge, is an execution contract failure. It is not a business REVIEW. The shared `FormalResultContract` validates:
@@ -564,7 +565,7 @@ A missing or invalid formal output after the graph, or a result lost in transfer
 - `model_proposal` is a nested `{rating, text}` object or `null`, with no `present` field; an illegal proposal rating is not a contract failure because SB-01 handles it;
 - `gate_status` is in the legal set and `final_rating` is in the legal formal set;
 - passed has a five-tier formal rating and blocked/error has REVIEW;
-- `final_trade_decision` is a non-empty string;
+- `final_trade_decision` is a non-whitespace string;
 - `reasons` is a list of strings, and blocked/error contains at least one actual reason.
 
 It returns the result unchanged or reports the contract failure. It does not recheck data, recompute risk, call a model/data source, parse model text, repair the result, or create a second business status. Risk reasons remain in `portfolio_risk_result.reasons`; top-level `reasons` is not a copy or flattening of that object. An execution diagnostic such as “Final result was not produced” is not a manual-review notice and is never written into `final_trade_decision`. No signature, hash, source proof, persistent diagnostic system, complex state machine, or new module/public API is added.
@@ -783,15 +784,15 @@ Re-open this ADR if:
 
 | ID | Question | Current proposal | Needed decision |
 |---|---|---|---|
-| OQ-01 | Purchase-scenario CLI/file shape | `--purchase-scenario <json-file>`; optional kwarg | Human review |
-| OQ-02 | Threshold key names | `max_projected_weight`, `max_stop_distance` | Human review |
-| OQ-04 | CLI save/display boundary | Save in run; display/browser after terminal attempt | Human review |
-| OQ-07 | Coding-agent roles/whitelists | Four-role proposal | Human review; Batch 3 |
-| OQ-08 | Recursion-limit reservation | Reserve at least four post-analyst steps | Human review |
-| OQ-16 | Execution-config callback propagation | Verify one per-analysis handler reaches model/tool calls in analyst subgraphs, parallel nodes, structured-output runnables, and graph-internal reflection; if a boundary does not inherit, pass the same execution config locally; call-ID/usage extraction details remain pending | Pending offline integration verification |
-| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes and add fixtures for every blueprint §8.3 row; unrecognized formats remain `unavailable` until confirmed | Pending verification |
-| OQ-13 | Shared news executor and path identity integration | Confirm the plain internal news executor call from the News tool (P-09) and sentiment prefetch (P-13), explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending verification |
-| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 minimum available-content fixtures | Pending verification |
+| OQ-01 | Purchase-scenario CLI/file shape | `--purchase-scenario <json-file>`; optional kwarg | Confirm before entry implementation: parameter/input form plus file read/parse error contract |
+| OQ-02 | Threshold key names | `max_projected_weight`, `max_stop_distance` | Decided for these two key names only by the current user instruction; no other configuration mechanism is approved |
+| OQ-04 | CLI save/display boundary | Save in run; display/browser after terminal attempt | Confirm before CLI entry implementation; not approved by this document |
+| OQ-07 | Coding-agent roles/whitelists | Four-role proposal; design is in `docs/architecture/permission-model.md` | Confirm and implement in D3-stage permission work |
+| OQ-08 | Recursion-limit reservation | Reserve at least four post-analyst steps | Pending technical verification by an actual normal path; the four-step figure is not acceptance |
+| OQ-16 | Execution-config callback propagation | Verify one per-analysis handler reaches model/tool calls in analyst subgraphs, parallel nodes, structured-output runnables, and graph-internal reflection; if a boundary does not inherit, pass the same execution config locally; call-ID/usage extraction details remain pending | Pending offline integration verification; local same-config handoff only |
+| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes with finite sourced samples and cover every blueprint §8.3 row; unrecognized formats remain `unavailable` until confirmed | Pending verification; keep conservative behavior, no generic recognizer or network probe |
+| OQ-13 | Shared news executor and path identity integration | Confirm the plain internal news executor call from the News tool (P-09) and sentiment prefetch (P-13), explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending offline integration verification within the existing scope |
+| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 minimum available-content fixtures | Pending verification under the existing contract; no new state, recovery, or global veto |
 
 No item above is an approved requirement change.
 

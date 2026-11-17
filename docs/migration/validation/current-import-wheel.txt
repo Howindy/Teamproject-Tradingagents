@@ -1,0 +1,4 @@
+tradingagents /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/final-wheel-venv/lib/python3.12/site-packages/tradingagents/__init__.py 0.7.0
+cli /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/final-wheel-venv/lib/python3.12/site-packages/cli/main.py
+logo True
+welcome True

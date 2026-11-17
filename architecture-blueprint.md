@@ -3,16 +3,17 @@
 - Status: Proposed for human review
 - Date: 2026-11-17
 - Requirements baseline: `docs/req/requirements.yaml` (document version 1.48.0, 13 requirements, 55 fit criteria)
-- Code baseline: `TradingAgents/` imported from TradingAgents v0.7.0 (`UPSTREAM.md`)
+- Code baseline: `src/` imported from TradingAgents v0.7.0 (`UPSTREAM.md`)
+- Module-path note: references such as `cli/run.py` and `tradingagents/graph/setup.py` are relative to the application source root; the current paths are `src/cli/run.py` and `src/tradingagents/graph/setup.py`.
 - Runtime evidence baseline: `baseline/runs/baseline-20261020-01` (existing behavior only; not new-requirement acceptance)
 - Related artifacts:
   - [ADR 001 — Graph-Internal Final Check with Run-Scoped Governance Context](docs/architecture/adr/001-graph-internal-final-check.md)
   - [Evaluation Table](docs/architecture/evaluation-table.md)
-  - `docs/architecture/invariants.md` (Batch 2)
-  - `docs/architecture/memory-design.md` (Batch 2)
-  - `docs/architecture/runtime-policy-catalog.md` (Batch 2)
-  - `docs/architecture/trace-matrix.md` (Batch 3)
-  - `docs/architecture/permission-model.md` (Batch 3)
+  - [`Invariants`](docs/architecture/invariants.md)
+  - [`Memory and State Design`](docs/architecture/memory-design.md)
+  - [`Runtime Policy Catalog`](docs/architecture/runtime-policy-catalog.md)
+  - [`Trace Matrix`](docs/architecture/trace-matrix.md)
+  - [`Permission Model`](docs/architecture/permission-model.md)
 
 This blueprint is the main constraint document for implementation planning. It contains architecture decisions and interfaces, not application implementation, test results, measurements, or acceptance claims. A statement marked `[Planned]` is not evidence that the behavior exists.
 
@@ -44,7 +45,7 @@ The count matches the expected 13 requirements / 55 fit criteria / 9 active / 40
 |---|---|
 | `[Requirement]` | Stated by the current requirement object or fit criterion. |
 | `[Static code]` | Observed by reading the current repository; no execution. |
-| `[Existing test]` | A test file exists in `TradingAgents/tests/`; it is not claimed to pass for new behavior. |
+| `[Existing test]` | A test file exists under `test/`; it is not claimed to pass for new behavior. |
 | `[Baseline]` | Recorded in `baseline/`; describes the old behavior, not new acceptance. |
 | `[Planned]` | A design-time verification plan; not executed. |
 | `[Not measured]` | No measurement exists. |
@@ -139,12 +140,12 @@ The Portfolio Manager currently writes `final_rating` and `final_trade_decision`
 
 ### 2.3 Constraints
 
-- Python >= 3.11; LangGraph/LangChain; pytest and ruff (`TradingAgents/pyproject.toml`).
+- Python >= 3.11; LangGraph/LangChain; pytest and ruff (`pyproject.toml`).
 - Two supported entry points only: the CLI analysis entry and `TradingAgentsGraph.propagate()`.
 - Governance must not add model, data-source, broker, or network calls.
 - Manifest persistence is best-effort and never changes the run outcome or formal result. Final-state JSON, new-memory append, and CLI-requested report failures preserve existing exception or save-failure behavior and may make the run `failed`; they never recompute or rewrite the SB-01 formal result. Availability behavior does not change the run outcome.
 - No new persistence service, database, index, or background worker.
-- The design must remain testable offline with fake models and data; the existing test suite blocks network access by default (`TradingAgents/tests/conftest.py`).
+- The design must remain testable offline with fake models and data; the existing test suite blocks network access by default (`test/conftest.py`).
 
 ---
 
@@ -190,7 +191,7 @@ All response measures reuse fit criteria. No invented latency, cost, or quality 
 | Reusable graph object vs per-analysis run | Entry-specific creation: the CLI creates the run before object construction; `propagate()` creates it on an existing object. The constructor creates no run or manifest, and no RunContext or collector is stored on the object across analyses. |
 | Entry cleanup vs `RunContext.finish()` | Each resource has one release owner. The entry/execution scope coordinates necessary cleanup; wrappers release their own resources; `finish()` only records end time, stats, and terminal manifest after cleanup attempts. |
 | Graph-internal check vs checkpoint resume | The new flow does not resume checkpoints. Each outermost call is a new run with a new run_id and initial state; FR-04/SB-01 always execute. Existing checkpoint code/tests remain outside this flow, and a checkpoint-enabled configuration only produces a notice that this flow will run fully. |
-| Portfolio Manager existing fields vs SB-01 authority | The Portfolio Manager writes a separate `model_proposal`. SB-01 alone writes `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`. |
+| Portfolio Manager existing fields vs SB-01 authority | The Portfolio Manager writes a separate `model_proposal`. SB-01 alone decides and generates `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; downstream entries, reductions, and writers may only pass, merge, copy, or save those values unchanged. |
 | Fail-closed REVIEW vs existing rating fallback | `run_rating()` text parsing is not a formal authority. SB-01 produces a complete blocked/REVIEW for missing or invalid check inputs and a complete error/REVIEW for its own handled exceptions. If the graph ends without a valid formal result, or the result is lost in transfer or merge, that is an execution contract failure: consumers do not create REVIEW, parse text, or substitute the proposal. |
 | Run observability vs non-blocking manifest | `ManifestStore` is best-effort; no manifest outcome changes the run outcome or formal result. |
 | CLI report save inside the run vs existing interaction | Save selection and save attempt occur inside the run; display and browser opening occur after terminalization. |
@@ -272,6 +273,8 @@ User / programmatic caller
 
 `final_rating` and `final_trade_decision` are never parsed from report prose, model narrative, memory, or history. `reasons` is the top-level SB-01 reason list; `portfolio_risk_result.reasons` is a separate risk-scoped list. The risk object is not flattened into the top-level formal fields.
 
+“Sole formal authority” means that C-09/SB-01 is the only component that decides and generates the formal business values. Entries, reducers, report/state writers, and memory adapters may assign, merge, copy, or persist those values unchanged. Such pass-through or projection is not a second authority; it is a violation only if the value is recomputed, re-parsed from model prose, replaced, or fabricated.
+
 `model_proposal` is a nested object with `rating` and `text` keys, or `null` when no proposal was produced. A missing inner value is `null`; there is no `present` boolean or invented proposal. The Portfolio Manager's free-text fallback may be used to extract the proposal rating, but only SB-01 determines the formal rating.
 
 ---
@@ -341,9 +344,9 @@ Components in this table are logical responsibilities. They do not require one c
 | IF-16 | `SecurityGuard.safe_endpoint_for_preference(url, known_secrets) -> PreferenceDecision` | Save/restore only safe endpoint or omit with re-entry notice. |
 | IF-17 | `SecurityGuard.safe_error_summary(exc, known_secrets) -> SafeErrorSummary` | Sanitized type/message; no traceback or attached request/response. |
 | IF-18 | `ReportWriter.write(final_state, output_refs) -> OutputRefs` | Renders the existing report tree plus deterministic availability/risk/check sections from the passed state. Availability comes from `data_availability_summary` in that state; Markdown and HTML use the same input. The same writer serves run-in save and independent `save_reports(final_state, ...)`, which is read-only over that state. It does not read `RunContext.current()`, the registry, the summarizer, a graph last-run cache, or model text, and does not derive a formal rating. |
-| IF-19 | `FormalResultContract.validate(result) -> ValidatedResult | ContractFailure` | Lightweight shared structural check: the five required fields exist with correct types; `model_proposal` is a nested `{rating, text}` object or `null` (an illegal proposal rating is SB-01 input, not a contract failure); formal gate and rating sets are legal; passed has a five-tier formal rating; blocked/error has REVIEW; formal text is non-empty; `reasons` is a string list and blocked/error has at least one actual reason. Returns the result unchanged or reports an execution contract failure. No business judgment, data/risk recheck, text parsing, model/data call, repair, second status set, or new module/API requirement. |
+| IF-19 | `FormalResultContract.validate(result) -> ValidatedResult | ContractFailure` | Lightweight shared structural check: the five required fields exist with correct types; `model_proposal` is a nested `{rating, text}` object or `null` (an illegal proposal rating is SB-01 input, not a contract failure); formal gate and rating sets are legal; passed has a five-tier formal rating; blocked/error has REVIEW; `final_trade_decision` is a non-whitespace string; `reasons` is a string list and blocked/error has at least one actual reason. Returns the result unchanged or reports an execution contract failure. No business judgment, data/risk recheck, text parsing, model/data call, repair, second status set, or new module/API requirement. |
 | IF-20 | `SaveCoordinator.save(...) -> SaveOutcome` | Internal CLI save interface: `not_requested`, `succeeded`, or `failed`, plus confirmed output references. It reports captured save failures to the lifecycle without adding an external diagnostic system or changing `propagate()` success shape. |
-| IF-21 | `ConfigSummary.project(effective_config, selected_analysts) -> dict` | Shared projection using the existing `run_settings()` allowlist; usable before graph construction; the instance `run_settings()` reuses the same projection. No second rule set, extra graph construction, or credential-policy expansion. |
+| IF-21 | `ConfigSummary.project(effective_config, selected_analysts) -> dict` | Shared projection using the existing `run_settings()` allowlist; usable before graph construction; the instance `run_settings()` reuses the same projection. If an allowlisted field value contains a known credential used in this run as a literal exact substring, omit the entire affected field; equality with the whole field is not required. Empty credential strings do not participate. Do not decode, fuzzy-match, detect unknown credentials, scan report bodies, or perform whole-output cleanup. Normal non-sensitive fields remain. No second rule set, extra graph construction, or credential-policy expansion. |
 | IF-23 | `DataResultClassifier.classify(method, effective_params, raw_result_or_exception, source_hint) -> DataObservation or ClassificationFailure` | Apply the verified per-method branch table; return status, short safe reason, and source (known or null). A normal unrecognized format is the existing `unavailable` classification; an internal exception is `ClassificationFailure`, not a data-source status. With a known query key, the local observation helper/registry converts that failure into a conservative per-query `unavailable` observation; it does not mean all registry data is corrupt. Preserve the original return/exception; no fetch, model call, global source inference, or fuzzy keyword guessing. |
 | IF-24 | `ResearchEntry.prepare(state, first_bull_call) -> (state_update, bull_result)` | On the first research entry after analyst join, obtain one `AvailabilitySummary` from the summarizer using existing asset type, enabled analysts, and analysis context, or `null` when none can be formed. Render the mapping to a labeled program block; for `null`, the renderer emits the fixed display text “program summary currently unavailable.” Inject that block directly into the same first Bull invocation and return `research_availability_summary` as the mapping or `null` in state. It is a wrapper, not a top-level node; no extra data/model call, compression, truncation, refresh loop, seal, version view, registry exposure, or second completeness authority. |
 | IF-25 | Risk-module internal helpers | Small local functions for input parsing/validation, exact comparison, one JSON-compatible result projection, and display formatting. They are not public interfaces, separate services, or a generic numeric framework; no canonical state protocol, digest, round-trip proof, consumer-specific float conversion, or implicit encoder is added. |
@@ -363,7 +366,7 @@ Components in this table are logical responsibilities. They do not require one c
 | `availability_tracking_error` | RunContext / availability observation management | In-memory for one run | No | `null` or a fixed safe reason for an unlocatable/untrackable observation loss; not in `AvailabilitySummary`, manifest, report state, memory, or checkpoint; cleared only by a new run |
 | `data_availability_summary` | Risk node writes check-time snapshot; entry/report preparation replaces it with the terminal delivery snapshot before return/save | Serializable/final state | Yes | Five-field `AvailabilitySummary` plain mapping or null/absent when unavailable; final check keeps using its check-time input; report/independent save read only this terminal state field, never the live registry. |
 | `portfolio_risk_result` | Graph state | Serializable/final state | Yes | JSON-compatible result with decimal-string metrics/null and its own `reasons`; exact status is decided before result generation; the new flow does not restore old risk data or flatten this object into top-level formal fields. |
-| `gate_status`, `reasons`, `final_rating`, `final_trade_decision` | Graph state, written only by SB-01 node | Serializable/final state/report/state log | Yes | Top-level formal authority for the current run; `reasons` does not replace `portfolio_risk_result.reasons`; old persisted values are not used by the new flow. |
+| `gate_status`, `reasons`, `final_rating`, `final_trade_decision` | Graph state; SB-01 alone decides/generates the values | Serializable/final state/report/state log | Yes | Top-level formal authority for the current run; entries, reducers, and writers may pass/merge/copy/save unchanged values but may not recompute, re-parse, replace, or fabricate them; `reasons` does not replace `portfolio_risk_result.reasons`; old persisted values are not used by the new flow. |
 | Run manifest | `ManifestStore` | JSON file | Yes | Auxiliary; no rating, gate, or reason field |
 | Memory entries | `TradingMemoryLog` | Markdown file | Yes | Cross-run; formal rating/body only |
 | Checkpoints | Existing checkpointer | SQLite | Yes | Existing code/tests outside the new flow; not acquired, read, or deleted by the new flow |
@@ -459,16 +462,17 @@ The CLI must not display or record a formal rating before the Final Recommendati
 
 1. Start from an existing `TradingAgentsGraph` object. Its earlier construction, client initialization, initial workflow compile, and idle time are not part of this analysis run. If object construction failed before `propagate()`, no analysis run or manifest is created.
 2. Invoke `propagate()`: validate `trade_date`, asset type, and effective configuration for this call. If `checkpoint_enabled` is set, emit a safe notice that this flow does not resume and will run fully; do not change the configuration or default.
-3. Read/validate optional `purchase_scenario` input at the caller boundary. File/JSON parse errors are parameter errors; business-field validity is decided by FR-04.
+3. Read optional `purchase_scenario` input at the caller boundary. An explicitly provided file that cannot be read or parsed is an entry parameter error; an omitted scenario is not an entry error and is passed to FR-04 as missing input. After successful parsing, business-field validity, object matching, and explicit threshold validity are decided by FR-04, which returns structured `blocked` rather than causing an entry hard failure.
 4. Create a new `RunContext`: allocate a new run_id, start clocks, attempt the running manifest, and create this analysis's `RunStatsHandler`/collector together with reuse state.
 5. Build initial state including `purchase_scenario` and resolved thresholds. The graph object was already constructed; the new flow does not acquire or recompile a checkpoint, and it does not bind the handler to model constructors.
 6. Run the graph fully with the handler in this execution's config (`callbacks`), preserving existing custom callbacks; no checkpoint scope is entered even when checkpointing is configured.
 7. Validate the final formal result with the shared `FormalResultContract` before normal final saving and successful return.
 8. While this analysis's registry is still accessible, prepare one terminal `data_availability_summary` plain mapping in `final_state`; if no valid summary can be formed, leave it null/absent. This does not rerun SB-01 or change formal fields.
-9. Exit the execution scope (no checkpoint session is acquired). Then call `RunContext.finish(outcome)` to record end time, take a stats snapshot, and attempt the terminal manifest.
-10. Restore the prior RunContext binding, then return `(final_state, final_rating)` where `final_rating` is the SB-01 formal field and `final_state` carries the terminal delivery summary. The return shape is unchanged. The new flow does not call `run_rating()` or parse the formal text; the existing helper may remain for older callers.
-11. On a contract failure, take the execution error path; do not return a fabricated `(final_state, REVIEW)` or parse the decision text. No specific exception class name is fixed.
-12. Do not force report saving. A later `save_reports()` call is outside the run and reads only the returned `final_state`; it does not update the manifest.
+9. After the terminal delivery summary is prepared, use the existing save flow to save final-state JSON and then attempt the existing new-memory append when its conditions create a record. A final-state failure prevents the later memory append; a memory failure does not roll back an already successful final-state save. Preserve the existing exceptions and run/outcome handling; add no transaction, compensation, recovery, or file rollback.
+10. After those save attempts complete or fail, exit the execution scope and follow the existing error path for cleanup. Then call `RunContext.finish(outcome)` to record end time, take a stats snapshot, and attempt the terminal manifest.
+11. Restore the prior RunContext binding, then return `(final_state, final_rating)` where `final_rating` is the SB-01 formal field and `final_state` carries the terminal delivery summary. The return shape is unchanged. The new flow does not call `run_rating()` or parse the formal text; the existing helper may remain for older callers.
+12. On a contract failure, take the execution error path; do not return a fabricated `(final_state, REVIEW)` or parse the decision text. No specific exception class name is fixed.
+13. Do not force report saving. A later `save_reports()` call is outside the run and reads only the returned `final_state`; it does not update the manifest.
 
 ### 6.4 Normal path sequence
 
@@ -534,7 +538,7 @@ Rules:
 - Top-level `reasons` is written by SB-01 and is not a copy of `portfolio_risk_result.reasons`.
 - The original proposal is never overwritten; it is either labeled unchecked or labeled failed.
 - “Model generation complete” and “Final check complete” are separate statuses in the CLI display.
-- Report/state/memory consumers use formal fields only. They never parse, synthesize, or substitute a rating. If formal fields are missing or invalid, the shared `FormalResultContract` reports an execution contract failure; consumers do not write REVIEW or a manual-review notice. A business REVIEW is written only by SB-01.
+- Report/state/memory consumers use formal fields only. They never parse, synthesize, or substitute a rating. If formal fields are missing or invalid, the shared `FormalResultContract` reports an execution contract failure; consumers do not write REVIEW or a manual-review notice. A business REVIEW is formed only by SB-01.
 
 ### 6.7 Checkpoint compatibility limit for the new flow
 
@@ -689,10 +693,10 @@ Proposed manifest fields (architecture interface, not a new requirement):
 
 | Field | Type | Notes |
 |---|---|---|
-| `manifest_version` | string | Architecture contract version |
+| `manifest_version` | string | Literal `"1"` for the shared writer/reader contract; any other value is an invalid record |
 | `run_id` | string | Safe path component |
 | `status` | `running` / `completed` / `failed` | Run status, not recommendation |
-| `analysis` | object | Ticker, analysis_date, asset_type, analysts |
+| `analysis` | object | Required: `ticker` string, `analysis_date` `YYYY-MM-DD` string, `asset_type` string, `analysts` list of strings |
 | `started_at` | string | Timezone-aware ISO 8601 |
 | `finished_at` | string or null | Null while running |
 | `duration_seconds` | number or null | Monotonic analysis operation elapsed |
@@ -702,9 +706,17 @@ Proposed manifest fields (architecture interface, not a new requirement):
 | `tokens_in` | integer or null | Exact sum only when complete |
 | `tokens_out` | integer or null | Exact sum only when complete |
 | `usage_complete` | boolean | False if any counted call lacks valid usage |
-| `result_files` | list | Confirmed files actually produced by this run |
-| `report` | object or null | `complete_report.md` reference for FR-05 when produced |
+| `result_files` | list | Required list of confirmed files actually produced by this run; `[]` when none was confirmed. Writer never guesses, fabricates, or scans old files |
+| `report` | object or null | Required key. `null` when no confirmed merged report; otherwise exactly `{"complete_report_md": string}` |
 | `error_summary` | object or null | `error_type` and safe message; no traceback |
+
+Minimal shared writer/reader contract for `manifest_version = "1"`:
+
+- Writer obligation: `analysis` and `report` use the shapes above. The writer records every confirmed produced-file reference in `result_files`, using `[]` when none exists; it does not omit an existing confirmed file, guess a path, fabricate a reference, or scan old directories to claim a file as current. “Optional output” means a report or other optional artifact is not forced to be generated; once produced and confirmed, its reference is still recorded.
+- Writer obligation: `report.complete_report_md` is a string path relative to the configured results root. An absolute value is allowed only when it resolves inside that root under the existing SR-02 checks. When no merged report was confirmed, the normal writer emits `report: null`, not an inferred path and not an empty object.
+- Reader obligation: history validates only the fields needed for registration, filtering, ordering, and report lookup. It does not expand validation over `result_files` or other unrelated content. A missing `report` key is format damage: list skips the record with a safe warning, and direct get treats it as an invalid record. A legal `report: null` is a valid no-registration record: it is absent from list and direct get returns not found.
+- If `report` is non-null, it must contain the `complete_report_md` string and satisfy the root/ownership checks; a missing member, wrong type, or illegal reference is an invalid record. A legally registered report that is later deleted or unreadable remains registered for list availability purposes and direct read returns a report-read error.
+- Missing other required metadata, wrong field types, an unsupported `manifest_version`, or an illegal report reference follows the existing invalid-record/skip rules. No independent schema file, migration, old-version compatibility, hash, archive, index, or new validation system is added.
 
 No rating, gate, reason, or decision fields are added to the manifest. A newly created memory record uses the formal rating and body; it is not required to store the complete gate metadata.
 
@@ -1090,7 +1102,23 @@ Completeness is computed once by the summarizer:
 - Every applicable necessary item in `necessary_items` is `available`: `complete`.
 - Otherwise: `incomplete`, with the corresponding non-available necessary item and reason supplying the gap. A query-level mark is already projected as that selected item's `unavailable`; completeness does not separately re-check marks. Supplementary limitations do not change this rule.
 
-The external snapshot interface receives `asset_type`, `enabled_analysts`, and the small existing `analysis_context` needed for object/range matching as explicit arguments. The research wrapper, final-check node, and report path supply them from existing state/config; no new configuration system is added. A `necessity_status` helper may remain internal only and is not called by consumers.
+The external snapshot interface receives `asset_type`, `enabled_analysts`, and the small existing `analysis_context` needed for object/range matching as explicit arguments. `asset_type` comes from `state["asset_type"]`, populated by `Propagator.create_initial_state`: the CLI derives it from the selected ticker through `detect_asset_type()` and carries it in the selections/state, while `propagate(..., asset_type=...)` supplies the explicit existing parameter (defaulting as that API already does). No separate effective-config key or new asset detector is added. `enabled_analysts` is the existing selected-analyst set used to build the graph; the object is `state["company_of_interest"]`, the analysis date is `state["trade_date"]`, and the existing tool arguments provide any additional date/window values. The research wrapper, final-check node, and report path supply these existing values; no new configuration system is added. A `necessity_status` helper may remain internal only and is not called by consumers.
+
+Existing-data source mapping for the seven necessary items:
+
+| Necessary item | Object source | Date/window source | Existing direct matching |
+|---|---|---|---|
+| `get_stock_data` | `state["company_of_interest"]` | Tool `start_date`/`end_date` after existing `as_of_window(..., trade_date)` handling | Same object and effective start/end; no coverage or period inference |
+| `get_verified_market_snapshot` | `state["company_of_interest"]` | Existing tool `curr_date` after `as_of(..., trade_date)`, plus `look_back_days` | Same object and analysis/effective date; utility lookback does not create a new necessity dimension |
+| `get_income_statement` | `state["company_of_interest"]` | Existing `freq` (default `quarterly`) and `as_of(curr_date, trade_date)` | Existing interface semantics; no annual/quarter substitution or missing-period inference |
+| `get_balance_sheet` | `state["company_of_interest"]` | Existing `freq` (default `quarterly`) and `as_of(curr_date, trade_date)` | Existing interface semantics; no annual/quarter substitution or missing-period inference |
+| `get_cashflow` | `state["company_of_interest"]` | Existing `freq` (default `quarterly`) and `as_of(curr_date, trade_date)` | Existing interface semantics; no annual/quarter substitution or missing-period inference |
+| `get_global_news` | Global news item; no ticker object | Existing analysis date plus `as_of(...)` and configured `global_news_lookback_days`/`global_news_article_limit` defaults | Current analysis date/window; it does not stand in for ticker-news availability |
+| `fetch_reddit_posts` | `state["company_of_interest"]` | Existing sentiment prefetch window from `_seven_days_back(trade_date)` through `trade_date`; `subreddits_for(ticker)`; `limit_per_sub` default 5 | Same object and prefetch window; StockTwits does not substitute for the Reddit item |
+
+These rows describe existing sources and matching only. They do not add an asset-identification rule, parameter registry, range-coverage algorithm, or forced query. Target matching happens before the existing last-accepted-result selection; an available query from another object, window, or data item does not substitute for the necessary target.
+
+For `get_verified_market_snapshot`, `get_global_news`, and `fetch_reddit_posts`, the existing entry/tool context above uniquely determines the target date/window. For `get_stock_data` and the three statement items, one analysis may issue multiple ranges or frequencies; current D1/D2 do not name which actual request is the canonical necessity target. That target-choice detail remains pending at C-07/IF-06 and must not be resolved here by inventing a default, period slot, or coverage rule. If a future entry supplies an asset type not produced by the existing `stock`/`crypto` paths, its matching is likewise unconfirmed rather than assumed to be non-stock.
 
 Summary rules:
 
@@ -1162,7 +1190,8 @@ Checkpoint interaction:
 Input transport:
 
 - Optional `purchase_scenario` keyword for `propagate()` and optional CLI `--purchase-scenario <json-file>`.
-- File read/JSON parse failure is a caller parameter error before run creation (or a controlled setup error). Parsed but business-invalid fields are FR-04 results, not hard failures.
+- An explicitly provided scenario file that cannot be read or parsed is a caller parameter error before run creation (or a controlled setup error). A file that is not provided is distinct from that failure: the absence is passed to FR-04, and an applicable stock Buy/Overweight then gets structured `blocked` without an entry hard failure.
+- After successful input acquisition, business-invalid fields, a mismatched object/ticker, or an invalid explicit threshold are FR-04 results, not entry pre-validation hard failures.
 - The evaluator receives the current analysis ticker explicitly. It does not read a global, parse a report, or infer the ticker from the scenario.
 - The existing `PortfolioContext` is not a source for scenario fields. `average_price`, model text, and network lookup are never used to fill a missing scenario value.
 
@@ -1288,13 +1317,13 @@ Top-level output fields:
 | `gate_status` | `passed`, `blocked`, or `error` |
 | `reasons` | Top-level SB-01 string list; passed may be empty; blocked/error has at least one actual reason; no reason code/priority system |
 | `final_rating` | Five-tier legal rating on passed; REVIEW on blocked/error |
-| `final_trade_decision` | Non-empty formal conclusion; program-generated manual-review notice on blocked/error |
+| `final_trade_decision` | Non-whitespace formal conclusion; program-generated manual-review notice on blocked/error |
 
 Rules:
 
 - Legal ratings: Buy, Overweight, Hold, Underweight, Sell.
 - Missing/illegal model rating or model REVIEW: blocked, final REVIEW, with a top-level reason.
-- Missing model decision body: blocked, with a top-level reason.
+- Model conclusion: it must be a non-whitespace string. Missing, wrong-type, empty-string, and whitespace-only conclusions are ordinary input-condition failures: blocked, final REVIEW, with a program-generated manual-review notice stating the actual reason. They are not handled as SB-01 internal errors. The check may test non-emptiness after stripping surrounding whitespace but must preserve the original valid conclusion unchanged on pass; it does not trim, rewrite, regenerate, or add length/format/quality/factual scoring.
 - FR-03 summary read: use only `basic_completeness`, `necessary_items`, and `applicability_note`, plus necessary-item reasons. `complete` passes; `incomplete` blocks with the non-available necessary items and reasons; `not_applicable` does not alone block and keeps the note.
 - Summary validation is limited to required field types and legal states. A complete result containing a non-available necessary item is a basic contradiction; an incomplete result with no non-available necessary item or corresponding reason is also a basic contradiction. A missing or invalid summary uses the existing missing/invalid-summary rule. No raw payload, source proof, hash, full-query audit, or new schema gate is checked.
 - Supplementary-data limitations are disclosed but do not separately trigger REVIEW and are not necessary gaps.
@@ -1317,9 +1346,9 @@ Interface:
 Registration:
 
 - The FR-02 manifest is the only registration source.
-- A record enters history only when a parseable, supported-format `completed` manifest registers a merged Markdown report reference.
-- Running/failed records, records without a report reference, and unregistered report files are not guaranteed to appear.
-- A legal registration whose report was deleted remains listable with `report_available = false`.
+- A record enters history only when a parseable, supported-format `completed` manifest registers a merged Markdown report reference. A normal `report: null` is a legal no-report record, not a corrupt one, and does not enter the list.
+- Running/failed records, legal no-report records, and unregistered report files are not guaranteed to appear. A missing required `report` key is format damage; list skips it with a safe warning and direct get treats it as an invalid record.
+- A legal registration whose report was deleted remains listable with `report_available = false`; it is not converted into an unregistered record.
 - No migration of old reports is required; existing ticker/date and timestamp layouts are allowed.
 
 List summary fields: `run_id`, `ticker`, `analysis_date`, `started_at`, `report_available`. The complete report body is never returned by `list_runs`.
@@ -1352,8 +1381,8 @@ Distinct errors:
 | Condition | Result |
 |---|---|
 | Illegal run_id | Parameter error |
-| No manifest, non-completed record, or no report reference | Not found |
-| Corrupt, unsupported, identity-mismatched, or out-of-root-reference manifest | Invalid record |
+| No manifest, non-completed record, or legal `report: null`/no-report reference | Not found |
+| Missing required `report` key, corrupt, unsupported, identity-mismatched, malformed report object, or out-of-root-reference manifest | Invalid record |
 | Registered report missing or unreadable | Report-read error |
 | Missing results root | Empty history |
 | Existing but unreadable or scan-failing results root | History-read error |
@@ -1412,8 +1441,8 @@ Supported scope only:
 Rules:
 
 - Configuration summary reuses `run_settings()` allowlist. Credential fields do not enter the summary.
-- Known credentials are only values configured or used by this application in this run; no collection of all environment variables and no credential registry file. Empty strings do not match; exact match only; no long-string or provider-key heuristic.
-- If an allowlisted field contains a known credential, omit the field.
+- Known credentials are only values configured or used by this application in this run; no collection of all environment variables and no credential registry file. Empty strings do not match; IF-21 defines the literal exact-substring matching contract; no long-string or provider-key heuristic.
+- If an allowlisted field contains a known credential as defined by IF-21, omit the entire affected field.
 - Endpoint preference: do not save/restore endpoints with userinfo, query, fragment (including an explicit empty separator), a known credential in host/path, or an unparseable form. Omit the item and require re-entry; do not save a masked pseudo-endpoint; do not strip query/fragment and save a different address; do not modify `.env` or migrate credentials.
 - Supported request errors: replace known credentials with a fixed marker (`***`); do not reattach unprocessed request/response objects, exception chains, or raw bodies; preserve safe error category and necessary diagnostics.
 - Handling failure: omit the field or use a fixed safe message; manifest handling failure skips the record and warns; no raw sensitive fallback; no hard exit.
@@ -1437,7 +1466,7 @@ Rules:
 
 ### 9.3 Coding-agent permissions
 
-The full whitelist is planned for `docs/architecture/permission-model.md` in Batch 3; until that artifact exists, this summary is the current permission constraint. Summary:
+The full whitelist is defined in [`docs/architecture/permission-model.md`](docs/architecture/permission-model.md). This summary reflects the current design constraint:
 
 - Default: no read and no write.
 - Each role has explicit path allowlists and read-only/frozen paths.
@@ -1493,7 +1522,7 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 | Output consistency | CLI streaming sections, immediate files, final report, final state, state log, memory, return value; waiting/unchecked/failed labels |
 | Fault injection | Manifest running/terminal/serialization failures; save failure; corrupt manifest; missing report; invalid UTF-8; unsafe endpoint; symlink escape |
 | Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
-| Static checks | No formal-field writer outside SB-01; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
+| Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
 
 No test in this list has been executed for this design. Existing test files are baseline assets, not new acceptance.
 
@@ -1555,15 +1584,15 @@ These items must not be presented as current acceptance, implementation, or evid
 
 | ID | Decision | Current proposal | Status |
 |---|---|---|---|
-| OQ-01 | Exact CLI flag/file shape for `purchase_scenario` | `--purchase-scenario <json-file>`; optional `purchase_scenario` kwarg | Pending review |
-| OQ-02 | Threshold configuration key names | `max_projected_weight`, `max_stop_distance` | Pending review |
-| OQ-04 | CLI save/display split | Save inside run; display/browser after terminal attempt | Pending review |
-| OQ-07 | Coding-agent role names and whitelists | Four-role proposal | Pending review |
-| OQ-08 | Recursion-limit reservation size | Reserve at least four post-analyst steps | Pending review |
-| OQ-16 | Execution-config callback propagation | Verify the per-analysis handler reaches model/tool calls in analyst subgraphs, parallel nodes, structured-output runnables, and graph-internal reflection; if a boundary does not inherit, pass the same execution config locally; call-ID/usage extraction details remain pending | Pending offline integration verification |
-| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes and add fixtures for every table row; unrecognized formats remain `unavailable` until confirmed | Pending verification |
-| OQ-13 | Shared news executor and research-wrapper integration | Confirm the plain internal news executor calls from P-09/P-13, explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending verification |
-| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 fixtures | Pending verification |
+| OQ-01 | Exact CLI flag/file shape for `purchase_scenario` | `--purchase-scenario <json-file>`; optional `purchase_scenario` kwarg | Pending before entry implementation; parameter/input form and file read/parse error contract remain unconfirmed |
+| OQ-02 | Threshold configuration key names | `max_projected_weight`, `max_stop_distance` | Key names decided by the current user instruction; no other configuration mechanism is approved |
+| OQ-04 | CLI save/display split | Save inside run; display/browser after terminal attempt | Pending before CLI entry implementation; not approved by this document |
+| OQ-07 | Coding-agent role names and whitelists | Four-role proposal | Pending D3-stage confirmation and implementation |
+| OQ-08 | Recursion-limit reservation size | Reserve at least four post-analyst steps | Pending technical verification; four steps is not a product acceptance value |
+| OQ-16 | Execution-config callback propagation | Verify the per-analysis handler reaches model/tool calls in analyst subgraphs, parallel nodes, structured-output runnables, and graph-internal reflection; if a boundary does not inherit, pass the same execution config locally; call-ID/usage extraction details remain pending | Pending offline integration verification; local same-config handoff only, no global collector |
+| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes with finite, sourced samples; unrecognized formats remain `unavailable` until confirmed | Pending verification; no generic recognizer, network probe, or vendor call is added |
+| OQ-13 | Shared news executor and research-wrapper integration | Confirm the plain internal news executor calls from P-09/P-13, explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending offline integration verification within the existing scope |
+| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 fixtures | Pending verification under the existing contract; no new state, recovery, or global veto |
 
 ### 13.2 Risks
 
@@ -1601,7 +1630,7 @@ These items must not be presented as current acceptance, implementation, or evid
 
 ## 14. Traceability summary
 
-The detailed fit-criterion mapping is planned for `docs/architecture/trace-matrix.md` (Batch 3); until that artifact exists, this summary is the current traceability constraint. This blueprint covers:
+The detailed fit-criterion mapping is in [`docs/architecture/trace-matrix.md`](docs/architecture/trace-matrix.md). This blueprint covers:
 
 - FR-01: P-09/P-13 query reuse service and observation boundary.
 - FR-02: RunContext lifecycle, manifest, stats, result references.
@@ -1619,7 +1648,7 @@ The detailed fit-criterion mapping is planned for `docs/architecture/trace-matri
 ## 15. Review checklist
 
 - [ ] The fixed graph sequence Portfolio Manager → FR-04 → SB-01 → END is accepted.
-- [ ] Portfolio Manager writes only `model_proposal` as a nested `{rating, text}` object or `null`; SB-01 alone writes `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`.
+- [ ] Portfolio Manager writes only `model_proposal` as a nested `{rating, text}` object or `null`; SB-01 alone decides/generates `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; unchanged pass-through/merge/save is allowed and is not a second authority.
 - [ ] Risk reasons remain in `portfolio_risk_result.reasons`; SB-01 reasons remain at the top level; no `present`, `gate_reasons`, or flattened risk object is required.
 - [ ] Missing/invalid formal output is an execution contract failure, not a consumer-generated REVIEW.
 - [ ] The availability snapshot is plumbing, not an approval authority.

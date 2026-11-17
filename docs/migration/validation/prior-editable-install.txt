@@ -1,0 +1,17 @@
+Obtaining file:///Users/ichihann/Desktop/CS5351/Teamproject-tradingagents
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: tradingagents
+  Building editable for tradingagents (pyproject.toml): started
+  Building editable for tradingagents (pyproject.toml): finished with status 'done'
+  Created wheel for tradingagents: filename=tradingagents-0.7.0-0.editable-py3-none-any.whl size=7687 sha256=81c2474348e2a522a6e0cbf3ceed130f3ba73de68d8b980aeb9f387bbac007c2
+  Stored in directory: /private/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/pip-ephem-wheel-cache-zca34bu7/wheels/78/e3/d6/94a91e8d4ed93004aa48b2155a9863b3584040ed2307055861
+Successfully built tradingagents
+Installing collected packages: tradingagents
+  Attempting uninstall: tradingagents
+    Found existing installation: tradingagents 0.4.0
+    Not uninstalling tradingagents at /opt/miniconda3/envs/tradingagents/lib/python3.12/site-packages, outside environment /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118/editable-venv
+    Can't uninstall 'tradingagents'. No files were found to uninstall.
+Successfully installed tradingagents-0.7.0

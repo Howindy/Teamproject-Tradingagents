@@ -12,7 +12,7 @@ from pathlib import Path
 from baseline_common import (
     BASELINE_ROOT,
     PROJECT_ROOT,
-    REPO_ROOT,
+    SOURCE_ROOT,
     classify_output,
     compare_snapshots,
     count_records,
@@ -109,7 +109,7 @@ def main() -> int:
     sys.stderr = Tee(sys.stderr, check_dir / "logs" / "stderr.log")
 
     real_home = Path(os.environ.get("HOME", str(Path.home()))).expanduser()
-    source_before = snapshot_tree(REPO_ROOT)
+    source_before = snapshot_tree(SOURCE_ROOT)
     outside_before = snapshot_project_outside_allowed(PROJECT_ROOT)
     home_before = snapshot_tree(real_home / ".tradingagents")
     write_json(check_dir / "source-before.json", source_before)
@@ -129,7 +129,7 @@ def main() -> int:
     os.environ["XDG_CONFIG_HOME"] = str(check_dir / "tmp" / "xdg-config")
     os.environ["XDG_DATA_HOME"] = str(check_dir / "tmp" / "xdg-data")
     sys.dont_write_bytecode = True
-    sys.path.insert(0, str(REPO_ROOT))
+    os.chdir(PROJECT_ROOT)
 
     log_path = check_dir / "logs" / "probe.log"
     handler = logging.FileHandler(log_path, encoding="utf-8")
@@ -172,9 +172,9 @@ def main() -> int:
             "tradingagents_version": getattr(tradingagents, "__version__", None),
             "cli_file": str(Path(cli.__file__).resolve()),
             "cli_main_file": str(Path(cli.main.__file__).resolve()),
-            "expected_repo": str(REPO_ROOT),
+            "expected_source": str(SOURCE_ROOT),
         }
-        expected = (REPO_ROOT / "tradingagents" / "__init__.py").resolve()
+        expected = (SOURCE_ROOT / "tradingagents" / "__init__.py").resolve()
         if Path(tradingagents.__file__).resolve() != expected:
             raise RuntimeError(f"refusing to run: loaded {tradingagents.__file__} instead of {expected}")
 
@@ -287,7 +287,7 @@ def main() -> int:
         write_text(check_dir / "logs" / "fatal.txt", traceback.format_exc())
     finally:
         total_elapsed = monotonic() - total_start
-        source_after = snapshot_tree(REPO_ROOT)
+        source_after = snapshot_tree(SOURCE_ROOT)
         outside_after = snapshot_project_outside_allowed(PROJECT_ROOT)
         home_after = snapshot_tree(real_home / ".tradingagents")
         source_integrity = compare_snapshots(source_before, source_after)

@@ -1,0 +1,1190 @@
+schema_version: "1.0"
+entries:
+  - id: "AI-001"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "CityU DeepSeek-V4-Flash"
+    activity: "project_analysis"
+    task: "Analyze the imported TradingAgents v0.7.0 baseline"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Produced a read-only analysis of the imported TradingAgents v0.7.0 source, covering the LangGraph orchestration, analyst/research/risk pipeline, memory, data vendors, CLI, and the absence of student changes at the import commit. No files were changed."
+    human_intervention: null
+    approval:
+      subject: "Read-only project analysis"
+      status: "not_established"
+      approved_at: null
+      evidence:
+        - "transcripts/session-01.md:9-2459 (user asks for an overall project analysis; assistant reports findings)"
+    verification:
+      status: "not_run"
+      summary: "Read-only source inspection only; the application was not run in this task."
+      evidence:
+        - "transcripts/session-01.md:2380-2459 (assistant analysis report)"
+    transcript_refs:
+      - path: "transcripts/session-01.md"
+        locator: "lines 9-2459"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The analysis describes the v0.7.0 source at the import commit; runtime behavior was not measured in this task."
+
+  - id: "AI-002"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "CityU DeepSeek-V4-Flash"
+    activity: "baseline_run"
+    task: "Run the unmodified TradingAgents baseline once for NVDA 2026-10-16 and store results under baseline/"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "baseline/logs/run_stdout.log"
+      - "baseline/memory/trading_memory.md"
+      - "baseline/results/NVDA/2026-10-16/reports/final_trade_decision.md"
+      - "baseline/results/reports/NVDA_20261020_174748/complete_report.md"
+      - "baseline/results/reports/NVDA_20261020_174748/complete_report.html"
+    ai_contribution: "Used the existing use_ta_cityu environment and TRADINGAGENTS_* path overrides to run one headless analysis without modifying application source. Corrected the temporary launcher's conda activation order after initial import failures. The run completed with final rating Hold. StockTwits returned HTTP 403 and one structured-output fallback was observed. Artifacts were collected under baseline/."
+    human_intervention: "User authorized one complete run without code changes and required all results under a new baseline/ directory."
+    approval:
+      subject: "One baseline run without code changes"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-01.md:2463 (user authorizes the run and baseline storage)"
+    verification:
+      status: "completed_with_findings"
+      summary: "Observed run completion and a Hold decision; the baseline stdout recorded StockTwits HTTP 403 and a structured-output fallback. Exact LLM/tool/token metrics were not captured in this run."
+      evidence:
+        - "transcripts/session-01.md:4924-5498 (run completion and result inspection)"
+        - "baseline/logs/run_stdout.log"
+    transcript_refs:
+      - path: "transcripts/session-01.md"
+        locator: "lines 2463-5498"
+    commit: null
+    pull_request: null
+    limitations:
+      - "No exact LLM/tool/token metrics were captured for this run."
+      - "The transcript captured a credential value in a tool output. That value is not reproduced here; no rotation evidence is present in the transcript."
+      - "Data coverage was incomplete: FRED was not configured, StockTwits failed, and historical sources were withheld."
+
+  - id: "AI-003"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "CityU DeepSeek-V4-Flash"
+    activity: "data_source_diagnosis"
+    task: "Diagnose baseline data gaps and choose a rerun scenario"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Compared the observed StockTwits 403, Yahoo ticker-news window behavior, missing FRED_API_KEY, and historical-withholding rules. Found that Yahoo ticker news only passes the coverage check when the window reaches the current day, that StockTwits had recovered, and that live-only sources require a non-historical analysis date. Presented Plan A (comparable NVDA 2026-10-16 rerun) and Plan B (live NVDA 2026-10-20 run)."
+    human_intervention: "After being told Plan B would include an unclosed market session, the user selected Plan B."
+    approval:
+      subject: "Plan B live rerun on 2026-10-20"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-01.md:7000-7060 (question answered with Plan B)"
+    verification:
+      status: "completed"
+      summary: "Independent non-LLM probes were executed. No full LLM rerun was started in this diagnostic step."
+      evidence:
+        - "transcripts/session-01.md:6560-7040 (probe outputs and diagnosis)"
+    transcript_refs:
+      - path: "transcripts/session-01.md"
+        locator: "lines 5499-7060"
+    commit: null
+    pull_request: null
+    limitations:
+      - "Probe scripts were temporary files outside the project and were not persisted as repository evidence."
+      - "The latest completed daily market bar was 2026-10-19, one day before the chosen live date."
+
+  - id: "AI-004"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "CityU DeepSeek-V4-Flash"
+    activity: "baseline_run"
+    task: "Execute the selected live baseline run for NVDA 2026-10-20 in an isolated run directory"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "baseline/runs/b_20261020_run1/logs/run_stdout.log"
+      - "baseline/runs/b_20261020_run1/memory/trading_memory.md"
+      - "baseline/runs/b_20261020_run1/results/NVDA/2026-10-20/reports/final_trade_decision.md"
+    ai_contribution: "Created an isolated run directory, redirected results/cache/memory there, and ran the unmodified CLI with four analysts and one debate/risk round. The run completed with final rating Underweight. Yahoo ticker news, StockTwits, Polymarket, company profile, and insider data were available under the live date; FRED remained unconfigured. The latest completed close was 2026-10-19."
+    human_intervention: "User selected Plan B and authorized execution."
+    approval:
+      subject: "Plan B live rerun on 2026-10-20"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-01.md:7000-7060 (Plan B selected)"
+    verification:
+      status: "completed_with_findings"
+      summary: "Run completed with 31 observed tool calls and an Underweight decision. Data coverage improved but FRED remained unavailable and the market session was not closed."
+      evidence:
+        - "transcripts/session-01.md:7060-8102 (run and result inspection)"
+        - "baseline/runs/b_20261020_run1/results/NVDA/2026-10-20/message_tool.log"
+    transcript_refs:
+      - path: "transcripts/session-01.md"
+        locator: "lines 7060-8102"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The analysis date was an unclosed trading day; the latest completed market bar was 2026-10-19."
+      - "FRED_API_KEY remained unset."
+      - "This run did not include the later formal README/manifest/metrics evidence package."
+
+  - id: "AI-005"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "CityU DeepSeek-V4-Flash"
+    activity: "tooling_attempt"
+    task: "Attempt a controlled baseline preflight and launcher, then remove session-produced artifacts after a write-boundary violation"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Drafted preflight and launcher scripts, ran read-only source and vendor probes, and attempted to start a formal baseline run. The formal launch did not complete. The session produced unintended Python bytecode under TradingAgents/, violating the user's boundary."
+    human_intervention: "After the boundary violation and credential exposure were identified, the user ordered deletion of all files produced by the session. The agent removed 89 .pyc files and 15 empty __pycache__ directories, then confirmed a clean git status. The user was told the OpenCode conversation record could not be deleted by project-file cleanup."
+    approval:
+      subject: "Delete all files produced by this session"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-03.md:9-5895 (preflight scripts and aborted formal launch)"
+        - "transcripts/session-04.md:9450 (user orders deletion)"
+    verification:
+      status: "completed"
+      summary: "Cleanup removed 89 .pyc files and 15 empty __pycache__ directories; git status was empty. No full baseline run was completed in this attempt."
+      evidence:
+        - "transcripts/session-04.md:9450-9510 (cleanup result)"
+    transcript_refs:
+      - path: "transcripts/session-03.md"
+        locator: "lines 9-5895"
+      - path: "transcripts/session-04.md"
+        locator: "lines 9-9510"
+      - path: "transcripts/session-05.md"
+        locator: "lines 1-926"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The formal run did not execute; a later cleanup found no scripts/ or baseline/ directory, so persistence of the drafted scripts is not established."
+      - "Exact deleted bytecode paths were not preserved in the transcript; only the counts of 89 files and 15 empty directories are evidenced."
+      - "Deleting project files did not remove the credential value from the OpenCode conversation record."
+
+  - id: "AI-006"
+    date: "2026-10-20"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "baseline_run"
+    task: "Run the formal NVDA 2026-10-19 baseline with a complete evidence package"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/run_baseline.py"
+      - "scripts/baseline_common.py"
+      - "scripts/rebuild_evidence.py"
+      - "scripts/finalize_run.py"
+      - "baseline/preflight/preflight-20261020-01/probe-manifest.json"
+      - "baseline/preflight/preflight-20261020-02/probe-manifest.json"
+      - "baseline/runs/baseline-20261020-01/README.md"
+      - "baseline/runs/baseline-20261020-01/run-manifest.json"
+      - "baseline/runs/baseline-20261020-01/metrics.json"
+      - "baseline/runs/baseline-20261020-01/data-availability.csv"
+      - "baseline/runs/baseline-20261020-01/summary.md"
+      - "baseline/runs/baseline-20261020-01/environment.json"
+      - "baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/complete_report.md"
+      - "baseline/runs/baseline-20261020-01/results/NVDA/2026-10-19/message_tool.log"
+      - "baseline/runs/baseline-20261020-01/transcripts/opencode-session.json"
+    ai_contribution: "Created run, preflight, evidence-rebuild, and finalization scripts and executed one formal analysis from TradingAgents/ using the repository source. The run exited 0 in 195.383 seconds with final rating Hold, 19 LLM calls, 31 tool calls, and 156,541 input / 27,639 output tokens. Produced README, run manifest, environment record, metrics, data-availability CSV, summary, source/outside/home integrity snapshots, and an OpenCode session export. Reports acknowledged missing ticker news, StockTwits 403, missing FRED, and historical withholding."
+    human_intervention: "User confirmed the formal run after reviewing the plan and accepted the missing FRED_API_KEY rather than adding credentials."
+    approval:
+      subject: "Formal baseline run"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-06.md:1029 (user confirms the formal run)"
+    verification:
+      status: "completed_with_findings"
+      summary: "Main flow completed and report/state consistency checks passed; data coverage was incomplete. Runtime and integrity evidence are in baseline/runs/baseline-20261020-01/."
+      evidence:
+        - "transcripts/session-06.md:3700-4135 (run verdict and evidence summary)"
+        - "baseline/runs/baseline-20261020-01/summary.md"
+    transcript_refs:
+      - path: "transcripts/session-06.md"
+        locator: "lines 1029-4135"
+    commit: null
+    pull_request: null
+    limitations:
+      - "Installed dependencies were below pyproject minima and an older tradingagents 0.4.0 distribution remained in site-packages; the run loaded the repository v0.7.0 source."
+      - "No monetary cost was computed because no CityU price schedule was provided."
+      - "This is not a live/full acceptance pass and does not show complete data coverage."
+      - "An earlier preflight was superseded after a counting-script bug; the superseded directory was retained."
+
+  - id: "AI-007"
+    date: "2026-10-27"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_analysis"
+    task: "Identify candidate functional and non-functional improvements and D1 scope options from the baseline"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Analyzed the formal baseline, code paths, data flow, state storage, AI calls, and costs. Identified candidate improvements around run-scoped query reuse, unified data availability, deterministic review gating, provenance consistency, observability, and secret-safe records. Presented candidate D1 requirements with acceptance ideas, tradeoffs, and minimum-scope options. No official requirement file was written in the candidate step."
+    human_intervention: "User required evidence-based candidates, separation of confirmed facts from inference, and no premature final scope decision."
+    approval:
+      subject: "D1 candidate analysis and scope options"
+      status: "not_established"
+      approved_at: null
+      evidence:
+        - "transcripts/session-06.md:4136 (first FR/NFR analysis request)"
+        - "transcripts/session-06.md:6334 (full read-only analysis request)"
+        - "transcripts/session-06.md:13212 (candidate D1 request, no file write)"
+    verification:
+      status: "not_run"
+      summary: "Read-only analysis using the existing baseline evidence; no new tests or measurements were run."
+      evidence:
+        - "transcripts/session-06.md:4136-14336 (analysis and candidate proposals)"
+    transcript_refs:
+      - path: "transcripts/session-06.md"
+        locator: "lines 4136-14336"
+    commit: null
+    pull_request: null
+    limitations:
+      - "Candidates were proposals; no requirement was approved in this step."
+      - "Cost, latency, and token-reduction figures were not measured in this task."
+
+  - id: "AI-008"
+    date: "2026-10-27"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_authoring"
+    task: "Write the approved D1 six-requirement registry and schema, then validate them"
+    requirement_ids:
+      - "PR-01"
+      - "QR-01"
+      - "FR-02"
+      - "SB-01"
+      - "INV-02"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+    ai_contribution: "Created D1 in English with six requirements, 24 acceptance criteria, MoSCoW, traceability, conflict resolutions, baseline observations, open questions, and a JSON Schema. Ran AJV Draft 2020-12 compile/validation and custom checks for duplicate IDs, missing references, conflicts, vague wording, verifiability, zero-tolerance invariants, measurement honesty, source evidence, MoSCoW coverage, and traceability paths."
+    human_intervention: "User approved the six-requirement scope and required English documents, while leaving full design approval open."
+    approval:
+      subject: "D1 six-requirement scope and registry"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-06.md:14337 (user approves the six-requirement scope)"
+    verification:
+      status: "passed"
+      summary: "AJV Draft 2020-12 compile and validation passed; registry contained 6 requirements and 24 acceptance criteria; all custom checks passed. Human approval of the complete requirements set was not established."
+      evidence:
+        - "transcripts/session-06.md:16140-16300 (validation output and open questions)"
+        - "docs/req/requirements.yaml"
+    transcript_refs:
+      - path: "transcripts/session-06.md"
+        locator: "lines 14337-16300"
+    commit: null
+    pull_request: null
+    limitations:
+      - "Blocking open questions OQ-01, OQ-03, OQ-04, and OQ-06 remained."
+      - "Schema validation is not human approval or application acceptance."
+
+  - id: "AI-009"
+    date: "2026-10-27"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "architecture_design"
+    task: "Compare D2 architecture candidates and generate the first D2 draft"
+    requirement_ids:
+      - "PR-01"
+      - "QR-01"
+      - "FR-02"
+      - "SB-01"
+      - "INV-02"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-run-governance.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/architecture/open-decisions.md"
+    ai_contribution: "Compared Lean A, event-ledger B, and decorator C; recommended Lean A for review; generated a v0.1 draft architecture, ADR, invariants, trace matrix, memory design, permission model, runtime policy catalog, evaluation table, and open decisions. All documents were marked draft/pending human review and design-only."
+    human_intervention: "User required Lean A as the review candidate, retained B/C comparison, and prohibited treating the draft or recommendation as approved."
+    approval:
+      subject: "Generate the D2 v0.1 draft"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-06.md:18348 (user authorizes the D2 v0.1 draft)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Document links and requirement/AC coverage were checked; six requirements and 24 acceptance criteria were represented. No code or tests were run."
+      evidence:
+        - "transcripts/session-06.md:20320-20625 (consistency checks and final report)"
+    transcript_refs:
+      - path: "transcripts/session-06.md"
+        locator: "lines 16301-20625"
+    commit: null
+    pull_request: null
+    limitations:
+      - "D2 design was not approved; open decisions remained."
+      - "No implementation, tests, or runtime monitoring were created."
+
+  - id: "AI-010"
+    date: "2026-11-10"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "design_revision"
+    task: "Resolve D2 memory/versioning, provenance, publication, and closure inconsistencies and commit the documents"
+    requirement_ids:
+      - "FR-02"
+      - "SB-01"
+      - "INV-02"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-run-governance.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/open-decisions.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/validation-results.json"
+      - "docs/req/evaluation/README.md"
+      - "docs/req/run-manifest-schema.json"
+    ai_contribution: "Unified decision/version semantics for reruns, separated stable decision digests from per-run evidence digests, defined pre-commit memory-version reservation, removed post-commit old-entry writes, clarified startup-failure publication, and consolidated requirements/architecture/schema/validation. Validation passed and a 23-file commit was created."
+    human_intervention: "User identified specific cross-document conflicts, required a whole-design closure rather than incremental patches, and later requested commit and push."
+    approval:
+      subject: "D2 consistency corrections and git commit/push"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-07.md:463 (conflict list)"
+        - "transcripts/session-07.md:1843 (whole-design closure request)"
+        - "transcripts/session-07.md:3248 (commit and push request)"
+    verification:
+      status: "passed_with_push_failure"
+      summary: "Validation passed; commit 9598c72 was created. Push to origin failed because github.com:443 was unreachable, and the branch remained ahead by one commit."
+      evidence:
+        - "transcripts/session-07.md:3510-3675 (commit, failed pushes, final status)"
+    transcript_refs:
+      - path: "transcripts/session-07.md"
+        locator: "lines 1-3675"
+    commit: "9598c72"
+    pull_request: null
+    limitations:
+      - "Push failed; no pull request was created."
+      - "Human approval of the D2 design remained pending."
+      - "The commit included goal.md and jyy/requirements.yaml in addition to design files."
+
+  - id: "AI-011"
+    date: "2026-11-10"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Tighten six D1 conflicts in docs/req only"
+    requirement_ids:
+      - "FR-02"
+      - "FR-08"
+      - "CR-01"
+      - "QR-01"
+      - "SB-01"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/req/run-manifest-schema.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/validation-results.json"
+      - "docs/req/evaluation/brief-eval-contract-v1.json"
+      - "docs/req/fixtures/brief_eval_states_v2.json"
+      - "docs/req/fixtures/downstream_brief_v1.json"
+    ai_contribution: "Unified quality-loss semantics, restricted acceptance_status to blocked/ready/accepted/failed, separated input/output prices in net-cost calculations, applied hard context-cap checks to all brief delivery branches including reference payloads, corrected short-report passthrough semantics, and added positive/negative fixtures. Validation passed at 13 requirements and 111 acceptance criteria; brief evaluation remained blocked."
+    human_intervention: "User limited changes to docs/req, required the six conflicts to be closed without scope expansion, and prohibited weakening security or inventing approval."
+    approval:
+      subject: "Six-conflict D1 tightening in docs/req"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-08.md:3643 (scope and conflict list)"
+    verification:
+      status: "passed"
+      summary: "Validator PASS; 13 requirements and 111 acceptance criteria; fixture checks and --check passed. Human review remained pending."
+      evidence:
+        - "transcripts/session-08.md:5570-5817 (validation and final report)"
+    transcript_refs:
+      - path: "transcripts/session-08.md"
+        locator: "lines 3643-5817"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The registry changed again after this task; the 13/111 counts are historical."
+      - "No application tests or live evaluation were run."
+
+  - id: "AI-012"
+    date: "2026-11-11"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "design_revision"
+    task: "Fix recovery ordering, record_hash projection, and SEC field provenance in D2"
+    requirement_ids:
+      - "FR-05"
+      - "INV-01"
+      - "INV-02"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-run-governance.md"
+      - "docs/architecture/adr/002-full-scope-add-r.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/open-decisions.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/trace-matrix.md"
+    ai_contribution: "Revised recovery to check the terminal manifest before any recovery snapshot; defined a field-level record_hash projection and canonical-content versus file-byte hash order; classified SEC facts into disclosure and canonical fields with versioned deterministic derivation and typed unavailable/ambiguous outcomes. Added ADR 002 and synchronized invariants, policies, trace matrix, evaluation table, memory design, and open decisions."
+    human_intervention: "User limited edits to architecture documents, required exactly one consistent rule set across artifacts, and prohibited claiming implementation or approval."
+    approval:
+      subject: "D2 three-issue correction"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-09.md:2146 (scope and three fixes)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Static coverage reported 111/111 acceptance criteria, 41 invariants, 44 architecture tests, and 18 scenario tests. No application tests were run."
+      evidence:
+        - "transcripts/session-09.md:3780-3814 (static check report)"
+    transcript_refs:
+      - path: "transcripts/session-09.md"
+        locator: "lines 2146-3814"
+    commit: null
+    pull_request: null
+    limitations:
+      - "No implementation or tests were created."
+      - "The D2 design remained pending human review."
+
+  - id: "AI-013"
+    date: "2026-11-15"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Clarify D1 specification edges to version 1.19.0"
+    requirement_ids:
+      - "FR-01"
+      - "FR-02"
+      - "FR-03"
+      - "FR-04"
+      - "FR-05"
+      - "FR-06"
+      - "FR-07"
+      - "FR-08"
+      - "PR-01"
+      - "CR-01"
+      - "GR-01"
+      - "QR-01"
+      - "SB-01"
+      - "INV-01"
+      - "INV-02"
+      - "SR-01"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/req/run-manifest-schema.json"
+      - "docs/req/requirement-mapping.csv"
+      - "docs/req/evaluation/brief-eval-contract-v2.json"
+      - "docs/req/fixtures/brief_eval_states_v2.json"
+      - "docs/req/fixtures/gr01_freeze_states_v1.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/validation-results.json"
+      - "architecture-blueprint.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+    ai_contribution: "Applied specification-edge clarifications across the active requirements and synchronized architecture version references. Kept 18 requirements and 119 fit criteria, and did not change requirement status, MoSCoW, approvals, or deferred scope."
+    human_intervention: "User allowed only specification edits, preserved existing review/approval states, and required that machine checks not be treated as human approval."
+    approval:
+      subject: "D1 v1.19.0 clarification"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-10.md:1692 (scope and prohibitions)"
+    verification:
+      status: "passed"
+      summary: "Validator PASS; 18 requirements and 119 fit criteria; no application or live tests; human review remained pending."
+      evidence:
+        - "transcripts/session-10.md:3450-3588 (validation summary)"
+    transcript_refs:
+      - path: "transcripts/session-10.md"
+        locator: "lines 1692-3588"
+    commit: null
+    pull_request: null
+    limitations:
+      - "No requirement status change or human approval was recorded."
+      - "Some conflicts were left as explicit open decisions."
+
+  - id: "AI-014"
+    date: "2026-11-15"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Resolve remaining D1 contradictions to version 1.20.0 and push the documents"
+    requirement_ids:
+      - "FR-01"
+      - "FR-02"
+      - "FR-03"
+      - "FR-04"
+      - "FR-05"
+      - "FR-06"
+      - "FR-07"
+      - "FR-08"
+      - "PR-01"
+      - "CR-01"
+      - "GR-01"
+      - "QR-01"
+      - "QR-02"
+      - "SB-01"
+      - "INV-01"
+      - "INV-02"
+      - "SR-01"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/req/run-manifest-schema.json"
+      - "docs/req/requirement-mapping.csv"
+      - "docs/req/evaluation/brief-eval-contract-v2.json"
+      - "docs/req/fixtures/brief_eval_states_v2.json"
+      - "docs/req/fixtures/gr01_freeze_states_v1.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/validation-results.json"
+      - "architecture-blueprint.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/evaluation-table.md"
+    ai_contribution: "Fixed identified contradictions across all 18 requirements, kept 119 fit criteria, regenerated validation results and brief/GR fixtures, synchronized architecture version references, and committed 52bb1b7. An initial push failed on network connectivity; a later retry succeeded."
+    human_intervention: "User required unique, complete, implementable, and verifiable interpretations and later requested commit and push."
+    approval:
+      subject: "D1 v1.20.0 revision and commit/push"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-10.md:3589 (revision scope)"
+        - "transcripts/session-10.md:5991 (commit/push request)"
+    verification:
+      status: "passed"
+      summary: "Validator PASS; 18 requirements and 119 fit criteria; 17 draft and QR-02 deferred. Commit 52bb1b7 was pushed after retry."
+      evidence:
+        - "transcripts/session-10.md:5380-5550 (validation)"
+        - "transcripts/session-10.md:6100-6296 (commit and push result)"
+    transcript_refs:
+      - path: "transcripts/session-10.md"
+        locator: "lines 3589-6296"
+    commit: "52bb1b7"
+    pull_request: null
+    limitations:
+      - "No human requirement approval was recorded."
+      - "No application tests or live evaluation were run."
+      - "CR-01 thresholds/prices and other policy choices remained open."
+
+  - id: "AI-015"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Correct CR-01 lifecycle states, publish contract v4, synchronize D2, and commit"
+    requirement_ids:
+      - "CR-01"
+      - "FR-08"
+      - "INV-01"
+      - "SB-01"
+    fit_criterion_ids:
+      - "CR-01-FC03"
+      - "CR-01-FC04"
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/validation-results.json"
+      - "docs/req/evaluation/README.md"
+      - "docs/req/evaluation/brief-eval-contract-v4.json"
+      - "docs/req/fixtures/brief_eval_states_v4.json"
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/003-add-r-round-3.md"
+      - "docs/architecture/adr/004-cr01-state-correction.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/open-decisions.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/trace-matrix.md"
+    ai_contribution: "Defined a two-field CR-01 state model, disallowed pending/aborted acceptance states, preserved retries as new attempts, updated CR-01 to contract v4, added ADR 004, synchronized D2 and trace rows, and validated 18 requirements and 122 fit criteria. Committed 3fc6b42 and pushed successfully."
+    human_intervention: "User requested commit and push of the corrected version. The initial CR-01 correction instruction is not visible in the transcript excerpt."
+    approval:
+      subject: "Commit/push of the CR-01 correction"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-11.md:3626 (commit and push request)"
+    verification:
+      status: "passed"
+      summary: "Validator PASS; 18 requirements and 122 fit criteria; the state fixture covered 34 cases. Commit 3fc6b42 was pushed as 7d3b553..3fc6b42."
+      evidence:
+        - "transcripts/session-11.md:3440-3645 (validation and commit)"
+    transcript_refs:
+      - path: "transcripts/session-11.md"
+        locator: "lines 1-3801"
+    commit: "3fc6b42"
+    pull_request: null
+    limitations:
+      - "CR-01 evaluation remained blocked by missing prices, thresholds, snapshots, and human contract approval."
+      - "No application tests or live evaluation were run."
+      - "The substantive CR-01 correction instruction is not visible in the transcript excerpt."
+
+  - id: "AI-016"
+    date: "2026-11-15"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Consolidate D1 to 13 requirements and 55 fit criteria and correct two wordings"
+    requirement_ids: []
+    fit_criterion_ids:
+      - "FR-03-FC04"
+      - "SR-02"
+    files_changed:
+      - "docs/req/requirements.yaml"
+    ai_contribution: "Recorded the v1.46.0 consolidation to 13 requirements and 55 fit criteria (9 active, 4 deferred), then corrected FR-03-FC04 and SR-02 wording without changing the protected requirement semantics. Only requirements.yaml was modified; the old schema was incompatible with the current definitions."
+    human_intervention: "The initial consolidation instruction is not visible. Two follow-up wording changes were explicitly authorized in a narrow docs/req edit."
+    approval:
+      subject: "D1 consolidation to v1.46.0"
+      status: "not_established"
+      approved_at: null
+      evidence:
+        - "transcripts/session-12.md:1-603 (completion report for the consolidation)"
+        - "transcripts/session-12.md:604 (two-word correction request)"
+    verification:
+      status: "passed"
+      summary: "Protected-field comparison, reference checks, and YAML parsing passed; 13 requirements and 55 fit criteria remained. No application tests were run."
+      evidence:
+        - "transcripts/session-12.md:560-603 (protected-field comparison and limitations)"
+    transcript_refs:
+      - path: "transcripts/session-12.md"
+        locator: "lines 1-889"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The initial consolidation instruction is not captured in the transcript."
+      - "The old schema remained incompatible at this point."
+      - "No human approval evidence was found."
+
+  - id: "AI-017"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_governance"
+    task: "Delete all docs/req artifacts except requirements.yaml, then rebuild req-schema.json"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/req-schema.json"
+      - "docs/req/evaluation/brief-eval-contract-v4.json"
+      - "docs/req/fixtures/financial_metrics_v1.json"
+      - "docs/req/validation-results.json"
+      - "docs/req/validate_requirements.py"
+      - "docs/req/run-manifest-schema.json"
+      - "docs/req/requirement-contracts-v1.json"
+      - "docs/req/requirement-mapping.csv"
+    ai_contribution: "Deleted the legacy schema, validator, validation results, contracts, mapping, evaluation, and fixture files per instruction, leaving only requirements.yaml. Then created a new JSON Schema Draft 2020-12 schema matching the current document structure, with open definitions and generic IDs. Schema validation on the current YAML produced zero errors; negative tests failed as expected."
+    human_intervention: "User explicitly required deletion of every other docs/req file, including the prior schema, and prohibited restoring auxiliary files or changing requirements.yaml."
+    approval:
+      subject: "Delete docs/req artifacts and rebuild the schema"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-12.md:890 (cleanup instruction)"
+        - "transcripts/session-12.md:1191 (schema rebuild instruction)"
+    verification:
+      status: "passed"
+      summary: "Only requirements.yaml remained after cleanup. The new schema passed Draft 2020-12 meta-schema checks and validated the current YAML with zero errors; negative tests failed as expected."
+      evidence:
+        - "transcripts/session-12.md:2480-2579 (schema validation result)"
+    transcript_refs:
+      - path: "transcripts/session-12.md"
+        locator: "lines 890-2579"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The deletion is irreversible in the working tree."
+      - "Schema checks document structure only; no CI wiring or application validation was performed."
+      - "The requirements file was unchanged by the schema task."
+
+  - id: "AI-018"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_governance"
+    task: "Redesign the validation section, remove stale current-state claims, and commit to a new frozen branch"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "docs/req/req-schema.json"
+    ai_contribution: "Separated current validation from historical records, corrected references to deleted files, updated the document version/date, and validated the document. Committed 028af25 and created/pushed branch req-frozen-v1.48.0 after initial network failures."
+    human_intervention: "User limited edits to the validation/document/schema area, then requested a frozen-branch commit/push and a new frozen branch after the first push failed."
+    approval:
+      subject: "Validation redesign and frozen-branch commit/push"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-12.md:4489 (validation redesign scope)"
+        - "transcripts/session-12.md:6278 (commit/push request)"
+        - "transcripts/session-12.md:6705 (new frozen branch request)"
+    verification:
+      status: "passed"
+      summary: "Validator and --check passed; commit 028af25 was pushed to req-frozen-v1.48.0. The commit recorded deletion of D2 files and legacy req artifacts in addition to docs/req changes."
+      evidence:
+        - "transcripts/session-12.md:6540-6620 (commit contents)"
+        - "transcripts/session-12.md:6760-6845 (branch push result)"
+    transcript_refs:
+      - path: "transcripts/session-12.md"
+        locator: "lines 2580-6848"
+    commit: "028af25"
+    pull_request: null
+    limitations:
+      - "The commit's deletion of architecture files is not explained by the visible task instruction; its origin is uncertain."
+      - "No application tests or CI validation were run."
+      - "No pull request was created."
+
+  - id: "AI-019"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "requirements_revision"
+    task: "Clarify SR-01 exact credential matching and SB-01 non-whitespace conclusion handling"
+    requirement_ids:
+      - "SB-01"
+      - "SR-01"
+    fit_criterion_ids:
+      - "SB-01-FC04"
+      - "SR-01-FC01"
+    files_changed:
+      - "docs/req/requirements.yaml"
+    ai_contribution: "Updated SR-01-FC01 to require exact substring matching, whole-field omission, empty-credential exclusion, and no fuzzy or unknown-secret detection. Updated SB-01 and SB-01-FC04 to treat missing, wrong-type, empty, and whitespace-only conclusions as ordinary blocked/REVIEW input conditions rather than internal errors. Requirement count stayed at 13 and fit-criterion count at 55."
+    human_intervention: "The initial instruction is not visible; the transcript begins at the completion report."
+    approval:
+      subject: "D1 v1.48.0 SR-01/SB-01 clarification"
+      status: "not_established"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:1-31 (completion report)"
+    verification:
+      status: "passed"
+      summary: "Read-only checks confirmed only requirements.yaml changed and counts remained 13 requirements/55 fit criteria. No application tests were run."
+      evidence:
+        - "transcripts/session-13.md:25-31 (completion check)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 1-34"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The authorizing instruction is not visible in the transcript excerpt."
+      - "No human approval evidence was found."
+
+  - id: "AI-020"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "design_revision"
+    task: "Apply five confirmed D2 decisions without expanding scope"
+    requirement_ids:
+      - "FR-04"
+      - "SB-01"
+      - "INV-01"
+      - "SR-01"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/trace-matrix.md"
+    ai_contribution: "Synchronized SB-01 conclusion and IF-19 non-whitespace rules, SR-01 IF-21 exact matching, removed outdated batch/file-creation text, clarified FR-04 entry boundaries, and distinguished SB-01's sole decision/generation authority from ordinary value pass-through."
+    human_intervention: "User restricted edits to five D2 files and required no new thresholds, tests, or approvals."
+    approval:
+      subject: "D2 five-decision revision"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:35 (scope and five decisions)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Static consistency checks passed; D1 remained 13 requirements/55 fit criteria. No application tests were run."
+      evidence:
+        - "transcripts/session-13.md:1900-1960 (final check and pending items)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 35-2487"
+    commit: null
+    pull_request: null
+    limitations:
+      - "The D2 design was not approved."
+      - "OQ-01/02/04/07/08/12/13/15/16 remained open or pending."
+      - "No implementation or tests were created."
+
+  - id: "AI-021"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "design_revision"
+    task: "Clarify programmatic save flow, asset-type sources, necessity-item targets, and evaluation approval wording"
+    requirement_ids:
+      - "FR-02"
+      - "FR-03"
+      - "FR-04"
+      - "SB-01"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/evaluation-table.md"
+    ai_contribution: "Specified the programmatic save order and memory-after-final-state behavior, identified confirmed asset-type sources, matched necessity items to the actual request context, and distinguished selected/proposed architecture from approved decisions."
+    human_intervention: "User allowed only three D2 files and required no OQ confirmation, new requirements, or test scope."
+    approval:
+      subject: "D2 local revision"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:2488 (scope and five items)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Static checks only; no application tests. The stock-data and statement necessity targets were left pending when multiple requests exist."
+      evidence:
+        - "transcripts/session-13.md:2450-2490 (final report)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 2488-5192"
+    commit: null
+    pull_request: null
+    limitations:
+      - "Stock-data and statement necessity targets remain ambiguous when one analysis issues multiple ranges or frequencies."
+      - "The D2 design was not approved."
+
+  - id: "AI-022"
+    date: "2026-11-17"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "design_revision"
+    task: "Separate manifest writer duties from history-reader checks and clarify report/result edge cases"
+    requirement_ids:
+      - "FR-01"
+      - "FR-02"
+      - "FR-03"
+      - "FR-04"
+      - "INV-01"
+      - "SB-01"
+    fit_criterion_ids: []
+    files_changed:
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/memory-design.md"
+    ai_contribution: "Defined manifest writer result_files/report obligations, limited history-reader validation, separated report:null, missing report key, malformed record, and registered-missing-report outcomes, applied target matching before last-accepted selection, and recorded only the OQ-02 key names as decided."
+    human_intervention: "User allowed seven D2 files but required OQ-02 names only, no new configuration mechanism, and no Git operations."
+    approval:
+      subject: "D2 manifest/history revision"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:5193 (scope and manifest/history items)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Static cross-reference checks only; no tests or application runs."
+      evidence:
+        - "transcripts/session-13.md:6630-6700 (final report and pending items)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 5193-6699"
+    commit: null
+    pull_request: null
+    limitations:
+      - "OQ-01/04 entry contracts remained open; OQ-07 belonged to D3; OQ-08/12/13/15/16 remained pending verification."
+      - "A pre-existing broken evaluation link was left unchanged because it was outside the authorized item."
+
+  - id: "AI-023"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "verification_documentation"
+    task: "Synchronize D4 verification constraints to D1/D2 and convert the file to English"
+    requirement_ids:
+      - "FR-01"
+      - "FR-02"
+      - "FR-03"
+      - "FR-04"
+      - "FR-05"
+      - "SB-01"
+      - "INV-01"
+      - "SR-01"
+      - "SR-02"
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/code-governance/verification-constraints.md"
+    ai_contribution: "Rewrote the verification-constraints document in English and synchronized it to D1/D2: 40 active fit criteria, 18 invariants, and deferred references. Corrected manifest/report edge cases, SB-01 conclusion handling, SR-01 exact matching, current-versus-historical evidence wording, and pending OQ status. Static audit found 40/40 active FCs, 18/18 IRs, zero CJK characters, and no broken links."
+    human_intervention: "User allowed only verification-constraints.md and required no tests, implementation, new requirements, or threshold changes."
+    approval:
+      subject: "D4 verification-constraints revision"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:6700 (scope and English requirement)"
+    verification:
+      status: "passed"
+      summary: "Static audit only: 40/40 active FCs and 18/18 IRs covered, 15 deferred FCs referenced, zero CJK characters, all target links valid. No tests were run."
+      evidence:
+        - "transcripts/session-13.md:7860-8041 (static audit and final report)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 6700-8041"
+    commit: null
+    pull_request: null
+    limitations:
+      - "No application, live, or CI verification was performed."
+      - "The context-budget course-alignment gap remains unresolved."
+
+  - id: "AI-024"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "governance_documentation"
+    task: "Create and revise the English MCP/tool manifest for coding-agent roles"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/code-governance/mcp-tool-manifest.md"
+    ai_contribution: "Created an English tool inventory and role-use matrix covering native tools, the absence of observed MCP servers, task authorization, path and command boundaries, local-versus-remote Git operations, and enforcement limits. Later corrected runtime-versus-task file access, skill resource scope, round-specific authorization, command pre-enumeration, and Git operation distinctions."
+    human_intervention: "User limited the task to the manifest file, then requested seven local corrections while retaining the English structure."
+    approval:
+      subject: "MCP tool manifest creation and correction"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "transcripts/session-13.md:8042 (creation scope)"
+        - "transcripts/session-13.md:9142 (correction scope)"
+    verification:
+      status: "static_checks_passed"
+      summary: "Static content and link checks only. No tests, installation, network access, MCP connection, remote Git operation, or commit was performed; local read-only status/diff checks were used."
+      evidence:
+        - "transcripts/session-13.md:9870-9901 (final check)"
+    transcript_refs:
+      - path: "transcripts/session-13.md"
+        locator: "lines 8042-9901"
+    commit: null
+    pull_request: null
+    limitations:
+      - "OQ-07 role whitelists remained pending."
+      - "The natural-language manifest does not enforce permissions."
+      - "No MCP server or project-level machine configuration was verified."
+
+  - id: "AI-025"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "layout_migration"
+    task: "Move the TradingAgents/ application and tests to the approved src/ and test/ layout, preserve behavior, and remove approved obsolete files"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "src/tradingagents/ (84 files moved from TradingAgents/tradingagents/)"
+      - "src/cli/ (11 files moved from TradingAgents/cli/)"
+      - "test/offline/ (87 test modules moved or split from TradingAgents/tests/)"
+      - "test/live/test_deepseek_live_structured_output.py (split from test_deepseek_reasoning.py)"
+      - "test/conftest.py"
+      - "pyproject.toml"
+      - "README.md"
+      - "UPSTREAM.md"
+      - "LICENSE"
+      - "requirements.txt"
+      - ".env.example"
+      - ".env.enterprise.example"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - ".gitignore"
+      - ".github/workflows/ci.yml"
+      - "scripts/baseline_common.py"
+      - "scripts/run_baseline.py"
+      - "scripts/probe_data.py"
+      - "scripts/finalize_run.py"
+      - "AGENTS.md"
+      - "Prompt.md"
+      - ".agent/rules.md"
+      - "goal.md"
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/code-governance/structural-constraints.md"
+      - "docs/code-governance/mcp-tool-manifest.md"
+      - "docs/code-governance/verification-constraints.md"
+      - "docs/plans/round-01.md"
+      - "test/offline/test_version.py"
+      - "test/offline/test_layering.py"
+      - "test/offline/test_i18n_coverage.py"
+      - "test/offline/test_structured_agents.py"
+      - "test/offline/test_deepseek_reasoning.py"
+    ai_contribution: "Executed the approved layout migration, preserved all 84 application files and 11 CLI files byte-for-byte, moved the regression suite, split the single mixed offline/live DeepSeek test module without dropping assertions, updated src-layout packaging, test paths, scripts, CI, Docker exclusions, and current documentation, and recorded pre/post validation."
+    human_intervention: "User approved the migration and cleanup scope after reviewing the plan, required no PYTHONPATH-based packaging workaround, required preservation of historical requirement evidence and transcripts, and authorized local editable/wheel validation without dependency upgrades or remote operations."
+    approval:
+      subject: "Directory migration and approved cleanup"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User execution authorization in the current session; transcript not yet exported."
+    verification:
+      status: "completed_with_findings"
+      summary: "Pre-migration offline collection was 1362 tests; post-migration normalized collection matched exactly at 1362. Live collection remained 1 test; live was not run. Post-migration offline run: 1358 passed, 3 failed, 1 skipped, 1 deselected, 100 subtests passed. The 3 failures are the same pre-existing Windows-specific test_cache_writes failures seen before migration. 84/84 application files, 11/11 CLI files, and package resources were byte-identical. Editable install, CLI help, wheel/sdist build, non-editable wheel install, and installed resource checks passed from outside the repository. Ruff was unavailable; pip check after project installation reports pre-existing dependency version drift; Docker and CI were not executed."
+      evidence:
+        - "Temporary evidence directory: /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/migration-20261118"
+        - "pytest-before.txt, collect-before.txt, collect-integration-before.txt"
+        - "pytest-after.txt, collect-after.txt, collect-integration-after.txt"
+        - "editable-install.txt, wheel-install.txt, build.txt, wheel-list.txt"
+        - "cli-help-after-editable.txt, cli-help-after-console.txt, cli-help-after-wheel.txt"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add transcript references after export without inventing line numbers."
+      - "Three pre-existing Windows-specific test_cache_writes tests fail on the macOS test environment before and after migration."
+      - "Ruff is not installed in the available environment; lint was not run."
+      - "pip check after installing this project reports pre-existing environment versions below the declared minimums; no dependency was upgraded."
+      - "Live integration tests were not run; only their collection was verified."
+      - "Docker configuration was inspected but not built; CI was migrated but not executed on GitHub."
+      - "The human-maintained permission model and .opencode permission paths still reference the old TradingAgents layout and require human updates."
+
+  - id: "AI-026"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "migration_finalization"
+    task: "Recheck and finalize the completed TradingAgents to src/test migration, preserve prior evidence, rerun available validation, and document pending permission changes"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/migration/migration-report.md"
+      - "docs/migration/file-map.tsv"
+      - "docs/migration/permission-path-changes.md"
+      - "docs/migration/validation/README.md"
+      - "docs/migration/validation/prior-* (selected text evidence copied from the migration working directory)"
+      - "docs/migration/validation/current-* (current verification logs)"
+      - "README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Independently rechecked source, CLI and resource hashes; compared normalized offline and live collection node sets; compared test function and assertion counts; reran the available offline suite and collection checks; verified editable installation, CLI entry points, wheel/sdist contents, non-editable wheel installation, installed resources and external import paths; statically checked root CI and Docker; recorded prior versus current evidence; and prepared an exact human-maintained permission-path change list without editing permission controls."
+    human_intervention: "User authorized final verification and documentation only, required separation of prior and current evidence, prohibited permission-control edits and packaging workarounds, required historical requirement/baseline/transcript evidence preservation, and required explicit reporting of unavailable tools and unrun checks."
+    approval:
+      subject: "Migration finalization and verification"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User finalization authorization in the current session; transcript not yet exported."
+    verification:
+      status: "completed_with_findings"
+      summary: "Source and CLI integrity passed: 84/84 application files and 11/11 CLI files are identical; logo and welcome resources are identical. Test functions and assertions are 982/982 and 1399/1399. Offline collection is identical after path normalization at 1362 nodes; live collection remains 1 test. Current offline pytest is 1358 passed, 3 failed, 1 skipped, 1 deselected, with 100 subtests passed; the 3 failures are the same pre-existing Windows-specific cache-lock tests. Editable install, CLI help, wheel/sdist build, wheel install, external imports, and wheel resources passed. pip check reports existing dependency-version drift. Ruff was unavailable and not run. Docker and CI were statically checked but not executed; live tests were not run."
+      evidence:
+        - "docs/migration/migration-report.md"
+        - "docs/migration/file-map.tsv"
+        - "docs/migration/validation/current-summary.txt"
+        - "docs/migration/validation/current-integrity.txt"
+        - "docs/migration/validation/current-test-structure.txt"
+        - "docs/migration/validation/current-collection-compare.txt"
+        - "docs/migration/validation/current-pytest-offline.txt"
+        - "docs/migration/validation/current-build.txt"
+        - "docs/migration/validation/current-wheel-list.txt"
+        - "docs/migration/validation/current-import-wheel.txt"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export."
+      - "Human-maintained .opencode/permissions.jsonc and docs/architecture/permission-model.md still contain old paths; changes are documented but not applied."
+      - "Ruff is not available locally; local lint remains unverified and would require authorization to install a compatible version."
+      - "pip check reports five existing dependency-version mismatches; no dependency was upgraded or minimum relaxed."
+      - "Three pre-existing Windows-specific cache-lock tests fail on macOS; the skip and unrun live test are not passes."
+      - "GitHub CI and Docker were not executed; only static configuration checks were performed."
+      - "The migration does not implement the six course CI gates or approve FR-04 work."

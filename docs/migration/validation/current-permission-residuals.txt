@@ -1,0 +1,54 @@
+Old permission-path references (read-only check; no edits applied)
+--- .opencode/permissions.jsonc ---
+104:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+105:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+106:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+107:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+108:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+152:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+153:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+154:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+155:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+156:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+165:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "allow",
+197:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+223:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+224:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+225:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+226:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+227:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+235:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "allow",
+236:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "allow",
+237:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/static/*": "allow",
+250:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "ask",
+251:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "ask",
+252:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "ask",
+253:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "ask",
+254:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "ask",
+272:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+298:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tradingagents/*": "allow",
+299:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/*": "allow",
+300:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "allow",
+301:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/pyproject.toml": "allow",
+302:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/requirements.txt": "allow",
+310:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/main.py": "allow",
+311:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/assets/*": "allow",
+312:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/cli/static/*": "allow",
+313:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "allow",
+326:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/tests/*": "ask",
+344:          "/Users/ichihann/Desktop/CS5351/Teamproject-tradingagents/TradingAgents/.github/*": "deny"
+--- docs/architecture/permission-model.md ---
+34:| Plan | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `scripts/**` | Yes | No | Read-only inspection needed to plan a task; no execution or modification | Actual project paths; least-read extension |
+39:| Architecture | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `scripts/**` | Yes | No | Inspect actual implementation and tests; never edit application code | Blueprint: no application code for Architecture |
+41:| Architecture | `TradingAgents/.github/**` | Yes | No | Read CI/governance context; no modification | Human-maintained boundary |
+42:| Architecture | `docs/architecture/permission-model.md`, `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `TradingAgents/.github/**` | No write | No | Permission, requirements, guidance, baseline, and CI remain human-maintained | Blueprint §9.3, §11 |
+44:| Implementation | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/main.py`, `TradingAgents/assets/**`, `TradingAgents/cli/static/**` | Yes | Yes | Only exact application files named in an approved task; no blanket directory write | Blueprint: approved application paths |
+45:| Implementation | `TradingAgents/tests/**` | Yes | Yes | Only exact test files named in an approved task and under test-first/approval rules | Blueprint: approved test paths |
+46:| Implementation | `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `TradingAgents/docker-compose.yml`, `TradingAgents/Dockerfile`, `scripts/**` | Yes | No | Build/dependency/evidence scripts are read-only unless a future human-approved task explicitly expands the model | User instruction on build/dependency/output boundaries |
+49:| Verification | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/main.py`, `TradingAgents/assets/**`, `TradingAgents/cli/static/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt` | Yes | No direct application write | Inspect implementation/tests; verification must not modify the code under test | Blueprint: read-only repository for Verification |
+50:| Verification | `TradingAgents/tests/<approved-test-file>` | Yes | Yes | Only the exact test files declared in an approved verification task; test-first/human approval applies | Blueprint: declared test paths |
+51:| Verification | `TradingAgents/.github/**` | Yes | No | Inspect CI/gate configuration; no edits | Human-maintained boundary |
+65:| `TradingAgents/.github/**` | Architecture and Verification may read; Plan and Implementation are not granted access | No agent write | Human-maintained CI and repository governance. The actual nested path is `TradingAgents/.github/**`; no root `.github/` exists in this checkout. |
+72:| `TradingAgents/pyproject.toml`, `requirements.txt`, build/dependency manifests | Read by Plan/Architecture/Implementation/Verification as applicable | No standing write | A future task may explicitly propose a scoped dependency/build change, but this document pre-authorizes none. |
+102:| CI | `TradingAgents/.github/workflows/ci.yml` runs install, pytest, ruff, and clean-install smoke jobs; `release-assets.yml` builds release assets | These are test/lint/build checks. No path-permission check is present. CI is post-hoc and cannot prevent arbitrary reads or local edits. |
+134:| P-V03 | No role writes `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `TradingAgents/.github/**`, `.env*`, `.git/**`, or governance files. | Planned; static diff-based verification only. |

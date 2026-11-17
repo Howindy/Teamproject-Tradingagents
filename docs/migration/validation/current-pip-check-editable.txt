@@ -1,0 +1,5 @@
+tradingagents 0.7.0 has requirement langchain-anthropic>=1.7.4, but you have langchain-anthropic 1.7.2.
+tradingagents 0.7.0 has requirement langchain-core>=1.6.5, but you have langchain-core 1.6.3.
+tradingagents 0.7.0 has requirement langchain-openai>=1.6.6, but you have langchain-openai 1.6.2.
+tradingagents 0.7.0 has requirement langgraph>=1.2.12, but you have langgraph 1.2.11.
+tradingagents 0.7.0 has requirement pandas>=3.0.6, but you have pandas 3.0.5.
