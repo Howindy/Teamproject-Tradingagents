@@ -2,13 +2,27 @@
 
 ## Status and scope
 
-This is an **offline-verified standalone adapter**, not an enabled graph feature.
-There is no shared ContextAssembler/material boundary in this worktree:
-`agents/context.py` supplies identity/portfolio/absence prompt helpers, while the
-downstream agents each interpolate their own four report fields. Graph scheduling
-has a post-analyst fan-in in `graph/setup.py`, but no existing shared material
-object to replace safely. No downstream role, graph, state schema, retrieval,
-FR-07 metric calculation or provider module was modified for this change.
+The brief is **wired into the run** behind config, at one replaceable node.
+`graph/setup.py` inserts a `Context Assembler` step after every analyst (and the
+memory step) has finished and before `Bull Researcher`; it stores one text on
+`downstream_brief`, and Bull, Bear and the three risk debaters read it instead of
+the four full reports. The reports themselves stay in state, so the saved report
+tree, history and later stages are unchanged.
+
+`run/assembler.py` holds the seam: a team `ContextAssembler` can replace that
+module as long as it writes the same `downstream_brief` text. `run/wiring.py`
+builds it from config; passing `context_assembler=` to `TradingAgentsGraph`
+overrides it entirely.
+
+```powershell
+# enable the deterministic brief and one structured-summary call
+$env:TRADINGAGENTS_FR08_ENABLED = "true"
+$env:TRADINGAGENTS_FR08_SUMMARY_ENABLED = "true"
+tradingagents            # interactive, no preset ticker/date
+```
+
+When `fr08_enabled` is off the original four-report prompts and the original graph
+are used; nothing in this delivery changes that path.
 
 Market, News and Fundamentals no longer receive FR08-SECTION instructions. All
 other prompt text, tool bindings and wrap-up behavior are preserved. Sentiment
@@ -195,6 +209,12 @@ Offline results for the delivered branch (FR-07 + FR-08 together):
   the rendered metric rows and source references survive verbatim in the protected
   block, once, for both the summary path and the deterministic fallback.
 - Offline example: passes (two reads, one fake invocation).
+- Graph wiring (`tests/test_downstream_wiring.py`, 5 tests): with FR-07 and FR-08
+  both on, one summary call and one metric build serve all five downstream roles;
+  every consumer prompt carries the brief plus the protected block with the FR-07
+  table; the four labelled report blocks are absent. Disabled: no brief, the
+  legacy four-report material, no protected block. A rejected protected block
+  leaves the roles on the full reports.
 
 The earlier NVDA one-call experiment remains **one pilot**, not a quality or
 decision-equivalence guarantee. It retained additional details but inherited a

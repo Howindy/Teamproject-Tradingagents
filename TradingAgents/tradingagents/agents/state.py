@@ -54,6 +54,15 @@ class AgentState(MessagesState):
     news_report: Annotated[str, "Report from the News Analyst on company and world news"]
     fundamentals_report: Annotated[str, "Report from the Fundamentals Analyst"]
 
+    # shared downstream material, assembled once after the analysts finish
+    downstream_brief: Annotated[
+        str, "Brief shared by the Bull, Bear and three risk debaters; replaces the four reports"
+    ]
+    downstream_brief_mode: Annotated[
+        str, "How the brief was produced: summary, deterministic or rejected"
+    ]
+    downstream_brief_tokens: Annotated[int, "Delivered brief size in the caller's token unit"]
+
     # researcher team discussion step
     investment_debate_state: Annotated[
         InvestDebateState, "Current state of the debate on if to invest or not"

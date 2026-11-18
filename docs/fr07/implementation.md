@@ -29,15 +29,28 @@
 
 ## 启用方式
 
-默认关闭，旧行为不变。二选一：
+默认全部关闭，旧行为不变。完整运行（FR-07 + FR-08）用交互式 CLI，不预设任何分析参数
+（ticker、日期、分析员由 CLI 提示输入）：
 
 ```powershell
-# 通用 SEC 适配器（任意美国申报公司）
-$env:TRADINGAGENTS_FR07_SEC_ENABLED = "true"
-
-# 或使用冻结参考快照
-$env:TRADINGAGENTS_FR07_REFERENCE_ROOT = "<repo>\docs\fr07\sec-reference-draft-v1"
+$env:TRADINGAGENTS_FR07_SEC_ENABLED = "true"      # FR-07：通用 SEC 适配器
+$env:TRADINGAGENTS_FR08_ENABLED = "true"          # FR-08：共享简报
+$env:TRADINGAGENTS_FR08_SUMMARY_ENABLED = "true"  # FR-08：一次结构化摘要（失败回退确定性）
+tradingagents
 ```
+
+单项组合：
+
+```powershell
+# 用冻结参考快照代替通用 SEC 适配器
+$env:TRADINGAGENTS_FR07_REFERENCE_ROOT = "<repo>\docs\fr07\sec-reference-draft-v1"
+
+# 只做确定性简报，不调用摘要模型
+$env:TRADINGAGENTS_FR08_ENABLED = "true"
+```
+
+预算可调：`TRADINGAGENTS_FR08_BRIEF_BUDGET`（默认 4000）、
+`TRADINGAGENTS_FR08_PROTECTED_BUDGET`（默认 600）。
 
 代码方式：
 
@@ -88,10 +101,17 @@ def data_factory(clock):          # clock: EvaluationClock
 
 ## 正常分析路径
 
-`TradingAgentsGraph` → `GraphSetup.setup_graph` → `create_fundamentals_analyst`。
-财务分析员进入节点时先调用 `metrics_factory(state)`；同一 run/ticker 只读取并计算一次，
-后续工具轮次与 wrap-up 复用同一文本。指标表写入 system prompt，并附带
-“优先引用、保留单位/期间/n-a、表外推导须标注假设”的指令；原有财报工具不变。
+1. `TradingAgentsGraph` → `GraphSetup.setup_graph` → `create_fundamentals_analyst`。
+   财务分析员进入节点时先调用 `metrics_factory(state)`；同一 run/ticker 只读取并计算一次，
+   后续工具轮次与 wrap-up 复用同一文本。指标表写入 system prompt，并附带
+   “优先引用、保留单位/期间/n-a、表外推导须标注假设”的指令；原有财报工具不变。
+2. 四份报告与内存步骤全部完成后，图中的 **Context Assembler** 节点（仅
+   `fr08_enabled` 时存在）构建一次简报：FR-07 指标表进入保护块，摘要模型最多调用一次，
+   失败则回退确定性抽取。
+3. Bull、Bear 与三个风险角色从 `downstream_brief` 读取同一份材料替换四份全文，
+   各自指令、历史与组合上下文不变；原始报告继续用于保存、展示和后续阶段。
+4. 团队共享材料入口就绪后，替换 `tradingagents/run/assembler.py`（或注入
+   `context_assembler=`）即可，无需改这五个角色。
 
 ## FR-07 结果进入 FR-08
 
@@ -126,7 +146,7 @@ cd <repo>\TradingAgents
 - FR-07 新增测试：**37 passed**（26 + 11）。
 - FR-08 新增测试：**56 passed**（`test_structured_summary.py`、`test_brief_delivery.py`、
   `test_downstream_brief.py`、`test_analyst_report_section_prompts.py` 合计）。
-- 全量离线（无需 `--ignore`，ranking 草稿已移出 tests）：**1460 passed / 5 failed /
+- 全量离线（无需 `--ignore`，ranking 草稿已移出 tests）：**1465 passed / 5 failed /
   4 skipped / 1 deselected / 100 subtests**；5 个失败与改动前基线一致（Windows 文件权限、
   升级命令、yfinance 缓存目录）。
 - Ruff：通过。

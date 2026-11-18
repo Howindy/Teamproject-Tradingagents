@@ -62,6 +62,11 @@ class Propagator:
             "fundamentals_report": "",
             "sentiment_report": "",
             "news_report": "",
+            # Empty until the Context Assembler runs; the four reports above stay
+            # the saved record either way.
+            "downstream_brief": "",
+            "downstream_brief_mode": "",
+            "downstream_brief_tokens": 0,
         }
 
     def get_graph_args(self, callbacks: list | None = None) -> dict[str, Any]:

@@ -27,6 +27,10 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_MAX_TOKENS":           "max_tokens",
     "TRADINGAGENTS_FR07_REFERENCE_ROOT":  "fr07_reference_root",
     "TRADINGAGENTS_FR07_SEC_ENABLED":     "fr07_sec_enabled",
+    "TRADINGAGENTS_FR08_ENABLED":         "fr08_enabled",
+    "TRADINGAGENTS_FR08_SUMMARY_ENABLED": "fr08_summary_enabled",
+    "TRADINGAGENTS_FR08_BRIEF_BUDGET":    "fr08_brief_budget",
+    "TRADINGAGENTS_FR08_PROTECTED_BUDGET": "fr08_protected_budget",
     # Provider-specific reasoning/thinking knobs (None = each provider's own
     # default). Settable here for non-interactive runs; the CLI also offers an
     # interactive choice, which is skipped when the matching var is set.
@@ -88,6 +92,14 @@ def build_default_config() -> dict:
         # rather than this metric core.
         "fr07_reference_root": os.getenv("TRADINGAGENTS_FR07_REFERENCE_ROOT") or "",
         "fr07_sec_enabled": False,
+        # FR-08: build the shared downstream brief after the analysts finish.
+        # fr08_summary_enabled uses one structured-summary call (deterministic
+        # fallback on failure); off keeps the deterministic brief only.
+        "fr08_enabled": False,
+        "fr08_summary_enabled": False,
+        "fr08_brief_budget": 4000,
+        "fr08_protected_budget": 600,
+        "fr08_coverage_view_version": "fr08-downstream-v1",
         "results_dir": os.getenv("TRADINGAGENTS_RESULTS_DIR") or os.path.join(_TRADINGAGENTS_HOME, "logs"),
         "data_cache_dir": os.getenv("TRADINGAGENTS_CACHE_DIR") or os.path.join(_TRADINGAGENTS_HOME, "cache"),
         "memory_log_path": os.getenv("TRADINGAGENTS_MEMORY_LOG_PATH") or os.path.join(_TRADINGAGENTS_HOME, "memory", "trading_memory.md"),

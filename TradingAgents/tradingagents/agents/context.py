@@ -201,6 +201,43 @@ def report_or_absent(text: str, source: str) -> str:
     return f"(No {source} report in this run: it is not available, not an empty finding.)"
 
 
+RESEARCH_LABELS = {
+    "market": "Market research report",
+    "sentiment": "Social media sentiment report",
+    "news": "Latest world affairs news",
+    "fundamentals": "Company fundamentals report",
+}
+
+RISK_LABELS = {
+    "market": "Market Research Report",
+    "sentiment": "Social Media Sentiment Report",
+    "news": "Latest World Affairs Report",
+    "fundamentals": "Company Fundamentals Report",
+}
+
+
+def research_material(state: Mapping[str, Any], labels: Mapping[str, str]) -> str:
+    """The research block for one downstream role.
+
+    When a run has assembled a shared brief, it replaces the four full reports
+    for that role: one text, already carrying its own protected evidence. The
+    original reports stay in state for the saved record and for later stages.
+    Without a brief the four labelled reports are supplied exactly as before.
+    """
+    brief = state.get("downstream_brief")
+    if isinstance(brief, str) and brief.strip():
+        return (
+            "Shared research brief for this role (replaces the four analyst reports;"
+            " the callers' protected metrics, gaps and safety constraints are inside"
+            " its markers and remain authoritative):\n"
+            f"{brief.strip()}"
+        )
+    return "\n".join(
+        f"{labels[source]}: {report_or_absent(state.get(f'{source}_report', ''), source)}"
+        for source in ("market", "sentiment", "news", "fundamentals")
+    )
+
+
 def get_portfolio_context_from_state(state: Mapping[str, Any]) -> str:
     """Return the caller's portfolio block, or a notice that none was given.
 

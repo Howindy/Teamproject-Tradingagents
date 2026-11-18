@@ -19,6 +19,7 @@ from tradingagents.llm_clients import create_tier_client, tier_provider
 from tradingagents.memory import TradingMemoryLog, settlement
 from tradingagents.memory.reflection import Reflector
 from tradingagents.reporting import write_report_tree
+from tradingagents.run.wiring import build_context_assembler
 
 from .checkpointer import checkpoint_step, clear_checkpoint, get_checkpointer, thread_id
 from .conditional_logic import ConditionalLogic
@@ -59,6 +60,7 @@ class TradingAgentsGraph:
         config: dict[str, Any] = None,
         callbacks: list | None = None,
         metrics_factory=None,
+        context_assembler=None,
     ):
         """Initialize the trading agents graph and components.
 
@@ -96,12 +98,16 @@ class TradingAgentsGraph:
                 f"max_tool_rounds={max_tool_rounds} needs max_recur_limit above {2 * max_tool_rounds + 2}"
             )
         self.metrics_factory = metrics_factory or build_metrics_factory(self.config)
+        self.context_assembler = context_assembler or build_context_assembler(
+            self.config, metrics_factory=self.metrics_factory, summary_llm=self.quick_thinking_llm
+        )
         self.graph_setup = GraphSetup(
             self.quick_thinking_llm,
             self.deep_thinking_llm,
             self.conditional_logic,
             max_tool_rounds,
             metrics_factory=self.metrics_factory,
+            context_assembler=self.context_assembler,
         )
 
         self.propagator = Propagator(

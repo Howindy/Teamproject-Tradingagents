@@ -100,17 +100,22 @@ class GraphSetup:
         conditional_logic: ConditionalLogic,
         max_tool_rounds: int,
         metrics_factory=None,
+        context_assembler=None,
     ):
         """Initialize with required components.
 
         ``metrics_factory(state)`` prepares the FR-07 block before the
         fundamentals analyst's first model turn; None preserves prior behavior.
+        ``context_assembler`` builds the shared FR-08 brief once, after every
+        analyst has filed and before the first downstream consumer; None keeps
+        the original four-report prompts.
         """
         self.quick_thinking_llm = quick_thinking_llm
         self.deep_thinking_llm = deep_thinking_llm
         self.conditional_logic = conditional_logic
         self.max_tool_rounds = max_tool_rounds
         self.metrics_factory = metrics_factory
+        self.context_assembler = context_assembler
 
     def setup_graph(
         self, selected_analysts=("market", "social", "news", "fundamentals"), memory_node=None
@@ -171,7 +176,14 @@ class GraphSetup:
             first_steps.append("Memory Log")
         for node in first_steps:
             workflow.add_edge(START, node)
-        workflow.add_edge(first_steps, "Bull Researcher")
+        if self.context_assembler is None:
+            workflow.add_edge(first_steps, "Bull Researcher")
+        else:
+            # One shared brief after every analyst has filed, before the first
+            # downstream reader. Swapping this node is the ContextAssembler seam.
+            workflow.add_node("Context Assembler", self.context_assembler)
+            workflow.add_edge(first_steps, "Context Assembler")
+            workflow.add_edge("Context Assembler", "Bull Researcher")
 
         # Both research-debate edges share the complete DEBATE_PATH_MAP (#1088).
         for debate_node in ("Bull Researcher", "Bear Researcher"):
