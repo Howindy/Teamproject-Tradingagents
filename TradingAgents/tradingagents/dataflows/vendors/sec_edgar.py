@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 _TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 _FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
+_SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
 # A filing history only changes when something new is filed, so one fetch per
 # company per day serves every date a run asks about.
@@ -140,6 +141,27 @@ def cik_for(ticker: str) -> str | None:
         if entry.get("ticker", "").upper() == wanted:
             return f"{int(entry['cik_str']):010d}"
     return None
+
+
+def company_facts(ticker: str) -> tuple[str, dict]:
+    """``(cik, companyfacts)`` for a US filer, through the same cache as statements.
+
+    Structured callers (e.g. the FR-07 metric boundary) read the raw XBRL facts
+    here instead of opening a second SEC path. A non-filer raises the same typed
+    error the statement tools do.
+    """
+    cik = cik_for(ticker)
+    if cik is None:
+        raise NoMarketDataError(ticker, ticker, "not a US SEC filer")
+    return cik, _cached_json(_FACTS_URL.format(cik=cik), f"CIK{cik}.json")
+
+
+def submissions(ticker: str) -> tuple[str, dict]:
+    """``(cik, submissions)``: filing metadata (dates, forms, accessions), cached."""
+    cik = cik_for(ticker)
+    if cik is None:
+        raise NoMarketDataError(ticker, ticker, "not a US SEC filer")
+    return cik, _cached_json(_SUBMISSIONS_URL.format(cik=cik), f"CIK{cik}-submissions.json")
 
 
 def _span_index(fact: dict, spans: tuple[tuple[int, int], ...]) -> int | None:

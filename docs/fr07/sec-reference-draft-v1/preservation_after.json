@@ -1,0 +1,22 @@
+{
+  "existing_worktree_files_verified_unchanged": 466,
+  "branch_unchanged": "haoxi-fr08-downstream-brief",
+  "head_unchanged": "3fc6b42729c838c820a0e58a741c1c67e911f04b",
+  "only_new_subdirectory": "docs/fr07/sec-reference-draft-v1",
+  "new_artifact_count_before_this_report": 63,
+  "application_and_FR08_changes": 0,
+  "earlier_docs_fr07_records_unchanged": true,
+  "source_files": 14,
+  "reference_tests": "9 passed",
+  "previous_reference_tests": "5 passed",
+  "ruff_with_project_config": "passed",
+  "consistency": "passed; source bytes/projections/pinned identities/arithmetic/coverage/controlled witnesses",
+  "human_review": "pending",
+  "frozen": false,
+  "stage_a_pass": false,
+  "manifest_content_sha256": "f1598a62aedffc28f5aeca54e1408ed508de5567e93d78569177db75980e0b9f",
+  "llm_requests": 0,
+  "full_TradingAgents_runs": 0,
+  "commits": 0,
+  "pushes": 0
+}

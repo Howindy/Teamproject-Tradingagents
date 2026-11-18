@@ -1,0 +1,62 @@
+{
+  "aapl-2024-10k": {
+    "accession": "0000320193-24-000123",
+    "form": "10-K",
+    "filed_at": "2024-11-01",
+    "accepted_at": "2024-11-01T10:01:36.000Z",
+    "report_date": "2024-09-28",
+    "document": "sources/aapl-2024-10k.htm",
+    "document_sha256": "f7fce60079cc813d4945acd413e6ecbd9c1d0a86e369b0f5acbaf4b75cb9db23",
+    "submissions_pointer": "/filings/recent/*/181"
+  },
+  "aapl-2025q3-10q": {
+    "accession": "0000320193-25-000073",
+    "form": "10-Q",
+    "filed_at": "2025-08-01",
+    "accepted_at": "2025-08-01T10:00:42.000Z",
+    "report_date": "2025-06-28",
+    "document": "sources/aapl-2025q3-10q.htm",
+    "document_sha256": "ef49651a716c112d0a0373f1bb41d70fd3984f8fc6b1e0c660e90517d02fb013",
+    "submissions_pointer": "/filings/recent/*/122"
+  },
+  "aapl-2025q2-10q": {
+    "accession": "0000320193-25-000057",
+    "form": "10-Q",
+    "filed_at": "2025-05-02",
+    "accepted_at": "2025-05-02T10:00:46.000Z",
+    "report_date": "2025-03-29",
+    "document": "sources/aapl-2025q2-10q.htm",
+    "document_sha256": "eb68d9c56c3323c3e610facebbb0e7f9a21b555aa7c6e3d293972145a220ad48",
+    "submissions_pointer": "/filings/recent/*/134"
+  },
+  "xom-2024-10k": {
+    "accession": "0000034088-25-000010",
+    "form": "10-K",
+    "filed_at": "2025-02-19",
+    "accepted_at": "2025-02-19T21:39:37.000Z",
+    "report_date": "2024-12-31",
+    "document": "sources/xom-2024-10k.htm",
+    "document_sha256": "50986c4f8c0023411d46543738d7070c395581c927381a73bcd5389b7e485a1f",
+    "submissions_pointer": "/filings/recent/*/136"
+  },
+  "xom-2025q2-10q": {
+    "accession": "0000034088-25-000042",
+    "form": "10-Q",
+    "filed_at": "2025-08-04",
+    "accepted_at": "2025-08-04T16:47:59.000Z",
+    "report_date": "2025-06-30",
+    "document": "sources/xom-2025q2-10q.htm",
+    "document_sha256": "60c9759e54ba5407f1df79a8cce8c77f20d6b3e38ce383930a9480140988b59a",
+    "submissions_pointer": "/filings/recent/*/106"
+  },
+  "xom-2025q1-10q": {
+    "accession": "0000034088-25-000024",
+    "form": "10-Q",
+    "filed_at": "2025-05-05",
+    "accepted_at": "2025-05-05T16:41:41.000Z",
+    "report_date": "2025-03-31",
+    "document": "sources/xom-2025q1-10q.htm",
+    "document_sha256": "dc9a81a3e47698f44922107d0fce4265b4a5b08e4732e5ae0f1553027d8c089d",
+    "submissions_pointer": "/filings/recent/*/120"
+  }
+}

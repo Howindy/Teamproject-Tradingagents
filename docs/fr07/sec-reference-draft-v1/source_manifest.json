@@ -1,0 +1,257 @@
+{
+  "retrieval_time_semantics": "request-start UTC; response Date retained separately",
+  "sources": [
+    {
+      "url": "https://data.sec.gov/submissions/CIK0000034088.json",
+      "final_url": "https://data.sec.gov/submissions/CIK0000034088.json",
+      "retrieved_at_utc": "2026-11-18T11:21:35.321705+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-submissions.json",
+      "bytes": 162976,
+      "sha256": "79aacad669ef044bf654934b659b9fda89514e0ba5514838dbfb787d53e48773",
+      "response_headers": {
+        "Content-Type": "application/json",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:21:44 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "final_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "retrieved_at_utc": "2026-11-18T11:21:35.294433+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-companyfacts.json",
+      "bytes": 3859564,
+      "sha256": "f085735b4d08fb116ade18d24247ffabe11df8eb52eae6556b165831f15ef1ad",
+      "response_headers": {
+        "Content-Type": "application/json",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:21:44 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000034088.json",
+      "final_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000034088.json",
+      "retrieved_at_utc": "2026-11-18T11:21:35.294433+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-companyfacts.json",
+      "bytes": 3122723,
+      "sha256": "9b95535419e5662e3deed01de803e83deead477a4c81316e1c45186368fdd8b8",
+      "response_headers": {
+        "Content-Type": "application/json",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:21:44 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://data.sec.gov/submissions/CIK0000320193.json",
+      "final_url": "https://data.sec.gov/submissions/CIK0000320193.json",
+      "retrieved_at_utc": "2026-11-18T11:21:35.314871+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-submissions.json",
+      "bytes": 164078,
+      "sha256": "157487629a9fbfc48445019105aad015e983a1714fd8406250ccfb25beda6342",
+      "response_headers": {
+        "Content-Type": "application/json",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:21:45 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000010/xom-20241231.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000010/xom-20241231.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:04.144399+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-2024-10k.htm",
+      "bytes": 5981015,
+      "sha256": "50986c4f8c0023411d46543738d7070c395581c927381a73bcd5389b7e485a1f",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Wed, 19 Feb 2025 21:40:11 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:13 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:04.160324+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-2024-10k.htm",
+      "bytes": 1503895,
+      "sha256": "f7fce60079cc813d4945acd413e6ecbd9c1d0a86e369b0f5acbaf4b75cb9db23",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Fri, 01 Nov 2024 10:05:09 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:13 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000073/aapl-20250628.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000073/aapl-20250628.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:04.144399+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-2025q3-10q.htm",
+      "bytes": 888163,
+      "sha256": "ef49651a716c112d0a0373f1bb41d70fd3984f8fc6b1e0c660e90517d02fb013",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Fri, 01 Aug 2025 10:09:44 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:13 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000042/xom-20250630.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000042/xom-20250630.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:04.160324+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-2025q2-10q.htm",
+      "bytes": 1983241,
+      "sha256": "60c9759e54ba5407f1df79a8cce8c77f20d6b3e38ce383930a9480140988b59a",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Mon, 04 Aug 2025 16:48:21 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:13 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/XOM?period1=1735603200&period2=1754352000&interval=1d&events=div%2Csplits",
+      "final_url": "https://query1.finance.yahoo.com/v8/finance/chart/XOM?period1=1735603200&period2=1754352000&interval=1d&events=div%2Csplits",
+      "retrieved_at_utc": "2026-11-18T11:23:23.579908+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-prices-actions.json",
+      "bytes": 17773,
+      "sha256": "dda155959d8cdc8372d0a4edf8593d749c6e52722cddda375322d99a62297d09",
+      "response_headers": {
+        "Content-Type": "application/json;charset=utf-8",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:32 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "Yahoo Finance (price and corporate-action history)"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1727481600&period2=1754352000&interval=1d&events=div%2Csplits",
+      "final_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1727481600&period2=1754352000&interval=1d&events=div%2Csplits",
+      "retrieved_at_utc": "2026-11-18T11:23:23.579908+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-prices-actions.json",
+      "bytes": 24442,
+      "sha256": "140a6e17f2e24f3e9daaaac00a0fa3311628d74ce7b61696c96b1b3c9e1519d8",
+      "response_headers": {
+        "Content-Type": "application/json;charset=utf-8",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:32 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "Yahoo Finance (price and corporate-action history)"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000057/aapl-20250329.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000057/aapl-20250329.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:23.488134+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-2025q2-10q.htm",
+      "bytes": 890092,
+      "sha256": "eb68d9c56c3323c3e610facebbb0e7f9a21b555aa7c6e3d293972145a220ad48",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Fri, 02 May 2025 10:03:42 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:32 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000024/xom-20250331.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/34088/000003408825000024/xom-20250331.htm",
+      "retrieved_at_utc": "2026-11-18T11:23:23.489852+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-2025q1-10q.htm",
+      "bytes": 1325279,
+      "sha256": "dc9a81a3e47698f44922107d0fce4265b4a5b08e4732e5ae0f1553027d8c089d",
+      "response_headers": {
+        "Content-Type": "text/html",
+        "Last-Modified": "Mon, 05 May 2025 16:42:17 GMT",
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:23:32 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "U.S. Securities and Exchange Commission"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/XOM?period1=1735603200&period2=1795046400&interval=1d&events=div%2Csplits",
+      "final_url": "https://query1.finance.yahoo.com/v8/finance/chart/XOM?period1=1735603200&period2=1795046400&interval=1d&events=div%2Csplits",
+      "retrieved_at_utc": "2026-11-18T11:26:18.141324+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\xom-share-basis-through-retrieval.json",
+      "bytes": 53920,
+      "sha256": "2ae96e8af0e8c9f16249b5dda47356deef67cc70b672d74ab57db1e96de02318",
+      "response_headers": {
+        "Content-Type": "application/json;charset=utf-8",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:26:27 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "Yahoo Finance (price and corporate-action history)"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1727481600&period2=1795046400&interval=1d&events=div%2Csplits",
+      "final_url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=1727481600&period2=1795046400&interval=1d&events=div%2Csplits",
+      "retrieved_at_utc": "2026-11-18T11:26:18.129709+00:00",
+      "http_status": 200,
+      "saved_file": "sources\\aapl-share-basis-through-retrieval.json",
+      "bytes": 59832,
+      "sha256": "a196842535ada1990977d99c581655a627c12a5ad99498550da8d176199b6e97",
+      "response_headers": {
+        "Content-Type": "application/json;charset=utf-8",
+        "Last-Modified": null,
+        "ETag": null,
+        "Date": "Wed, 18 Nov 2026 11:26:27 GMT"
+      },
+      "method": "urllib GET, no retry, raw body bytes",
+      "user_agent_source": "explicit placeholder contact; not a claimed real contact",
+      "publisher": "Yahoo Finance (price and corporate-action history)"
+    }
+  ]
+}

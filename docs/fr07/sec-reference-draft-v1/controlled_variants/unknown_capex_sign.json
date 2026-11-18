@@ -1,0 +1,61 @@
+{
+  "id": "unknown_capex_sign",
+  "base_record_id": "xom.capex.ytd",
+  "base_record": {
+    "fact_id": "xom.capex.ytd",
+    "issuer": "xom",
+    "subject_id": "0000034088",
+    "concept": "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+    "value": "12181000000",
+    "unit": "USD",
+    "currency": "USD",
+    "period_start": "2025-01-01",
+    "period_end": "2025-06-30",
+    "span": "ytd",
+    "duration_days_inclusive": 181,
+    "fiscal_year": 2025,
+    "fiscal_quarter": 2,
+    "fiscal_annotation_method": "explicit reviewer-readable plan + statement column/calendar evidence; not filing fy/fp copy",
+    "selection_rationale": "Positive PaymentsToAcquirePropertyPlantAndEquipment XBRL amount; Additions to property, plant and equipment shown as outflow in cash-flow statement. Not the broader management capex-and-exploration measure.",
+    "filed_at": "2025-08-04",
+    "accession": "0000034088-25-000042",
+    "form": "10-Q",
+    "carrying_filing_fy": 2025,
+    "carrying_filing_fp": "Q2",
+    "raw_companyfacts_record": {
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "val": 12181000000,
+      "accn": "0000034088-25-000042",
+      "fy": 2025,
+      "fp": "Q2",
+      "form": "10-Q",
+      "filed": "2025-08-04"
+    },
+    "companyfacts_file": "sources/xom-companyfacts.json",
+    "companyfacts_pointer": "/facts/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment/units/USD/152",
+    "filing_file": "sources/xom-2025q2-10q.htm",
+    "inline_element_id": "f-230",
+    "inline_context_ref": "c-1",
+    "inline_unit_ref": "usd",
+    "raw_unit_xml": "<ns0:unit xmlns:ns0=\"http://www.xbrl.org/2003/instance\" id=\"usd\"><ns0:measure>iso4217:USD</ns0:measure></ns0:unit>",
+    "raw_display": "12,181",
+    "raw_scale": "6",
+    "raw_ix_sign": "+",
+    "statement_row": "Additions to property, plant and equipment ( 12,181 ) ( 11,309 )",
+    "restatement_lineage": null,
+    "lineage_note": "Pinned to this disclosure; no general latest-version or restatement resolution is inferred."
+  },
+  "controlled_override": {
+    "operation": "raw_sign_rule",
+    "after": "unknown"
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "n/a",
+    "reason": "unknown_capex_sign"
+  },
+  "independent_rationale": "Source payment-positive rule deliberately removed; do not blindly abs().",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

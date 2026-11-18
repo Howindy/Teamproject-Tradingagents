@@ -1,0 +1,61 @@
+{
+  "id": "ytd_as_quarter",
+  "base_record_id": "aapl.rev.q3.2025",
+  "base_record": {
+    "fact_id": "aapl.rev.q3.2025",
+    "issuer": "aapl",
+    "subject_id": "0000320193",
+    "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+    "value": "94036000000",
+    "unit": "USD",
+    "currency": "USD",
+    "period_start": "2025-03-30",
+    "period_end": "2025-06-28",
+    "span": "quarter",
+    "duration_days_inclusive": 91,
+    "fiscal_year": 2025,
+    "fiscal_quarter": 3,
+    "fiscal_annotation_method": "explicit reviewer-readable plan + statement column/calendar evidence; not filing fy/fp copy",
+    "selection_rationale": "Current FY2025 Q3 separately reported three-month Total net sales.",
+    "filed_at": "2025-08-01",
+    "accession": "0000320193-25-000073",
+    "form": "10-Q",
+    "carrying_filing_fy": 2025,
+    "carrying_filing_fp": "Q3",
+    "raw_companyfacts_record": {
+      "start": "2025-03-30",
+      "end": "2025-06-28",
+      "val": 94036000000,
+      "accn": "0000320193-25-000073",
+      "fy": 2025,
+      "fp": "Q3",
+      "form": "10-Q",
+      "filed": "2025-08-01"
+    },
+    "companyfacts_file": "sources/aapl-companyfacts.json",
+    "companyfacts_pointer": "/facts/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax/units/USD/110",
+    "filing_file": "sources/aapl-2025q3-10q.htm",
+    "inline_element_id": "f-59",
+    "inline_context_ref": "c-19",
+    "inline_unit_ref": "usd",
+    "raw_unit_xml": "<ns0:unit xmlns:ns0=\"http://www.xbrl.org/2003/instance\" id=\"usd\"><ns0:measure>iso4217:USD</ns0:measure></ns0:unit>",
+    "raw_display": "94,036",
+    "raw_scale": "6",
+    "raw_ix_sign": "+",
+    "statement_row": "Total net sales 94,036 85,777 313,695 296,105",
+    "restatement_lineage": null,
+    "lineage_note": "Pinned to this disclosure; no general latest-version or restatement resolution is inferred."
+  },
+  "controlled_override": {
+    "operation": "replace_record",
+    "after": "aapl.rev.ytd.2025"
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "n/a",
+    "reason": "missing_quarter"
+  },
+  "independent_rationale": "Same end date does not make nine months into one quarter.",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

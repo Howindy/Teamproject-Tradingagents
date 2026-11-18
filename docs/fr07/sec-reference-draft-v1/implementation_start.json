@@ -1,0 +1,7 @@
+{
+  "first_application_implementation_started_at_utc": "2026-11-18T12:00:41.089378+00:00",
+  "frozen_reference_version": "fr07-sec-reference-v1",
+  "freeze_content_sha256": "a1256bdef7ef8d46f71f0ef3bba7b06550d87e962f957da8b7e30e68702a2af6",
+  "branch": "haoxi-fr08-downstream-brief",
+  "stage_b_ordering": "freeze precedes this implementation start record"
+}

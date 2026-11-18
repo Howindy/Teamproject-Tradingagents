@@ -1,0 +1,21 @@
+{
+  "metric_table_present_in_captured_prompt": true,
+  "captured_prompt_chars_equal_live_request": true,
+  "captured_prompt_chars": 6716,
+  "live_prompt_chars": 6716,
+  "program_values_cited": {
+    "revenue_yoy_q": true,
+    "revenue_yoy_a": true,
+    "revenue_qoq": true,
+    "gross_margin": true,
+    "operating_margin": true,
+    "net_margin": true,
+    "current_ratio": true,
+    "liabilities_to_assets": true,
+    "fcf_reported_span": true,
+    "pe_fy": true
+  },
+  "no_ttm_computed": true,
+  "extra_derivation_labelled": true,
+  "all_ten_values_cited": true
+}

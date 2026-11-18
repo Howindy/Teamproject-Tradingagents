@@ -1,0 +1,28 @@
+{
+  "consistency_pass": true,
+  "saved_source_files": 14,
+  "selected_fact_count": 30,
+  "metric_rows": 20,
+  "computed_reference_rows": 18,
+  "n_a_reference_rows": 2,
+  "positive_metric_families": 10,
+  "controlled_precondition_witnesses": {
+    "currency_mismatch": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "current_only_without_q4": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "future_disclosure": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "future_price": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "missing_yoy_comparison": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "non_positive_eps": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "non_positive_growth_base": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "price_basis_mismatch": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "unit_mismatch": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "unknown_capex_sign": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "wrong_previous_quarter_as_yoy": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test",
+    "ytd_as_quarter": "input/precondition witness consistent; expected n/a/exclusion remains a reviewed specification, NOT an application test"
+  },
+  "human_review": "pending",
+  "frozen": false,
+  "stage_a_pass": false,
+  "limitation": "Consistency is not business/source independence approval or application acceptance.",
+  "manifest_content_sha256": "f1598a62aedffc28f5aeca54e1408ed508de5567e93d78569177db75980e0b9f"
+}

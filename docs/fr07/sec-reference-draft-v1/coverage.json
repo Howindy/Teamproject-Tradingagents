@@ -1,0 +1,86 @@
+{
+  "metrics": {
+    "revenue_yoy_q": {
+      "computed": [
+        "aapl.revenue_yoy_q",
+        "xom.revenue_yoy_q"
+      ],
+      "n/a": []
+    },
+    "revenue_yoy_a": {
+      "computed": [
+        "aapl.revenue_yoy_a",
+        "xom.revenue_yoy_a"
+      ],
+      "n/a": []
+    },
+    "revenue_qoq": {
+      "computed": [
+        "aapl.revenue_qoq",
+        "xom.revenue_qoq"
+      ],
+      "n/a": []
+    },
+    "gross_margin": {
+      "computed": [
+        "aapl.gross_margin"
+      ],
+      "n/a": [
+        "xom.gross_margin"
+      ]
+    },
+    "operating_margin": {
+      "computed": [
+        "aapl.operating_margin"
+      ],
+      "n/a": [
+        "xom.operating_margin"
+      ]
+    },
+    "net_margin": {
+      "computed": [
+        "aapl.net_margin",
+        "xom.net_margin"
+      ],
+      "n/a": []
+    },
+    "current_ratio": {
+      "computed": [
+        "aapl.current_ratio",
+        "xom.current_ratio"
+      ],
+      "n/a": []
+    },
+    "liabilities_to_assets": {
+      "computed": [
+        "aapl.liabilities_to_assets",
+        "xom.liabilities_to_assets"
+      ],
+      "n/a": []
+    },
+    "fcf_reported_span": {
+      "computed": [
+        "aapl.fcf_reported_span",
+        "xom.fcf_reported_span"
+      ],
+      "n/a": []
+    },
+    "pe_fy": {
+      "computed": [
+        "aapl.pe_fy",
+        "xom.pe_fy"
+      ],
+      "n/a": []
+    }
+  },
+  "all_ten_have_positive_reference": true,
+  "controlled_cases_count": 12,
+  "unfilled_edge_scenarios": [
+    "Real restatement lineage/same-day accession conflict",
+    "Directly reported Q4 positive",
+    "Current-day cutoff unknown availability",
+    "Verified negative-sign capex source positive",
+    "Non-trading-day/unfinished-session service behavior beyond this fixed historical cutoff"
+  ],
+  "human_adequacy_review": "pending; not full FR-07 acceptance"
+}

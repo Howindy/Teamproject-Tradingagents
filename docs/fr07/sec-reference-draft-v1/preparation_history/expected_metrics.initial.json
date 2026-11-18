@@ -1,0 +1,692 @@
+[
+  {
+    "reference_id": "aapl.revenue_yoy_q",
+    "issuer": "aapl",
+    "metric_id": "revenue_yoy_q",
+    "formula": "(current/prior_same_fiscal_quarter - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.rev.q3.2025",
+      "aapl.rev.q3.2024"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-03-30",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current FY2025 Q3 separately reported three-month Total net sales.",
+      "Same filing's prior-year three-month June 29 2024 column, same fiscal Q3; NOT filing fy=2025 copied to prior fact."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "9.6",
+    "exact_rational_result": "825900/85777",
+    "input_values": [
+      "94036000000",
+      "85777000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.revenue_yoy_a",
+    "issuer": "aapl",
+    "metric_id": "revenue_yoy_a",
+    "formula": "(current_fy/prior_fy - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.rev.fy2024",
+      "aapl.rev.fy2023"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2023-10-01",
+      "period_end": "2024-09-28",
+      "fiscal_year": 2024,
+      "fiscal_quarter": null,
+      "span": "annual"
+    },
+    "selection_rationales": [
+      "FY2024 full-year consolidated Total net sales from annual income statement.",
+      "FY2023 full-year comparative, with explicitly disclosed 53-week calendar."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "2.0",
+    "exact_rational_result": "155000/76657",
+    "input_values": [
+      "391035000000",
+      "383285000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.revenue_qoq",
+    "issuer": "aapl",
+    "metric_id": "revenue_qoq",
+    "formula": "(current/immediately_preceding_fiscal_quarter - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.rev.q3.2025",
+      "aapl.rev.q2.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-03-30",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current FY2025 Q3 separately reported three-month Total net sales.",
+      "Directly reported immediately preceding FY2025 Q2; no subtraction or nearest-column substitution."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "-1.4",
+    "exact_rational_result": "-132300/95359",
+    "input_values": [
+      "94036000000",
+      "95359000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.gross_margin",
+    "issuer": "aapl",
+    "metric_id": "gross_margin",
+    "formula": "gross_profit/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.gross.q3.2025",
+      "aapl.rev.q3.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-03-30",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Gross margin amount (not percentage), same consolidated quarter as revenue.",
+      "Current FY2025 Q3 separately reported three-month Total net sales."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "46.5",
+    "exact_rational_result": "1092950/23509",
+    "input_values": [
+      "43718000000",
+      "94036000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.operating_margin",
+    "issuer": "aapl",
+    "metric_id": "operating_margin",
+    "formula": "operating_income/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.operating.q3.2025",
+      "aapl.rev.q3.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-03-30",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Operating income, same quarter and currency/scale.",
+      "Current FY2025 Q3 separately reported three-month Total net sales."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "30.0",
+    "exact_rational_result": "705050/23509",
+    "input_values": [
+      "28202000000",
+      "94036000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.net_margin",
+    "issuer": "aapl",
+    "metric_id": "net_margin",
+    "formula": "reported_net_income/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.net.q3.2025",
+      "aapl.rev.q3.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-03-30",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Net income, same quarter and consolidated reporting scope.",
+      "Current FY2025 Q3 separately reported three-month Total net sales."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "24.9",
+    "exact_rational_result": "585850/23509",
+    "input_values": [
+      "23434000000",
+      "94036000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.current_ratio",
+    "issuer": "aapl",
+    "metric_id": "current_ratio",
+    "formula": "current_assets/current_liabilities",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1x",
+    "unit": "x",
+    "input_fact_ids": [
+      "aapl.current_assets",
+      "aapl.current_liabilities"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": null,
+      "period_end": "2025-06-28",
+      "fiscal_year": null,
+      "fiscal_quarter": null,
+      "span": "instant"
+    },
+    "selection_rationales": [
+      "Current balance at June 28 2025, not the comparison year-end balance.",
+      "Same June 28 2025 instant as current assets."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "0.9",
+    "exact_rational_result": "122491/141120",
+    "input_values": [
+      "122491000000",
+      "141120000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.liabilities_to_assets",
+    "issuer": "aapl",
+    "metric_id": "liabilities_to_assets",
+    "formula": "total_liabilities/total_assets*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "aapl.liabilities",
+      "aapl.assets"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": null,
+      "period_end": "2025-06-28",
+      "fiscal_year": null,
+      "fiscal_quarter": null,
+      "span": "instant"
+    },
+    "selection_rationales": [
+      "Total liabilities, same June 28 2025 balance date.",
+      "Total assets, same June 28 2025 balance date."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "80.1",
+    "exact_rational_result": "5313300/66299",
+    "input_values": [
+      "265665000000",
+      "331495000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.fcf_reported_span",
+    "issuer": "aapl",
+    "metric_id": "fcf_reported_span",
+    "formula": "operating_cash_flow - positive_reported_PP&E_payments",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "exact source USD millions",
+    "unit": "USD_millions",
+    "input_fact_ids": [
+      "aapl.cfo.ytd",
+      "aapl.capex.ytd"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2024-09-29",
+      "period_end": "2025-06-28",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 3,
+      "span": "ytd"
+    },
+    "selection_rationales": [
+      "Cash generated by operating activities for nine months; do not label a single quarter.",
+      "Positive PaymentsToAcquirePropertyPlantAndEquipment XBRL amount; cash-flow row prints parentheses as investing outflow. Subtract positive payment, not arbitrary abs()."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "72281",
+    "exact_rational_result": "72281",
+    "input_values": [
+      "81754000000",
+      "9473000000"
+    ]
+  },
+  {
+    "reference_id": "aapl.pe_fy",
+    "issuer": "aapl",
+    "metric_id": "pe_fy",
+    "formula": "completed_close/annual_diluted_eps; NOT TTM",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1x",
+    "unit": "x",
+    "input_fact_ids": [
+      "aapl.eps.fy2024"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2023-10-01",
+      "period_end": "2024-09-28",
+      "fiscal_year": 2024,
+      "fiscal_quarter": null,
+      "span": "annual"
+    },
+    "selection_rationales": [
+      "Annual diluted EPS; usdPerShare unit definition is USD divided by shares; scale zero, not millions."
+    ],
+    "human_review_status": "pending",
+    "price_id": "aapl.close.2025-08-04",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "33.4",
+    "exact_rational_result": "10167500305175781/304000000000000",
+    "input_values": [
+      "203.35000610351562",
+      "6.08"
+    ]
+  },
+  {
+    "reference_id": "xom.revenue_yoy_q",
+    "issuer": "xom",
+    "metric_id": "revenue_yoy_q",
+    "formula": "(current/prior_same_fiscal_quarter - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.rev.q2.2025",
+      "xom.rev.q2.2024"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current Q2 three-month Total revenues and other income, not six-month column.",
+      "Prior-year Q2 comparative from the same filing/concept; source fy=2025 belongs to filing, not this fact."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "-12.4",
+    "exact_rational_result": "-57770/4653",
+    "input_values": [
+      "81506000000",
+      "93060000000"
+    ]
+  },
+  {
+    "reference_id": "xom.revenue_yoy_a",
+    "issuer": "xom",
+    "metric_id": "revenue_yoy_a",
+    "formula": "(current_fy/prior_fy - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.rev.fy2024",
+      "xom.rev.fy2023"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "fiscal_year": 2024,
+      "fiscal_quarter": null,
+      "span": "annual"
+    },
+    "selection_rationales": [
+      "Reported FY2024 Revenues, same concept as comparative and quarter.",
+      "Reported full calendar FY2023 Revenues."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "1.5",
+    "exact_rational_result": "250150/172291",
+    "input_values": [
+      "349585000000",
+      "344582000000"
+    ]
+  },
+  {
+    "reference_id": "xom.revenue_qoq",
+    "issuer": "xom",
+    "metric_id": "revenue_qoq",
+    "formula": "(current/immediately_preceding_fiscal_quarter - 1)*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.rev.q2.2025",
+      "xom.rev.q1.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current Q2 three-month Total revenues and other income, not six-month column.",
+      "Immediately preceding Q1, directly reported with same Revenues concept."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "-2.0",
+    "exact_rational_result": "-16240/8313",
+    "input_values": [
+      "81506000000",
+      "83130000000"
+    ]
+  },
+  {
+    "reference_id": "xom.gross_margin",
+    "issuer": "xom",
+    "metric_id": "gross_margin",
+    "formula": "gross_profit/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.rev.q2.2025"
+    ],
+    "missing_input_roles": [
+      "xom.gross.q2.2025"
+    ],
+    "period": {
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current Q2 three-month Total revenues and other income, not six-month column."
+    ],
+    "human_review_status": "pending",
+    "status": "n/a",
+    "reason": "missing_input",
+    "expected_display": "n/a",
+    "source_absence_evidence": "XOM saved target 10-Q and companyfacts do not provide the selected us-gaap GrossProfit/OperatingIncomeLoss concepts; no proxy substituted. Apple supplies positive coverage."
+  },
+  {
+    "reference_id": "xom.operating_margin",
+    "issuer": "xom",
+    "metric_id": "operating_margin",
+    "formula": "operating_income/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.rev.q2.2025"
+    ],
+    "missing_input_roles": [
+      "xom.operating.q2.2025"
+    ],
+    "period": {
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Current Q2 three-month Total revenues and other income, not six-month column."
+    ],
+    "human_review_status": "pending",
+    "status": "n/a",
+    "reason": "missing_input",
+    "expected_display": "n/a",
+    "source_absence_evidence": "XOM saved target 10-Q and companyfacts do not provide the selected us-gaap GrossProfit/OperatingIncomeLoss concepts; no proxy substituted. Apple supplies positive coverage."
+  },
+  {
+    "reference_id": "xom.net_margin",
+    "issuer": "xom",
+    "metric_id": "net_margin",
+    "formula": "reported_net_income/revenue*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.net.q2.2025",
+      "xom.rev.q2.2025"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "quarter"
+    },
+    "selection_rationales": [
+      "Net income attributable to ExxonMobil; preserve row scope in net margin definition.",
+      "Current Q2 three-month Total revenues and other income, not six-month column."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "8.7",
+    "exact_rational_result": "354100/40753",
+    "input_values": [
+      "7082000000",
+      "81506000000"
+    ]
+  },
+  {
+    "reference_id": "xom.current_ratio",
+    "issuer": "xom",
+    "metric_id": "current_ratio",
+    "formula": "current_assets/current_liabilities",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1x",
+    "unit": "x",
+    "input_fact_ids": [
+      "xom.current_assets",
+      "xom.current_liabilities"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": null,
+      "period_end": "2025-06-30",
+      "fiscal_year": null,
+      "fiscal_quarter": null,
+      "span": "instant"
+    },
+    "selection_rationales": [
+      "June 30 2025 Total current assets.",
+      "June 30 2025 Total current liabilities."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "1.2",
+    "exact_rational_result": "85108/68161",
+    "input_values": [
+      "85108000000",
+      "68161000000"
+    ]
+  },
+  {
+    "reference_id": "xom.liabilities_to_assets",
+    "issuer": "xom",
+    "metric_id": "liabilities_to_assets",
+    "formula": "total_liabilities/total_assets*100",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1 pp",
+    "unit": "%",
+    "input_fact_ids": [
+      "xom.liabilities",
+      "xom.assets"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": null,
+      "period_end": "2025-06-30",
+      "fiscal_year": null,
+      "fiscal_quarter": null,
+      "span": "instant"
+    },
+    "selection_rationales": [
+      "June 30 2025 Total liabilities.",
+      "June 30 2025 Total assets."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "39.7",
+    "exact_rational_result": "17763500/447597",
+    "input_values": [
+      "177635000000",
+      "447597000000"
+    ]
+  },
+  {
+    "reference_id": "xom.fcf_reported_span",
+    "issuer": "xom",
+    "metric_id": "fcf_reported_span",
+    "formula": "operating_cash_flow - positive_reported_PP&E_payments",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "exact source USD millions",
+    "unit": "USD_millions",
+    "input_fact_ids": [
+      "xom.cfo.ytd",
+      "xom.capex.ytd"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2025-01-01",
+      "period_end": "2025-06-30",
+      "fiscal_year": 2025,
+      "fiscal_quarter": 2,
+      "span": "ytd"
+    },
+    "selection_rationales": [
+      "Six-month Net cash provided by operating activities.",
+      "Positive PaymentsToAcquirePropertyPlantAndEquipment XBRL amount; Additions to property, plant and equipment shown as outflow in cash-flow statement. Not the broader management capex-and-exploration measure."
+    ],
+    "human_review_status": "pending",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "12322",
+    "exact_rational_result": "12322",
+    "input_values": [
+      "24503000000",
+      "12181000000"
+    ]
+  },
+  {
+    "reference_id": "xom.pe_fy",
+    "issuer": "xom",
+    "metric_id": "pe_fy",
+    "formula": "completed_close/annual_diluted_eps; NOT TTM",
+    "formula_version": "fr07-independent-direct-reference-v1",
+    "rounding": "ROUND_HALF_UP",
+    "resolution": "0.1x",
+    "unit": "x",
+    "input_fact_ids": [
+      "xom.eps.fy2024"
+    ],
+    "missing_input_roles": [],
+    "period": {
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "fiscal_year": 2024,
+      "fiscal_quarter": null,
+      "span": "annual"
+    },
+    "selection_rationales": [
+      "Annual diluted EPS, USD/shares, scale zero."
+    ],
+    "human_review_status": "pending",
+    "price_id": "xom.close.2025-08-04",
+    "status": "computed",
+    "reason": null,
+    "expected_display": "13.7",
+    "exact_rational_result": "1533857182094029/112000000000000",
+    "input_values": [
+      "107.37000274658203",
+      "7.84"
+    ]
+  }
+]

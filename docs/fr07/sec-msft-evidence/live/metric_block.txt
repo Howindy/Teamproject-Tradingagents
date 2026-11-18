@@ -1,0 +1,21 @@
+Program financial metrics (fr07-direct-v1); as_of=2025-08-05; issuer=0000789019
+| metric_id | value / reason | period / span | sources |
+|---|---|---|---|
+| revenue_yoy_q | 13.3 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| revenue_yoy_a | 14.9 % | 2024-07-01..2025-06-30 / annual | S2 |
+| revenue_qoq | 0.6 % | 2025-01-01..2025-03-31 / quarter | S1,S3 |
+| gross_margin | 68.7 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| operating_margin | 45.7 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| net_margin | 36.9 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| current_ratio | 1.4 x | at 2025-06-30 / instant | S2 |
+| liabilities_to_assets | 44.5 % | at 2025-06-30 / instant | S2 |
+| fcf_reported_span | 71611 USD_millions | 2024-07-01..2025-06-30 / annual | S2 |
+| pe_fy | 38.9 x | 2024-07-01..2025-06-30 / annual | S2,S4 |
+[S1] sec://CIK0000789019/0000950170-25-061046
+[S2] sec://CIK0000789019/0000950170-25-100235
+[S3] sec://CIK0000789019/0000950170-25-010491
+[S4] yahoo://MSFT/close/2025-08-04
+Percentages: 0.1 percentage point; ratios: 0.1x; half-up. FCF is exact source-currency amount, not a derived quarter.
+Historical filing visibility is date-level, not an intraday point-in-time guarantee.
+Source/calendar/basis evidence comes from the injected data boundary, not model prose.
+TTM, FCF YoY and quarter-by-subtraction are not computed.

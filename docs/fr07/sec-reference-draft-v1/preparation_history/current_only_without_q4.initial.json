@@ -1,0 +1,64 @@
+{
+  "id": "current_only_without_q4",
+  "base_record_id": "aapl.rev.q2.2025",
+  "base_record": {
+    "fact_id": "aapl.rev.q2.2025",
+    "issuer": "aapl",
+    "subject_id": "0000320193",
+    "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+    "value": "95359000000",
+    "unit": "USD",
+    "currency": "USD",
+    "period_start": "2024-12-29",
+    "period_end": "2025-03-29",
+    "span": "quarter",
+    "duration_days_inclusive": 91,
+    "fiscal_year": 2025,
+    "fiscal_quarter": 2,
+    "fiscal_annotation_method": "explicit reviewer-readable plan + statement column/calendar evidence; not filing fy/fp copy",
+    "selection_rationale": "Directly reported immediately preceding FY2025 Q2; no subtraction or nearest-column substitution.",
+    "filed_at": "2025-05-02",
+    "accession": "0000320193-25-000057",
+    "form": "10-Q",
+    "carrying_filing_fy": 2025,
+    "carrying_filing_fp": "Q2",
+    "raw_companyfacts_record": {
+      "start": "2024-12-29",
+      "end": "2025-03-29",
+      "val": 95359000000,
+      "accn": "0000320193-25-000057",
+      "fy": 2025,
+      "fp": "Q2",
+      "form": "10-Q",
+      "filed": "2025-05-02"
+    },
+    "companyfacts_file": "sources/aapl-companyfacts.json",
+    "companyfacts_pointer": "/facts/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax/units/USD/106",
+    "filing_file": "sources/aapl-2025q2-10q.htm",
+    "inline_element_id": "f-62",
+    "inline_context_ref": "c-20",
+    "inline_unit_ref": "usd",
+    "raw_unit_xml": "<ns0:unit xmlns:ns0=\"http://www.xbrl.org/2003/instance\" id=\"usd\"><ns0:measure>iso4217:USD</ns0:measure></ns0:unit>",
+    "raw_display": "95,359",
+    "raw_scale": "6",
+    "raw_ix_sign": "+",
+    "statement_row": "Total net sales 95,359 90,753 219,659 210,328",
+    "restatement_lineage": null,
+    "lineage_note": "Pinned to this disclosure; no general latest-version or restatement resolution is inferred."
+  },
+  "controlled_override": {
+    "operation": "target_fiscal_position",
+    "after": [
+      2025,
+      1
+    ]
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "n/a",
+    "reason": "missing_quarter"
+  },
+  "independent_rationale": "This controlled input subset has no directly reported FY2024 Q4 quarter. Annual-minus-YTD remains forbidden; not a claim that no such fact exists anywhere.",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

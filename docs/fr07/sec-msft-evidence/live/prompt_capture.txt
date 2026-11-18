@@ -1,0 +1,65 @@
+[system]
+You are a helpful AI assistant, collaborating with other assistants. Use the provided tools to progress towards answering the question. If you are unable to fully answer, that's OK; another assistant with different tools will help where you left off. Execute what you can to make progress. Report what your tools support; another agent decides the trade. You have access to the following tools: none; your tool rounds are spent. Today's date is 2025-08-05; treat it as 'now' for all analysis and tool-call date ranges. The instrument to analyze is `MSFT`. Preserve this exact ticker.
+You are a researcher tasked with analyzing fundamental information over the past week about a company. Please write a comprehensive report of the company's fundamental information such as financial documents, company profile, basic company financials, and company financial history to gain a full view of the company's fundamental information to inform traders. Make sure to include as much detail as possible. Provide specific, actionable insights with supporting evidence to help traders make informed decisions. Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read. Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements, and `get_insider_transactions` for recent insider buying and selling.
+Program financial metrics are supplied below. They are the numeric authority for the listed metric_ids and their periods: cite them first, preserve their units, periods and n/a reasons, and do not recompute or contradict them. For any additional derivation outside that table, state your assumptions explicitly and label it unverified analysis. The table's source IDs are references only; it does not prove other report claims.
+Program financial metrics (fr07-direct-v1); as_of=2025-08-05; issuer=0000789019
+| metric_id | value / reason | period / span | sources |
+|---|---|---|---|
+| revenue_yoy_q | 13.3 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| revenue_yoy_a | 14.9 % | 2024-07-01..2025-06-30 / annual | S2 |
+| revenue_qoq | 0.6 % | 2025-01-01..2025-03-31 / quarter | S1,S3 |
+| gross_margin | 68.7 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| operating_margin | 45.7 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| net_margin | 36.9 % | 2025-01-01..2025-03-31 / quarter | S1 |
+| current_ratio | 1.4 x | at 2025-06-30 / instant | S2 |
+| liabilities_to_assets | 44.5 % | at 2025-06-30 / instant | S2 |
+| fcf_reported_span | 71611 USD_millions | 2024-07-01..2025-06-30 / annual | S2 |
+| pe_fy | 38.9 x | 2024-07-01..2025-06-30 / annual | S2,S4 |
+[S1] sec://CIK0000789019/0000950170-25-061046
+[S2] sec://CIK0000789019/0000950170-25-100235
+[S3] sec://CIK0000789019/0000950170-25-010491
+[S4] yahoo://MSFT/close/2025-08-04
+Percentages: 0.1 percentage point; ratios: 0.1x; half-up. FCF is exact source-currency amount, not a derived quarter.
+Historical filing visibility is date-level, not an intraday point-in-time guarantee.
+Source/calendar/basis evidence comes from the injected data boundary, not model prose.
+TTM, FCF YoY and quarter-by-subtraction are not computed.
+
+
+[human]
+MSFT
+
+[human]
+[get_income_statement / get_balance_sheet / get_cashflow returned]
+MSFT filings as filed, USD millions unless stated; cumulative XBRL facts:
+- Revenue [USD] 2024-07-01..2025-03-31: 205283000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Revenue [USD] 2025-01-01..2025-03-31: 70066000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Revenue [USD] 2024-07-01..2025-06-30: 281724000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Gross profit [USD] 2024-07-01..2025-03-31: 141466000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Gross profit [USD] 2025-01-01..2025-03-31: 48147000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Gross profit [USD] 2024-07-01..2025-06-30: 193893000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Operating income [USD] 2024-07-01..2025-03-31: 94205000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Operating income [USD] 2025-01-01..2025-03-31: 32000000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Operating income [USD] 2024-07-01..2025-06-30: 128528000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Net income [USD] 2024-07-01..2025-03-31: 74599000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Net income [USD] 2025-01-01..2025-03-31: 25824000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Net income [USD] 2024-07-01..2025-06-30: 101832000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Current assets [USD] instant..2025-03-31: 156644000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Current assets [USD] instant..2025-06-30: 191131000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Current liabilities [USD] instant..2025-03-31: 114206000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Current liabilities [USD] instant..2025-06-30: 141218000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Total liabilities [USD] instant..2025-03-31: 240733000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Total liabilities [USD] instant..2025-06-30: 275524000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Total assets [USD] instant..2025-03-31: 562624000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Total assets [USD] instant..2025-06-30: 619003000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Diluted EPS [USD/shares] 2024-07-01..2025-03-31: 9.99 (accession 0000950170-25-061046, filed 2025-04-30)
+- Diluted EPS [USD/shares] 2025-01-01..2025-03-31: 3.46 (accession 0000950170-25-061046, filed 2025-04-30)
+- Diluted EPS [USD/shares] 2024-07-01..2025-06-30: 13.64 (accession 0000950170-25-100235, filed 2025-07-30)
+- Operating cash flow [USD] 2024-07-01..2025-03-31: 93515000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Operating cash flow [USD] 2025-01-01..2025-03-31: 37044000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Operating cash flow [USD] 2024-07-01..2025-06-30: 136162000000 (accession 0000950170-25-100235, filed 2025-07-30)
+- Payments for PP&E [USD] 2024-07-01..2025-03-31: 47472000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Payments for PP&E [USD] 2025-01-01..2025-03-31: 16745000000 (accession 0000950170-25-061046, filed 2025-04-30)
+- Payments for PP&E [USD] 2024-07-01..2025-06-30: 64551000000 (accession 0000950170-25-100235, filed 2025-07-30)
+
+[human]
+You have used every tool round this report allows. Write your final report now from the tool results above, and say which data you could not retrieve.

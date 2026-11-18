@@ -1,0 +1,8 @@
+{
+  "request_index": 1,
+  "outcome": "http_422_no_model_generation",
+  "error": "client mapped langchain role human->human; API requires user",
+  "provider_tokens": null,
+  "finish_reason": null,
+  "note": "No completion was produced; corrected client-side role mapping before the single successful request."
+}

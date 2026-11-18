@@ -1,0 +1,30 @@
+{
+  "request_index": 1,
+  "model": "deepseek-flash",
+  "response_id": "fab0b72f-3a60-4132-b975-6a6e455635c4",
+  "finish_reason": "stop",
+  "usage": {
+    "completion_tokens": 2943,
+    "prompt_tokens": 2364,
+    "total_tokens": 5307,
+    "completion_tokens_details": null,
+    "prompt_tokens_details": {
+      "audio_tokens": null,
+      "cache_write_tokens": null,
+      "cached_tokens": 0,
+      "image_tokens": null,
+      "text_tokens": null
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2364
+  },
+  "reasoning_tokens": null,
+  "visible_content_nonempty": true,
+  "tool_calls_returned": false,
+  "latency_seconds": 16.371182800037786,
+  "latency_ms": 16371.2,
+  "prompt_chars": 6716,
+  "max_tokens": 8192,
+  "max_retries": 0,
+  "thinking": "disabled"
+}

@@ -272,6 +272,66 @@ def get_closes(symbol: str, start_date: str, end_date: str) -> pd.Series:
     return history["Close"] if history is not None and "Close" in history else pd.Series(dtype=float)
 
 
+def completed_close(
+    symbol: str, as_of_date: str, cutoff: datetime, split_floor: str | None = None
+) -> dict | None:
+    """Last regular-session close completed by ``cutoff``, with its basis metadata.
+
+    A daily bar's timestamp is its session open; the session is treated as
+    completed at 16:00 exchange-local time on that date, never at the open. The
+    quote currency comes from the chart metadata, and any split between
+    ``start_date`` and ``as_of_date`` is reported so a caller comparing with an
+    unadjusted per-share figure can refuse the mix instead of adjusting it.
+    """
+    canonical = normalize_symbol(symbol)
+    as_of_dt = datetime.strptime(as_of_date, "%Y-%m-%d")
+    start = (as_of_dt - relativedelta(days=40)).strftime("%Y-%m-%d")
+    end = (as_of_dt + relativedelta(days=1)).strftime("%Y-%m-%d")
+    closes = get_closes(symbol, start, end)
+    if closes is None or len(closes) == 0:
+        return None
+    ticker = yf.Ticker(canonical)
+    try:
+        metadata = ticker.get_history_metadata() or {}
+    except Exception:
+        metadata = {}
+    zone = metadata.get("exchangeTimezoneName") or "America/New_York"
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo(zone)
+    sessions = []
+    for stamp, close in closes.items():
+        session_date = stamp.date()
+        completed = datetime(session_date.year, session_date.month, session_date.day, 16, tzinfo=tz)
+        if completed <= cutoff:
+            sessions.append((session_date, float(close), completed))
+    if not sessions:
+        return None
+    price_date, value, completed = sessions[-1]
+    splits = []
+    try:
+        split_index = ticker.splits
+        if split_index is not None and len(split_index):
+            floor = datetime.strptime(split_floor, "%Y-%m-%d").date() if split_floor else price_date
+            splits = [
+                stamp.date().isoformat()
+                for stamp in split_index.index
+                if floor < stamp.date() <= datetime.strptime(as_of_date, "%Y-%m-%d").date()
+            ]
+    except Exception:
+        return None
+    return {
+        "value": value,
+        "currency": metadata.get("currency"),
+        "unit": f"{metadata.get('currency')}/shares" if metadata.get("currency") else None,
+        "price_date": price_date.isoformat(),
+        "completed_at": completed,
+        "exchange_timezone": zone,
+        "splits_between": splits,
+        "source_ref": f"yahoo://{canonical}/close/{price_date.isoformat()}",
+    }
+
+
 def get_stock_stats(
     symbol: Annotated[str, "ticker symbol for the company"],
     indicator: Annotated[

@@ -14,6 +14,7 @@ from tradingagents.dataflows.config import run_config, run_config_context, set_c
 from tradingagents.dataflows.date_window import get_current_date, is_historical
 from tradingagents.dataflows.symbols import safe_ticker_component
 from tradingagents.default_config import DEFAULT_CONFIG
+from tradingagents.financials.wiring import build_metrics_factory
 from tradingagents.llm_clients import create_tier_client, tier_provider
 from tradingagents.memory import TradingMemoryLog, settlement
 from tradingagents.memory.reflection import Reflector
@@ -57,6 +58,7 @@ class TradingAgentsGraph:
         debug=False,
         config: dict[str, Any] = None,
         callbacks: list | None = None,
+        metrics_factory=None,
     ):
         """Initialize the trading agents graph and components.
 
@@ -93,11 +95,13 @@ class TradingAgentsGraph:
             raise ValueError(
                 f"max_tool_rounds={max_tool_rounds} needs max_recur_limit above {2 * max_tool_rounds + 2}"
             )
+        self.metrics_factory = metrics_factory or build_metrics_factory(self.config)
         self.graph_setup = GraphSetup(
             self.quick_thinking_llm,
             self.deep_thinking_llm,
             self.conditional_logic,
             max_tool_rounds,
+            metrics_factory=self.metrics_factory,
         )
 
         self.propagator = Propagator(

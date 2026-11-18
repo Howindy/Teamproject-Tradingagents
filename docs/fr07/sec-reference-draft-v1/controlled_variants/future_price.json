@@ -1,0 +1,44 @@
+{
+  "id": "future_price",
+  "base_record_id": "aapl.price",
+  "base_record": {
+    "price_id": "aapl.close.2025-08-04",
+    "issuer": "aapl",
+    "value": "203.35000610351562",
+    "display_only_2dp": "203.35",
+    "currency": "USD",
+    "unit": "USD/shares",
+    "actual_price_date": "2025-08-04",
+    "price_as_of": "2025-08-05",
+    "cutoff": "2025-08-05T00:00:00-04:00",
+    "timestamp_raw": 1754314200,
+    "volume": 75109300,
+    "exchange_timezone": "America/New_York",
+    "exchange": "NasdaqGS",
+    "source_file": "sources\\aapl-prices-actions.json",
+    "json_pointer": "/chart/result/0/indicators/quote/0/close/210",
+    "timestamp_pointer": "/chart/result/0/timestamp/210",
+    "adjclose_not_used": "202.21827697753906",
+    "completion_evidence": "NYSE/Nasdaq regular daily session closed 16:00 America/New_York on 2025-08-04, before fixed cutoff 2025-08-05T00:00-04:00; later downloaded final daily OHLCV record, not a live today quote",
+    "freshness_policy": "Reference policy v1: previous completed regular trading session at this fixed midnight cutoff; no earlier missing session accepted. Human review of historical session/completion and policy adequacy pending.",
+    "share_basis_evidence": {
+      "event_snapshot": "sources\\aapl-share-basis-through-retrieval.json",
+      "split_events": {},
+      "request_covers_eps_end_through_retrieval": true,
+      "basis": "common shares, no returned split events across interval; no split/FX conversion"
+    },
+    "limitation": "Retrospective daily-history evidence, not an intraday point-in-time quote captured in 2025. Completion/calendar and split-feed adequacy require human review."
+  },
+  "controlled_override": {
+    "operation": "analysis_as_of",
+    "after": "2025-08-03"
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "exclude",
+    "reason": "future_price_excluded"
+  },
+  "independent_rationale": "2025-08-04 close cannot be used on 2025-08-03; 2025-08-01 is the preceding completed row.",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

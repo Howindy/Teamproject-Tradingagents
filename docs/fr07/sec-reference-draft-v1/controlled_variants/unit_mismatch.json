@@ -1,0 +1,62 @@
+{
+  "id": "unit_mismatch",
+  "base_record_id": "aapl.rev.q3.2024",
+  "base_record": {
+    "fact_id": "aapl.rev.q3.2024",
+    "issuer": "aapl",
+    "subject_id": "0000320193",
+    "concept": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+    "value": "85777000000",
+    "unit": "USD",
+    "currency": "USD",
+    "period_start": "2024-03-31",
+    "period_end": "2024-06-29",
+    "span": "quarter",
+    "duration_days_inclusive": 91,
+    "fiscal_year": 2024,
+    "fiscal_quarter": 3,
+    "fiscal_annotation_method": "explicit reviewer-readable plan + statement column/calendar evidence; not filing fy/fp copy",
+    "selection_rationale": "Same filing's prior-year three-month June 29 2024 column, same fiscal Q3; NOT filing fy=2025 copied to prior fact.",
+    "filed_at": "2025-08-01",
+    "accession": "0000320193-25-000073",
+    "form": "10-Q",
+    "carrying_filing_fy": 2025,
+    "carrying_filing_fp": "Q3",
+    "raw_companyfacts_record": {
+      "start": "2024-03-31",
+      "end": "2024-06-29",
+      "val": 85777000000,
+      "accn": "0000320193-25-000073",
+      "fy": 2025,
+      "fp": "Q3",
+      "form": "10-Q",
+      "filed": "2025-08-01",
+      "frame": "CY2024Q2"
+    },
+    "companyfacts_file": "sources/aapl-companyfacts.json",
+    "companyfacts_pointer": "/facts/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax/units/USD/98",
+    "filing_file": "sources/aapl-2025q3-10q.htm",
+    "inline_element_id": "f-60",
+    "inline_context_ref": "c-20",
+    "inline_unit_ref": "usd",
+    "raw_unit_xml": "<ns0:unit xmlns:ns0=\"http://www.xbrl.org/2003/instance\" id=\"usd\"><ns0:measure>iso4217:USD</ns0:measure></ns0:unit>",
+    "raw_display": "85,777",
+    "raw_scale": "6",
+    "raw_ix_sign": "+",
+    "statement_row": "Total net sales 94,036 85,777 313,695 296,105",
+    "restatement_lineage": null,
+    "lineage_note": "Pinned to this disclosure; no general latest-version or restatement resolution is inferred."
+  },
+  "controlled_override": {
+    "operation": "unit",
+    "after": "shares"
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "n/a",
+    "reason": "unit_mismatch"
+  },
+  "independent_rationale": "Change currency amount dimension to shares; no valid unit conversion exists.",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

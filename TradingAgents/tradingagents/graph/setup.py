@@ -99,12 +99,18 @@ class GraphSetup:
         deep_thinking_llm: Any,
         conditional_logic: ConditionalLogic,
         max_tool_rounds: int,
+        metrics_factory=None,
     ):
-        """Initialize with required components."""
+        """Initialize with required components.
+
+        ``metrics_factory(state)`` prepares the FR-07 block before the
+        fundamentals analyst's first model turn; None preserves prior behavior.
+        """
         self.quick_thinking_llm = quick_thinking_llm
         self.deep_thinking_llm = deep_thinking_llm
         self.conditional_logic = conditional_logic
         self.max_tool_rounds = max_tool_rounds
+        self.metrics_factory = metrics_factory
 
     def setup_graph(
         self, selected_analysts=("market", "social", "news", "fundamentals"), memory_node=None
@@ -126,7 +132,9 @@ class GraphSetup:
             "market": lambda: create_market_analyst(self.quick_thinking_llm),
             "social": lambda: create_sentiment_analyst(self.quick_thinking_llm),
             "news": lambda: create_news_analyst(self.quick_thinking_llm),
-            "fundamentals": lambda: create_fundamentals_analyst(self.quick_thinking_llm),
+            "fundamentals": lambda: create_fundamentals_analyst(
+                self.quick_thinking_llm, metrics_factory=self.metrics_factory
+            ),
         }
 
         bull_researcher_node = create_bull_researcher(self.quick_thinking_llm)

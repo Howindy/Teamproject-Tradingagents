@@ -1,0 +1,61 @@
+{
+  "id": "non_positive_eps",
+  "base_record_id": "xom.eps.fy2024",
+  "base_record": {
+    "fact_id": "xom.eps.fy2024",
+    "issuer": "xom",
+    "subject_id": "0000034088",
+    "concept": "us-gaap:EarningsPerShareDiluted",
+    "value": "7.84",
+    "unit": "USD/shares",
+    "currency": "USD",
+    "period_start": "2024-01-01",
+    "period_end": "2024-12-31",
+    "span": "annual",
+    "duration_days_inclusive": 366,
+    "fiscal_year": 2024,
+    "fiscal_quarter": null,
+    "fiscal_annotation_method": "explicit reviewer-readable plan + statement column/calendar evidence; not filing fy/fp copy",
+    "selection_rationale": "Annual diluted EPS, USD/shares, scale zero.",
+    "filed_at": "2025-02-19",
+    "accession": "0000034088-25-000010",
+    "form": "10-K",
+    "carrying_filing_fy": 2024,
+    "carrying_filing_fp": "FY",
+    "raw_companyfacts_record": {
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "val": "7.84",
+      "accn": "0000034088-25-000010",
+      "fy": 2024,
+      "fp": "FY",
+      "form": "10-K",
+      "filed": "2025-02-19"
+    },
+    "companyfacts_file": "sources/xom-companyfacts.json",
+    "companyfacts_pointer": "/facts/us-gaap/EarningsPerShareDiluted/units/USD~1shares/214",
+    "filing_file": "sources/xom-2024-10k.htm",
+    "inline_element_id": "f-124",
+    "inline_context_ref": "c-1",
+    "inline_unit_ref": "usdPerShare",
+    "raw_unit_xml": "<ns0:unit xmlns:ns0=\"http://www.xbrl.org/2003/instance\" id=\"usdPerShare\"><ns0:divide><ns0:unitNumerator><ns0:measure>iso4217:USD</ns0:measure></ns0:unitNumerator><ns0:unitDenominator><ns0:measure>xbrli:shares</ns0:measure></ns0:unitDenominator></ns0:divide></ns0:unit>",
+    "raw_display": "7.84",
+    "raw_scale": "0",
+    "raw_ix_sign": "+",
+    "statement_row": "Earnings (loss) per common share - assuming dilution (dollars) 12 7.84 8.89 13.26",
+    "restatement_lineage": null,
+    "lineage_note": "Pinned to this disclosure; no general latest-version or restatement resolution is inferred."
+  },
+  "controlled_override": {
+    "operation": "value",
+    "after": "-1"
+  },
+  "is_real_disclosure": false,
+  "expected": {
+    "outcome": "n/a",
+    "reason": "non_positive_eps"
+  },
+  "independent_rationale": "No positive P/E from non-positive annual EPS.",
+  "draft_lineage": "docs/fr07/counterexamples.draft.json; translated to explicitly pinned real source records",
+  "application_test_executed": false
+}

@@ -1,0 +1,499 @@
+{
+  "issuer": {
+    "ticker": "MSFT",
+    "cik": "0000789019",
+    "name": "MICROSOFT CORP",
+    "fiscal_year_end": "0630"
+  },
+  "as_of": "2025-08-05",
+  "cutoff": "2025-08-05T00:00:00-04:00",
+  "source": "SEC companyfacts via tradingagents.dataflows.vendors.sec_edgar",
+  "companyfacts_projection_sha256": "6b66eccdccbe4051f0eb965d082be499ee4a7fc69492177dad52f728c3e6c7ca",
+  "companyfacts_original_sha256": "11071048a9cf1d23d9804f1a1c18783e8a6d50586e857c1e8a8bcce9081ddad6",
+  "price": {
+    "value": "530.39697265625",
+    "currency": "USD",
+    "unit": "USD/shares",
+    "price_date": "2025-08-04",
+    "completed_at": "2025-08-04T20:00:00+00:00",
+    "expected_latest_session": "2025-08-04",
+    "freshness_policy": "previous completed regular session at the fixed run-clock cutoff",
+    "source_ref": "yahoo://MSFT/close/2025-08-04",
+    "share_basis": "common_shares",
+    "basis_evidence": [
+      "yahoo://MSFT/history-metadata currency=USD"
+    ],
+    "completion_evidence": "regular session 2025-08-04 closed 16:00 America/New_York"
+  },
+  "issues": [],
+  "selected_fact_count": 1129,
+  "metrics": [
+    {
+      "metric_id": "revenue_yoy_q",
+      "status": "computed",
+      "value": "13.2691001972259044909308416049662129393126192246758705422096",
+      "display": "13.3",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "fiscal_year": 2025,
+        "fiscal_quarter": 3,
+        "span": "quarter"
+      },
+      "formula": "revenue_yoy_q",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "70066000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2024-01-01:2024-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "61858000000",
+          "span": "quarter",
+          "period_start": "2024-01-01",
+          "period_end": "2024-03-31",
+          "fiscal_year": 2024,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        }
+      ]
+    },
+    {
+      "metric_id": "revenue_yoy_a",
+      "status": "computed",
+      "value": "14.9321562324067199190607126247338060231231794779742332389586",
+      "display": "14.9",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2024-07-01",
+        "period_end": "2025-06-30",
+        "fiscal_year": 2025,
+        "fiscal_quarter": null,
+        "span": "annual"
+      },
+      "formula": "revenue_yoy_a",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2024-07-01:2025-06-30:0000950170-25-100235",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "281724000000",
+          "span": "annual",
+          "period_start": "2024-07-01",
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2023-07-01:2024-06-30:0000950170-25-100235",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "245122000000",
+          "span": "annual",
+          "period_start": "2023-07-01",
+          "period_end": "2024-06-30",
+          "fiscal_year": 2024,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        }
+      ]
+    },
+    {
+      "metric_id": "revenue_qoq",
+      "status": "computed",
+      "value": "0.623276654411764705882352941176470588235294117647058823529412",
+      "display": "0.6",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "fiscal_year": 2025,
+        "fiscal_quarter": 3,
+        "span": "quarter"
+      },
+      "formula": "revenue_qoq",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "70066000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2024-10-01:2024-12-31:0000950170-25-010491",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "69632000000",
+          "span": "quarter",
+          "period_start": "2024-10-01",
+          "period_end": "2024-12-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 2,
+          "filed_at": "2025-01-29",
+          "accession": "0000950170-25-010491",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q2"
+        }
+      ]
+    },
+    {
+      "metric_id": "gross_margin",
+      "status": "computed",
+      "value": "68.7166385978934147803499557560014843147889133103074244283961",
+      "display": "68.7",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "fiscal_year": 2025,
+        "fiscal_quarter": 3,
+        "span": "quarter"
+      },
+      "formula": "gross_margin",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:GrossProfit:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "GrossProfit",
+          "value": "48147000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "70066000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        }
+      ]
+    },
+    {
+      "metric_id": "operating_margin",
+      "status": "computed",
+      "value": "45.6712242742557017669054891102674621071561099534724402706020",
+      "display": "45.7",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "fiscal_year": 2025,
+        "fiscal_quarter": 3,
+        "span": "quarter"
+      },
+      "formula": "operating_margin",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:OperatingIncomeLoss:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "OperatingIncomeLoss",
+          "value": "32000000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "70066000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        }
+      ]
+    },
+    {
+      "metric_id": "net_margin",
+      "status": "computed",
+      "value": "36.8566779893243513258927297119858419204749807324522592983758",
+      "display": "36.9",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "fiscal_year": 2025,
+        "fiscal_quarter": 3,
+        "span": "quarter"
+      },
+      "formula": "net_margin",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:NetIncomeLoss:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "NetIncomeLoss",
+          "value": "25824000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        },
+        {
+          "fact_id": "0000789019:RevenueFromContractWithCustomerExcludingAssessedTax:2025-01-01:2025-03-31:0000950170-25-061046",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "value": "70066000000",
+          "span": "quarter",
+          "period_start": "2025-01-01",
+          "period_end": "2025-03-31",
+          "fiscal_year": 2025,
+          "fiscal_quarter": 3,
+          "filed_at": "2025-04-30",
+          "accession": "0000950170-25-061046",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "Q3"
+        }
+      ]
+    },
+    {
+      "metric_id": "current_ratio",
+      "status": "computed",
+      "value": "1.35344644450424166890906258408984690336925887634720786302029",
+      "display": "1.4",
+      "reason": null,
+      "unit": "x",
+      "period": {
+        "period_start": null,
+        "period_end": "2025-06-30",
+        "fiscal_year": 2025,
+        "fiscal_quarter": null,
+        "span": "instant"
+      },
+      "formula": "current_ratio",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:AssetsCurrent:instant:2025-06-30:0000950170-25-100235",
+          "concept": "AssetsCurrent",
+          "value": "191131000000",
+          "span": "instant",
+          "period_start": null,
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        },
+        {
+          "fact_id": "0000789019:LiabilitiesCurrent:instant:2025-06-30:0000950170-25-100235",
+          "concept": "LiabilitiesCurrent",
+          "value": "141218000000",
+          "span": "instant",
+          "period_start": null,
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        }
+      ]
+    },
+    {
+      "metric_id": "liabilities_to_assets",
+      "status": "computed",
+      "value": "44.5109312878935966384654032371410154716536107256346092022171",
+      "display": "44.5",
+      "reason": null,
+      "unit": "%",
+      "period": {
+        "period_start": null,
+        "period_end": "2025-06-30",
+        "fiscal_year": 2025,
+        "fiscal_quarter": null,
+        "span": "instant"
+      },
+      "formula": "liabilities_to_assets",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:Liabilities:instant:2025-06-30:0000950170-25-100235",
+          "concept": "Liabilities",
+          "value": "275524000000",
+          "span": "instant",
+          "period_start": null,
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        },
+        {
+          "fact_id": "0000789019:Assets:instant:2025-06-30:0000950170-25-100235",
+          "concept": "Assets",
+          "value": "619003000000",
+          "span": "instant",
+          "period_start": null,
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        }
+      ]
+    },
+    {
+      "metric_id": "fcf_reported_span",
+      "status": "computed",
+      "value": "71611",
+      "display": "71611",
+      "reason": null,
+      "unit": "USD_millions",
+      "period": {
+        "period_start": "2024-07-01",
+        "period_end": "2025-06-30",
+        "fiscal_year": 2025,
+        "fiscal_quarter": null,
+        "span": "annual"
+      },
+      "formula": "fcf_reported_span",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:NetCashProvidedByUsedInOperatingActivities:2024-07-01:2025-06-30:0000950170-25-100235",
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "value": "136162000000",
+          "span": "annual",
+          "period_start": "2024-07-01",
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        },
+        {
+          "fact_id": "0000789019:PaymentsToAcquirePropertyPlantAndEquipment:2024-07-01:2025-06-30:0000950170-25-100235",
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "value": "64551000000",
+          "span": "annual",
+          "period_start": "2024-07-01",
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        }
+      ]
+    },
+    {
+      "metric_id": "pe_fy",
+      "status": "computed",
+      "value": "38.8854085525109970674486803519061583577712609970674486803519",
+      "display": "38.9",
+      "reason": null,
+      "unit": "x",
+      "period": {
+        "period_start": "2024-07-01",
+        "period_end": "2025-06-30",
+        "fiscal_year": 2025,
+        "fiscal_quarter": null,
+        "span": "annual"
+      },
+      "formula": "pe_fy",
+      "formula_version": "fr07-direct-v1",
+      "rounding": "ROUND_HALF_UP",
+      "input_facts": [
+        {
+          "fact_id": "0000789019:EarningsPerShareDiluted:2024-07-01:2025-06-30:0000950170-25-100235",
+          "concept": "EarningsPerShareDiluted",
+          "value": "13.64",
+          "span": "annual",
+          "period_start": "2024-07-01",
+          "period_end": "2025-06-30",
+          "fiscal_year": 2025,
+          "fiscal_quarter": null,
+          "filed_at": "2025-07-30",
+          "accession": "0000950170-25-100235",
+          "carrying_filing_fy": "2025",
+          "carrying_filing_fp": "FY"
+        }
+      ]
+    }
+  ],
+  "rendered_text": "Program financial metrics (fr07-direct-v1); as_of=2025-08-05; issuer=0000789019\n| metric_id | value / reason | period / span | sources |\n|---|---|---|---|\n| revenue_yoy_q | 13.3 % | 2025-01-01..2025-03-31 / quarter | S1 |\n| revenue_yoy_a | 14.9 % | 2024-07-01..2025-06-30 / annual | S2 |\n| revenue_qoq | 0.6 % | 2025-01-01..2025-03-31 / quarter | S1,S3 |\n| gross_margin | 68.7 % | 2025-01-01..2025-03-31 / quarter | S1 |\n| operating_margin | 45.7 % | 2025-01-01..2025-03-31 / quarter | S1 |\n| net_margin | 36.9 % | 2025-01-01..2025-03-31 / quarter | S1 |\n| current_ratio | 1.4 x | at 2025-06-30 / instant | S2 |\n| liabilities_to_assets | 44.5 % | at 2025-06-30 / instant | S2 |\n| fcf_reported_span | 71611 USD_millions | 2024-07-01..2025-06-30 / annual | S2 |\n| pe_fy | 38.9 x | 2024-07-01..2025-06-30 / annual | S2,S4 |\n[S1] sec://CIK0000789019/0000950170-25-061046\n[S2] sec://CIK0000789019/0000950170-25-100235\n[S3] sec://CIK0000789019/0000950170-25-010491\n[S4] yahoo://MSFT/close/2025-08-04\nPercentages: 0.1 percentage point; ratios: 0.1x; half-up. FCF is exact source-currency amount, not a derived quarter.\nHistorical filing visibility is date-level, not an intraday point-in-time guarantee.\nSource/calendar/basis evidence comes from the injected data boundary, not model prose.\nTTM, FCF YoY and quarter-by-subtraction are not computed."
+}

@@ -20,15 +20,43 @@ TOOLS = (
 )
 
 
-def create_fundamentals_analyst(llm):
+def create_fundamentals_analyst(llm, metrics_factory=None):
+    """``metrics_factory(state)`` returns a run-scoped metric result, or None.
+
+    The factory is resolved before the first model turn, so a provider that does
+    not use tools still receives the program block. Repeated tool rounds receive
+    the same cached text; a factory failure degrades to no block, never to an
+    invented metric.
+    """
+
     def fundamentals_analyst_node(state):
         current_date = state["trade_date"]
         instrument_context = get_instrument_context_from_state(state)
+        metric_block = ""
+        metric_instruction = ""
+        if metrics_factory is not None:
+            try:
+                metric_result = metrics_factory(state)
+            except Exception:
+                metric_result = None
+            if metric_result is not None and metric_result.text:
+                metric_block = metric_result.text
+                metric_instruction = (
+                    "\nProgram financial metrics are supplied below. They are the numeric"
+                    " authority for the listed metric_ids and their periods: cite them first,"
+                    " preserve their units, periods and n/a reasons, and do not recompute or"
+                    " contradict them. For any additional derivation outside that table,"
+                    " state your assumptions explicitly and label it unverified analysis."
+                    " The table's source IDs are references only; it does not prove other"
+                    " report claims.\n"
+                    f"{metric_block}\n"
+                )
 
         system_message = (
             "You are a researcher tasked with analyzing fundamental information over the past week about a company. Please write a comprehensive report of the company's fundamental information such as financial documents, company profile, basic company financials, and company financial history to gain a full view of the company's fundamental information to inform traders. Make sure to include as much detail as possible. Provide specific, actionable insights with supporting evidence to help traders make informed decisions."
             + " Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read."
             + " Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements, and `get_insider_transactions` for recent insider buying and selling."
+            + metric_instruction
             + get_language_instruction()
         )
 

@@ -1,0 +1,102 @@
+{
+  "version": "fr07-reference-counterexamples-draft-v1",
+  "status": "DRAFT_NOT_FROZEN_NOT_APPLICATION_TEST_RESULTS",
+  "base_fixture": "docs/req/fixtures/financial_metrics_v1.json",
+  "purpose": "Independent expected behavior preparation. No FR-07 selector/calculator has executed these cases.",
+  "source_and_human_review": "pending",
+  "cases": [
+    {
+      "id": "missing_prior_year_same_quarter",
+      "remove_fact_ids": ["revenue_q_2025_07_27"],
+      "current_fact_id": "revenue_q_2026_07_26",
+      "expected": {"metric_id": "revenue_yoy_q", "status": "n/a", "reason": "missing_comparison"},
+      "must_retain": ["revenue_q_2026_07_26", "missing_input_roles: prior_year_same_quarter"],
+      "forbidden_substitutions": ["revenue_q_2025_04_27", "revenue_ytd_2025_07_27"]
+    },
+    {
+      "id": "current_ytd_not_a_quarter",
+      "remove_fact_ids": ["revenue_q_2026_07_26"],
+      "retain_fact_ids": ["revenue_ytd_2026_07_26"],
+      "target_fiscal_year": 2027,
+      "target_fiscal_quarter": 2,
+      "target_span": "quarter",
+      "expected": {"status": "n/a", "reason": "missing_quarter"},
+      "forbidden": ["Use YTD as quarter", "Subtract current YTD and prior YTD to invent a quarter"]
+    },
+    {
+      "id": "future_disclosure_excluded",
+      "as_of": "2026-06-01",
+      "excluded_filed_at": "2026-08-26",
+      "excluded_example_fact_id": "revenue_q_2026_07_26",
+      "expected_latest_visible_quarter_end": "2026-04-26",
+      "expected_latest_visible_fiscal_position": [2027, 1],
+      "arithmetic_if_calendar_and_source_verified": {"formula": "(81615/44062-1)*100", "display": "85.2%"}
+    },
+    {
+      "id": "missing_q4_blocks_q1_qoq",
+      "focus_fact_id": "revenue_q_2026_04_26",
+      "comparison_required": {"fiscal_year": 2026, "fiscal_quarter": 4, "span": "quarter"},
+      "expected": {"metric_id": "revenue_qoq", "status": "n/a", "reason": "missing_quarter"},
+      "forbidden": ["Use latest available Q3", "annual minus nine-month derivation"]
+    },
+    {
+      "id": "explicit_unit_mismatch",
+      "override_fact_id": "revenue_q_2025_07_27",
+      "overrides": {"unit": "USD_thousands"},
+      "precondition": "No verified canonical scale-conversion evidence is supplied.",
+      "expected": {"metric_id": "revenue_yoy_q", "status": "n/a", "reason": "unit_mismatch"}
+    },
+    {
+      "id": "explicit_currency_mismatch",
+      "override_fact_id": "revenue_q_2025_07_27",
+      "overrides": {"currency": "EUR", "unit": "EUR_millions"},
+      "expected": {"metric_id": "revenue_yoy_q", "status": "n/a", "reason": "currency_mismatch"},
+      "note": "If multiple validation failures exist, preserve diagnostics; do not silently convert FX."
+    },
+    {
+      "id": "price_eps_basis_mismatch",
+      "precondition": "Supply reviewed price completion/cutoff/freshness evidence and a correctly declared EPS unit first; these are absent from the base fixture.",
+      "price_basis": "split_adjusted_to_current_basis",
+      "eps_basis": "different_unadjusted_historical_share_basis",
+      "unified_adjustment_evidence": null,
+      "expected": {"metric_id": "pe_fy", "status": "n/a", "reason": "basis_mismatch"},
+      "forbidden": ["Infer a split factor", "Treat computable division as sufficient evidence"]
+    },
+    {
+      "id": "same_day_unrelated_accessions",
+      "existing_scenario": "same_day_multiple_filings",
+      "expected": {"status": "n/a", "reason": "ambiguous_filing"},
+      "forbidden": ["Take the last array element", "Merge equal-period facts without lineage"]
+    },
+    {
+      "id": "near_date_equal_values",
+      "existing_scenario": "duplicate_equal_near_dates",
+      "expected": {"status": "n/a", "reason": "ambiguous_period"},
+      "forbidden": ["Merge because values match", "Select by closest date"]
+    },
+    {
+      "id": "explicit_visible_restatement",
+      "existing_scenario": "restatement",
+      "restates_fact_id": "revenue_q_2025_07_27",
+      "visible_restatement_value": "46800",
+      "arithmetic_expected_display": "105.6%",
+      "must_retain": ["Original fact", "Replacement fact", "Explicit lineage", "filed_at visibility"]
+    },
+    {
+      "id": "negative_capex_unknown_sign",
+      "override_fact_id": "capex_ytd_2026_07_26",
+      "overrides": {"value": "-4434"},
+      "source_sign_evidence": null,
+      "expected": {"status": "n/a", "reason_proposal": "unknown_capex_sign"},
+      "conflicts_with_old_fixture_assumption": "fcf_negative_capex expects normalization without supplied sign evidence",
+      "forbidden": ["abs(capex) without a verified source sign rule"]
+    },
+    {
+      "id": "negative_fcf_valid",
+      "independent_inputs": {"cfo": "5", "capex_positive_outflow": "10", "currency": "USD", "unit": "USD_millions"},
+      "preconditions": ["Same issuer and reported span", "Source sign convention independently verified"],
+      "formula": "5 - 10",
+      "expected": {"status": "computed", "display": "-5", "unit": "USD_millions"}
+    }
+  ]
+}

@@ -25,6 +25,8 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_TEMPERATURE":          "temperature",
     "TRADINGAGENTS_LLM_MAX_RETRIES":      "llm_max_retries",
     "TRADINGAGENTS_MAX_TOKENS":           "max_tokens",
+    "TRADINGAGENTS_FR07_REFERENCE_ROOT":  "fr07_reference_root",
+    "TRADINGAGENTS_FR07_SEC_ENABLED":     "fr07_sec_enabled",
     # Provider-specific reasoning/thinking knobs (None = each provider's own
     # default). Settable here for non-interactive runs; the CLI also offers an
     # interactive choice, which is skipped when the matching var is set.
@@ -81,6 +83,11 @@ def build_default_config() -> dict:
     the environment as it is now.
     """
     return _apply_env_overrides({
+        # FR-07 structured input. Empty reference root with SEC disabled keeps
+        # the metric block off; a team data service replaces this injection point
+        # rather than this metric core.
+        "fr07_reference_root": os.getenv("TRADINGAGENTS_FR07_REFERENCE_ROOT") or "",
+        "fr07_sec_enabled": False,
         "results_dir": os.getenv("TRADINGAGENTS_RESULTS_DIR") or os.path.join(_TRADINGAGENTS_HOME, "logs"),
         "data_cache_dir": os.getenv("TRADINGAGENTS_CACHE_DIR") or os.path.join(_TRADINGAGENTS_HOME, "cache"),
         "memory_log_path": os.getenv("TRADINGAGENTS_MEMORY_LOG_PATH") or os.path.join(_TRADINGAGENTS_HOME, "memory", "trading_memory.md"),
