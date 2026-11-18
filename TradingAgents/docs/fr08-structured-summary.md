@@ -12,12 +12,15 @@ FR-07 metric calculation or provider module was modified for this change.
 
 Market, News and Fundamentals no longer receive FR08-SECTION instructions. All
 other prompt text, tool bindings and wrap-up behavior are preserved. Sentiment
-is untouched. The unused legacy `report_sections.py` utility and parser fixtures
-are retained for compatibility/historical artifacts; the active builder no longer
-imports it, parses sections, or accepts `section_token_limit`. Section-preference
-tests were retired; the recorded marker-free fallback hash regression remains.
-The unrelated passage-ranking draft is unchanged and excluded from regression
-runs because it describes an unimplemented interface.
+is untouched. The retired `report_sections.py` parser and its fixtures/tests were
+removed in this delivery; the active builder no longer parses sections or accepts
+`section_token_limit`, and the recorded marker-free fallback hash regression
+remains. The unimplemented passage-ranking draft moved to
+`docs/fr07/drafts/passage_ranking_unimplemented.py` so normal test collection no
+longer fails on it.
+
+FR-07's rendered metric table plugs into the existing caller-owned
+`metric_block` argument unchanged; no FR-08 interface changed for that.
 
 ## API
 
@@ -177,22 +180,21 @@ rendered labels, exact 1,531-token boundary, nonadditive token counting, protect
 content and report immutability, concurrent reuse and cached fallbacks. Delivery,
 analyst prompt and existing graph regressions run offline with network blocking.
 
-Offline results for this change:
+Offline results for the delivered branch (FR-07 + FR-08 together):
 
-- Focused summary/delivery/analyst/graph/portfolio/legacy-parser suite: **127 passed**.
-- Broader suite, explicitly ignoring `tests/test_passage_ranking.py`: **1,440 passed,
-  5 failed, 4 skipped, 1 deselected**, plus **100 passed subtests**.
-- The five failures were rerun on the pristine detached baseline: **the same five
-  failed** (two Windows private-file-mode assertions, two install-upgrade command
-  tests, one yfinance cache-under-home test). They are not FR-08 regressions.
-- Ruff on changed Python implementation/tests/example: **all checks passed**.
-- Offline example: passed (two reads, one fake invocation).
-
-JUnit reports, initial-file backups and preservation hashes are in
-`C:\Users\24968\AppData\Local\Temp\opencode\fr08-structured-summary-offline-01`.
-The first test attempt hit a default pytest temporary-directory permission error;
-the successful runs used explicit fresh approved external `--basetemp` paths.
-There were no paid API calls, commits or pushes.
+- FR-08 tests: `test_structured_summary.py`, `test_brief_delivery.py`,
+  `test_downstream_brief.py`, `test_analyst_report_section_prompts.py` — all pass.
+- Full offline suite now runs **without** `--ignore`: **1,460 passed, 5 failed,
+  4 skipped, 1 deselected**, plus **100 passed subtests**.
+- The five failures are the pre-existing Windows/environment ones (two private-file-mode
+  assertions, two install-upgrade command tests, one yfinance cache-under-home test);
+  they fail identically on the pristine detached baseline.
+- Ruff across the package: **all checks passed**.
+- FR-07 → FR-08 integration is covered by
+  `tests/test_financial_metrics.py::test_fr07_metric_block_is_preserved_verbatim_in_the_fr08_protected_material`:
+  the rendered metric rows and source references survive verbatim in the protected
+  block, once, for both the summary path and the deterministic fallback.
+- Offline example: passes (two reads, one fake invocation).
 
 The earlier NVDA one-call experiment remains **one pilot**, not a quality or
 decision-equivalence guarantee. It retained additional details but inherited a
