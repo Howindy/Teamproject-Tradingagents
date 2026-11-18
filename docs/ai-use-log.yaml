@@ -1,0 +1,140 @@
+schema_version: '1.0'
+entries:
+- id: AI-FR01-CR01-D1D2-20261103-01
+  date: '2026-11-03'
+  owner: haoxi
+  phase: D1 and D2 personal contribution
+  tool: Claude (claude-opus-5-5) in a cloud workspace with repository read access
+  purpose: 'Review the other members'' branches, inspect TradingAgents v0.7.0 and the recorded baseline
+    run, select one functional and one non-functional requirement, and draft the personal D1 registry
+    entries and D2 architecture fragments for FR-01 and CR-01 without changing product code.
+
+    '
+  human_supervision:
+  - Asked for a summary of every other branch's requirements before choosing a topic.
+  - 'Set the scope rules: one FR and one NFR per member, low merge overhead with other branches, and a
+    scope comparable to other members.'
+  - Corrected an earlier misreading that treated low coupling as a ban on editing existing files; it applies
+    only to merge overhead.
+  - Required an analysis of pivot risk (technical infeasibility, cost, workload) before committing to
+    a topic.
+  - Required the NFR to improve a metric with a valid, measured baseline, and rejected candidates that
+    did not.
+  - Allowed the NFR to be independent of the FR and asked to evaluate context-token cost as the NFR.
+  - Selected FR-01 (derived metrics) and CR-01 (downstream context cost).
+  - Asked that design rationales in the documents use engineering reasons only.
+  inputs_reviewed:
+  - Teamproject-Tradingagents main (2c8996e) and TradingAgents v0.7.0 source
+  - Branches Yifan_docs/d1-d2-initial-draft, JiangYiyang_docs/d1-d2-initial-draft, pxs
+  - baseline/runs/baseline-20261020-01 (metrics, final state, tool outputs)
+  - docs/req/req-schema.json (team schema)
+  files_affected:
+  - architecture-blueprint.md
+  - docs/req/requirements.yaml
+  - docs/architecture/adr/003-derived-metrics-and-context-brief.md
+  - docs/architecture/evaluation-table.md
+  - docs/architecture/invariants.md
+  - docs/architecture/memory-design.md
+  - docs/architecture/open-decisions.md
+  - docs/architecture/permission-model.md
+  - docs/architecture/runtime-policy-catalog.md
+  - docs/architecture/trace-matrix.md
+  - docs/ai-use-log.yaml
+  decisions:
+    accepted:
+    - 'FR-01: pure derived-metrics calculator matched by period-end date, delivered as a tool and as a
+      code-appended verified block.'
+    - No derived quarters, following the existing vendor rule; fourth-quarter comparisons are n/a.
+    - Report P/E on TTM EPS and on fiscal-year EPS as separate rows.
+    - 'CR-01: analyst-written brief with deterministic extraction, fallback condensation, (the previously
+      proposed comparison switch was removed in revision 0.2.0).'
+    - 'CR-01 primary metric: input tokens of the five downstream calls, with total input as secondary.'
+    - Quality guard as agreement relative to measured baseline variation, plus a literal-match check on
+      model-computed figures.
+    - Multi-company reference values from sources independent of the code under test.
+    rejected:
+    - 'NFR ''share of report numbers derivable from evidence'': a prototype accepted all 75 checked percentages,
+      including the wrong +68.6%, and 1,000 of 1,000 random values, so it cannot detect the target error.'
+    - 'NFR ''tool accuracy improves from 86% to 100%'': compares model prose with tool output, which are
+      different objects.'
+    - 'NFR ''citations to metric IDs'': its baseline is 100% uncited by construction.'
+    - 'Guard ''final rating unchanged'': ratings vary between identical runs, so equality is not a valid
+      criterion.'
+    - 'Deriving fourth quarters by subtraction: creates figures no filing states.'
+    - 'Limit-triggered compression for CR-01: downstream prompts (an estimated 11k-17k tokens) never reach
+      the threshold.'
+    - 'Dedicated LLM summarizer node: extra calls and another place where numbers can change.'
+    - 'Technical-indicator batching as the NFR: 8 of 31 tool calls, small expected effect.'
+    - 'Reproducibility mode as the FR: thin functional scope and no baseline variation data.'
+  verification:
+  - Requirements registry validated against the team JSON Schema with Python jsonschema Draft 2020-12.
+  - All repository paths cited in the registry checked to exist at main 2c8996e.
+  - Baseline figures in the acceptance criteria (105.9%, 85.2%, 17.9%, 75.0/66.2/62.0%, 302,969, 7.91,
+    27.4x, 44.3x) recomputed from recorded tool outputs with a script.
+  - Literal-match false-match rate measured at 6.1% on 1,000 random values.
+  - 'Self-review corrections: CR-01-AC2 originally cited data-gap statements in the market report, which
+    has none (moved to news and fundamentals, 5 and 7 mentions); a claim that 13 of 14 criteria were pure-function
+    tests was corrected; a claim that memory stores analyst reports was corrected after reading store_decision.'
+  - 'Full product tests and runs were not executed: the workspace could not install dependencies and has
+    no course LLM credentials.'
+  - No application source, test, baseline evidence, credential, or runtime state was modified.
+  status: Draft prepared for human and team review
+- id: AI-FR01-CR01-D2-20261103-02
+  date: '2026-11-03'
+  owner: haoxi
+  phase: D2 revision against the course project requirement sheet
+  tool: Claude (claude-opus-5-5) in a cloud workspace with repository read access
+  purpose: 'Check the FR-01 / CR-01 drafts against the course requirement sheet and align them with the
+    required directory layout, design method, and agentic-engineering rules.
+
+    '
+  human_supervision:
+  - Provided the course project requirement sheet and asked for a gap review.
+  - Approved producing the complete aligned document set.
+  inputs_reviewed:
+  - Course project requirement sheet (scope, agentic rules, submission layout, higher-grade criteria)
+  - Previous FR-01 / CR-01 D1 and D2 drafts
+  files_affected:
+  - architecture-blueprint.md
+  - docs/req/requirements.yaml
+  - docs/architecture/adr/003-derived-metrics-and-context-brief.md
+  - docs/architecture/option-ledger.md
+  - docs/architecture/evaluation-logbook.md
+  - docs/architecture/risk-list.md
+  - docs/architecture/evaluation-table.md
+  - docs/architecture/invariants.md
+  - docs/architecture/permission-model.md
+  - docs/architecture/trace-matrix.md
+  - docs/architecture/open-decisions.md (removed; content moved to option-ledger.md)
+  - docs/ai-use-log.yaml
+  decisions:
+    accepted:
+    - 'Add the three missing D2 artifact types: option ledger, evaluation logbook, risk list.'
+    - Fold open decisions into the option ledger, since open-decisions.md is not a listed artifact type.
+    - Record three attribute-driven design iterations with quality-attribute scenarios in the blueprint.
+    - Place deterministic tests in test/offline and API-dependent experiments in test/live.
+    - State that all code is generated by OpenCode and that humans supply test reference values through
+      the task specification.
+    - Add an import-audit test as a structural CI gate and an invariant requiring a recorded source for
+      every expected value.
+    - Plan to record coding-agent token use per implementation task.
+    rejected:
+    - 'Humans writing reference values directly into test files: the sheet forbids non-agentic modification
+      of generated code.'
+    - 'Keeping test paths under TradingAgents/tests: the sheet prescribes test/offline and test/live.'
+  verification:
+  - Requirements registry re-validated against the team JSON Schema.
+  - Counts of offline and live acceptance criteria rechecked (9 pure, 2 mocked, 3 live).
+  - Cross-references between invariants, trace matrix, option ledger, risk list, and evaluation logbook
+    checked by script.
+  status: Draft prepared for human and team review
+- id: AI-FR01-CR01-REMOVE-COMPARISON-20261103
+  date: '2026-11-03'
+  owner: haoxi
+  tool: Codex
+  purpose: At the user request, remove the comparison experiment, its switch, harness, quota questions,
+    and associated acceptance and trace entries. Preserve the functional design and offline acceptance
+    checks. Prepare the remaining D1/D2 artifacts for the personal branch.
+  implementation_status: Documentation only; product code and tests unchanged.
+history_note: Earlier entries describe the drafting history, including superseded verification plans.
+  Requirements version 0.2.0 and the latest entry define the current scope.
