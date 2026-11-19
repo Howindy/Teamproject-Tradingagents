@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
+import run_baseline as rb
 from baseline_common import (
     BASELINE_ROOT,
     PROJECT_ROOT,
@@ -14,12 +15,10 @@ from baseline_common import (
     count_records,
     now_iso,
     reason_for,
-    sha256_file,
     write_csv,
     write_json,
     write_text,
 )
-import run_baseline as rb
 
 
 def extract_content(raw: str) -> str:

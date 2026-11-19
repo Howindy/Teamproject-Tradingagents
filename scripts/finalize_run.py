@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import json
 import subprocess
 from collections import defaultdict
 from pathlib import Path
 
-from packaging.version import InvalidVersion, Version
-
+import run_baseline as rb
 from baseline_common import (
     BASELINE_ROOT,
     PROJECT_ROOT,
@@ -16,7 +16,7 @@ from baseline_common import (
     write_json,
     write_text,
 )
-import run_baseline as rb
+from packaging.version import InvalidVersion, Version
 
 
 def git_output(args: list[str]) -> str:
@@ -40,7 +40,7 @@ def latest_bar(cache_csv: Path) -> dict:
     if len(rows) < 2:
         return {}
     header, last = rows[0], rows[-1]
-    record = dict(zip(header, last))
+    record = dict(zip(header, last, strict=False))
     date = (record.get("Date") or "").split(" ")[0]
     return {"date": date, "close": record.get("Close"), "open": record.get("Open"),
             "high": record.get("High"), "low": record.get("Low"), "volume": record.get("Volume")}
@@ -107,10 +107,8 @@ def main() -> int:
     for row in rows:
         key = (row["tool"], row["source"], row["status"])
         grouped[key]["calls"] += 1
-        try:
+        with contextlib.suppress(ValueError):
             grouped[key]["records"] += int(row["record_count"] or 0)
-        except ValueError:
-            pass
 
     invocation = (
         "zsh -c 'source ~/.zshrc && use_ta_cityu && cd "
@@ -167,7 +165,7 @@ PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python -B \\
         f"- Main flow completed: {'yes' if main_complete else 'no'}",
         f"- Data coverage complete: {'yes' if coverage_complete else 'no'}",
         f"- Metric evidence sufficient: {'yes for calls/tokens; retries/fallback observed only' if metrics.get('llm_calls') is not None else 'no'}",
-        f"- Reproducible: yes, with the recorded command and dependency-version caveat",
+        "- Reproducible: yes, with the recorded command and dependency-version caveat",
         f"- Source unchanged: {'yes' if metrics.get('source_integrity', {}).get('identical') else 'no'}",
         f"- Out-of-scope writes: {'none detected' if metrics.get('outside_integrity', {}).get('identical') and metrics.get('home_tradingagents_integrity', {}).get('identical') else 'detected'}",
         "",
@@ -202,7 +200,7 @@ PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python -B \\
         "## Preflight",
         "",
         f"- Authoritative preflight: `{preflight_dir.relative_to(PROJECT_ROOT)}`",
-        f"- Superseded preflight retained for audit: `baseline/preflight/preflight-20261020-01`",
+        "- Superseded preflight retained for audit: `baseline/preflight/preflight-20261020-01`",
         f"- Preflight status counts: {json.dumps(preflight_manifest.get('status_counts', {}), ensure_ascii=False)}",
         f"- Source/outside/home integrity in preflight: "
         f"{preflight_manifest.get('source_integrity', {}).get('identical')} / "

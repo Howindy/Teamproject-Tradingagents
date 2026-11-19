@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import os
 import sys
-import time
 import traceback
 from pathlib import Path
 
@@ -18,10 +16,8 @@ from baseline_common import (
     count_records,
     ensure_new_dir,
     env_summary,
-    find_files,
     monotonic,
     now_iso,
-    preview,
     reason_for,
     snapshot_project_outside_allowed,
     snapshot_tree,
@@ -50,7 +46,9 @@ class Tee:
     def __init__(self, stream, path):
         self.stream = stream
         self.path = path
-        self.handle = open(path, "a", encoding="utf-8")
+        # Tee retains this append-mode handle for the whole run.
+        # A with-block would close it before Tee.write/flush calls.
+        self.handle = open(path, "a", encoding="utf-8")  # noqa: SIM115
 
     def write(self, data):
         self.stream.write(data)
@@ -147,6 +145,8 @@ def main() -> int:
     exit_code = 0
 
     try:
+        import cli
+        import cli.main
         import tradingagents
         from tradingagents.dataflows.config import run_config
         from tradingagents.dataflows.vendors.fred import get_macro_data
@@ -164,8 +164,6 @@ def main() -> int:
         from tradingagents.dataflows.vendors.yahoo.ohlcv import load_ohlcv
         from tradingagents.dataflows.vendors.yahoo.snapshot import build_verified_market_snapshot
         from tradingagents.default_config import DEFAULT_CONFIG
-        import cli
-        import cli.main
 
         module_paths = {
             "tradingagents_file": str(Path(tradingagents.__file__).resolve()),

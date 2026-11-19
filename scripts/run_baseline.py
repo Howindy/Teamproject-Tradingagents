@@ -7,7 +7,6 @@ import os
 import subprocess
 import sys
 import threading
-import time
 import traceback
 from pathlib import Path
 from types import SimpleNamespace
@@ -594,7 +593,7 @@ def write_run_docs(run_dir, args, manifest, metric, rows, consistency,
         f"- Working directory: {manifest.get('cwd')}",
         f"- Module path: {(manifest.get('environment', {}).get('module_check', {}).get('parsed', {}) or {}).get('tradingagents_file')}",
         f"- Python: {(manifest.get('environment', {}).get('module_check', {}).get('parsed', {}) or {}).get('sys_executable')}",
-        f"- Commit recorded separately in environment.json.",
+        "- Commit recorded separately in environment.json.",
         "",
         "## Limitations",
         "",
@@ -666,12 +665,13 @@ def run_inner(args: argparse.Namespace) -> int:
         raise SystemExit(f"refusing to run: loaded {tradingagents.__file__} instead of {expected}")
 
     from langchain_core.outputs import LLMResult
-    from tradingagents.agents.rating import run_rating
-    from tradingagents.agents.analysts import sentiment_analyst
-    from tradingagents.graph.trading_graph import TradingAgentsGraph
+
     import cli.prefs as prefs
     import cli.run as cli_run
     from cli.stats_handler import StatsCallbackHandler
+    from tradingagents.agents.analysts import sentiment_analyst
+    from tradingagents.agents.rating import run_rating
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
 
     prefs._PREFS_PATH = run_dir / "tmp" / "home" / ".tradingagents" / "cli_prefs.json"
     log_handler = logging.FileHandler(run_dir / "logs" / "app.log", encoding="utf-8")
