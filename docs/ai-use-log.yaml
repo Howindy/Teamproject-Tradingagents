@@ -1615,3 +1615,40 @@ entries:
       - "Semantic evaluation still lacks an approved dataset, rubric, threshold, model, and runner."
       - "Round 1 remains a draft and unapproved; no application implementation was started."
       - "Existing uncommitted CI, requirements, permission, and governance changes were preserved and were not committed."
+
+  - id: "AI-036"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_approval_positive_probe_implementation"
+    task: "Implement the approved CI classification probe tests and associate the new test with the AI-use log"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "test/offline/test_ci_approval_probe.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Implemented test/offline/test_ci_approval_probe.py with exactly two independent offline tests that load scripts/ci_checks.py by project-relative file path and assert the approved documentation-path and script-path classifications. Did not create the synthetic input files, modify the approved specification, gate scripts, workflow, application code, other tests, or any Round 1 file."
+    human_intervention: "Human reviewer jyy722 approved docs/plans/ci-gate-positive.md at commit d2b60d9de26bff1645738655857f8915b521cbe3 in PR #3 through the cited issue comment. The user then authorized implementation of the two approved tests and their AI-use log entry. PR #3 remains a temporary validation PR and must not merge into main."
+    approval:
+      subject: "Test specification docs/plans/ci-gate-positive.md @ d2b60d9de26bff1645738655857f8915b521cbe3"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/3#issuecomment-7059136183"
+        - "Approved by non-author reviewer jyy722 in PR #3; the exact wall-clock time was not recorded."
+    verification:
+      status: "completed"
+      summary: "Collected exactly the two approved test functions and both passed: `python -m pytest -q -c /dev/null --confcutdir=<repo>/test/offline test/offline/test_ci_approval_probe.py` reported 2 passed in 0.01s, with no skips. `--collect-only` listed only test_docs_path_does_not_require_code_approval_or_ai_log and test_script_path_requires_code_approval_and_ai_log. This is local verification only; no remote CI result is claimed."
+      evidence:
+        - "test/offline/test_ci_approval_probe.py"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/3"
+    limitations:
+      - "PR #3 is a temporary validation PR and must not be merged into main."
+      - "The approval event is recorded by URL and reviewer; its exact wall-clock time was not captured."
+      - "The test run excluded test/conftest.py to avoid its .env-reading setup; this probe imports only the standard library and scripts/ci_checks.py and performs no network, credential, model, or data API access."
+      - "No remote CI result, test pre-approval gate result, or Round 1 implementation is claimed."
+      - "No synthetic input file named by the test cases was created."
