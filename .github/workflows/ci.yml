@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install project and CI checks
-        run: python -m pip install -e ".[dev]" -r .github/requirements-ci.txt
+        run: python -m pip install -e ".[dev]" -r .github/requirements-ci.txt -c .github/type-check-constraints.txt
       - name: Type-check against the recorded baseline
         run: python scripts/ci_checks.py mypy --output mypy-current.txt --baseline mypy-baseline.txt
 
@@ -129,10 +129,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install (with dev extras)
+      - name: Install (with dev extras and CI test dependencies)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -e ".[dev]" -r .github/requirements-ci.txt
       - name: Run offline regression suite
         run: pytest -q
 

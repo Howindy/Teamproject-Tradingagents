@@ -1,0 +1,2 @@
+# Version used when mypy-baseline.txt was established.
+langchain-google-genai==4.4.0
