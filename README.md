@@ -87,6 +87,51 @@ Lint uses the repository Ruff configuration:
 ruff check .
 ```
 
+## CI gates
+
+The CI design and gate-test specification is [`CI.md`](CI.md), with operation
+details in [`docs/ci/README.md`](docs/ci/README.md). CI is split by event:
+
+- `push` runs the basic checks (`classify`, `requirements-schema`, `static`,
+  `type-check`, `dependency-check`, `regression`, `smoke-install`).
+- `pull_request` additionally runs applicable test pre-approval, contract tests,
+  security-path, AI-use-log, semantic-evidence, and `ci / aggregate` checks.
+  Pure documentation and build configuration do not require test pre-approval.
+- A push result cannot satisfy the PR-only `ci / aggregate` check.
+- Semantic evidence for prompt/model changes is produced by the manually
+  dispatched [`trusted-evaluation.yml`](.github/workflows/trusted-evaluation.yml)
+  in the protected `trusted-evaluation` environment. Live execution is optional
+  and is not a merge gate.
+
+Local gate commands, from the project root:
+
+```bash
+python scripts/ci_checks.py schema \
+  --requirements docs/req/requirements.yaml \
+  --schema docs/req/req-schema.json
+python scripts/ci_checks.py permissions --path .opencode/permissions.jsonc
+python scripts/ci_checks.py api
+python scripts/ci_checks.py mypy --output mypy-current.txt --baseline mypy-baseline.txt
+pytest -q test/offline/test_ci_gates.py
+ruff check .
+```
+
+The CI-only tools are pinned in `.github/requirements-ci.txt`. They do not
+change application runtime dependencies.
+
+Current known limits:
+
+- The 16 pre-existing Ruff findings recorded earlier were historical; commit
+  `b56da53` repaired them, and the current local `ruff check .` passes.
+- The current local `test/offline/test_ci_gates.py` verification passed 61 cases,
+  as recorded in `CI.md`; this is not GitHub remote validation.
+- Three pre-existing Windows-only cache-lock test failures remain on this host.
+- No semantic dataset/threshold/model configuration is approved, and branch
+  protection is not verified.
+- GitHub Actions, remote required checks, live execution, and Docker remain
+  unverified. Live execution is optional. Required gates remain blocked until
+  the applicable items are resolved.
+
 ## Docker
 
 The optional container configuration is at the repository root:

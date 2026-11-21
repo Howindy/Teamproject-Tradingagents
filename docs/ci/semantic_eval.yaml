@@ -1,0 +1,24 @@
+schema_version: "1.0"
+status: "unapproved"
+dataset:
+  version: null
+  cases: []
+  notes: "No approved semantic dataset exists. Do not invent cases or standards."
+rubric:
+  version: null
+  definition: null
+  notes: "No approved rubric exists."
+thresholds:
+  notes: "No approved quality threshold exists. Null means undetermined, not zero or pass."
+model:
+  provider: null
+  model: null
+  configuration: null
+  notes: "No approved semantic-evaluation model configuration exists."
+repetition:
+  rule: null
+approval:
+  approved_by: null
+  approved_at: null
+  evidence: []
+  notes: "Human approval is required before this file can become approved."

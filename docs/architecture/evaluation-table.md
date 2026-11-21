@@ -3,7 +3,7 @@
 - Status: Proposed for human review
 - Date: 2026-11-17
 - Requirements baseline: `docs/req/requirements.yaml` version 1.48.0
-- Related: [Architecture Blueprint](../../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md)
+- Related: [Architecture Blueprint](../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md)
 
 This document compares architecture candidates and key design options. It does not contain numeric scores, performance measurements, cost estimates, test results, or approvals. Ratings are qualitative and trace to requirements or static code evidence.
 

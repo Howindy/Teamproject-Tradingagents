@@ -238,18 +238,18 @@ If requirements, expectations, assertions, or scope change, reconfirm affected a
 
 | Gate | Required Design | Current Evidence | Gap |
 |---|---|---|---|
-| Test pre-approval | Concrete tests approved before implementation; test file/FC/IR/assertions recorded | No automated or file-recorded gate found | Not implemented; human and CI evidence required |
-| Lint | Every commit | `ci.yml` runs `ruff check .` | Lint exists, but is not a test/permission gate |
-| Type checking | Every commit | No confirmed type checker or CI step | Gap |
-| Dependency check | Every commit | CI installs and smoke-imports; no dependency audit | Gap; a dependency check is not automatically a security audit, zero-warning claim, or new numeric threshold |
-| Security PR checks | Contract, security, API surface, path-permission checks | No dedicated CI check found | Gap |
-| Requirements schema | YAML validated against `req-schema.json` | Requirements records a local command; CI is not integrated (`ci_status: not_integrated`) | CI integration needed; not changed here |
-| Prompt/model evaluation | Fixed evaluation set replay and quality threshold | No fixed D2 eval set/threshold found | Gap; do not invent thresholds |
-| Full regression | Every prior applicable test each round | CI runs `pytest -q`, excluding integration by default | New D2 tests do not exist; live not covered |
-| AI-use log | Code/prompt changes update the log | No AI-use log file or CI check found | Gap; no file created here |
-| Branch protection | CI passes; security-critical paths require human review and ADR | Repository files cannot prove it is enabled | Human/repository setting confirmation pending |
+| Test pre-approval | Concrete tests approved before implementation; test file/FC/IR/assertions recorded | Local PR gate implements the explicit `APPROVED test-spec:` phrase, bot rejection, approved-spec commit, implementation-start, and changed-scope checks. The historical local gate suite recorded 57 passed; the current gate file statically contains 58 top-level test functions, but no execution result for that current version is recorded in this documentation sync. No real GitHub PR approval event is verified. | Logic is locally implemented and historically tested; current-version coverage and remote execution remain unconfirmed; actual human approval is still required |
+| Lint | Every commit | `ci.yml` runs `ruff check .` on push/PR. The 16 historical findings were later repaired by commit `b56da53`; this documentation sync did not re-run full-repository Ruff. | CI step and local repair exist; current remote execution is unverified, and lint is not a test/permission gate |
+| Type checking | Every commit | `mypy.ini` and an exact `mypy-baseline.txt` exist, and CI runs the baseline check. Historical local execution reported no diagnostics outside the baseline; it was not re-run for this document. | Local configuration and historical local evidence exist; current-version and remote execution are unverified |
+| Dependency check | Every commit | CI runs `pip check`, an import smoke check, and a separate clean-install job. | Local configuration exists; remote execution is unverified. This is not a vulnerability audit, zero-warning claim, or new numeric threshold |
+| Security PR checks | Contract, security, API surface, path-permission checks | Local PR `security-paths` runs permission-configuration, API-signature, ADR-reference, and selected security tests; classification also selects contract tests and governance tests. No runtime path-permission engine exists. | Static gates are locally configured; real PR execution, ADR applicability/human approval, and runtime enforcement remain unverified |
+| Requirements schema | YAML validated against `req-schema.json` | The push/PR workflow runs the schema check locally, the Schema accepts `ci_status: integrated`, and current requirements metadata records that local integration. Historical local checks reported 0 errors for the earlier version. | Local workflow integration exists; actual GitHub execution and current-version coverage are unverified, and semantic correctness is not checked |
+| Prompt/model evaluation | Fixed evaluation set replay and quality threshold | The manual trusted workflow, candidate-bound evidence check, and controlled semantic entry are locally implemented. `docs/ci/semantic_eval.yaml` remains unapproved and no dataset, rubric, threshold, model, or runner is approved. | No approved semantic standard; evaluation and trusted-environment enforcement are unverified; do not invent thresholds |
+| Full regression | Every prior applicable test each round | CI runs the Python 3.11–3.14 regression matrix and `pytest -q`, excluding integration by default. Historical local execution recorded 1415 passed, 3 existing failures, 1 skip, 1 deselected, and 100 subtests passed at the 57-gate-test version; the current 58-function gate file was not executed in this documentation sync. | Local CI configuration exists; the historical result is not current-version coverage, known failures/skip remain, and remote execution is unverified |
+| AI-use log | Code/prompt changes update the log | The local PR gate requires a substantive changed entry associated with a changed code/prompt path; historical gate tests covered blocking and exemption cases. CI scripts and executable governance code remain covered. | Logic is locally implemented and historically tested; current-version and remote PR execution are unverified |
+| Branch protection | CI passes; security-critical paths require human review and ADR | The repository contains the local required-check name and a branch-protection checklist, but repository files cannot prove remote rules are enabled. | Human/repository setting confirmation remains pending; no remote enforcement is claimed |
 
-CI is retrospective and cannot prevent arbitrary reads or local edits. Passing tests is not PR approval or security-review completion.
+Local workflow configuration is not proof of remote execution. Historical local gate tests are not current-version coverage, and this documentation sync did not create a new test result. CI is retrospective and cannot prevent arbitrary reads or local edits. Passing tests is not PR approval or security-review completion.
 
 ### 7.3 QA Handoff
 
@@ -299,17 +299,21 @@ D2 currently defers context token caps, compaction thresholds, and compressed-co
 
 ### 9.3 Permissions, CI, and Branch Protection
 
-- [`permission-model.md`](../architecture/permission-model.md) is a design artifact, not active machine permission or an OS boundary.
-- No `AGENTS.md`, `.opencode/permissions.jsonc`, `.opencode/rules.md`, `.agent/rules.md`, or D3 machine permissions were found; machine enforcement is not established.
-- Current CI has test, lint, and smoke/install jobs; it has no test pre-approval, type/dependency audit, security path check, schema gate, fixed prompt evaluation, AI-use log, or branch-protection evidence.
-- Branch protection cannot be confirmed from repository files and is not claimed.
-- These are course-gate gaps, not application FC failures; this document records them without changing configuration.
+- [`permission-model.md`](../architecture/permission-model.md) is a design artifact. `.opencode/permissions.jsonc` exists and CI statically checks its configuration, but actual OpenCode loading, merged precedence, runtime access restriction, and effective enforcement remain unverified.
+- `AGENTS.md`, `.opencode/rules.md`, `.agent/rules.md`, and D3 governance files exist; their automatic loading and protection effect were not verified by this check.
+- Local CI now includes schema, Ruff, mypy-baseline, dependency/import, regression, clean-install, test-approval, contract-test, security-path/ADR, permission-configuration, API-signature, AI-use-log, trusted semantic evidence, and aggregate configuration. These are local workflow and script implementations, not proof of GitHub execution.
+- The historical local gate suite recorded 57 passed and the full local offline record was 1415 passed, 3 existing failures, 1 skip, 1 deselected, and 100 subtests. The current gate file contains 58 top-level test functions; its execution and the current full-suite result are unconfirmed by this documentation sync.
+- No approved semantic dataset, rubric, threshold, model, or runner exists.
+- Branch protection and remote required checks cannot be confirmed from repository files and are not claimed.
+- These are course-gate evidence and enforcement gaps, not application FC failures; this document records them without changing configuration.
 
 ### 9.4 No Invented Thresholds
 
 This document adds no performance, cost, model-quality, token, latency, or security-scan threshold. Faithfulness/relevance remain quality examples, not course-mandated scores. Without a D1 or human-approved score, dataset, and threshold, the gate remains `Undefined`/`Decision pending`; no pass criterion is fabricated.
 
 ## 10. Completion Self-Check
+
+This table records the original D4 authoring self-check, not the current workspace's later CI implementation, test inventory, or execution state. Later synchronization notes are in Sections 7.2 and 9.3.
 
 | Check | Result |
 |---|---|

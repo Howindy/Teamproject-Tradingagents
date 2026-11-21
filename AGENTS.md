@@ -26,7 +26,7 @@ The current D1 baseline is v1.48.0: nine active requirements with 40 FCs (FR-01 
 
 ## Round plans and approval
 
-Specific development content belongs in a separately selected round plan, initially `docs/plans/round-01.md`, not in this file or the static launch prompt. That first plan has not been created or approved by this instruction. Later rounds use their own explicitly selected plan; never assume that a previous round authorizes the next one.
+Specific development content belongs in a separately selected round plan, initially `docs/plans/round-01.md`, not in this file or the static launch prompt. That first plan exists as a draft but has not been approved; this instruction neither approves it nor authorizes implementation. Later rounds use their own explicitly selected plan; never assume that a previous round authorizes the next one.
 
 Before application implementation, produce a concrete plan for human review. Creating or updating the plan file requires explicit task authorization and the applicable permission configuration; if not authorized, present the draft in conversation. Do not create the first plan merely because this path is mentioned here.
 
@@ -80,6 +80,6 @@ Record actual command, environment, code/test/input version, FC/IR mapping, resu
 
 Report changed files, implemented FCs, checks actually run, failures/skips, evidence, and unresolved limitations. Do not claim a planned test passed or that a baseline accepts new behavior.
 
-Before merge, the applicable course gates must be real: test pre-approval, lint/type/dependency checks, requirements schema, regression, AI-use log, safety-path checks, and fixed semantic evaluation for prompt/model changes before production. CI and safety-critical human review/ADR must be enforced by branch protection. Existing nested workflow files do not prove the outer repository executes them or protection is enabled. Do not invent quality thresholds or substitute placeholder-success gates.
+Before merge, the applicable course gates must be real: test pre-approval, lint/type/dependency checks, requirements schema, regression, AI-use log, safety-path checks, and fixed semantic evaluation for prompt/model changes before production. CI and safety-critical human review/ADR must be enforced by branch protection. Workflow files under the project-root `.github/workflows/` do not prove that the remote repository executes them or that required checks and protection are enabled. Do not invent quality thresholds or substitute placeholder-success gates.
 
 Use per-PR review records ending in `APPROVE`, `CHANGES REQUIRED`, or `REJECT`. Passing tests alone is not approval, push is not merge, and merge is not evidence of unrun acceptance. Do not deploy or merge without the corresponding authorization.

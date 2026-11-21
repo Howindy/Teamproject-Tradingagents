@@ -2912,7 +2912,7 @@ requirements:
       arbitrary output channels.
       Supported scope is limited to: (1) the FR-02 manifest configuration and error summaries; (2) the existing report
       and final-state configuration summaries; (3) CLI preference save/load for the endpoint; (4) the existing get_scrubbed()
-      request-error paths at TradingAgents/tradingagents/dataflows/net.py, the Alpha Vantage common.py get_scrubbed call
+      request-error paths at src/tradingagents/dataflows/net.py, the Alpha Vantage common.py get_scrubbed call
       and its scrubbed notice helper, and the FRED fred.py get_scrubbed call including its passthrough 400 error_message
       path; and (5) warnings produced by these handlers. Provider-internal logs, third-party exception frameworks, and
       any unlisted display path are not included. If a path cannot be confirmed, it is listed as out of scope rather
@@ -3283,19 +3283,19 @@ moscow:
 traceability:
   - req_id: FR-01
     code_refs:
-      - path: "TradingAgents/tradingagents/dataflows/router.py"
+      - path: "src/tradingagents/dataflows/router.py"
         locator: "L200 route_to_vendor"
         description: "Dispatcher for the existing get_news data-fetch flow and its vendor chain; run-scoped reuse wraps the supported flow without changing vendor selection, fallback, retry, or vendor caches."
-      - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+      - path: "src/tradingagents/agents/analysts/sentiment_analyst.py"
         locator: "L66 get_news.func and L69 jev_screen"
         description: "Direct prefetch path that must share the same run-scoped query-reuse entry as the analyst ticker-news tool call for the same ticker and date window."
-      - path: "TradingAgents/tradingagents/graph/setup.py"
+      - path: "src/tradingagents/graph/setup.py"
         locator: "L157-L166 parallel analyst edges"
         description: "Concurrent analyst execution; concurrent callers for the same supported query must share one data-fetch flow."
-      - path: "TradingAgents/tradingagents/dataflows/vendors/yahoo/ohlcv.py"
+      - path: "src/tradingagents/dataflows/vendors/yahoo/ohlcv.py"
         locator: "L146-L207 load_ohlcv cache"
         description: "Existing cross-run vendor cache that remains unchanged and is not FR-01 run-scoped reuse."
-      - path: "TradingAgents/tradingagents/dataflows/vendors/sec_edgar.py"
+      - path: "src/tradingagents/dataflows/vendors/sec_edgar.py"
         locator: "L122-L132 _cached_json"
         description: "Existing cross-run vendor cache that remains unchanged and is not FR-01 run-scoped reuse."
     baseline_refs:
@@ -3317,22 +3317,22 @@ traceability:
       - path: "docs/req/run-manifest-schema.json"
         locator: "deleted historical material"
         description: "The path refers to deleted historical manifest-schema material, not a current file or design constraint. Current FR-02 semantics are defined by this YAML's requirement statement and fit criteria."
-      - path: "TradingAgents/cli/stats_handler.py"
+      - path: "src/cli/stats_handler.py"
         locator: "L9 StatsCallbackHandler"
         description: "Existing LLM/tool/token callback event boundary; it does not persist a run record or measure duration."
-      - path: "TradingAgents/cli/run.py"
+      - path: "src/cli/run.py"
         locator: "L135-L140 results directory and message_tool.log"
         description: "Run-scoped output location and existing call log used to locate result files actually produced."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L167-L181 propagate and L372-L401 _run_graph"
         description: "Supported analysis entry and lifecycle where a best-effort running and terminal manifest write is attempted; a manifest failure is non-blocking."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L255-L275 run_settings"
         description: "Existing allowlisted settings view for the manifest configuration summary."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L308-L335 _memory_step"
         description: "Settlement and reflection model calls that are counted within llm_calls."
-      - path: "TradingAgents/tradingagents/memory/reflection.py"
+      - path: "src/tradingagents/memory/reflection.py"
         locator: "L63 invoke"
         description: "Reflection LLM boundary counted by the same analysis-scoped call counter."
     baseline_refs:
@@ -3348,19 +3348,19 @@ traceability:
     notes: "FR-02 v1.27.0 covers only the native auxiliary per-analysis manifest for the CLI analysis entry and TradingAgentsGraph.propagate(). The baseline metrics and manifest are external wrapper evidence, not a native implementation. docs/req/run-manifest-schema.json was later deleted and remains historical material, not a current file or design constraint; current FR-02 semantics are defined by this YAML."
   - req_id: FR-03
     code_refs:
-      - path: "TradingAgents/tradingagents/agents/state.py"
+      - path: "src/tradingagents/agents/state.py"
         locator: "AgentState"
         description: "Graph state to extend with the run-scoped availability summary."
-      - path: "TradingAgents/tradingagents/dataflows/router.py"
+      - path: "src/tradingagents/dataflows/router.py"
         locator: "L200 route_to_vendor and L237-L295 fallback outcomes"
         description: "Existing routing and fallback outcomes that the summary records as available, no_data, unavailable, or withheld."
-      - path: "TradingAgents/tradingagents/dataflows/errors.py"
+      - path: "src/tradingagents/dataflows/errors.py"
         locator: "L1-L55 vendor error taxonomy"
         description: "Existing vendor error taxonomy used to derive a short safe reason; no general evidence-quality judge is added."
-      - path: "TradingAgents/tradingagents/dataflows/date_window.py"
+      - path: "src/tradingagents/dataflows/date_window.py"
         locator: "L67-L190 coverage_gap and withhold rules"
         description: "Existing point-in-time and withholding rules that produce withheld status."
-      - path: "TradingAgents/tradingagents/agents/analysts/sentiment_analyst.py"
+      - path: "src/tradingagents/agents/analysts/sentiment_analyst.py"
         locator: "L66-L76 prefetch calls"
         description: "Direct get_news, StockTwits, and Reddit prefetch paths that must enter the unified record."
     baseline_refs:
@@ -3373,22 +3373,22 @@ traceability:
     notes: "FR-03 v1.28.0 is limited to the fixed 15-path/14-method support list, the seven analyst-gated stock necessity items, last-completed-result summaries, and deterministic report display. It does not define a dynamic critical profile, quorum, supports contracts, seals, checkpoint inheritance, or memory binding. The baseline CSV and tool-event stream are external evidence, not a native implementation."
   - req_id: FR-04
     code_refs:
-      - path: "TradingAgents/tradingagents/portfolio.py"
+      - path: "src/tradingagents/portfolio.py"
         locator: "PortfolioContext"
         description: "Existing optional holdings and cash model; quantity and average price do not supply current market value or pre-purchase portfolio total, so the purchase scenario comes from the caller."
-      - path: "TradingAgents/tradingagents/agents/schemas.py"
+      - path: "src/tradingagents/agents/schemas.py"
         locator: "TraderProposal and PortfolioDecision"
         description: "Existing structured Trader and Portfolio Manager outputs; the rating is model-produced and has no deterministic concentration or stop-distance result."
-      - path: "TradingAgents/tradingagents/agents/state.py"
+      - path: "src/tradingagents/agents/state.py"
         locator: "AgentState.portfolio_context"
         description: "Rendered portfolio prompt text that must not be treated as authoritative numeric risk input."
-      - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+      - path: "src/tradingagents/agents/managers/portfolio_manager.py"
         locator: "portfolio_manager_node final rating"
         description: "Model-produced final rating that the deterministic check must not override and must not trust for scenario numbers."
-      - path: "TradingAgents/tradingagents/graph/setup.py"
+      - path: "src/tradingagents/graph/setup.py"
         locator: "Portfolio Manager edge to END"
         description: "Graph terminal edge after the Portfolio Manager; no deterministic purchase-scenario risk check follows."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "record_decision"
         description: "Persistence path where a risk result could be exposed; FR-04 does not require a separate writer or formal publication."
     baseline_refs:
@@ -3401,16 +3401,16 @@ traceability:
     notes: "FR-04 v1.29.0 is limited to a caller-supplied single-stock purchase/add-long scenario with two deterministic checks and configurable classroom thresholds. It does not require a broker, account valuation, cash check, historical valuation, currency conversion, policy approval, artifact hash, memory binding, or SB-01 implementation. The baseline is a Hold run and provides no over-limit Buy observation."
   - req_id: FR-05
     code_refs:
-      - path: "TradingAgents/cli/run.py"
+      - path: "src/cli/run.py"
         locator: "_run_directory; save_report_section_decorator; run_analysis"
         description: "CLI path-based report writing used by the existing save flow; history lookup consumes a registered merged report, not an arbitrary file."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "default_report_path; record_decision; save_reports"
         description: "API report-saving path; a report enters history only through FR-02 completed-manifest registration."
-      - path: "TradingAgents/tradingagents/reporting.py"
+      - path: "src/tradingagents/reporting.py"
         locator: "_SECTIONS; _report_parts; _header; write_report_tree"
         description: "Fixed section map and complete_report.md writer; FR-05 reads the saved merged report and does not re-render or assemble sections."
-      - path: "TradingAgents/tradingagents/dataflows/symbols.py"
+      - path: "src/tradingagents/dataflows/symbols.py"
         locator: "normalize_symbol and safe_ticker_component"
         description: "Canonical ticker normalization and path-component safety."
     baseline_refs:
@@ -3423,16 +3423,16 @@ traceability:
     notes: "FR-05 v1.30.0 provides a minimal read-only history lookup over FR-02 completed manifests and saved complete_report.md files. It adds no committed-publication proof, section manifest, hash, immutability, index, pagination, scan budget, CLI menu, export, migration, or report regeneration. The baseline report tree and memory file are gap evidence only."
   - req_id: FR-06
     code_refs:
-      - path: "TradingAgents/cli/run.py"
+      - path: "src/cli/run.py"
         locator: "_run_directory; save_report_section_decorator; run_analysis"
         description: "CLI report-writing path; a future deferred recovery entry would be invoked before a new analysis, not by arbitrary Python import."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "record_decision; save_reports"
         description: "Report-saving path that would create saved-text material only when a report save is requested; no analysis resume."
-      - path: "TradingAgents/tradingagents/reporting.py"
+      - path: "src/tradingagents/reporting.py"
         locator: "write_report_tree"
         description: "Merged report text and writer; recovery would write saved text directly and would not call the renderer."
-      - path: "TradingAgents/tradingagents/memory/log.py"
+      - path: "src/tradingagents/memory/log.py"
         locator: "store_decision and settlement"
         description: "Memory write boundary; the deferred recovery does not recover, complete, or modify memory."
     baseline_refs:
@@ -3445,13 +3445,13 @@ traceability:
     notes: "FR-06 v1.31.0 is deferred. If re-enabled, it only completes a requested complete_report.md from saved text in one process, keeps FR-02 only for run identity and context, and does not recover sections or HTML, manifest, memory, or history registration. The baseline provides no recovery incident."
   - req_id: FR-07
     code_refs:
-      - path: "TradingAgents/tradingagents/agents/context.py"
+      - path: "src/tradingagents/agents/context.py"
         locator: "report_or_absent"
         description: "Single downstream report-reading boundary where a valid per-analyst summary could replace the corresponding full report for the five target roles."
-      - path: "TradingAgents/tradingagents/agents/researchers/bull_researcher.py"
+      - path: "src/tradingagents/agents/researchers/bull_researcher.py"
         locator: "report_or_absent calls and prompt assembly"
         description: "Representative downstream debate consumer; it would receive the short summary instead of the full report for that analyst."
-      - path: "TradingAgents/tradingagents/agents/researchers/bear_researcher.py"
+      - path: "src/tradingagents/agents/researchers/bear_researcher.py"
         locator: "report_or_absent calls and prompt assembly"
         description: "Downstream debate consumer of the same analyst inputs; other roles keep full reports."
     baseline_refs:
@@ -3467,7 +3467,7 @@ traceability:
       - path: docs/req/run-manifest-schema.json
         locator: deleted historical material
         description: The path refers to deleted historical manifest-schema material, not a current file or design constraint; current PR-01 and FR-02 semantics are defined by this YAML's requirement statements and fit criteria.
-      - path: TradingAgents/tradingagents/graph/trading_graph.py
+      - path: src/tradingagents/graph/trading_graph.py
         locator: propagate and _run_graph
         description: Run lifecycle where simplified manifest creation and update save operations are attempted; PR-01 would time the full save operation.
     baseline_refs:
@@ -3477,7 +3477,7 @@ traceability:
     notes: "PR-01 v1.35.0 is deferred. If re-enabled, it measures complete manifest creation and update operations with 20 samples each and a nearest-rank p95, keeping failures and actual byte counts, with thresholds undetermined until after measurement. No measurement, performance acceptance, or low-overhead claim is made."
   - req_id: CR-01
     code_refs:
-      - path: TradingAgents/tradingagents/agents/context.py
+      - path: src/tradingagents/agents/context.py
         locator: report_or_absent
         description: Downstream input boundary affected by briefs; the deferred comparison would observe whole-analysis model usage.
       - path: docs/req/evaluation/brief-eval-contract-v4.json
@@ -3490,25 +3490,25 @@ traceability:
     notes: "CR-01 v1.36.0 is deferred. If re-enabled, it compares three fixed OFF/ON scenarios over whole-analysis model token usage and estimated cost, keeps failures and incomplete results, and leaves prices and cost targets undetermined until after measurement. No measurement, cost saving, quality preservation, or overall optimization success is claimed."
   - req_id: SB-01
     code_refs:
-      - path: "TradingAgents/tradingagents/agents/rating.py"
+      - path: "src/tradingagents/agents/rating.py"
         locator: "L96-L117 parse_rating, run_rating, is_review"
         description: "Existing five-tier parser and terminal REVIEW sentinel."
-      - path: "TradingAgents/tradingagents/agents/managers/portfolio_manager.py"
+      - path: "src/tradingagents/agents/managers/portfolio_manager.py"
         locator: "L80-L103 structured decision"
         description: "Where the model proposal and model rating are produced; SB-01 consumes them."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L358-L370 record_decision and L437-L465 _log_state"
         description: "Persistence points where the post-check final result is returned and logged."
-      - path: "TradingAgents/cli/run.py"
+      - path: "src/cli/run.py"
         locator: "L310-L340 streaming display and L380-L385 review notice"
         description: "Intermediate streaming and final summary; intermediate content must be labeled, and the final summary uses the post-check result."
-      - path: "TradingAgents/tradingagents/reporting.py"
+      - path: "src/tradingagents/reporting.py"
         locator: "L20-L46 and L92-L119 write_report_tree"
         description: "Report writer that must use the post-check final decision."
-      - path: "TradingAgents/tradingagents/memory/log.py"
+      - path: "src/tradingagents/memory/log.py"
         locator: "L32-L60 store_decision"
         description: "Memory writer that must store the post-check final rating and decision, with the proposal separated."
-      - path: "TradingAgents/tradingagents/backtest.py"
+      - path: "src/tradingagents/backtest.py"
         locator: "L150-L170 and L196-L207"
         description: "Backtest is not an added acceptance entry point; if it calls propagate it naturally receives the post-check result."
     baseline_refs:
@@ -3521,16 +3521,16 @@ traceability:
     notes: "SB-01 v1.40.0 is a deterministic final-rating check over FR-03/FR-04 results and the model rating. It adds no snapshot/hash/profile validation, publication commit, memory/history/recovery proof, or backtest acceptance matrix. No implementation or gate result is claimed."
   - req_id: INV-01
     code_refs:
-      - path: "TradingAgents/tradingagents/reporting.py"
+      - path: "src/tradingagents/reporting.py"
         locator: "L20-L46 header and L92-L119 write_report_tree"
         description: "Report writer whose final rating and formal-decision area must reflect the SB-01 post-check result, while other format and content may differ."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L437-L475 _log_state"
         description: "Final-state writer whose saved rating and decision fields must use the SB-01 post-check result."
-      - path: "TradingAgents/tradingagents/memory/log.py"
+      - path: "src/tradingagents/memory/log.py"
         locator: "L32-L60 store_decision and settlement paths"
         description: "New memory decision entry uses the post-check result; later settlement may update outcome/reflection without regenerating the original rating or decision body."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L358-L370 record_decision"
         description: "Where the post-check result is returned to consumers; the manifest is not a rating authority."
     baseline_refs:
@@ -3543,25 +3543,25 @@ traceability:
     notes: "INV-01 v1.41.0 requires the SB-01 post-check final rating and formal conclusion to be used consistently by actually produced outputs. It adds no manifest rating field, atomic multi-file commit, immutability, retention, versioning, recovery proof, or read-time revalidation. No implementation or pass result is claimed."
   - req_id: SR-01
     code_refs:
-      - path: "TradingAgents/tradingagents/dataflows/net.py"
+      - path: "src/tradingagents/dataflows/net.py"
         locator: "L6-L24 get_scrubbed"
         description: "Existing exact-value scrubber for provider request errors; it replaces the configured secret and re-raises without attaching the request/response or exception chain."
-      - path: "TradingAgents/tradingagents/dataflows/vendors/alpha_vantage/common.py"
+      - path: "src/tradingagents/dataflows/vendors/alpha_vantage/common.py"
         locator: "L95-L97 get_scrubbed call and scrubbed notice helper"
         description: "Supported API-key scrub path for Alpha Vantage request errors and JSON notices."
-      - path: "TradingAgents/tradingagents/dataflows/vendors/fred.py"
+      - path: "src/tradingagents/dataflows/vendors/fred.py"
         locator: "L149-L160 get_scrubbed call and 400 error_message path"
         description: "Supported API-key scrub path for FRED request errors; a passthrough 400 error_message is surfaced separately."
-      - path: "TradingAgents/tradingagents/graph/trading_graph.py"
+      - path: "src/tradingagents/graph/trading_graph.py"
         locator: "L255-L275 run_settings"
         description: "Existing allowlist used by the manifest, report, and final-state configuration summaries."
-      - path: "TradingAgents/cli/prefs.py"
+      - path: "src/cli/prefs.py"
         locator: "L30-L58 save_last_run"
         description: "Preference writer that must not save or restore an endpoint with userinfo, query, fragment, a known credential, or an unparseable form."
-      - path: "TradingAgents/cli/prompts.py"
+      - path: "src/cli/prompts.py"
         locator: "L731-L738 .env creation and chmod"
         description: "Existing .env 0600 control preserved but not part of the new acceptance."
-      - path: "TradingAgents/tests/test_api_key_env.py"
+      - path: "test/offline/test_api_key_env.py"
         locator: "L168-L190 .env mode tests"
         description: "Existing regression tests for .env 0600."
     baseline_refs:
@@ -3575,13 +3575,13 @@ traceability:
 
   - req_id: SR-02
     code_refs:
-      - path: TradingAgents/tradingagents/dataflows/symbols.py
+      - path: src/tradingagents/dataflows/symbols.py
         locator: normalize_symbol and safe_ticker_component
         description: Existing ticker normalization and path-component guard reused for the controlled result paths.
-      - path: TradingAgents/tradingagents/reporting.py
+      - path: src/tradingagents/reporting.py
         locator: write_report_tree
         description: Report tree writer; user-chosen report locations follow existing behavior.
-      - path: TradingAgents/tradingagents/graph/trading_graph.py
+      - path: src/tradingagents/graph/trading_graph.py
         locator: default_report_path and propagate
         description: Manifest/report path formation under the configured results directory.
     baseline_refs:
@@ -3626,8 +3626,8 @@ validation:
 
       print("需求文档结构校验通过")
       PY
-    ci_status: not_integrated
-    ci_note: GitHub CI has not been updated to run this schema gate; no CI result is claimed.
+    ci_status: integrated
+    ci_note: The local push/PR workflow `.github/workflows/ci.yml` runs this schema gate; actual GitHub execution is not verified. This metadata-only update does not change the requirement version, 13 requirements, 55 FCs, approvals, or source evidence.
     application_status: not_run
     application_note: No application tests, live model or vendor evaluation, performance measurement, cost measurement, or application acceptance were executed.
     design_approval_note: The historical approval is requirement-design approval only; it is not implementation, test, CI, or application acceptance.

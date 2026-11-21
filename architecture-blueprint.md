@@ -246,7 +246,7 @@ User / programmatic caller
 | Data vendors | Market, fundamentals, news, social, macro, prediction markets | None in governance checks; FR-03 observes existing calls |
 | Filesystem | Results, cache, memory, checkpoints | Run manifest, reports, history read |
 | CLI terminal | Interactive selections, display | Save selection inside run; display after run |
-| GitHub CI | pytest and ruff (`.github/workflows/ci.yml`) | Planned verification only; no new gate claimed |
+| GitHub CI | Project-root `.github/workflows/ci.yml` and `.github/workflows/trusted-evaluation.yml`; local gates cover schema, Ruff, mypy baseline, dependency/import, regression, test approval, contract tests, security paths, AI-use log, trusted semantic evidence, and aggregate status | Verification/governance only; CI has no application authority, and local configuration does not prove remote execution, required checks, or branch protection |
 
 ### 4.3 Trust boundaries
 
@@ -1470,7 +1470,7 @@ The full whitelist is defined in [`docs/architecture/permission-model.md`](docs/
 
 - Default: no read and no write.
 - Each role has explicit path allowlists and read-only/frozen paths.
-- Human-maintained: `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `.github/**`, governance configuration, `.env*`.
+- Human-maintained: `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, governance configuration, `.env*`.
 - Architecture agent: write only `architecture-blueprint.md` and `docs/architecture/**`; no application code.
 - Implementation agent: write only approved application/test paths after human approval; read requirements and architecture.
 - Verification agent: read-only repository; write only declared test/report paths.

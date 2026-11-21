@@ -6,7 +6,7 @@ This D3 structural-constraints document is located at the course-required projec
 
 Inputs are `docs/req/requirements.yaml` (current v1.48.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
 
-D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan, initially the not-yet-created `docs/plans/round-01.md`, to select exact files and approved tests. No code or plan-file creation is authorized by this document alone.
+D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan, initially the existing but unapproved `docs/plans/round-01.md`, to select exact files and approved tests. No code or plan-file creation is authorized by this document alone.
 
 ## 2. Existing baseline and implementation status
 

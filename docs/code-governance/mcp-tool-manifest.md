@@ -62,7 +62,7 @@ The four roles are the logical responsibilities in the D2 permission model. OQ-0
 | Maintain this tool manifest or another governance/permission file | No | No standing grant | No | No | Human-authorized governance maintenance only; no role may self-expand access |
 | Session checklist/user questions (`todowrite`, `question`) | Yes | Yes | Yes | Yes | No file/network/approval effect; cannot replace a plan or human approval |
 | Load a skill (`skill`) | Yes | Yes | Yes | Yes | Only matching instruction resources allowed by current permissions/task scope; do not load an uncertain or out-of-scope resource to test it; a skill grants no extra capability |
-| Read-only project commands (`bash`) | Conditional | Conditional | Conditional | Conditional | Approve the purpose, cwd, path scope, and side-effect boundary; ordinary read/search/check commands need no pre-enumerated literal string. Project root/`TradingAgents` only for task files; no hidden writes, out-of-scope reads, credentials, or background process |
+| Read-only project commands (`bash`) | Conditional | Conditional | Conditional | Conditional | Approve the purpose, cwd, path scope, and side-effect boundary; ordinary read/search/check commands need no pre-enumerated literal string. Project root only for task files; no hidden writes, out-of-scope reads, credentials, or background process |
 | Run approved tests/lint/type checks (`bash`) | No | No | Conditional | Conditional | Approve command class/purpose and output boundary; high-impact/complex commands may require the exact command. Run from the project root; no live/network or dependency install by default |
 | Dependency installation or environment mutation (`bash`) | No | No | No | No | Requires separate explicit human authorization; not granted by this manifest |
 | Local Git read-only inspection (`bash`, if authorized) | Conditional | Conditional | Conditional | Conditional | Current permission model does not grant `.git/**` access; a future human task/model update must authorize any local Git inspection |
@@ -106,7 +106,7 @@ Without a plan or recorded approval, no development or test work is represented 
 
 ### 5.3 Protected Inputs
 
-- `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `.github/**`, governance/permission files, `.env*`, and credentials are read-only or forbidden as specified by the permission model.
+- `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, governance/permission files, `.env*`, and credentials are read-only or forbidden as specified by the permission model.
 - Requirements and design guidance may be read as task inputs; they are not writable by an implementation or verification agent.
 - Do not read `.env*` or credential values, and do not use real credentials as fixtures. SR-01's limited runtime protection does not grant coding-agent secret access.
 - Baseline evidence is read selectively; it must not be regenerated, formatted, cleaned, or rewritten.
@@ -127,12 +127,12 @@ Without a plan or recorded approval, no development or test work is represented 
 |---|---|---|
 | This manifest | Documentation only | Natural-language inventory does not enforce tool access or paths |
 | `AGENTS.md` | Exists at project root and was read as guidance | Natural-language instructions are not an OS sandbox; it does not itself grant tools |
-| D2 permission model | Exists as a Proposed design artifact | Role maxima are not active enforcement; its older “no AGENTS.md found” and “no D3 files” metadata is stale relative to the current checkout |
+| D2 permission model | Exists as a Proposed design artifact with current project-path metadata | Role maxima remain design boundaries, not active runtime enforcement |
 | Project OpenCode permissions | `.opencode/permissions.jsonc` exists with default-deny and per-role rules | Explicit loading is required; effective merged policy and enforcement have not been tested. Commands/discovery remain denied pending round configuration |
-| Project rules | `.agent/rules.md` exists; human-only `.opencode/rules.md` remains missing | Document presence is not proof of automatic loading or enforcement |
+| Project rules | `.agent/rules.md` exists; human-only `.opencode/rules.md` exists and remains human-only | Automatic loading and effective enforcement are unverified; document presence is not proof of either |
 | Structural constraints | `docs/code-governance/structural-constraints.md` exists | Proposed allocations and checks are not implementation or execution evidence |
 | MCP configuration | No project-local MCP configuration or MCP tool observed | No server, endpoint, credential, or connection is claimed; global OpenCode config was not inspected |
-| CI | CI runs install, `pytest -q`, ruff, and clean-install smoke checks | CI is retrospective and contains no verified path/tool-permission gate; it cannot prevent local reads or writes |
+| CI | Root workflows classify paths and run schema, Ruff, mypy-baseline, dependency/import, regression, and clean-install jobs; PR gates add test approval, contract tests, security-path/ADR, permission-configuration, API-signature, AI-use-log, trusted semantic evidence, and aggregate checks | CI includes static configuration and classification gates, not a runtime tool-permission engine. It is retrospective, cannot prevent local reads or writes, and remote execution is unverified. |
 | Branch protection | Not verifiable from repository files | Do not claim it is enabled |
 | OpenCode/tool provenance | Tool names and availability observed in this session | Version, package source, and execution isolation are unverified |
 | OS/container sandbox | Not established by project evidence | Tool rules are not a substitute for OS isolation |
@@ -140,11 +140,11 @@ Without a plan or recorded approval, no development or test work is represented 
 Open items:
 
 1. **OQ-07 remains pending.** The four role names are design labels, not approved configured identities or machine whitelists.
-2. The intent that roles may read D3/D4 inputs and `AGENTS.md` is a design boundary, not proof that a machine allowlist exists. Actual permission enforcement remains for authorized D3 configuration work; this document supplies no new role or enforcement mechanism.
+2. The project permission file contains a machine-readable allowlist, but its actual loading, merged precedence, and effective enforcement remain unverified. The role intent to read D3/D4 inputs and `AGENTS.md` is still a design boundary, not proof of runtime access. This document supplies no new role or enforcement mechanism.
 3. The current MCP server inventory is empty/unverified. No MCP capability is granted.
-4. The current round-plan inventory is absent; no implementation/test authorization exists.
+4. `docs/plans/round-01.md` exists and remains proposed; it is not implementation or specific-test approval.
 5. Local Git writes, remote Git operations, network/live API use, and dependency installation remain separate human authorizations.
-6. The permission model's AGENTS/D3 file-presence metadata and role/tool synchronization require future human-maintained updates; this task may not edit that file.
+6. The permission model and this tool manifest remain human-maintained design records; file presence and CI static checks do not establish runtime permission enforcement.
 
 No application implementation, test execution, MCP connection, network call, dependency installation, or acceptance claim is made by this manifest.
 

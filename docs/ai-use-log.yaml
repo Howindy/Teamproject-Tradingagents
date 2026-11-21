@@ -1188,3 +1188,430 @@ entries:
       - "Three pre-existing Windows-specific cache-lock tests fail on macOS; the skip and unrun live test are not passes."
       - "GitHub CI and Docker were not executed; only static configuration checks were performed."
       - "The migration does not implement the six course CI gates or approve FR-04 work."
+
+  - id: "AI-027"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_implementation"
+    task: "Implement the approved CI.md offline gates, tests, workflow split, and controlled semantic/live entry without application development"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/trusted-evaluation.yml"
+      - ".github/requirements-ci.txt"
+      - "scripts/ci_checks.py"
+      - "scripts/ci_semantic_eval.py"
+      - "test/offline/test_ci_gates.py"
+      - "mypy.ini"
+      - "mypy-baseline.txt"
+      - "docs/ci/README.md"
+      - "docs/ci/semantic_eval.yaml"
+      - "README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Implemented deterministic CI gate scripts for classification, test pre-approval, requirements schema, AI-use-log association, API signatures, permission configuration, security review, trusted evidence, mypy baseline, and aggregate results; added shared positive/negative gate tests; wired push basic checks and PR-only merge gates with a PR-only ci / aggregate; added a manually dispatched trusted semantic/live workflow and an unapproved semantic configuration container; recorded the approval basis and actual verification limits."
+    human_intervention: "User approved the current CI.md implementation scope and gate-test specification in the current session, authorized editing only the listed CI files and installing CI-only tools in an isolated environment, and prohibited application behavior, requirement, history, permission-control, test-weakening, push, merge, paid API, and GitHub-settings changes."
+    approval:
+      subject: "CI.md implementation scope and gate-test specification"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User approval in the current OpenCode session; transcript not yet exported."
+        - "docs/ci/README.md records the approved CI.md hash and scope."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 24/24. Requirements schema passed with 13 requirements and 55 FCs. Permission and API checks passed. Mypy reported no diagnostics outside the recorded 162-line existing baseline. New files pass Ruff, while the full repository still has 16 pre-existing Ruff findings in unmodified scripts. Offline regression remains 1382 passed including the 24 new gate tests, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. The workflows parse but were not executed on GitHub. Semantic evaluation remains blocked by the unapproved configuration; live evaluation remains blocked by the absent authorized environment."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "mypy-baseline.txt"
+        - "Temporary isolated environment: /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-venv"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "The one-time CI.md approval is recorded in docs/ci/README.md from the current session, not as a GitHub approval event."
+      - "No GitHub workflow run, branch protection, or remote required-check evidence exists."
+      - "Semantic evaluation has no approved dataset, rubric, threshold, model, or runner."
+      - "No authorized live environment or DEEPSEEK_API_KEY was used; live evidence is absent and is not a pass."
+      - "Full-repository Ruff and the offline regression suite remain red on pre-existing findings; they were not hidden or weakened."
+      - "No Round 1 application work or application behavior change is included."
+
+  - id: "AI-028"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_security_gate_trim"
+    task: "Trim the safety-critical human-review CI mechanism to a minimal project ADR reference check while preserving the other gates"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - ".github/workflows/ci.yml"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Removed the security-path GitHub review API query and APPROVED-state logic; added optional ADR PR field parsing and validation requiring a non-empty, project-relative path under docs/architecture/adr/ that resolves inside the root and exists; kept the contract, security, API-surface, and permission checks; removed only the security job's pull-requests permission and token/review arguments; documented branch protection as the human-review enforcement; added positive and negative ADR tests and checks that other gates are unchanged."
+    human_intervention: "User authorized only this security-review trim, the exact related CI script/workflow/test/document files, and the AI-use-log update; required preserving the ADR reference check and all other gates, forbade GitHub settings, push, merge, application behavior, requirements, machine permissions, and historical records changes, and required reporting that branch protection remains unverified."
+    approval:
+      subject: "Security-critical human-review CI trim"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "Pre-edit file fingerprints saved under /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/security-review-trim/before.sha256."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 27/27. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing 162-line baseline. Modified-file Ruff passed. Full offline pytest is 1385 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. The security-path job no longer queries reviews or requests pull-requests: read; the test pre-approval job still does. The workflows parse but were not executed on GitHub, and branch protection remains unconfigured and unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+        - "/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/security-review-trim/before.sha256"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Local trim is complete, but the remote human-review enforcement mechanism is still pending branch-protection configuration and verification."
+      - "No GitHub workflow run, required branch-protection check, or remote ruleset evidence exists."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "No application behavior, requirements, machine permissions, or historical records were changed."
+      - "No new review-check mechanism was added to replace the removed GitHub review query."
+
+  - id: "AI-029"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_gate_fixes"
+    task: "Fix five CI gate defects: explicit test approval, trusted source verification, live JUnit judgment, unknown executable handling, and current-round contract test association"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/trusted-evaluation.yml"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Replaced substring approval detection with one explicit APPROVED test-spec phrase bound to the PR test-specification version, excluded bots, and retained scope/time/ancestry checks; required trusted evidence runs to come from the repository default branch and match the artifact workflow version; replaced live text greps with direct test/live execution and structured JUnit validation; wired the existing conservative classifier flag into the main workflow and aggregate; and added contract-test selection that requires actual approved plan test paths, collection, and execution while using gate tests for governance changes and exempting pure documentation."
+    human_intervention: "User approved this five-defect repair scope and corresponding positive/negative test expectations, preserved the prior CI authorization, required minimal changes without a new gate platform or Round 1 application work, prohibited changing Round 1 status or fabricating approval, and prohibited application/D1-D4/permission/plan/test-assertion changes, push, merge, GitHub settings, transcripts, credentials, and paid APIs."
+    approval:
+      subject: "Five CI gate defect repairs"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "Pre-edit file fingerprints saved under /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-five-fixes/before.sha256."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 38/38. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing 162-line baseline. Modified-file Ruff passed. Full offline pytest is 1396 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. CLI checks confirmed classify-guard rejects unknown runtime files and accepts docs, live-result accepts a passing case with deselected=2 and rejects a skipped case, and contract-tests selected and executed the governance gate tests. Both workflows parse but were not executed on GitHub. Round 1 remains proposed, live was not run, and branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+        - "/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-five-fixes/before.sha256"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Offline fixes are verified; real GitHub PR events, trusted workflow runs, live API execution, and branch protection are not verified."
+      - "Round 1 remains proposed and unapproved; no application contract test was fabricated or claimed."
+      - "The trusted evaluator source/version checks are tested synthetically; no real trusted run or default-branch dispatch was executed."
+      - "The live JUnit parser is tested offline only; no live test was run and the live environment remains unverified."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "No application behavior, requirements, machine permissions, historical records, or existing test assertions were changed."
+      - "No push, merge, GitHub settings change, transcript read, credential read, or paid API call was performed."
+
+  - id: "AI-030"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_contract_and_trusted_version_fix"
+    task: "Make contract-test results structured and pin trusted tool checkout to the triggering workflow SHA"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - ".github/workflows/trusted-evaluation.yml"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Replaced contract-test return-code-only success with JUnit-based validation requiring at least one executed passing case and rejecting zero cases, skipped selected cases, failures, and errors; added positive/negative tests for skipped, failed, errored, and zero-executed contract results; changed trusted-evaluation tool checkout from the default-branch tip to github.sha, added a checkout-version verification, kept the separate candidate checkout and default-branch/protected-environment checks; and synchronized CI.md and docs/ci/README.md with original baseline, local implementation, local verification, and remote-unverified status."
+    human_intervention: "User approved this minimal contract-result and trusted-version repair, required preserving the six course gates and existing workflows without a new approval platform, and prohibited application behavior, Round 1 plan/test-approval, permission, assertion-weakening, forged evidence, push, merge, or GitHub settings changes."
+    approval:
+      subject: "Contract-result and trusted-tool-version repairs"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "docs/ci/README.md records the current CI.md hash and scope."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 43/43. The governance-mode contract command collected and executed the gate tests with JUnit, reporting 43 passed and 0 skipped. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing baseline. Modified-file Ruff passed. Full offline pytest is 1401 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. Workflow/YAML parsing and diff checks passed. The trusted workflow was not executed on GitHub; live and semantic evaluation were not run; branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Contract-result and trusted-checkout logic are offline-verified; no real GitHub PR or trusted workflow run was executed."
+      - "The live suite and semantic evaluation were not run; no live or semantic evidence is claimed."
+      - "Branch protection and remote required checks remain unconfigured and unverified."
+      - "Live execution frequency for every intermediate commit remains a course-alignment question; this work does not claim full course compliance."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "No application behavior, Round 1 plan/test approval, machine permissions, or historical records were changed; the CI gate tests were extended for structured results without weakening application assertions."
+      - "No push, merge, transcript read, credential read, or GitHub settings change was performed."
+
+  - id: "AI-031"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_gate_scope_and_path_fixes"
+    task: "Narrow test-approval and approval-scope triggers, remove the mandatory live gate, fix path classification, and bind contract tests to the approved test specification version"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - ".github/workflows/ci.yml"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Added approval applicability so pure documentation and build configuration skip test pre-approval; removed mandatory live evidence from the PR aggregate while retaining optional trusted live JUnit validation; classified known build/dependency files and stopped hard-blocking unknown paths while keeping them out of the docs-only exemption; made runtime prompts trigger semantic and AI-use-log checks and kept static Prompt.md as documentation; bound contract-test selection to the Approved test specification path at its approved commit, supporting non-Markdown specs; narrowed changed-scope IDs to added diff lines and changed test paths; and synchronized the CI documentation and tests."
+    human_intervention: "User supplied the authoritative course CI requirements, explicitly authorized only minimal CI gate/test/documentation repair, prohibited reading project.pdf, application behavior, requirements, permissions, Round 1 plan/test approval, dependency installation, paid APIs, Git writes, and GitHub settings changes, and required preserving existing tests and uncommitted work."
+    approval:
+      subject: "CI gate scope, live, path, approved-spec, and changed-scope repairs"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "Pre-edit file fingerprints saved under /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-scope-fix/before.sha256."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 45/45. The governance-mode contract command collected and executed the gate tests with JUnit, reporting 45 passed and 0 skipped. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing baseline. Modified-file Ruff passed. Full offline pytest is 1403 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. The workflows parse but were not executed on GitHub; semantic evaluation was not run; optional live execution was not run; branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+        - "/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-scope-fix/before.sha256"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Offline fixes are verified; real GitHub PR events, trusted semantic runs, optional live execution, and branch protection are not verified."
+      - "No live evidence is claimed; live execution is optional and not a course gate."
+      - "Semantic evaluation remains blocked without approved dataset, rubric, threshold, model, or runner."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "Full-repository Ruff still has 16 pre-existing findings in unmodified scripts."
+      - "No application behavior, requirements, machine permissions, Round 1 plan/test approval, existing application assertions, or historical records were changed."
+      - "No dependency installation, paid API call, Git write, transcript read, credential read, push, merge, or GitHub settings change was performed."
+
+  - id: "AI-032"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_runtime_prompt_and_code_classification"
+    task: "Fix runtime prompt path detection, code outside src and docs classification, and narrow semantic-evaluation triggering"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Classified runtime prompt files under prompts/ with supported text/config suffixes as semantic and AI-use-log relevant; classified executable code outside src/test, including scripts/**/*.py and .sh, tools/**/*.py, setup.py, root executables, and docs/**/*.py and .sh, as requiring test approval and AI-use-log while keeping pyproject.toml and requirements.txt as non-code build configuration; prevented docs executable files from entering the documentation exemption; replaced broad agents/llm_clients/CLI semantic path triggers with explicit prompt/model locations, AST-level old/new prompt-definition snapshots, and changed-hunk model-config tokens; added tests for prompts YAML, static Prompt.md, scripts/tools/setup/docs code including shell scripts, long middle-of-prompt edits, prompt deletion/replacement, ordinary logic, model config, and git-diff prompt snapshots."
+    human_intervention: "User supplied the authoritative course CI requirements and authorized only this second-round minimal CI gate/test/documentation repair; prohibited reading project.pdf, application behavior, requirements, permissions, Round 1 plan/test approval, dependency installation, paid APIs, Git writes, and GitHub settings changes; required preserving prior correct behavior and uncommitted work."
+    approval:
+      subject: "Runtime prompt, outside-src code, docs executable, and semantic-diff classification repairs"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "Pre-edit file fingerprints saved under /var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-scope-fix/before.sha256."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 47/47. The governance-mode contract command collected and executed the gate tests with JUnit, reporting 47 passed and 0 skipped. Classification CLI checks confirmed prompts/prompt_v1.1.yaml triggers semantic/log/approval, scripts/helper.py, scripts/helper.sh, tools/helper.py, setup.py, docs/helper.py, and docs/helper.sh trigger approval/log without becoming docs, and pyproject.toml/requirements.txt remain non-code configuration. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing baseline. Modified-file Ruff passed. Full offline pytest is 1405 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. Workflows parse but were not executed on GitHub; semantic evaluation and optional live execution were not run; branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+        - "/var/folders/16/vlln_1rs23j4vw_lyshq37pc0000gn/T/opencode/ci-scope-fix/before.sha256"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Prompt/model diff detection uses AST prompt-definition snapshots plus bounded model-config hunk tokens; it is not a general semantic analyzer, and ambiguous changes use the existing candidate-bound reviewed not-applicable path."
+      - "Real GitHub PR events, trusted semantic runs, optional live execution, and branch protection are not verified."
+      - "Semantic evaluation remains blocked without approved dataset, rubric, threshold, model, or runner."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "Full-repository Ruff still has 16 pre-existing findings in unmodified scripts."
+      - "No application behavior, requirements, machine permissions, Round 1 plan/test approval, existing application assertions, or historical records were changed."
+      - "No dependency installation, paid API call, Git write, transcript read, credential read, push, merge, or GitHub settings change was performed."
+
+  - id: "AI-033"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_external_code_contract_association"
+    task: "Require approved-test association for executable code outside src and remove empty contract-test success"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Extended the approved-specification contract path to executable code outside src, including scripts, tools, docs executables, setup.py, application tests, and governance code; required the approved specification to name each changed code path and contain real test paths; kept a shared specification/test able to cover multiple related files; routed governance code through the same approved-spec association while retaining gate tests only when explicitly approved; and removed the mode=code/test_paths=[] empty-success branch."
+    human_intervention: "User authorized only the minimal src-outside code/test-association repair and required preserving prior prompt, live, unknown-path, approved-spec, scope, security, and aggregate behavior; prohibited application behavior, requirements, permissions, Round 1 plan/test approval, existing application assertions, dependency installation, paid APIs, Git writes, and GitHub settings changes."
+    approval:
+      subject: "src-outside approved-test association repair"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "docs/ci/README.md records the current CI.md version and scope."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 50/50. Positive tests cover shared approved specifications for scripts/helper.py, scripts/helper.sh, tools/helper.py, setup.py, docs/helper.py, and docs/helper.sh, plus governance code with an approved gate-test path and a real Git commit specification. Negative tests cover missing approval, code paths not named in the approved spec, missing tests, wrong code paths, skipped/failed/errored/zero JUnit results, and empty contract success. The non-code governance path still selects gate tests. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing baseline. Modified-file Ruff passed. Full offline pytest is 1408 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. Workflows parse but were not executed on GitHub; semantic evaluation and optional live execution were not run; branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Real GitHub PR events, trusted semantic runs, optional live execution, and branch protection are not verified."
+      - "Approved test association uses exact changed-code-path mentions in the approved specification; shared specs must list each related path explicitly."
+      - "Semantic evaluation remains blocked without approved dataset, rubric, threshold, model, or runner."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "Full-repository Ruff still has 16 pre-existing findings in unmodified scripts."
+      - "No application behavior, requirements, machine permissions, Round 1 plan/test approval, existing application assertions, or historical records were changed."
+      - "No dependency installation, paid API call, Git write, transcript read, credential read, push, merge, or GitHub settings change was performed."
+
+  - id: "AI-034"
+    date: "2026-11-18"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_semantic_and_ai_log_scope_fix"
+    task: "Narrow false semantic triggers in mixed prompt/model files and narrow the AI-use log blocking condition"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Replaced blanket semantic-path triggering for mixed files with content-sensitive AST comparisons: default_config.py and llm_clients/factory.py compare model-related dict/assignment/function definitions, model catalog/capability modules compare model data, and context/structured/reflection prompt definitions use existing prompt snapshots. Comment, formatting, output-path, and unrelated logic changes no longer trigger semantic evidence, while actual model/prompt changes still do. Narrowed the AI-use log check to require at least one substantive changed entry associated with at least one changed code/prompt path; other paths are diagnostics only, and non-code workflow/docs/build configuration no longer requires log updates."
+    human_intervention: "User authorized only this minimal CI semantic/AI-log scope correction and required preserving prior prompt, contract, path, live, unknown-path, security, schema, regression, and aggregate behavior; prohibited application behavior, requirements, permissions, Round 1 plan/test approval, existing application assertions, dependency installation, paid APIs, Git writes, and GitHub settings changes."
+    approval:
+      subject: "Semantic mixed-file and AI-use-log scope correction"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+        - "docs/ci/README.md records the current CI.md version and scope."
+    verification:
+      status: "completed_with_findings"
+      summary: "Gate tests passed 57/57. New tests cover default_config comment/format/output-path changes not requiring semantic evidence, actual default_config model config requiring it, model-call parameter changes requiring it, unrelated context/logic not requiring it, long prompt middle edits/deletion, AI-use-log no-update failure, one related entry covering a multi-path change without per-file failure, non-code workflow/docs exemptions, and CI-script log enforcement. Requirements schema, permission, and API checks passed. Mypy reported no diagnostics outside the existing baseline. Modified-file Ruff passed. Full offline pytest is 1415 passed, 3 existing Windows-specific failures, 1 skip, 1 deselected, and 100 subtests passed. Workflows parse but were not executed on GitHub; semantic evaluation and optional live execution were not run; branch protection remains unverified."
+      evidence:
+        - "docs/ci/README.md"
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "Semantic detection remains a bounded AST/model-definition comparison plus changed-hunk model tokens, not a general semantic analyzer."
+      - "Semantic evaluation still lacks an approved dataset, rubric, threshold, model, and runner; no semantic pass is claimed."
+      - "The reviewed not-applicable path is only a candidate-bound trusted-workflow record; remote protected-environment enforcement is not verified."
+      - "Real GitHub PR events, optional live execution, remote Actions, and branch protection remain unverified."
+      - "Three existing Windows-specific cache-lock tests fail on this host and one optional test skips; these are not passes."
+      - "Full-repository Ruff still has 16 pre-existing findings in unmodified scripts."
+      - "No application behavior, requirements, machine permissions, Round 1 plan/test approval, existing application assertions, or historical records were changed."
+      - "No dependency installation, paid API call, Git write, transcript read, credential read, push, merge, or GitHub settings change was performed."
+
+  - id: "AI-035"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "documentation_baseline_sync"
+    task: "Synchronize governance and CI documentation with the latest pre-Round-1 local baseline"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "AGENTS.md"
+      - "Prompt.md"
+      - "architecture-blueprint.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/code-governance/mcp-tool-manifest.md"
+      - "docs/code-governance/verification-constraints.md"
+      - "docs/code-governance/structural-constraints.md"
+      - "docs/req/requirements.yaml"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "docs/migration/migration-report.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Updated project-root workflow references and synchronized architecture, permission, tool-manifest, verification, structural, requirements-metadata, CI, and migration text with the locally implemented CI and permission configuration. Distinguished historical 57-gate-test/1415-passed records from the current 58-function static inventory, preserved historical approval hashes, and added a separate unapproved documentation-sync hash. Kept Round 1 unapproved and left requirements, FCs, architecture semantics, permission configuration, workflows, schemas, tests, and raw evidence unchanged."
+    human_intervention: "User authorized only this documentation version synchronization across the named files and required preserving all uncommitted implementation, CI, requirements, permission, and governance work. The user prohibited source, test, workflow, dependency, Schema, permission-configuration, or Round 1 changes; test/application execution; installs; external calls; Git writes; PR creation; merge; and GitHub settings changes."
+    approval:
+      subject: "Documentation-only baseline synchronization"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "User authorization in the current OpenCode session; transcript not yet exported."
+    verification:
+      status: "completed_with_findings"
+      summary: "Read-only review and document-structure checks completed. The current CI gate file statically contains 58 top-level test functions; the historical 57-passed and 1415-passed records were retained as version-scoped history. No pytest, CI workflow, application, baseline, Docker, live, or semantic evaluation was run. Remote GitHub execution, branch protection, OpenCode permission enforcement, and current-version test coverage remain unverified."
+      evidence:
+        - "CI.md"
+        - "docs/ci/README.md"
+        - "docs/code-governance/verification-constraints.md"
+        - "docs/migration/migration-report.md"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The current session transcript has not been exported; add references after export without inventing line numbers."
+      - "This task changed documentation only and did not run tests or refresh CI, baseline, Docker, or live evidence."
+      - "The 57-gate-test and 1415-passed records remain historical; the current 58-function file has no execution result from this task."
+      - "Remote GitHub CI, required checks, branch protection, trusted semantic evaluation, and OpenCode permission loading or enforcement remain unverified."
+      - "Semantic evaluation still lacks an approved dataset, rubric, threshold, model, and runner."
+      - "Round 1 remains a draft and unapproved; no application implementation was started."
+      - "Existing uncommitted CI, requirements, permission, and governance changes were preserved and were not committed."

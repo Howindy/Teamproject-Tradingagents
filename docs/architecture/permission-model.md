@@ -1,17 +1,17 @@
 # Coding-Agent Permission Model
 
-- Document status: Proposed permission design; not an active permission configuration, security certification, or claim that enforcement exists.
+- Document status: Proposed role-permission design. A machine-readable project permission file exists and CI includes a static configuration check, but effective OpenCode loading, merged policy, runtime access restriction, and enforcement are not verified; this is not a security certification.
 - Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.48.0, independently counted as 13 requirements and 55 fit criteria: 9 active requirements with 40 FCs and 4 deferred requirements with 15 FCs.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md), especially §9.3 and §11, and [`ADR 001`](adr/001-graph-internal-final-check.md).
 - Cross-check basis: [`invariants.md`](invariants.md), [`trace-matrix.md`](trace-matrix.md), [`memory-design.md`](memory-design.md), [`runtime-policy-catalog.md`](runtime-policy-catalog.md), and [`evaluation-table.md`](evaluation-table.md).
-- Project guidance checked: `goal.md` and `D2.md`.
+- Project guidance checked: `goal.md`. `D2.md` was a deleted copy of course instructions, not a required project deliverable; the course D2 delivery basis is the course PDF (pages 5 and 9), and project architecture is read through the existing blueprint and `docs/architecture/` artifacts.
 - Secret handling: no `.env*`, credential, or secret content was read. Only project paths and non-secret governance files were inspected.
 
 This document describes file-level permissions for AI coding agents. It is not the TradingAgents runtime business model. Analyst, researcher, Trader, Portfolio Manager, SB-01, and other application roles are not file-access roles. Conversely, Plan/Architecture/Implementation/Verification are coding responsibilities, not application authorities.
 
 ## 1. Role model
 
-The project does not contain an `AGENTS.md`, `.opencode/` permissions configuration, `.opencode/rules.md`, `.agent/rules.md`, or D3 machine-permission file. The following four roles are design responsibilities derived from the blueprint's four-role proposal and the project guidance. They do not imply that four agent processes, tools, or configured identities exist.
+The project contains `AGENTS.md`, `.opencode/permissions.jsonc`, `.opencode/rules.md`, `.agent/rules.md`, and D3 governance files under `docs/code-governance/`. Their presence does not establish automatic loading, effective permissions, or enforcement. The following four roles are design responsibilities derived from the blueprint's four-role proposal and the project guidance. They do not imply that four agent processes, tools, or configured identities exist.
 
 | Role | Responsibility | Default posture | Write boundary |
 |---|---|---|---|
@@ -28,27 +28,27 @@ All paths are project-relative and are denied unless listed. A path pattern in t
 
 | Role | Project-relative path or restricted pattern | Read | Write | Task/condition | Basis |
 |---|---|---|---|---|---|
-| Plan | `goal.md`, `D2.md` | Yes | No | Read project goals and authoring guidance | Blueprint §9.3; project guidance |
+| Plan | `goal.md` | Yes | No | Read project goals and authoring guidance | Blueprint §9.3; project guidance |
 | Plan | `docs/req/**` | Yes | No | Read current requirements/FCs; no requirement edits | Human-maintained boundary |
 | Plan | `architecture-blueprint.md`, `docs/architecture/**` | Yes | No | Read selected architecture and D2 artifacts | Architecture inputs |
-| Plan | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `scripts/**` | Yes | No | Read-only inspection needed to plan a task; no execution or modification | Actual project paths; least-read extension |
+| Plan | `src/tradingagents/**`, `src/cli/**`, `test/conftest.py`, `test/offline/**`, `test/live/**`, `pyproject.toml`, `requirements.txt`, `scripts/**` | Yes | No | Read-only inspection needed to plan a task; no execution or modification | Actual project paths; least-read extension |
 | Plan | `baseline/**/summary.md`, `baseline/**/metrics*.json`, `baseline/**/report-consistency.json`, `baseline/**/data-availability.csv`, `baseline/**/source-integrity.json`, `baseline/**/probe-manifest.json`, `baseline/**/README.md` | Yes | No | Only baseline files relevant to the task; not all raw logs | Blueprint evidence boundary; actual baseline files |
 | Plan | No file | — | — | Produce the plan in conversation; no plan-file path is created or implied | Project guidance |
-| Architecture | `goal.md`, `D2.md`, `docs/req/**` | Yes | No | Read requirements and guidance; requirements remain human-maintained | Blueprint §9.3 |
+| Architecture | `goal.md`, `docs/req/**` | Yes | No | Read requirements and guidance; requirements remain human-maintained | Blueprint §9.3 |
 | Architecture | `architecture-blueprint.md`, `docs/architecture/**` except `docs/architecture/permission-model.md` | Yes | Yes | Only D2 artifacts named in an approved architecture task; exact file list required | Blueprint §9.3 |
-| Architecture | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `scripts/**` | Yes | No | Inspect actual implementation and tests; never edit application code | Blueprint: no application code for Architecture |
+| Architecture | `src/tradingagents/**`, `src/cli/**`, `test/conftest.py`, `test/offline/**`, `test/live/**`, `pyproject.toml`, `requirements.txt`, `scripts/**` | Yes | No | Inspect actual implementation and tests; never edit application code | Blueprint: no application code for Architecture |
 | Architecture | `baseline/**/summary.md`, `baseline/**/metrics*.json`, `baseline/**/report-consistency.json`, `baseline/**/data-availability.csv`, `baseline/**/source-integrity.json`, `baseline/**/probe-manifest.json`, `baseline/**/README.md` | Yes | No | Selected baseline evidence only; no regeneration/formatting/cleanup | Blueprint §9.3 and baseline boundary |
-| Architecture | `TradingAgents/.github/**` | Yes | No | Read CI/governance context; no modification | Human-maintained boundary |
-| Architecture | `docs/architecture/permission-model.md`, `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `TradingAgents/.github/**` | No write | No | Permission, requirements, guidance, baseline, and CI remain human-maintained | Blueprint §9.3, §11 |
-| Implementation | `goal.md`, `D2.md`, `docs/req/**`, `architecture-blueprint.md`, `docs/architecture/**` | Yes | No | Read the governing requirements and architecture for the approved task | Blueprint §9.3 |
-| Implementation | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/main.py`, `TradingAgents/assets/**`, `TradingAgents/cli/static/**` | Yes | Yes | Only exact application files named in an approved task; no blanket directory write | Blueprint: approved application paths |
-| Implementation | `TradingAgents/tests/**` | Yes | Yes | Only exact test files named in an approved task and under test-first/approval rules | Blueprint: approved test paths |
-| Implementation | `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt`, `TradingAgents/docker-compose.yml`, `TradingAgents/Dockerfile`, `scripts/**` | Yes | No | Build/dependency/evidence scripts are read-only unless a future human-approved task explicitly expands the model | User instruction on build/dependency/output boundaries |
+| Architecture | `.github/**` | Yes | No | Read CI/governance context; no modification | Human-maintained boundary |
+| Architecture | `docs/architecture/permission-model.md`, `docs/req/**`, `goal.md`, `baseline/**`, `.github/**` | No write | No | Permission, requirements, guidance, baseline, and CI remain human-maintained | Blueprint §9.3, §11 |
+| Implementation | `goal.md`, `docs/req/**`, `architecture-blueprint.md`, `docs/architecture/**` | Yes | No | Read the governing requirements and architecture for the approved task | Blueprint §9.3 |
+| Implementation | `src/tradingagents/**`, `src/cli/**`, `src/cli/static/**` | Yes | Yes | Only exact application files named in an approved task; no blanket directory write | Blueprint: approved application paths |
+| Implementation | `test/conftest.py`, `test/offline/**`, `test/live/**` | Yes | Yes | Only exact test files named in an approved task and under test-first/approval rules | Blueprint: approved test paths |
+| Implementation | `pyproject.toml`, `requirements.txt`, `docker-compose.yml`, `Dockerfile`, `scripts/**` | Yes | No | Build/dependency/evidence scripts are read-only unless a future human-approved task explicitly expands the model | User instruction on build/dependency/output boundaries |
 | Implementation | `baseline/**/summary.md`, `baseline/**/metrics*.json`, `baseline/**/report-consistency.json`, `baseline/**/data-availability.csv`, `baseline/**/source-integrity.json`, `baseline/**/probe-manifest.json`, `baseline/**/README.md` | Yes | No | Read only task-relevant evidence; no baseline regeneration or cleanup | Human-maintained baseline boundary |
-| Verification | `goal.md`, `D2.md`, `docs/req/**`, `architecture-blueprint.md`, `docs/architecture/**` | Yes | No | Read acceptance basis and architecture | Verification inputs |
-| Verification | `TradingAgents/tradingagents/**`, `TradingAgents/cli/**`, `TradingAgents/main.py`, `TradingAgents/assets/**`, `TradingAgents/cli/static/**`, `TradingAgents/tests/**`, `TradingAgents/pyproject.toml`, `TradingAgents/requirements.txt` | Yes | No direct application write | Inspect implementation/tests; verification must not modify the code under test | Blueprint: read-only repository for Verification |
-| Verification | `TradingAgents/tests/<approved-test-file>` | Yes | Yes | Only the exact test files declared in an approved verification task; test-first/human approval applies | Blueprint: declared test paths |
-| Verification | `TradingAgents/.github/**` | Yes | No | Inspect CI/gate configuration; no edits | Human-maintained boundary |
+| Verification | `goal.md`, `docs/req/**`, `architecture-blueprint.md`, `docs/architecture/**` | Yes | No | Read acceptance basis and architecture | Verification inputs |
+| Verification | `src/tradingagents/**`, `src/cli/**`, `src/cli/static/**`, `test/conftest.py`, `test/offline/**`, `test/live/**`, `pyproject.toml`, `requirements.txt` | Yes | No direct application write | Inspect implementation/tests; verification must not modify the code under test | Blueprint: read-only repository for Verification |
+| Verification | `test/<approved-test-file>` | Yes | Yes | Only the exact test files declared in an approved verification task; test-first/human approval applies | Blueprint: declared test paths |
+| Verification | `.github/**` | Yes | No | Inspect CI/gate configuration; no edits | Human-maintained boundary |
 | Verification | `baseline/**/summary.md`, `baseline/**/metrics*.json`, `baseline/**/report-consistency.json`, `baseline/**/data-availability.csv`, `baseline/**/source-integrity.json`, `baseline/**/probe-manifest.json`, `baseline/**/README.md` | Yes | No | Task-relevant evidence only; no regeneration or cleanup | Baseline boundary |
 | Verification | Verification-report path | No path is currently declared | No | If a future project report location is established, a human must first update the permission model; this document does not pre-authorize one | User instruction; no D4 report path exists |
 | All roles | Unlisted project path | No | No | Default deny; no “necessary” or “any project file” exception | Blueprint default no read/write |
@@ -60,16 +60,16 @@ Human-maintained does not mean unreadable. It means agents cannot modify it with
 | Path/content | Read | Write | Protection and rationale |
 |---|---|---|---|
 | `docs/req/**` | Plan, Architecture, Implementation, Verification may read for their task | No agent write | Requirements and FCs are human-maintained. No reformatting or regeneration by an implementation agent. |
-| `goal.md`, `D2.md` | Roles may read as project guidance | No agent write | Human-maintained course/project guidance. |
+| `goal.md` | Roles may read as project guidance | No agent write | Human-maintained course/project guidance. |
 | `baseline/**` | Selected safe evidence patterns only, as listed above | No agent write | Human-maintained evidence. Do not regenerate, format, clean, or read all raw logs by default. The `home-*`, `outside-*`, `environment*`, and reproduction artifacts are not included unless a human task explicitly selects them. |
-| `TradingAgents/.github/**` | Architecture and Verification may read; Plan and Implementation are not granted access | No agent write | Human-maintained CI and repository governance. The actual nested path is `TradingAgents/.github/**`; no root `.github/` exists in this checkout. |
+| `.github/**` | Architecture and Verification may read; Plan and Implementation are not granted access | No agent write | Human-maintained CI and repository governance. The current CI/governance path is the root `.github/**`; the old nested path was removed by the approved layout migration. |
 | `.env*` and credential files | No agent read | No agent write | Default deny. This document was prepared without reading their contents. SR-01's application-level limited protection does not grant coding agents secret access. |
 | `.git/**` | No agent read | No agent write | Version-control metadata is not a normal implementation input or write target. A human can provide a diff/status excerpt instead of granting metadata access. |
 | `docs/architecture/permission-model.md` | All roles may read | No role may self-edit | This permission boundary is human-controlled. The current creation is a user-authorized task, not a standing agent grant. |
-| `.opencode/**`, `.agent/**`, `AGENTS*`, future rules/permission files | None currently exist; if introduced, read only by an explicit human task | No agent write | No machine governance configuration exists in this checkout. Future governance files are human-maintained. |
-| `docs/code-governance/**` D3 files | None currently exist; future files are human-maintained | No agent write | D3 machine permissions, rules, and tool manifests are not present here. Do not create or infer them from this document. |
-| D4 verification reports and review/debt/bug records | None currently exist as declared project paths | No standing write | Verification reports require a future declared path and human update to this model. Do not invent D4 files. |
-| `TradingAgents/pyproject.toml`, `requirements.txt`, build/dependency manifests | Read by Plan/Architecture/Implementation/Verification as applicable | No standing write | A future task may explicitly propose a scoped dependency/build change, but this document pre-authorizes none. |
+| `.opencode/**`, `.agent/**`, `AGENTS*`, future rules/permission files | Existing governance files are readable only by an explicit human task | No agent write | Machine governance files exist in this checkout, but their automatic loading and effective enforcement are unverified. Future governance files remain human-maintained. |
+| `docs/code-governance/**` D3 files | Existing D3 governance files are human-maintained | No agent write | D3 structural, verification, and tool-manifest documents exist; this does not establish active machine enforcement. Do not create or infer additional controls from this document. |
+| D4 verification reports and review/debt/bug records | `docs/review-memo.md`, `docs/debt-register.md`, and `docs/bug-diary.md` exist as templates; no actual records are registered. Selected migration validation evidence exists under `docs/migration/validation/`. | No standing write | Template or evidence-file existence does not grant Verification write access or create a new record-write path; a future task must declare and approve any report path. Do not invent D4 records. |
+| `pyproject.toml`, `requirements.txt`, build/dependency manifests | Read by Plan/Architecture/Implementation/Verification as applicable | No standing write | A future task may explicitly propose a scoped dependency/build change, but this document pre-authorizes none. |
 | Dependency, build, temporary, and test output directories | Read only if a task names a relevant existing file | No standing write | No broad write grant for generated or transient files. A future task must name a project-relative path and obtain approval. |
 
 ## 4. From role maximum to task permission
@@ -96,22 +96,27 @@ Rules:
 | Mechanism | Verified current state | Limitation |
 |---|---|---|
 | This permission model | Design document only | Natural-language rules do not enforce file access. |
-| Project-level OpenCode permissions | No `.opencode/permissions.jsonc` or `.opencode/` directory found | Default agent/tool behavior is not established by this document; no machine allowlist is configured here. |
-| AGENTS / rules | No `AGENTS.md`, `.opencode/rules.md`, or `.agent/rules.md` found in the project | No persistent agent-specific rule file currently enforces these boundaries. |
-| D3 machine governance | No `docs/code-governance/**` files found | Structural constraints and MCP/tool permissions remain unconfigured in this checkout. |
-| CI | `TradingAgents/.github/workflows/ci.yml` runs install, pytest, ruff, and clean-install smoke jobs; `release-assets.yml` builds release assets | These are test/lint/build checks. No path-permission check is present. CI is post-hoc and cannot prevent arbitrary reads or local edits. |
+| Project-level OpenCode permissions | `.opencode/permissions.jsonc` exists | Explicit loading, effective merged policy, and enforcement are unverified; this document does not establish machine permission behavior. |
+| AGENTS / rules | `AGENTS.md`, `.opencode/rules.md`, and `.agent/rules.md` exist in the project | Their automatic loading and actual enforcement of these boundaries are unverified. |
+| D3 machine governance | `docs/code-governance/**` governance files exist | They remain design/verification records; active machine enforcement is unverified. |
+| CI | Root `.github/workflows/ci.yml` runs push/PR schema, Ruff, mypy-baseline, dependency/import, regression, and clean-install jobs; PR gates add test approval, contract tests, security-path/ADR, permission-configuration, API-signature, AI-use-log, trusted semantic evidence, and aggregate checks | CI includes a static `.opencode/permissions.jsonc` check and classification-based gates, not a runtime path-permission engine. CI is retrospective, cannot prevent arbitrary reads or local edits, and remote execution is unverified. |
 | Branch protection | Not verifiable from repository files | No claim is made that branch protection is enabled. |
 | Human task approval/review | Required by project guidance and blueprint change policy | Human review is an operational control, not an OS boundary. |
 | OS/container permissions | Not configured by this model | Tool-level rules are not an OS security sandbox. |
 
-Planned mechanisms, not current enforcement:
+Partially evidenced mechanisms:
 
-- a machine-readable per-role permission file matching the actual OpenCode version;
-- a path allow/deny check covering reads and writes, including exact task file lists;
-- human-approved test-first and security-critical change gates with recorded evidence;
-- verification that protected requirements, baseline, CI, and governance files were not modified.
+- `.opencode/permissions.jsonc` exists and CI runs a static configuration check for it;
+- CI has PR gates for test approval, contract tests, security paths/ADR references, permission configuration, API signatures, AI-use log, and the aggregate result.
 
-No planned mechanism is claimed to be implemented. This document does not grant command execution, network access, messaging, deployment, release, package publication, secrets access, or trade execution. Those require separate human authorization and are outside file permissions.
+Still planned or unverified:
+
+- actual OpenCode loading, merged policy, and runtime read/write restriction matching this design;
+- a precedence-tested path allow/deny engine covering reads and writes, including exact task file lists;
+- automated proof that protected requirements, baseline, CI, and governance files were not modified beyond classification, static checks, and human review;
+- remote branch protection and human-review enforcement.
+
+The existing file and CI gates are not proof of runtime permission enforcement. This document does not grant command execution, network access, messaging, deployment, release, package publication, secrets access, or trade execution. Those require separate human authorization and are outside file permissions.
 
 ## 6. Application runtime boundary
 
@@ -129,9 +134,9 @@ FR-06, FR-07, PR-01, CR-01, and context budgeting/compression/reinjection remain
 
 | ID | Verification intent | Evidence state |
 |---|---|---|
-| P-V01 | Each role can read every required input for its normal task and can write only the listed task outputs. | Planned; no permission test or enforcement configuration exists. |
+| P-V01 | Each role can read every required input for its normal task and can write only the listed task outputs. | Planned for runtime enforcement; a project permission file exists and CI statically checks its configuration, but no effective loading/merged-policy test or runtime access test exists. |
 | P-V02 | Unlisted paths, `..`, absolute paths, aliases, links, and out-of-project targets are denied. | Planned; resolution rules must be implemented before testing. |
-| P-V03 | No role writes `docs/req/**`, `goal.md`, `D2.md`, `baseline/**`, `TradingAgents/.github/**`, `.env*`, `.git/**`, or governance files. | Planned; static diff-based verification only. |
+| P-V03 | No role writes `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, `.env*`, `.git/**`, or governance files. | Planned; static diff-based verification only. |
 | P-V04 | Architecture cannot modify application code or requirements; Verification cannot modify the code under test in a pure-review task. | Planned; human review/static checks. |
 | P-V05 | A task can narrow a role allowlist and cannot widen it; exact file lists are required for conditional writes. | Planned; process rule, not automated. |
 | P-V06 | No current document or CI check is represented as an active OS/security enforcement boundary. | Planned; documentation/review check. |
@@ -139,8 +144,8 @@ FR-06, FR-07, PR-01, CR-01, and context budgeting/compression/reinjection remain
 Open items that affect implementation:
 
 1. OQ-07 still leaves coding-agent role names and whitelists pending human review. The role names here are design labels, not configured identities.
-2. No machine-readable permission file, rules file, AGENTS file, path check, or D3 machine governance currently exists.
+2. The machine-readable permission file, rules, AGENTS file, and D3 governance files exist, but their effective loading and path-check enforcement are not verified.
 3. No verification-report path is currently declared, so Verification has no standing report-write path.
-4. Branch protection and CI path checks are not evidenced in the checkout; they must not be claimed as active.
+4. CI has local classification, permission-configuration, and security-path checks, but no runtime path-permission enforcement is verified. Remote branch protection and required-check enforcement are not evidenced in the checkout and must not be claimed as active.
 
-No source conflict changes the file boundaries above. The main limitation is enforcement: the current project has design guidance and ordinary CI, not a verified file-permission engine.
+No source conflict changes the file boundaries above. The main limitation is enforcement: the project has design guidance, a machine-readable permission file, and CI static checks, not a verified runtime file-permission engine.

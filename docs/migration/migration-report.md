@@ -1,15 +1,24 @@
 # TradingAgents Layout Migration Report
 
-- Date: 2026-11-18
+- Original migration report date: 2026-11-18
+- Latest follow-up status sync: 2026-11-21. Sections 8–10 separate the original
+  migration-time status from later current-state summaries.
 - Scope: finalization and verification of the completed `TradingAgents/` ->
   `src/` / `test/` migration.
-- Status: source migration complete; packaging and core behavior verified;
-  overall finalization still has pending permission, lint, CI, Docker, and live
-  verification items listed below.
+- Status at the original migration close: source migration complete; packaging
+  and core behavior verified; overall finalization still had pending permission,
+  lint, CI, Docker, and live verification items listed below.
+- Current follow-up summary (2026-11-21): the reviewed permission-path patch and
+  related path documentation are applied; later local Ruff execution and the
+  16-finding repair are recorded, and local CI gate implementation now exists.
+  Actual OpenCode permission enforcement, GitHub CI execution, Docker build, and
+  live tests remain unverified. These updates do not revise the original dated
+  results or raw evidence under `docs/migration/validation/`.
 - No application algorithm, runtime prompt, model-default configuration, safety
-  boundary, or test assertion was changed during this finalization.
+  boundary, or test assertion was changed during the original migration
+  finalization.
 - No Git stage, commit, push, pull request, remote workflow, or GitHub setting
-  change was performed.
+  change was performed during the original migration task.
 
 ## 1. Migration result
 
@@ -194,9 +203,10 @@ The root `.github/workflows/ci.yml` was statically checked:
 - clean install plus `import tradingagents, cli.main`;
 - `ruff check .` after installing `ruff>=0.16`.
 
-This is baseline CI migration only. The six course CI gates are not
-implemented, release assets are not migrated, and the workflow was not executed
-on GitHub.
+At the original migration close, this was baseline CI migration only. The six
+course CI gates were not yet implemented, release assets were not migrated, and
+the workflow was not executed on GitHub. Later local CI work is summarized in
+Sections 8 and 10 and does not change this historical static-check result.
 
 Docker was statically checked only:
 
@@ -229,7 +239,9 @@ Evidence:
 - No old-path references remain in `src/`, `test/`, root `pyproject.toml`, root
   CI workflow or current scripts, apart from product-name/URL strings.
 
-## 8. Pending work and responsibility
+## 8. Pending work at the original migration close and current follow-up
+
+### Original status (2026-11-18)
 
 | Item | Status | Responsibility |
 |---|---|---|
@@ -243,11 +255,42 @@ Evidence:
 | Full course six-gate CI | Not implemented; out of scope | Separate approved CI governance work |
 | FR-04 implementation/test approval | Not changed or approved | Separate round approval |
 
+### Current follow-up summary (2026-11-21)
+
+- The reviewed permission-path patch for `.opencode/permissions.jsonc` and the related D2 path documentation have been applied. Actual OpenCode loading, merged precedence, runtime access restriction, and enforcement remain unverified.
+- Ruff was later run in the existing local CI environment. The 16 historical findings were repaired by commit `b56da53`; this documentation sync did not re-run Ruff, pytest, Docker, or live tests.
+- Local CI gate implementation now exists in `scripts/ci_checks.py`, `scripts/ci_semantic_eval.py`, and the project-root `.github/workflows/`. The historical local gate record is 57 passed and the full local offline record is 1415 passed with 3 existing failures, 1 skip, 1 deselected, and 100 subtests at that version. The current gate file statically contains 58 top-level test functions; no current-version execution result is claimed here.
+- GitHub Actions, remote required checks, branch protection, Docker image build, and live API tests remain unexecuted or unverified.
+- Dependency-version drift and the three pre-existing Windows-specific failures remain unchanged.
+- Round 1 remains a draft and is not approved; application implementation and FR-04 tests are not authorized by this report.
+
 ## 9. Conclusion
 
-The source/test migration is complete and its package structure, core tests,
-collection, installation, wheel/sdist packaging and resources have been
-verified to the extent supported by the available environment.
+At the original migration close, the source/test migration was complete and its
+package structure, core tests, collection, installation, wheel/sdist packaging
+and resources had been verified to the extent supported by the available
+environment.
 
-Overall finalization is not complete while permission paths remain human-pending
-and Ruff, GitHub CI, Docker and live verification are unrun.
+At that time, overall finalization was not complete while permission paths
+remained human-pending and Ruff, GitHub CI, Docker and live verification were
+unrun.
+
+Current follow-up (2026-11-21): the permission-path patch and related path
+documentation are applied; later Ruff execution and repair are recorded; local
+CI gates exist. Actual permission enforcement, GitHub CI execution, Docker, and
+live verification remain unverified. These follow-up statements do not revise
+the original conclusion or its dated evidence.
+
+## 10. Follow-up status update
+
+This section records later file-level and local-verification maintenance only.
+It does not revise the earlier dated verification results, raw evidence,
+timestamps, or approval state.
+
+- D1 current code-tracking paths in `docs/req/requirements.yaml` have been synchronized to the migrated `src/` and `test/` locations; historical source-evidence locators remain unchanged.
+- D2 permission paths in `docs/architecture/permission-model.md` have been synchronized to the migrated layout.
+- The reviewed migration path patch for `.opencode/permissions.jsonc` has been applied.
+- Later local Ruff execution is recorded in the CI implementation records; commit `b56da53` repaired the 16 historical findings. No Ruff or test suite was re-run for this documentation sync.
+- Local CI gates and project-root workflows now exist. This does not prove GitHub execution or remote branch protection.
+- These are file-level and documentation-maintenance actions. OpenCode loading, effective merged policy, permission execution, dependency alignment, Docker, and live behavior remain unverified.
+- The original migration-time limitations remain historical records. The resolved permission-path and Ruff-repair items are identified above; unresolved limitations are not converted into passes.
