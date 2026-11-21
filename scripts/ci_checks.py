@@ -1949,6 +1949,30 @@ def semantic_config_status(path: Path | str) -> dict[str, Any]:
     }
 
 
+def _url_origin(url: str) -> tuple[str, str, int | None]:
+    parts = urllib.parse.urlsplit(url)
+    scheme = parts.scheme.lower()
+    hostname = (parts.hostname or "").casefold()
+    port = parts.port
+    if port is None:
+        if scheme == "http":
+            port = 80
+        elif scheme == "https":
+            port = 443
+    return scheme, hostname, port
+
+
+class _NoCrossOriginAuthRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if (
+            redirected is not None
+            and _url_origin(req.full_url) != _url_origin(redirected.full_url)
+        ):
+            redirected.remove_header("Authorization")
+        return redirected
+
+
 def _github_bytes(url: str, token: str) -> bytes:
     request = urllib.request.Request(
         url,
@@ -1960,7 +1984,8 @@ def _github_bytes(url: str, token: str) -> bytes:
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
+        opener = urllib.request.build_opener(_NoCrossOriginAuthRedirect())
+        with opener.open(request, timeout=60) as response:
             return response.read()
     except (OSError, urllib.error.URLError) as exc:
         raise CiError(f"cannot download GitHub artifact: {exc}") from exc

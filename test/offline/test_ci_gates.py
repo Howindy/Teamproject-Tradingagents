@@ -6,11 +6,16 @@ GitHub responses. They are governance/CI tests, not application FC tests.
 
 from __future__ import annotations
 
+import contextlib
 import copy
+import http.server
 import importlib.util
 import inspect
 import json
+import socket
 import sys
+import threading
+import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -20,6 +25,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
+_CONNECT, _GETADDRINFO = socket.socket.connect, socket.getaddrinfo
 
 
 def _load_module(name: str, path: Path) -> Any:
@@ -1890,3 +1896,222 @@ def test_semantic_config_validation_and_not_applicable_entry(tmp_path: Path):
     record = json.loads(output.read_text(encoding="utf-8"))
     assert record["status"] == "not_applicable"
     assert record["reviewed_by"] == "human"
+
+
+class _ArtifactProbeServer(http.server.ThreadingHTTPServer):
+    routes: dict[str, tuple[int, dict[str, str], bytes]]
+    seen: list[tuple[str, str | None]]
+
+
+class _ArtifactProbeHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        server = self.server
+        assert isinstance(server, _ArtifactProbeServer)
+        server.seen.append((self.path, self.headers.get("Authorization")))
+        status, headers, body = server.routes[self.path]
+        self.send_response(status)
+        for name, value in headers.items():
+            self.send_header(name, value)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@contextlib.contextmanager
+def _serve_artifact_probe(routes):
+    server = _ArtifactProbeServer(("127.0.0.1", 0), _ArtifactProbeHandler)
+    server.routes = routes
+    server.seen = []
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def _bypass_local_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,127.1,localhost")
+    monkeypatch.setenv("no_proxy", "127.0.0.1,127.1,localhost")
+
+    def loopback_connect(sock, address):
+        if address[0] not in {"127.0.0.1", "127.1"}:
+            raise OSError(f"test tried to reach the network: {address!r}")
+        return _CONNECT(sock, address)
+
+    def loopback_getaddrinfo(host, *args, **kwargs):
+        if host not in {"127.0.0.1", "127.1", "localhost"}:
+            raise OSError(f"test tried to reach the network: {host!r}")
+        return _GETADDRINFO(host, *args, **kwargs)
+
+    monkeypatch.setattr(socket.socket, "connect", loopback_connect)
+    monkeypatch.setattr(socket, "getaddrinfo", loopback_getaddrinfo)
+
+
+def test_github_bytes_preserves_authorization_on_same_origin_redirect(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _bypass_local_proxy(monkeypatch)
+    token = "fake-local-token"
+    body = b"artifact-body"
+    routes = {
+        "/start": (302, {"Location": "/final"}, b""),
+        "/final": (200, {}, body),
+    }
+    with _serve_artifact_probe(routes) as server:
+        url = f"http://127.0.0.1:{server.server_address[1]}/start"
+        assert ci_checks._github_bytes(url, token) == body
+        assert server.seen[-1] == ("/final", f"Bearer {token}")
+
+
+def test_github_bytes_drops_authorization_on_cross_origin_redirect_and_reads_body(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _bypass_local_proxy(monkeypatch)
+    token = "fake-local-token"
+    body = b"artifact-body"
+    with _serve_artifact_probe({"/final": (200, {}, body)}) as target:
+        target_url = f"http://127.1:{target.server_address[1]}/final"
+        with _serve_artifact_probe({
+            "/start": (302, {"Location": target_url}, b""),
+        }) as origin:
+            url = f"http://127.0.0.1:{origin.server_address[1]}/start"
+            assert ci_checks._github_bytes(url, token) == body
+        assert target.seen == [("/final", None)]
+
+
+def test_github_bytes_treats_scheme_change_as_cross_origin():
+    request = urllib.request.Request(
+        "http://example.test/start",
+        headers={"Authorization": "Bearer fake-local-token"},
+    )
+    redirected = ci_checks._NoCrossOriginAuthRedirect().redirect_request(
+        request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://example.test/final",
+    )
+    assert redirected is not None
+    assert redirected.get_header("Authorization") is None
+
+
+def test_github_bytes_treats_effective_port_change_as_cross_origin(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _bypass_local_proxy(monkeypatch)
+    token = "fake-local-token"
+    body = b"artifact-body"
+    with _serve_artifact_probe({"/final": (200, {}, body)}) as target:
+        target_url = f"http://127.0.0.1:{target.server_address[1]}/final"
+        with _serve_artifact_probe({
+            "/start": (302, {"Location": target_url}, b""),
+        }) as origin:
+            url = f"http://127.0.0.1:{origin.server_address[1]}/start"
+            assert ci_checks._github_bytes(url, token) == body
+        assert target.seen == [("/final", None)]
+
+
+def test_github_bytes_treats_default_and_explicit_equivalent_ports_as_same_origin():
+    handler = ci_checks._NoCrossOriginAuthRedirect()
+    cases = (
+        ("https://example.test/start", "https://EXAMPLE.TEST:443/final"),
+        ("http://example.test/start", "http://example.test:80/final"),
+    )
+    for request_url, redirect_url in cases:
+        request = urllib.request.Request(
+            request_url,
+            headers={"Authorization": "Bearer fake-local-token"},
+        )
+        redirected = handler.redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            redirect_url,
+        )
+        assert redirected is not None
+        assert redirected.get_header("Authorization") == "Bearer fake-local-token"
+    assert ci_checks._url_origin("https://example.test/start") != ci_checks._url_origin(
+        "https://example.test./start"
+    )
+
+
+def test_github_bytes_does_not_reattach_authorization_across_multiple_redirects(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _bypass_local_proxy(monkeypatch)
+    token = "fake-local-token"
+    body = b"artifact-body"
+    routes = {
+        "/second": (302, {"Location": "/final"}, b""),
+        "/final": (200, {}, body),
+    }
+    with _serve_artifact_probe(routes) as target:
+        second_url = f"http://127.1:{target.server_address[1]}/second"
+        with _serve_artifact_probe({
+            "/start": (302, {"Location": second_url}, b""),
+        }) as origin:
+            url = f"http://127.0.0.1:{origin.server_address[1]}/start"
+            assert ci_checks._github_bytes(url, token) == body
+        assert target.seen == [("/second", None), ("/final", None)]
+
+
+def test_github_bytes_raises_ci_error_on_401(monkeypatch: pytest.MonkeyPatch):
+    _bypass_local_proxy(monkeypatch)
+    with _serve_artifact_probe({"/fail": (401, {}, b"")}) as server:
+        url = f"http://127.0.0.1:{server.server_address[1]}/fail"
+        with pytest.raises(ci_checks.CiError) as excinfo:
+            ci_checks._github_bytes(url, "fake-local-token")
+    assert "401" in str(excinfo.value)
+
+
+def test_github_bytes_raises_ci_error_on_connection_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _bypass_local_proxy(monkeypatch)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    with pytest.raises(ci_checks.CiError):
+        ci_checks._github_bytes(
+            f"http://127.0.0.1:{port}/artifact",
+            "fake-local-token",
+        )
+
+
+def test_fetch_trusted_runs_propagates_artifact_download_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    def fake_request(url: str, token: str):
+        if url.endswith("/actions/runs/1"):
+            return {"path": ci_checks.TRUSTED_WORKFLOW}
+        if url.endswith("/artifacts"):
+            return {
+                "artifacts": [
+                    {
+                        "expired": False,
+                        "archive_download_url": "https://example.invalid/archive",
+                    }
+                ]
+            }
+        raise AssertionError(url)
+
+    def fail_download(url: str, token: str):
+        raise ci_checks.CiError("artifact download failed")
+
+    monkeypatch.setattr(ci_checks, "_github_request", fake_request)
+    monkeypatch.setattr(ci_checks, "_github_bytes", fail_download)
+    with pytest.raises(ci_checks.CiError):
+        ci_checks.fetch_trusted_runs(
+            "o/r",
+            [{"target_url": "https://github.com/o/r/actions/runs/1"}],
+            "fake-local-token",
+        )

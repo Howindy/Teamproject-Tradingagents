@@ -1615,3 +1615,42 @@ entries:
       - "Semantic evaluation still lacks an approved dataset, rubric, threshold, model, and runner."
       - "Round 1 remains a draft and unapproved; no application implementation was started."
       - "Existing uncommitted CI, requirements, permission, and governance changes were preserved and were not committed."
+
+  - id: "AI-036"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_artifact_download_redirect_fix"
+    task: "Implement the approved cross-origin redirect authentication fix for trusted artifact downloads and add regression tests"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Added a local redirect handler for trusted artifact downloads that preserves Authorization for the initial API request and same-origin redirects, removes it on cross-origin redirects using scheme, case-folded hostname, and effective-port comparison, and does not reattach it on later hops. Kept the opener local to _github_bytes() and preserved CiError propagation for download failures. Added the approved local-server and controlled-origin regression tests, including same-origin, cross-host, scheme, port, multiple-redirect, 401, connection-failure, and fetch_trusted_runs propagation cases."
+    human_intervention: "Reviewer espino2233 approved docs/plans/ci-artifact-download-fix.md at commit 8a845d1f31a8faa4c4c8cfe22a4658a35f7357b9 in PR #6 through the cited comment. The user then authorized implementation and local verification only; no remote artifact consumption or GitHub write was authorized."
+    approval:
+      subject: "Test specification docs/plans/ci-artifact-download-fix.md @ 8a845d1f31a8faa4c4c8cfe22a4658a35f7357b9"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/6#issuecomment-7060623934"
+        - "Approved by non-author reviewer espino2233 in PR #6; the exact wall-clock time was not recorded."
+    verification:
+      status: "completed"
+      summary: "The nine new artifact-download tests passed. The full test/offline/test_ci_gates.py run passed 70 tests in 6.77s with no skips. Pre-fix behavior was checked in a disposable copy: the cross-host and multiple-redirect tests failed because the target received `Bearer fake-local-token`, not because of missing imports or internal classes. Full-repository Ruff passed; mypy against the baseline reported no new or fixed diagnostics; git diff --check passed. No real artifact, token, .env, model, or external API was used."
+      evidence:
+        - "test/offline/test_ci_gates.py"
+        - "scripts/ci_checks.py"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/6"
+    limitations:
+      - "Remote artifact consumption by evidence-check has not yet been rerun and is not claimed successful; the remote 401 is not yet verified as resolved."
+      - "The pre-fix validation used a disposable copy with test/conftest.py removed so its network-block fixture would not prevent local loopback HTTP tests."
+      - "No real GitHub artifact URL, token, credentials, .env, model, or data API was accessed."
+      - "No approval, commit SHA, or remote CI result was fabricated."
+      - "No application behavior or Round 1 work was started."
