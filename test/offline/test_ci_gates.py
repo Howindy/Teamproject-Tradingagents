@@ -1022,6 +1022,156 @@ def test_contract_plan_reads_approved_spec_from_git_commit(tmp_path: Path):
     assert result["test_paths"] == ["test/offline/test_a.py"]
 
 
+def test_plan_test_paths_ignores_ellipsis_placeholder():
+    real_path = "test/offline/test_ci_gates.py"
+    placeholder = "test/offline/" + "." * 3 + "py"
+    spec_text = f"Use `{real_path}`. Placeholder: `{placeholder}`.\n"
+
+    assert ci_checks.plan_test_paths(spec_text) == ["test/offline/test_ci_gates.py"]
+
+
+def test_plan_test_paths_extracts_and_deduplicates_real_test():
+    real_path = "test/offline/test_ci_gates.py"
+    placeholder = "test/offline/" + "." * 3 + "py"
+    spec_text = (
+        f"`{real_path}`\n"
+        f"- {real_path}\n"
+        f"Use {real_path} again; ignore `{placeholder}`.\n"
+    )
+
+    assert ci_checks.plan_test_paths(spec_text) == ["test/offline/test_ci_gates.py"]
+
+
+def test_contract_plan_rejects_missing_non_placeholder_test(tmp_path: Path):
+    missing_test_path = "test/offline/" + "missing_contract" + ".py"
+    spec = tmp_path / "docs" / "specs" / "approved.md"
+    spec.parent.mkdir(parents=True)
+    spec_text = f"Code: `scripts/ci_checks.py`. Use `{missing_test_path}`.\n"
+    spec.write_text(spec_text, encoding="utf-8")
+    fields = {
+        "Plan": "docs/plans/round-01.md",
+        "Approved test specification": "docs/specs/approved.md @ abc1234",
+        "Approved scope": "contract-test path extraction",
+    }
+
+    result = ci_checks.contract_test_plan(
+        tmp_path,
+        fields,
+        ["scripts/ci_checks.py"],
+        spec_text=spec_text,
+    )
+
+    assert result["errors"]
+    assert any(
+        "contract test does not exist" in error and missing_test_path in error
+        for error in result["errors"]
+    )
+    assert result["test_paths"] == [missing_test_path]
+
+
+def test_contract_plan_rejects_placeholder_only_specification(tmp_path: Path):
+    placeholder = "test/offline/" + "." * 3 + "py"
+    spec = tmp_path / "docs" / "specs" / "approved.md"
+    spec.parent.mkdir(parents=True)
+    spec_text = f"Code: `scripts/ci_checks.py`. Placeholder: `{placeholder}`.\n"
+    spec.write_text(spec_text, encoding="utf-8")
+    fields = {
+        "Plan": "docs/plans/round-01.md",
+        "Approved test specification": "docs/specs/approved.md @ abc1234",
+        "Approved scope": "contract-test path extraction",
+    }
+
+    assert ci_checks.plan_test_paths(spec_text) == []
+
+    result = ci_checks.contract_test_plan(
+        tmp_path,
+        fields,
+        ["scripts/ci_checks.py"],
+        spec_text=spec_text,
+    )
+
+    assert result["errors"]
+    assert any(
+        "contains no test/offline or test/live test paths" in error
+        for error in result["errors"]
+    )
+    assert result["test_paths"] == []
+
+
+def test_contract_plan_selects_real_test_when_spec_also_has_placeholder(
+    tmp_path: Path,
+):
+    repo, _ = _repo(tmp_path)
+    real_path = "test/offline/test_ci_gates.py"
+    placeholder = "test/offline/" + "." * 3 + "py"
+    spec = repo / "docs" / "specs" / "contract-paths.md"
+    spec.parent.mkdir(parents=True)
+    spec.write_text(
+        f"Code: `scripts/ci_checks.py`.\n"
+        f"Use `{real_path}`.\n"
+        f"Placeholder: `{placeholder}`.\n",
+        encoding="utf-8",
+    )
+    test_file = repo / "test" / "offline" / "test_ci_gates.py"
+    test_file.parent.mkdir(parents=True)
+    test_file.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "contract path spec")
+    spec_commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-01.md",
+        "Approved test specification": f"docs/specs/contract-paths.md @ {spec_commit}",
+        "Approved scope": "contract-test path extraction",
+    }
+
+    result = ci_checks.contract_test_plan(
+        repo,
+        fields,
+        ["scripts/ci_checks.py"],
+        spec_text=None,
+    )
+
+    assert result["errors"] == []
+    assert result["test_paths"] == ["test/offline/test_ci_gates.py"]
+
+
+def test_contract_plan_fails_when_real_test_file_missing(tmp_path: Path):
+    repo, _ = _repo(tmp_path)
+    real_path = "test/offline/test_ci_gates.py"
+    placeholder = "test/offline/" + "." * 3 + "py"
+    spec = repo / "docs" / "specs" / "contract-paths.md"
+    spec.parent.mkdir(parents=True)
+    spec.write_text(
+        f"Code: `scripts/ci_checks.py`.\n"
+        f"Use `{real_path}`.\n"
+        f"Placeholder: `{placeholder}`.\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "missing real contract test")
+    spec_commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-01.md",
+        "Approved test specification": f"docs/specs/contract-paths.md @ {spec_commit}",
+        "Approved scope": "contract-test path extraction",
+    }
+
+    result = ci_checks.contract_test_plan(
+        repo,
+        fields,
+        ["scripts/ci_checks.py"],
+        spec_text=None,
+    )
+
+    assert result["errors"]
+    assert any(
+        "contract test does not exist" in error and real_path in error
+        for error in result["errors"]
+    )
+    assert result["test_paths"] == ["test/offline/test_ci_gates.py"]
+    assert all(placeholder not in path for path in result["test_paths"])
+
+
 def test_contract_plan_does_not_require_unimplemented_out_of_scope_fcs(
     tmp_path: Path,
 ):
