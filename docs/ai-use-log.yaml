@@ -1654,3 +1654,83 @@ entries:
       - "No real GitHub artifact URL, token, credentials, .env, model, or data API was accessed."
       - "No approval, commit SHA, or remote CI result was fabricated."
       - "No application behavior or Round 1 work was started."
+
+  - id: "AI-037"
+    date: "2026-11-22"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_contract_test_paths_spec"
+    task: "Author the maintenance specification for the contract-test path extraction fix"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/plans/ci-contract-test-paths-fix.md"
+    ai_contribution: "Created docs/plans/ci-contract-test-paths-fix.md, describing the observed placeholder-extraction failure, the exact-basename filter at the plan_test_paths extraction boundary, the unchanged existence and other gate rules, six independent tests (T1-T6), verification commands, and the approval flow. This step changed the specification only; no code or test was modified."
+    human_intervention: "The user authorized only this maintenance specification, required it to remain pending human approval, and prohibited implementation, shell, tests, installs, Git, and GitHub operations in that step. The specification was committed as fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1."
+    approval:
+      subject: "Test specification docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+      status: "approved"
+      approved_at: "2026-11-21T16:01:47Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+        - "APPROVED test-spec: docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+        - "Non-author reviewer espino2233; approval time 2026-11-21T16:01:47Z (2026-11-22 00:01:47 Asia/Shanghai). Codex verified the approval read-only through the GitHub API; OpenCode did not query GitHub."
+    verification:
+      status: "not_run"
+      summary: "Specification-only step. No code, test, install, or CI execution was performed; the approval is recorded from the PR #9 comment and Codex's read-only GitHub API check."
+      evidence:
+        - "docs/plans/ci-contract-test-paths-fix.md"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+    transcript_refs: []
+    commit: "fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/9"
+    limitations:
+      - "This entry records specification authoring and the pre-approval only; it does not claim implementation, test execution, remote CI, final review, or merge."
+      - "No exported transcript exists for this activity; no transcript filename or line number is invented."
+      - "OpenCode did not query GitHub; the approval was verified read-only by Codex."
+
+  - id: "AI-038"
+    date: "2026-11-22"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_contract_test_paths_fix"
+    task: "Implement the approved contract-test path extraction fix and add the six approved regression tests"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Implemented the approved maintenance specification. Added T1-T6 with the approved names, inputs, and independent expectations to test/offline/test_ci_gates.py, then added an exact-basename filter at the plan_test_paths extraction boundary in scripts/ci_checks.py so only the placeholder whose final component is three ASCII periods plus py is ignored. Kept CONTRACT_TEST_PATTERN unchanged; preserved real-path extraction, sorting, de-duplication, resolve_project_file existence checks, approved-version reading, changed-code-path coverage, collection, and execution rules. No approved specification, Round 1 file, workflow, permission, dependency, mypy baseline, or other gate rule was changed."
+    human_intervention: "The user authorized only scripts/ci_checks.py and test/offline/test_ci_gates.py and directed the implementation sequence: tests first, then the minimal filter. The user executed all verification; OpenCode did not execute the commands or read the raw reports. Post-fix, the user reported test/offline/test_ci_gates.py at 76 passed in 8.07s, Ruff 'All checks passed!' on both modified files, mypy baseline comparison errors=[] and fixed=[], and git diff --check with no output. Pre-fix, the user ran the six current tests against the old scripts/ci_checks.py from the specification commit in a /private/tmp copy: 5 failed, 1 passed in 0.36s, pytest exit code 1 as expected. T1, T2, T4, T5, and T6 failed because the placeholder was extracted; T3 passed; no import, fixture, or Git initialization errors occurred. That temporary copy did not load the project conftest.py and ran only the six tests, so it is not a full regression."
+    approval:
+      subject: "Test specification docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+      status: "approved"
+      approved_at: "2026-11-21T16:01:47Z"
+      evidence:
+        - "See AI-037 and https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+        - "APPROVED test-spec: docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+        - "Non-author reviewer espino2233; approval time 2026-11-21T16:01:47Z. Codex verified the approval read-only; OpenCode did not query GitHub."
+    verification:
+      status: "completed_with_findings"
+      summary: "User-reported verification. Post-fix: test/offline/test_ci_gates.py reported 76 passed in 8.07s; Ruff reported 'All checks passed!' for scripts/ci_checks.py and test/offline/test_ci_gates.py; the mypy baseline comparison reported errors=[] and fixed=[]; git diff --check produced no output. Pre-fix: using the old scripts/ci_checks.py from the specification commit with the current six tests in a /private/tmp copy produced 5 failed, 1 passed in 0.36s with pytest exit code 1 as expected. T1, T2, T4, T5, and T6 failed because the placeholder path was extracted; T3 passed; there were no import, fixture, or Git initialization errors. The pre-fix copy did not load the project conftest.py and ran only the six tests, so it is not a full regression. The AI did not execute these commands or read the raw report."
+      evidence:
+        - "User-provided terminal screenshots and conversation; not executed or directly read by the AI."
+        - "/private/tmp/cs5351-ci-contract-paths/pre-fix-vtcqfwmo/pre-fix-tests.txt (user-reported local temporary evidence; not read by the AI; not repository or remote CI evidence)"
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "The implementation commit has not been produced; commit remains null."
+      - "All verification results are user-reported; OpenCode did not execute the commands or read the raw reports."
+      - "The pre-fix check used a temporary copy without the project conftest.py and ran only the six tests; it is not a full regression."
+      - "The 76-passed result covers test/offline/test_ci_gates.py only, not the whole repository."
+      - "The mypy result means no new or fixed diagnostics relative to the baseline, not that the whole repository has no historical type errors."
+      - "Ruff covered only the two modified files."
+      - "No remote CI, final human review, merge, or confirmation that PR #7 is fixed is claimed."
+      - "No exported transcript reference exists; no filename, line number, or implementation commit SHA is invented."
+      - "No test was deleted, skipped, or weakened."

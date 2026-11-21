@@ -1144,10 +1144,18 @@ def resolve_project_file(root: Path, value: str, label: str) -> tuple[Path | Non
     return resolved, ""
 
 
+def _is_ellipsis_placeholder(path: str) -> bool:
+    return path.rsplit("/", 1)[-1] == "." * 3 + "py"
+
+
 def plan_test_paths(plan_text: str) -> list[str]:
-    return sorted(set(CONTRACT_TEST_PATTERN.findall(plan_text)))
-
-
+    return sorted(
+        {
+            path
+            for path in CONTRACT_TEST_PATTERN.findall(plan_text)
+            if not _is_ellipsis_placeholder(path)
+        }
+    )
 
 
 def parse_approved_specification(value: str) -> tuple[str, str, list[str]]:
