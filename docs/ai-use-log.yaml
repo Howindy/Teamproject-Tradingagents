@@ -1615,3 +1615,38 @@ entries:
       - "Semantic evaluation still lacks an approved dataset, rubric, threshold, model, and runner."
       - "Round 1 remains a draft and unapproved; no application implementation was started."
       - "Existing uncommitted CI, requirements, permission, and governance changes were preserved and were not committed."
+
+  - id: "AI-036"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_ai_use_log_positive_path"
+    task: "Record the temporary CI validation probe and add its AI-use log association to test the AI-use-log gate positive path"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_validation_probe.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Guided creation of the temporary scripts/ci_validation_probe.py probe, which intentionally lacks test pre-approval, an approved test specification, and an AI-use-log association; added this log entry explicitly naming the probe so the AI-use-log gate can evaluate its positive path. No application code, tests, workflow, gate logic, PR description, or test specification were changed."
+    human_intervention: "The human user directed work on the temporary verify-ci-gates branch and PR #2, which is explicitly not intended to merge into main, and requested this AI-use-log-only addition to validate the positive AI-use-log path. Exact human command strings, CI run IDs, check names, and pass/fail conclusions were not supplied in this task; they remain unrecorded rather than invented."
+    approval:
+      subject: "Temporary CI gate probe; no implementation or merge approval claimed"
+      status: "not_established"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "completed"
+      summary: "Local format and association checks passed. The AI-use log parsed with 36 entries and 36 unique IDs (last AI-036), and `scripts/ci_checks.py ai-log` against PR base d73f312 and HEAD d1a80b8 reported changed_entries=1, errors=[], required=true, and unassociated_paths=[]. This verifies only the local log-format/association path; no application tests, CI execution, test approval, or remote CI conclusion is claimed."
+      evidence:
+        - "docs/ai-use-log.yaml"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/2"
+    limitations:
+      - "PR #2 is a temporary validation branch and must not be merged into main."
+      - "The current session transcript has not been exported; no transcript reference is invented."
+      - "Exact human command strings, CI run IDs, check names, and pass/fail results were not supplied and are not claimed; the AI did not query GitHub or independently view PR #2 results."
+      - "This entry does not approve tests, application implementation, Round 1, or merge."
+      - "No application code, tests, workflows, gate logic, PR description, or test specification were changed."
