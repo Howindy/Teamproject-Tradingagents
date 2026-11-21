@@ -1659,83 +1659,84 @@ entries:
       - "No application behavior or Round 1 work was started."
 
   - id: "AI-037"
-    date: "2026-11-21"
+    date: "2026-11-22"
     round: null
     human_operator: null
     tool: "OpenCode"
     model: "DeepSeek Flash"
-    activity: "ci_ai_use_log_positive_probe"
-    task: "Exercise the AI-use-log gate positive path with the temporary verify-ci-gates probe"
+    activity: "ci_contract_test_paths_spec"
+    task: "Author the maintenance specification for the contract-test path extraction fix"
     requirement_ids: []
     fit_criterion_ids: []
     files_changed:
-      - "docs/ai-use-log.yaml"
-    ai_contribution: "On branch verify-ci-gates at d1a80b8, added a temporary AI-use-log entry (ID AI-036) associating the pre-existing scripts/ci_validation_probe.py with the log so the AI-use-log gate could be checked on its positive path. No code, test, workflow, gate, or PR-description change was made. The local ai-log check against base d73f312 reported changed_entries=1, required=true, errors=[], and unassociated_paths=[]; the YAML parsed with 36 entries and unique IDs. The temporary AI-036 entry was later replaced in the working file by the artifact-download AI-036 entry, so this activity is recorded separately here."
-    human_intervention: "The transcript begins mid-task; the assistant's recorded context states that the user directed work on the temporary verify-ci-gates branch and PR #2, that PR #2 must not merge into main, and that only the AI-use-log addition was requested. Exact human command strings, CI run IDs, check names, and pass/fail results were not supplied; the AI did not query GitHub. No user message for this opening task is retained in the exported transcript."
+      - "docs/plans/ci-contract-test-paths-fix.md"
+    ai_contribution: "Created docs/plans/ci-contract-test-paths-fix.md, describing the observed placeholder-extraction failure, the exact-basename filter at the plan_test_paths extraction boundary, the unchanged existence and other gate rules, six independent tests (T1-T6), verification commands, and the approval flow. This step changed the specification only; no code or test was modified."
+    human_intervention: "The user authorized only this maintenance specification, required it to remain pending human approval, and prohibited implementation, shell, tests, installs, Git, and GitHub operations in that step. The specification was committed as fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1."
     approval:
-      subject: "Temporary AI-use-log positive-path probe (PR #2); no merge or implementation approval claimed"
-      status: "not_established"
-      approved_at: null
-      evidence: []
-    verification:
-      status: "completed_with_findings"
-      summary: "Local log-format and association checks passed: 36 unique entries, changed_entries=1, errors=[], required=true, and no unassociated paths. This is local evidence only; no application test, CI workflow, or remote PR #2 result was observed."
+      subject: "Test specification docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+      status: "approved"
+      approved_at: "2026-11-21T16:01:47Z"
       evidence:
-        - "transcripts/session-14.md:941-959 (local ai-log check)"
-        - "transcripts/session-14.md:1261-1332 (recorded AI-036 and local validation)"
-    transcript_refs:
-      - path: "transcripts/session-14.md"
-        locator: "lines 9-1351"
-    commit: null
-    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/2"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+        - "APPROVED test-spec: docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+        - "Non-author reviewer espino2233; approval time 2026-11-21T16:01:47Z (2026-11-22 00:01:47 Asia/Shanghai). Codex verified the approval read-only through the GitHub API; OpenCode did not query GitHub."
+    verification:
+      status: "not_run"
+      summary: "Specification-only step. No code, test, install, or CI execution was performed; the approval is recorded from the PR #9 comment and Codex's read-only GitHub API check."
+      evidence:
+        - "docs/plans/ci-contract-test-paths-fix.md"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+    transcript_refs: []
+    commit: "fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/9"
     limitations:
-      - "The initial user instruction is not present; the transcript starts with assistant work."
-      - "PR #2 is a temporary validation branch and must not be merged into main."
-      - "Exact human commands, CI run IDs, check names, and remote results were not supplied or independently observed."
-      - "The temporary AI-036 entry is not the current AI-036; the later artifact-download entry replaced it in the working log."
-      - "No application code, tests, workflow, gate logic, or test specification was changed."
+      - "This entry records specification authoring and the pre-approval only; it does not claim implementation, test execution, remote CI, final review, or merge."
+      - "No exported transcript exists for this activity; no transcript filename or line number is invented."
+      - "OpenCode did not query GitHub; the approval was verified read-only by Codex."
 
   - id: "AI-038"
-    date: "2026-11-21"
+    date: "2026-11-22"
     round: null
     human_operator: null
     tool: "OpenCode"
     model: "DeepSeek Flash"
-    activity: "ci_test_approval_positive_probe"
-    task: "Author the approved CI test-approval positive-path specification and implement its two probe tests"
+    activity: "ci_contract_test_paths_fix"
+    task: "Implement the approved contract-test path extraction fix and add the six approved regression tests"
     requirement_ids: []
     fit_criterion_ids: []
     files_changed:
-      - "docs/plans/ci-gate-positive.md"
-      - "test/offline/test_ci_approval_probe.py"
+      - "scripts/ci_checks.py"
+      - "test/offline/test_ci_gates.py"
       - "docs/ai-use-log.yaml"
-    ai_contribution: "Created the plan-only docs/plans/ci-gate-positive.md specifying two classification tests, then corrected its Section 7 after verifying that scripts/ci_checks.py reads the specification at the approved commit but resolves and executes test files from the implementation checkout. After user-supplied PR #3 approval, created test/offline/test_ci_approval_probe.py with exactly the two named tests, loading scripts/ci_checks.py by project-relative path and directly asserting the approved path classifications. Added the matching AI-use-log entry. The approved specification file was left unmodified and still marked Proposed."
-    human_intervention: "The user limited work first to the specification and then to the two tests plus the AI-use-log entry, required exact independent assertions, no synthetic input files, no spec status change, and no Git/GitHub writes. The user supplied PR #3 approval by non-author jyy722 at the cited comment and specified commit d2b60d9de26bff1645738655857f8915b521cbe3; the AI did not independently fetch or verify the comment."
+    ai_contribution: "Implemented the approved maintenance specification. Added T1-T6 with the approved names, inputs, and independent expectations to test/offline/test_ci_gates.py, then added an exact-basename filter at the plan_test_paths extraction boundary in scripts/ci_checks.py so only the placeholder whose final component is three ASCII periods plus py is ignored. Kept CONTRACT_TEST_PATTERN unchanged; preserved real-path extraction, sorting, de-duplication, resolve_project_file existence checks, approved-version reading, changed-code-path coverage, collection, and execution rules. No approved specification, Round 1 file, workflow, permission, dependency, mypy baseline, or other gate rule was changed."
+    human_intervention: "The user authorized only scripts/ci_checks.py and test/offline/test_ci_gates.py and directed the implementation sequence: tests first, then the minimal filter. The user executed all verification; OpenCode did not execute the commands or read the raw reports. Post-fix, the user reported test/offline/test_ci_gates.py at 76 passed in 8.07s, Ruff 'All checks passed!' on both modified files, mypy baseline comparison errors=[] and fixed=[], and git diff --check with no output. Pre-fix, the user ran the six current tests against the old scripts/ci_checks.py from the specification commit in a /private/tmp copy: 5 failed, 1 passed in 0.36s, pytest exit code 1 as expected. T1, T2, T4, T5, and T6 failed because the placeholder was extracted; T3 passed; no import, fixture, or Git initialization errors occurred. That temporary copy did not load the project conftest.py and ran only the six tests, so it is not a full regression."
     approval:
-      subject: "Test specification docs/plans/ci-gate-positive.md @ d2b60d9de26bff1645738655857f8915b521cbe3"
+      subject: "Test specification docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
       status: "approved"
-      approved_at: null
+      approved_at: "2026-11-21T16:01:47Z"
       evidence:
-        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/3#issuecomment-7059136183"
-        - "User-supplied approval by non-author reviewer jyy722 in PR #3; exact time not recorded and not independently verified."
+        - "See AI-037 and https://github.com/Howindy/Teamproject-Tradingagents/pull/9#issuecomment-7065323701"
+        - "APPROVED test-spec: docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1"
+        - "Non-author reviewer espino2233; approval time 2026-11-21T16:01:47Z. Codex verified the approval read-only; OpenCode did not query GitHub."
     verification:
-      status: "passed"
-      summary: "Collection and execution reported exactly 2 passed tests in 0.01s with no skips; Ruff passed on the new test file; the AI-use-log format/association check passed. The run excluded test/conftest.py and project pytest configuration to avoid .env reading. These are local results only; no remote CI result is claimed."
+      status: "completed_with_findings"
+      summary: "User-reported verification. Post-fix: test/offline/test_ci_gates.py reported 76 passed in 8.07s; Ruff reported 'All checks passed!' for scripts/ci_checks.py and test/offline/test_ci_gates.py; the mypy baseline comparison reported errors=[] and fixed=[]; git diff --check produced no output. Pre-fix: using the old scripts/ci_checks.py from the specification commit with the current six tests in a /private/tmp copy produced 5 failed, 1 passed in 0.36s with pytest exit code 1 as expected. T1, T2, T4, T5, and T6 failed because the placeholder path was extracted; T3 passed; there were no import, fixture, or Git initialization errors. The pre-fix copy did not load the project conftest.py and ran only the six tests, so it is not a full regression. The AI did not execute these commands or read the raw report."
       evidence:
-        - "transcripts/session-14.md:5571-5595 (collection and 2 passed)"
-        - "transcripts/session-14.md:5597-5620 (AI-log and Ruff checks)"
-    transcript_refs:
-      - path: "transcripts/session-14.md"
-        locator: "lines 1355-5646"
+        - "User-provided terminal screenshots and conversation; not executed or directly read by the AI."
+        - "/private/tmp/cs5351-ci-contract-paths/pre-fix-vtcqfwmo/pre-fix-tests.txt (user-reported local temporary evidence; not read by the AI; not repository or remote CI evidence)"
+    transcript_refs: []
     commit: null
-    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/3"
+    pull_request: null
     limitations:
-      - "PR #3 is a temporary validation PR and was not merged."
-      - "The approval evidence is user-supplied and was not independently fetched or verified."
-      - "The approved specification remained marked Proposed/not approved in the file; no status was changed."
-      - "The test run excluded test/conftest.py to avoid its .env-reading setup; this is a reduced local test environment."
-      - "The temporary AI-use-log entry was later replaced in the working file by a later AI-036 entry; it is not retained as a separate current entry."
-      - "No remote CI, test-approval gate, or Round 1 work is claimed."
+      - "The implementation commit has not been produced; commit remains null."
+      - "All verification results are user-reported; OpenCode did not execute the commands or read the raw reports."
+      - "The pre-fix check used a temporary copy without the project conftest.py and ran only the six tests; it is not a full regression."
+      - "The 76-passed result covers test/offline/test_ci_gates.py only, not the whole repository."
+      - "The mypy result means no new or fixed diagnostics relative to the baseline, not that the whole repository has no historical type errors."
+      - "Ruff covered only the two modified files."
+      - "No remote CI, final human review, merge, or confirmation that PR #7 is fixed is claimed."
+      - "No exported transcript reference exists; no filename, line number, or implementation commit SHA is invented."
+      - "No test was deleted, skipped, or weakened."
 
   - id: "AI-039"
     date: "2026-11-21"
@@ -2071,6 +2072,7 @@ entries:
       - "No YAML validator, tests, mypy, remote CI, final human review, commit, or merge evidence is provided."
       - "AI-043 and AI-044 retain their original not-run/limited evidence scope; later results are recorded only in AI-045."
       - "FR-04-FC05 and CLI/graph/report integration remain unimplemented."
+      - "Historical ID mapping after the main merge: the probe activities that were AI-037 and AI-038 when this backfill was recorded are now AI-048 and AI-049; AI-037 and AI-038 now identify the separate CI contract-test path activities from main. The historical counts and IDs in this entry describe the pre-merge log and are not rewritten as if the new IDs had been used then."
 
   - id: "AI-047"
     date: "2026-11-21"
@@ -2113,3 +2115,84 @@ entries:
       - "The contract-test path extraction issue remains unfixed, and remote CI has not been re-confirmed as passing."
       - "No commit, push, PR, merge, or final human review is evidenced."
       - "FR-04-FC05 and CLI/graph/report integration remain unimplemented."
+
+  - id: "AI-048"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_ai_use_log_positive_probe"
+    task: "Exercise the AI-use-log gate positive path with the temporary verify-ci-gates probe"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "On branch verify-ci-gates at d1a80b8, added a temporary AI-use-log entry (ID AI-036) associating the pre-existing scripts/ci_validation_probe.py with the log so the AI-use-log gate could be checked on its positive path. No code, test, workflow, gate, or PR-description change was made. The local ai-log check against base d73f312 reported changed_entries=1, required=true, errors=[], and unassociated_paths=[]; the YAML parsed with 36 entries and unique IDs. The temporary AI-036 entry was later replaced in the working file by the artifact-download AI-036 entry, so this activity is recorded separately here."
+    human_intervention: "The transcript begins mid-task; the assistant's recorded context states that the user directed work on the temporary verify-ci-gates branch and PR #2, that PR #2 must not merge into main, and that only the AI-use-log addition was requested. Exact human command strings, CI run IDs, check names, and pass/fail results were not supplied; the AI did not query GitHub. No user message for this opening task is retained in the exported transcript."
+    approval:
+      subject: "Temporary AI-use-log positive-path probe (PR #2); no merge or implementation approval claimed"
+      status: "not_established"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "completed_with_findings"
+      summary: "Local log-format and association checks passed: 36 unique entries, changed_entries=1, errors=[], required=true, and no unassociated paths. This is local evidence only; no application test, CI workflow, or remote PR #2 result was observed."
+      evidence:
+        - "transcripts/session-14.md:941-959 (local ai-log check)"
+        - "transcripts/session-14.md:1261-1332 (recorded AI-036 and local validation)"
+    transcript_refs:
+      - path: "transcripts/session-14.md"
+        locator: "lines 9-1351"
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/2"
+    limitations:
+      - "The initial user instruction is not present; the transcript starts with assistant work."
+      - "PR #2 is a temporary validation branch and must not be merged into main."
+      - "Exact human commands, CI run IDs, check names, and remote results were not supplied or independently observed."
+      - "The temporary AI-036 entry is not the current AI-036; the later artifact-download entry replaced it in the working log."
+      - "No application code, tests, workflow, gate logic, or test specification was changed."
+      - "Originally AI-037 on branch round-01-portfolio-risk at source commit ad60f625ba82877ddcd458dbc908691a4e4c0eeb; renumbered to AI-048 because main already used AI-037 for a different CI maintenance activity."
+
+  - id: "AI-049"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "ci_test_approval_positive_probe"
+    task: "Author the approved CI test-approval positive-path specification and implement its two probe tests"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/plans/ci-gate-positive.md"
+      - "test/offline/test_ci_approval_probe.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Created the plan-only docs/plans/ci-gate-positive.md specifying two classification tests, then corrected its Section 7 after verifying that scripts/ci_checks.py reads the specification at the approved commit but resolves and executes test files from the implementation checkout. After user-supplied PR #3 approval, created test/offline/test_ci_approval_probe.py with exactly the two named tests, loading scripts/ci_checks.py by project-relative path and directly asserting the approved path classifications. Added the matching AI-use-log entry. The approved specification file was left unmodified and still marked Proposed."
+    human_intervention: "The user limited work first to the specification and then to the two tests plus the AI-use-log entry, required exact independent assertions, no synthetic input files, no spec status change, and no Git/GitHub writes. The user supplied PR #3 approval by non-author jyy722 at the cited comment and specified commit d2b60d9de26bff1645738655857f8915b521cbe3; the AI did not independently fetch or verify the comment."
+    approval:
+      subject: "Test specification docs/plans/ci-gate-positive.md @ d2b60d9de26bff1645738655857f8915b521cbe3"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/3#issuecomment-7059136183"
+        - "User-supplied approval by non-author reviewer jyy722 in PR #3; exact time not recorded and not independently verified."
+    verification:
+      status: "passed"
+      summary: "Collection and execution reported exactly 2 passed tests in 0.01s with no skips; Ruff passed on the new test file; the AI-use-log format/association check passed. The run excluded test/conftest.py and project pytest configuration to avoid .env reading. These are local results only; no remote CI result is claimed."
+      evidence:
+        - "transcripts/session-14.md:5571-5595 (collection and 2 passed)"
+        - "transcripts/session-14.md:5597-5620 (AI-log and Ruff checks)"
+    transcript_refs:
+      - path: "transcripts/session-14.md"
+        locator: "lines 1355-5646"
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/3"
+    limitations:
+      - "PR #3 is a temporary validation PR and was not merged."
+      - "The approval evidence is user-supplied and was not independently fetched or verified."
+      - "The approved specification remained marked Proposed/not approved in the file; no status was changed."
+      - "The test run excluded test/conftest.py to avoid its .env-reading setup; this is a reduced local test environment."
+      - "The temporary AI-use-log entry was later replaced in the working file by a later AI-036 entry; it is not retained as a separate current entry."
+      - "No remote CI, test-approval gate, or Round 1 work is claimed."
+      - "Originally AI-038 on branch round-01-portfolio-risk at source commit ad60f625ba82877ddcd458dbc908691a4e4c0eeb; renumbered to AI-049 because main already used AI-038 for a different CI maintenance activity."
