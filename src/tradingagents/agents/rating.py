@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
+# Temporary CI validation probe: missing ADR; never merge this branch.
 # Canonical, ordered 5-tier scale (most bullish to most bearish).
 RATINGS_5_TIER: tuple[str, ...] = (
     "Buy", "Overweight", "Hold", "Underweight", "Sell",
