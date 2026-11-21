@@ -77,7 +77,7 @@ The return value is one plain JSON-compatible mapping. Required keys and meaning
 | `status` | One of `passed`, `blocked`, `not_applicable`, `error`. |
 | `analysis_ticker` | The explicit analysis ticker argument as supplied; not a network-resolved identity. |
 | `scenario` | Display-safe mapping of the scenario fields that were safely parsable; numeric values are decimal strings; unsafe/invalid raw values are omitted and the mapping may be empty. |
-| `thresholds` | Display-safe mapping of only the valid threshold values actually used, as decimal strings; it may be empty when none are valid. The classroom-demonstration/non-trade-authorization statement remains a documented display requirement, not a new required result key. |
+| `thresholds` | Display-safe mapping of only the valid threshold values actually used, as decimal strings; it may be empty when none are valid. The actual returned risk result must carry the classroom-demonstration/non-trade-authorization semantics; this is not merely a statement in the specification. It does not require a new specific result field, fixed wording, renderer, or display component. |
 | `projected_weight`, `stop_distance` | Decimal strings when their own arithmetic operands are legal, otherwise `None`. |
 | `reasons` | A list of short risk-scoped strings; blocked/error cases include at least one actual reason. |
 
@@ -163,4 +163,4 @@ After this Draft 2 is reviewed, the sequence is: final specification commit P â†
 | FC01â€“FC04 completion | Not established |
 | FC05 / full FR-04 / integrated IR-14 | Excluded and not accepted |
 
-After real approval, record its time, approved content/version, scope, and evidence location through an authorized plan update. Reconfirm affected approval only if expectations, interfaces or scope change; unrelated approved work needs no repeated approval. Completion requires the approved core assertions and applicable regression/structural checks to pass with actual evidence. Environment blocks and skips are not passes, and no risk pass is trade authorization.
+After real approval, record its time, approved content/version, scope, and evidence location in the same PR or an explicitly authorized existing record. Keep the approved specification unchanged; do not update it to fill approval status or execution results. Reconfirm affected approval only if expectations, interfaces or scope change; unrelated approved work needs no repeated approval. Completion requires the approved core assertions and applicable regression/structural checks to pass with actual evidence. Environment blocks and skips are not passes, and no risk pass is trade authorization.
