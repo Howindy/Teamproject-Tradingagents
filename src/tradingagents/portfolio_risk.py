@@ -124,8 +124,8 @@ def _format_fraction(value):
 
 def _analyze_scenario(scenario, analysis_ticker):
     """Return safe display inputs, parsed values, errors, and operand legality."""
-    safe = {}
-    values = {}
+    safe: dict[str, str | Fraction] = {}
+    values: dict[str, Fraction] = {}
     errors = []
 
     if not isinstance(scenario, Mapping):
@@ -173,7 +173,13 @@ def _analyze_scenario(scenario, analysis_ticker):
     current_ok = current is not None and current >= 0
     if current is not None and current < 0:
         errors.append("scenario current_position_value must be at least 0")
-    if portfolio_ok and current_ok and current > portfolio:
+    if (
+        portfolio_ok
+        and current_ok
+        and current is not None
+        and portfolio is not None
+        and current > portfolio
+    ):
         errors.append("scenario current_position_value must not exceed portfolio_value")
         current_ok = False
 
@@ -190,7 +196,7 @@ def _analyze_scenario(scenario, analysis_ticker):
         errors.append(
             "scenario stop_loss_price must be greater than 0 and less than entry_price"
         )
-    if entry_ok and stop is not None and stop >= entry:
+    if entry_ok and entry is not None and stop is not None and stop >= entry:
         errors.append(
             "scenario stop_loss_price must be greater than 0 and less than entry_price"
         )
@@ -203,6 +209,7 @@ def _analyze_scenario(scenario, analysis_ticker):
 
 def _parse_thresholds(thresholds):
     """Apply the confirmed per-key threshold omission and invalid-value rules."""
+    raw: Mapping[str, object]
     if thresholds is None:
         raw = {}
     elif isinstance(thresholds, Mapping):

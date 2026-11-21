@@ -2071,3 +2071,45 @@ entries:
       - "No YAML validator, tests, mypy, remote CI, final human review, commit, or merge evidence is provided."
       - "AI-043 and AI-044 retain their original not-run/limited evidence scope; later results are recorded only in AI-045."
       - "FR-04-FC05 and CLI/graph/report integration remain unimplemented."
+
+  - id: "AI-047"
+    date: "2026-11-21"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "fr04_mypy_type_fix"
+    task: "Fix mypy type annotations and nullable numeric comparisons in the FR-04 risk evaluator"
+    requirement_ids:
+      - "FR-04"
+    fit_criterion_ids:
+      - "FR-04-FC01"
+      - "FR-04-FC02"
+      - "FR-04-FC03"
+      - "FR-04-FC04"
+    files_changed:
+      - "src/tradingagents/portfolio_risk.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "OpenCode added accurate container annotations for safe (dict[str, str | Fraction]) and values (dict[str, Fraction]), annotated the threshold input as Mapping[str, object] while preserving the empty-mapping case, and added explicit None narrowing before the current_position_value/portfolio_value and stop_loss_price/entry_price comparisons. Existing behavior, interface, threshold rules, exact Fraction comparisons, independent metric nullability, and JSON-safe output were preserved. No test, approved specification, CI, permission, dependency file, or mypy-baseline.txt was changed."
+    human_intervention: "The user authorized the narrow type-only source change and this log-only update. The user executed the local validation; OpenCode did not execute it or read the raw reports. The user reported that the initial baseline mypy comparison left only a google_client.py diagnostic, that local langchain-google-genai was 4.5.2 while the CI type constraint is 4.4.0, and that the user aligned the environment to the existing constraint. After alignment, the user reported pip check 'No broken requirements found.', mypy baseline comparison errors=[] and fixed=[], Ruff 'All checks passed!' on the two target files, target tests 82 passed in 0.63s, and git diff --check with no output."
+    approval:
+      subject: "FR-04 mypy type fix"
+      status: "not_established"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "completed_with_findings"
+      summary: "User-reported local verification only. The initial baseline mypy comparison left only the google_client.py diagnostic under a langchain-google-genai 4.5.2 environment; the CI type constraint is 4.4.0, and the user aligned the environment to that existing constraint. After alignment: pip check reported 'No broken requirements found.'; the mypy baseline comparison reported errors=[] and fixed=[]; Ruff reported 'All checks passed!' for src/tradingagents/portfolio_risk.py and test/offline/test_fr04_risk.py; the target tests reported 82 passed in 0.63s; git diff --check produced no output. The errors=[]/fixed=[] result means no new or fixed diagnostics relative to the baseline; it does not mean the whole repository has no historical type errors."
+      evidence:
+        - "User-provided terminal screenshots and conversation; not present in an exported transcript and not directly executed or read by the AI."
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "All verification results are user-reported; OpenCode did not execute the commands or read the raw reports."
+      - "No transcript file, line number, or commit SHA is invented for this activity."
+      - "The mypy baseline result means no new or fixed diagnostics relative to the baseline, not a clean repository-wide type result."
+      - "Ruff covered only the two target files; the target tests are not a full regression pass."
+      - "The contract-test path extraction issue remains unfixed, and remote CI has not been re-confirmed as passing."
+      - "No commit, push, PR, merge, or final human review is evidenced."
+      - "FR-04-FC05 and CLI/graph/report integration remain unimplemented."
