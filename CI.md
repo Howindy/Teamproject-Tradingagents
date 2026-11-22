@@ -1,13 +1,13 @@
 # CI Governance Plan
 
-- Status: **Approved for implementation by the human user; implemented locally. Round 1 and PR #9 have real approvals, merges, and successful workflow-level PR/main runs; individual job results, trusted semantic evaluation, permission enforcement, and remote branch protection remain unverified; live execution is optional and not a merge gate.**
+- Status: **Approved for implementation by the human user; implemented locally. Round 1, PR #9, and the Round 2 C-09 independent core (PR #10) have real approvals, merges, and successful workflow-level PR/main runs; individual job results, trusted semantic evaluation, permission enforcement, and remote branch protection remain unverified; live execution is optional and not a merge gate.**
 - Scope: minimum viable implementation of the six course CI gates and branch-protection requirements for this repository.
 - This document is a design and test specification. It does not approve a round plan, application implementation, branch protection, semantic-evaluation standards, or a live-test environment.
 - The CI checks and workflows listed in section 5 are implemented locally in this checkout; this document does not execute them or prove their remote behavior.
 - `CI.md` itself is the test specification for the CI implementation. The human approval is recorded in `docs/ci/README.md`; the new CI cannot retroactively machine-verify its own pre-approval.
 - D2.md is not a current input. Course D2 requirements come from the course PDF; project architecture is represented by the existing blueprint and `docs/architecture/` artifacts.
 
-**Current-status clarification (2026-11-22):** Round 1 (C-08 core) and the PR #9 contract-test path fix have real human approvals, merges, and successful PR/main workflow runs; see [RM-7-R1 and RM-9-R1](docs/review-memo.md#4-registered-records). This does not establish branch protection, individual job success, trusted semantic/live evaluation, full permission enforcement, or any unrun check. Historical sections below keep their original version context.
+**Current-status clarification (2026-11-22):** Round 1 (C-08 core), the PR #9 contract-test path fix, and the Round 2 C-09/IF-09 independent core (PR #10) have real human approvals, merges, and successful PR/main workflow runs; see [RM-7-R1, RM-9-R1, and RM-10-R1](docs/review-memo.md#4-registered-records). PR #10's main push skipped PR-only jobs. This does not establish branch protection, individual job success, trusted semantic/live evaluation, full permission enforcement, production integration, full SB-01, or any unrun check. Historical sections below keep their original version context.
 
 ---
 
@@ -21,7 +21,7 @@
 - D2 includes the blueprint, ADR 001, invariants, trace matrix, memory/state design, permission model, runtime policy catalog, and evaluation table.
 - The current ADR and architecture package remain Proposed; they are not implementation or test acceptance.
 - D4 defines verification obligations. Its `V-*` identifiers are planned verification intents, not actual test coverage.
-- The C-08 FR-04 core now has offline tests and a merged Round 1 record. Other new D2 behavior, including SB-01/C-09, availability, manifest, history, and broader security paths, has no dedicated test yet.
+- The C-08 FR-04 and C-09/IF-09 independent cores have offline tests and merged review records. Production C-09 integration, availability, manifest, history, and broader security paths do not yet have dedicated tests; the C-09 test file covers only SB-01-FC01–FC04 core and local IR-01/IR-02 responsibility.
 
 ### Application and test layout
 
@@ -91,13 +91,13 @@ historical 57-gate-test/1415-passed record above.
 
 ### Governance state
 
-- Round 1 is approved at `docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1 records its test and safety pre-approvals and merge. That approval covers the C-08 core only; FR-04-FC05, complete IR-14, entry/graph/report integration, and C-09 remain unimplemented.
+- Round 1 is approved at `docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1 records its test and safety pre-approvals and merge. That approval covers the C-08 core only; FR-04-FC05, complete IR-14, and production integration remain unimplemented.
 - Round 1 test and safety pre-approvals are recorded in PR #7 (see RM-7-R1). PR #9 is the separate contract-test path-fix approval and merge (see RM-9-R1); neither CI maintenance nor workflow success expands application scope.
-- PR #10 records a fixed-version pre-approval of `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535` ([comment 7073333663](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663)); the current work is documentation closeout only, C-09 is not implemented, and that specification pre-approval is not safety-critical implementation approval, execution evidence, or final acceptance.
+- Round 2 is frozen at `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535`. PR #10 records its test/safety approvals, review of H, merge M, and workflow-level PR/main success (RM-10-R1). The approved and merged scope is the C-09/IF-09 independent core, SB-01-FC01–FC04, and local IR-01/IR-02 responsibility only. Production integration, SB-01-FC05, full SB-01, global invariants, IF-19, and the FR-03 producer remain incomplete.
 - No fixed semantic-evaluation dataset, rubric, threshold, or model configuration exists.
 - No live-test environment is configured or verified; the course does not require a live call for every change.
 - No actual CODEOWNERS owner accounts or branch-protection settings are confirmed from the local checkout.
-- CI implementation and semantic/live evaluation remain separate from the Round 1 application approval and do not expand its C-08-only scope.
+- CI implementation and semantic/live evaluation remain separate from the Round 1 and Round 2 application approvals and do not expand their C-08/C-09 core-only scope.
 
 ---
 
@@ -547,7 +547,7 @@ Parameterized cases:
 - pure documentation/build configuration sets `approval_applicable=false` and skips this gate;
 - `scripts/**/*.py`, `setup.py`, root Python files, and `docs/**/*.py` remain code and require approval/log checks; non-code `pyproject.toml`/`requirements.txt` stay configuration;
 - changed-scope IDs come from changed diff lines and changed test paths; unchanged FC/IRs in the same file do not expand approval;
-- Round 1 remains proposed and an application change without approval fields is blocked.
+- An application change without approval fields is blocked; the historical Round 1 pre-approval example is no longer presented as currently unapproved.
 
 ### Schema
 
@@ -732,13 +732,13 @@ These may be adopted later through separate approved work. They are not required
 
 ## 9. Unmet or unverified course requirements
 
-Current GitHub execution evidence: the PR and main workflow runs recorded for PR #7 (Round 1) and PR #9 (contract-test path fix) completed successfully at workflow level in RM-7-R1 and RM-9-R1. Individual job outcomes, branch protection, permission enforcement, and semantic/live evidence were not separately verified. Remaining "unverified" statements below refer to those unverified aspects, not to the absence of any successful PR/main workflow run.
+Current GitHub execution evidence: the PR and main workflow runs recorded for PR #7 (Round 1), PR #9 (contract-test path fix), and PR #10 (Round 2 C-09 core) completed successfully at workflow level in RM-7-R1, RM-9-R1, and RM-10-R1. PR #10's push run skipped PR-only jobs. Individual job outcomes, branch protection, permission enforcement, and semantic/live evidence were not separately verified. Remaining "unverified" statements below refer to those unverified aspects, not to the absence of any successful PR/main workflow run.
 
-- Test pre-approval: the explicit `APPROVED test-spec:` phrase, bot exclusion, and version binding are implemented and offline-tested. Round 1's real pre-approvals and merged PR are recorded in RM-7-R1; PR #10 records the fixed-version Round 2 plan/test-spec pre-approval, with C-09 still unimplemented and no safety-critical implementation approval, execution evidence, or final acceptance; individual gate-job results and branch-protection enforcement remain unverified.
+- Test pre-approval: the explicit `APPROVED test-spec:` phrase, bot exclusion, and version binding are implemented and offline-tested. Round 1's real pre-approvals and merged PR are recorded in RM-7-R1. PR #10 records the Round 2 test-spec and safety-critical implementation approvals, review of H, merge M, and workflow-level PR/main success; its approved scope is the independent core only, not production integration or full SB-01. Individual gate-job results and branch-protection enforcement remain unverified.
 - Trusted evaluation source: default-branch and trusted-workflow-version checks are implemented and offline-tested; no real trusted run exists.
 - Optional live result: JUnit-based execution/skip/deselection logic is implemented and offline-tested; the live suite has not been run and is not a merge gate.
 - Build/unknown classification and contract-test association: implemented and offline-tested; unknown paths run generic checks without a permanent hard block; PR #9 exercised the contract-path fix at workflow level, but individual job results were not separately checked.
-- Security-path contract coverage: new D2 tests do not exist; security changes remain blocked.
+- Security-path contract coverage: new D2 tests exist only for the named C-08 and C-09 independent cores; production integration and other new D2 behavior remain untested, so security changes outside covered scope remain blocked.
 - Type checking: mypy configuration and an exact baseline are implemented locally; workflow-level PR/main runs succeeded for the recorded PRs, but the type-check job result was not separately verified.
 - Dependency check: `pip check` is wired into CI; workflow-level runs succeeded, but the dependency/install job results and installation consistency were not separately verified.
 - Schema: validation is wired into CI and passes locally; workflow-level runs succeeded, but the schema job result was not separately checked.
@@ -748,16 +748,16 @@ Current GitHub execution evidence: the PR and main workflow runs recorded for PR
 - Live tests: optional and not required by the course gates; no live evidence is claimed.
 - Full active-FC/IR coverage: not established.
 - Branch protection: not configured or verified.
-- Required CI aggregate: implemented as the PR-only `ci / aggregate`; workflow-level PR runs succeeded, but the aggregate job outcome was not separately checked and branch protection is not configured or verified.
+- Required CI aggregate: implemented as the PR-only `ci / aggregate`; workflow-level PR runs for PR #7, PR #9, and PR #10 succeeded, but the aggregate job outcome was not separately checked and branch protection is not configured or verified.
 - CI self-protection: only native human review is proposed; no strong policy guard.
-- D2 design and ADR remain Proposed; no application acceptance is claimed.
+- D2 design and ADR remain Proposed; the C-08 and C-09 independent-core implementations do not approve the production architecture or establish application acceptance.
 
 ---
 
 ## 10. Status conclusion
 
 - This document's implementation scope was approved by the human user and the files are present in the current checkout.
-- Round 1 and PR #9 have real approvals, merges, and workflow-level PR/main success (RM-7-R1, RM-9-R1). This does not prove individual job success or branch-protection enforcement.
+- Round 1, PR #9, and PR #10 have real approvals, merges, and workflow-level PR/main success (RM-7-R1, RM-9-R1, RM-10-R1). PR #10's main push skipped PR-only jobs. This does not prove individual job success or branch-protection enforcement.
 - Local implementation does not enable branch protection or prove per-job GitHub CI execution.
 - A green local gate test does not prove semantic quality or optional live model/vendor behavior.
 - Semantic evaluation stays blocked without approved standards; the optional live workflow is not a course gate.

@@ -1,7 +1,7 @@
 # D4 Review Memo
 
-- Document status: Reusable review-record template with two historical closeout records transcribed from user-provided GitHub evidence and one AI-authored draft implementation-review record; this is not a new human review or approval.
-- Registered records: RM-7-R1 and RM-9-R1 are historical human closeout records; both GitHub review bodies are empty and written rationale was not provided. RM-10-R1 is an AI-authored draft, not a third completed human review or verdict.
+- Document status: Reusable review-record template with two historical closeout records and one AI-authored implementation-review draft whose final human `APPROVED` event is separately transcribed from user-provided GitHub evidence. The AI-authored analysis remains distinct from the human verdict; this update is not a new review or approval.
+- Registered records: RM-7-R1 and RM-9-R1 are historical human closeout records; both GitHub review bodies are empty and written rationale was not provided. RM-10-R1's analysis was authored by the AI; its later human formal review and written rationale are transcribed separately below. The AI did not select or invent the human verdict.
 - Purpose: Keep one human-reviewed memo per PR, covering specification and architecture alignment, code and test quality, operational metadata, security, and efficiency.
 - Related records: [Bug diary](bug-diary.md) and [Debt register](debt-register.md).
 
@@ -22,6 +22,7 @@ This file is a record format, not a second requirements document, a test plan, o
 Use the current approved inputs that apply to the actual PR. Do not treat a Proposed or draft document as review evidence.
 
 - Round plan: [`docs/plans/round-01.md`](plans/round-01.md) is the frozen approved Round 1 specification at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical pre-approval text, not the current approval record.
+- Round 2 plan: [`docs/plans/round-02.md`](plans/round-02.md) is frozen at `8ad99c25ea1acd77b6e019fbe3c357899e8fc535`; its internal Pending cells remain the pre-implementation specification and are not rewritten by the later approval, execution, review, or merge evidence.
 - Verification rules: [`docs/code-governance/verification-constraints.md`](code-governance/verification-constraints.md).
 - Requirements: [`docs/req/requirements.yaml`](req/requirements.yaml) v1.48.0.
 - D2 invariants: [`docs/architecture/invariants.md`](architecture/invariants.md).
@@ -29,7 +30,7 @@ Use the current approved inputs that apply to the actual PR. Do not treat a Prop
 - Runtime policies: [`docs/architecture/runtime-policy-catalog.md`](architecture/runtime-policy-catalog.md).
 - Relevant ADR: [`ADR 001`](architecture/adr/001-graph-internal-final-check.md).
 
-For the currently available Round 1 plan, the candidate review scope is the FR-04 core FCs `FR-04-FC01` through `FR-04-FC04` and the core portion of `IR-14`; `FR-04-FC05` and the entry/graph/report portion of `IR-14` are excluded by that plan. This is plan context only. Record the IDs that the actual PR implements and test evidence demonstrates, not a whole-requirement claim inferred from the plan.
+For the currently available Round 1 plan, the candidate review scope is the FR-04 core FCs `FR-04-FC01` through `FR-04-FC04` and the core portion of `IR-14`; `FR-04-FC05` and the entry/graph/report portion of `IR-14` are excluded by that plan. For Round 2, the reviewed scope is the C-09/IF-09 independent core, `SB-01-FC01` through `SB-01-FC04`, and local `IR-01`/`IR-02` responsibility; production integration, `SB-01-FC05`, full SB-01, global invariant acceptance, `IF-19`, and the FR-03 producer remain excluded. This is plan context only. Record the IDs that the actual PR implements and test evidence demonstrates, not a whole-requirement claim inferred from the plan.
 
 ## 3. Review record template
 
@@ -182,14 +183,14 @@ An AI may draft findings, checklists, and a recommended disposition, but it must
 - Verification: T1-T6 are specification scenario IDs, not function names. AI-038 records user-reported post-fix `76 passed in 8.07s`, pre-fix `5 failed, 1 passed in 0.36s`, target Ruff passed, mypy baseline `errors=[]`/`fixed=[]`, and a clean diff check. OpenCode did not execute those checks.
 - Evidence limit: Workflow-level results are recorded without inferring every individual job's outcome. No application behavior, permission, dependency, or baseline change is accepted by this maintenance review. Related defect: [BUG-01](bug-diary.md#bug-01-contract-test-placeholder-path).
 
-### RM-10-R1 (draft; not a human verdict)
+### RM-10-R1 (AI-authored draft; final human approval transcribed below)
 
-- Record type: AI-authored post-implementation review draft for PR #10. It is not a human review, does not select `APPROVE`/`CHANGES REQUIRED`/`REJECT`, and does not authorize merge.
-- PR: [#10](https://github.com/Howindy/Teamproject-Tradingagents/pull/10). Current state is an uncommitted working tree; no candidate commit or reviewed SHA has been formed.
+- Record type: AI-authored post-implementation review draft for PR #10 with a separately transcribed final human `APPROVED` event. The analysis and findings below remain AI-authored. The human verdict and rationale are recorded only from the real GitHub event and linked comment; the AI did not select them or authorize merge.
+- PR: [#10](https://github.com/Howindy/Teamproject-Tradingagents/pull/10), `MERGED`. Historical draft-time state, retained: the working tree was uncommitted and no candidate commit or reviewed SHA had been formed. Final reviewed implementation commit: `fbba457a9235ef53de52604f9b591aaf89a1972b` (H). Merge commit: `cc8b17596a81751bd6165899423dd511e93dc394` (M), merged at `2026-11-22T06:29:54Z`.
 - Frozen specification: `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535`.
 - Scope: C-09/IF-09 independent core; `SB-01-FC01` through `SB-01-FC04`; local `IR-01`/`IR-02` responsibility. Excluded: `SB-01-FC05`, full SB-01, global IR-01/IR-03/IR-04, IF-19, graph/entry/report/memory/checkpoint/RunContext/manifest integration, the FR-03 producer, and FR-04-FC05.
-- Approvals: [test specification](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663) and [C-09 safety-critical implementation](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7074759911). The user reports an Approve but did not supply the complete review object, time, or reviewed SHA; those fields remain unknown and do not approve future additional code.
-- Changed files reviewed: `src/tradingagents/final_recommendation.py` and `test/offline/test_sb01_final_check.py`. This record-maintenance task also appends the AI-use log, review memo, and bug diary; it does not change application or test behavior.
+- Approvals: [test specification](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663) and [C-09 safety-critical implementation](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7074759911). At draft time the user reported an Approve without supplying the complete review object, time, or reviewed SHA; that limitation is retained as history and did not approve future additional code. The later formal review and separate written rationale are recorded below.
+- Changed files reviewed: `src/tradingagents/final_recommendation.py` and `test/offline/test_sb01_final_check.py`. The original record-maintenance activity also appended the AI-use log, review memo, and bug diary; it did not change application or test behavior.
 
 **Specification alignment**
 
@@ -219,7 +220,9 @@ An AI may draft findings, checklists, and a recommended disposition, but it must
 | Permissions / API | Permissions `errors=[]`/`warnings=[]`; API `errors=[]`; not runtime authentication | User-executed terminal |
 | Full Ruff | Initial `38` errors from untracked `tmp/round-01/regression-pytest` historical artifacts; excluding only that directory passed | User-executed; initial failure retained |
 | Default regression | `3 failed, 1615 passed, 1 skipped, 1 deselected, 20 warnings, 100 subtests passed in 15.37s`; integration excluded | User-executed; `regression.xml` read by Codex |
-| Remote CI | Not verified for this code | None |
+| Remote CI at draft time | Not verified for this code | None; retained as the draft-time state |
+| PR CI after H | [run 44993034732](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44993034732), `pull_request`, completed/success | User-provided GitHub output; workflow level only; H |
+| main CI after M | [run 44993981274](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44993981274), `push`, completed/success | User-provided GitHub output; workflow level only; M; PR-only jobs were skipped, so this is not evidence that every PR task ran in push |
 
 - The three regression failures are the existing `test_cache_writes.py` `errno.EDEADLOCK` cases recorded in [BUG-02](bug-diary.md#bug-02-macos-windows-lock-tests); the skip is the optional `langchain_aws` absence. These are not passes.
 - Operational metadata: interpreter `/Users/ichihann/Desktop/CS5351/round1-runtime/bin/python` resolved to the current checkout. All commands were executed by the user; Codex performed read-only source review and read the target/regression JUnit and mypy report; OpenCode did not execute or read the raw reports. Evidence paths: `/private/tmp/cs5351-round02/targeted.xml`, `/private/tmp/cs5351-round02/regression.xml`, and `/private/tmp/cs5351-round02/mypy-current.txt`; these are local temporary files, not committed or remote CI evidence.
@@ -233,8 +236,8 @@ An AI may draft findings, checklists, and a recommended disposition, but it must
 
 | Issue | Finding | Required action | Status |
 |---|---|---|---|
-| RM10-I1 | Working tree is uncommitted; no candidate SHA exists | Form the candidate and review the exact diff | Open |
-| RM10-I2 | Remote CI for this Round 2 code is unverified | Run the applicable CI after candidate formation | Open |
+| RM10-I1 | Working tree is uncommitted; no candidate SHA exists | Form the candidate and review the exact diff | Resolved at the workflow level: H `fbba457a9235ef53de52604f9b591aaf89a1972b` was reviewed and merged as M `cc8b17596a81751bd6165899423dd511e93dc394`; the original finding remains as draft-time history |
+| RM10-I2 | Remote CI for this Round 2 code is unverified | Run the applicable CI after candidate formation | Resolved at the workflow level: PR run 44993034732 and main run 44993981274 are completed/success; main skipped PR-only jobs; individual job results were not separately inspected |
 | RM10-I3 | Default regression retains three BUG-02 failures and one optional skip | Keep BUG-02 open; no waiver or platform fix in this round | Open |
 | RM10-I4 | Initial full Ruff failed on untracked historical generated artifacts | Preserve the failure; decide cleanup separately without lowering rules | Open |
 
@@ -242,8 +245,9 @@ Uncovered integration: no graph/Portfolio Manager/state/CLI/report/memory/checkp
 
 #### Final human review
 
-- Final verdict: Not decided; a human must select `APPROVE`, `CHANGES REQUIRED`, or `REJECT`.
-- Rationale: Not recorded.
-- Reviewer identity: Not recorded.
-- Review time: Not recorded.
-- Approval record or signature: Only the specification/C-09 implementation approvals above are recorded; no final implementation review or merge approval is claimed.
+- Final verdict: `APPROVE`, transcribed from the GitHub review state `APPROVED`.
+- Rationale: The formal review body is empty. A separate ordinary comment by the same reviewer at `2026-11-22T06:25:42Z` records approval of the independent core and limited closeout while retaining local failures and integration exclusions: [comment 7075320080](https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7075320080).
+- Reviewer identity: `espino2233`.
+- Review time: `2026-11-22T06:25:52Z`; reviewed implementation commit H `fbba457a9235ef53de52604f9b591aaf89a1972b`.
+- Approval record or signature: PR #10 formal review event on H; the rationale is the linked ordinary comment, not the empty review body. Merge M `cc8b17596a81751bd6165899423dd511e93dc394` at `2026-11-22T06:29:54Z`.
+- Evidence limit: The review event, comment, commit, merge, and workflow-level CI facts are user-provided GitHub output. The AI did not query GitHub or inspect individual CI jobs; the approval covers only the frozen independent core and limited closeout, not production integration or full SB-01.
