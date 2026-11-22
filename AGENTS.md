@@ -26,7 +26,7 @@ The current D1 baseline is v1.48.0: nine active requirements with 40 FCs (FR-01 
 
 ## Round plans and approval
 
-Specific development content belongs in a separately selected round plan, initially `docs/plans/round-01.md`, not in this file or the static launch prompt. That first plan exists as a draft but has not been approved; this instruction neither approves it nor authorizes implementation. Later rounds use their own explicitly selected plan; never assume that a previous round authorizes the next one.
+Specific development content belongs in a separately selected round plan, not in this file or the static launch prompt. Round 1 (`docs/plans/round-01.md`) is approved at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical pre-approval text, not the current approval, and that approval does not authorize later rounds. Later rounds use their own explicitly selected plan and approval; never assume that a previous round authorizes the next one.
 
 Before application implementation, produce a concrete plan for human review. Creating or updating the plan file requires explicit task authorization and the applicable permission configuration; if not authorized, present the draft in conversation. Do not create the first plan merely because this path is mentioned here.
 

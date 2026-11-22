@@ -2196,3 +2196,229 @@ entries:
       - "The temporary AI-use-log entry was later replaced in the working file by a later AI-036 entry; it is not retained as a separate current entry."
       - "No remote CI, test-approval gate, or Round 1 work is claimed."
       - "Originally AI-038 on branch round-01-portfolio-risk at source commit ad60f625ba82877ddcd458dbc908691a4e4c0eeb; renumbered to AI-049 because main already used AI-038 for a different CI maintenance activity."
+
+  - id: "AI-050"
+    date: "2026-11-22"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "round1_closeout_readonly_preparation"
+    task: "Inspect Round 1 closeout candidates and identify stale or missing status facts"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Performed the earlier read-only preparation over governance, the approved round plan, 13 candidate documents, the C-08 source/tests, contract-path maintenance materials and existing AI log. Produced findings and proposed edits only; no file, code, test, permission or workflow was changed, and no shell, test, install, Git or GitHub operation was executed."
+    human_intervention: "The user authorized read-only preparation and required preservation of historical evidence limits, no file edits and no C-09 implementation. Remote PR/CI facts were supplied by the user, not queried by OpenCode."
+    approval:
+      subject: "Fixed Round 2 plan/test specification; immediate task limited to Round 1 documentation closeout"
+      status: "approved"
+      approved_at: "2026-11-22T03:06:51Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663"
+        - "espino2233 approved docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535. The immediate execution task is documentation closeout; this is not final implementation review or merge permission."
+    verification:
+      status: "completed_with_findings"
+      summary: "Read-only inspection identified stale status text, missing records and role-permission limitations. No test, lint, type, YAML validation or remote CI result was produced by this activity."
+      evidence:
+        - "User-provided conversation and screenshots of the read-only preparation"
+        - "Existing governance, candidate documents, C-08 source/tests and AI-use log"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/10"
+    limitations:
+      - "No exported transcript reference was supplied; no filename or line number is invented."
+      - "This activity changed no file; later document application is a separate activity."
+      - "OpenCode did not query GitHub or execute historical checks."
+      - "Existing entries and ID-reconciliation provenance remain unchanged."
+
+  - id: "AI-051"
+    date: "2026-11-22"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "round1_closeout_record_drafts"
+    task: "Draft concise review, bug and AI-use records for the Round 1 closeout"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed: []
+    ai_contribution: "Prepared and revised text-only drafts for RM-7-R1, RM-9-R1, BUG-01, BUG-02 and the proposed AI-use entries. Incorporated user-provided checked PR #7/#9 review, commit, merge and workflow evidence. Preserved empty written-review rationales, historical local-result attribution and the open macOS issue. No draft was applied during this activity."
+    human_intervention: "The user supplied evidence, corrected missing-field handling and requested concise records without excessive wording constraints. The user prohibited file edits and commands during drafting, and required no C-09 implementation or invented future results."
+    approval:
+      subject: "Fixed Round 2 plan/test specification; immediate task limited to Round 1 documentation closeout"
+      status: "approved"
+      approved_at: "2026-11-22T03:06:51Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663"
+        - "Approved specification: docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535. Current task scope does not start C-09 or authorize final review/merge."
+    verification:
+      status: "not_run"
+      summary: "Text-only drafting and revision. No file was edited and no YAML validation, application/gate test, lint, type-check, Git or GitHub operation was performed by OpenCode."
+      evidence:
+        - "PR #7: https://github.com/Howindy/Teamproject-Tradingagents/pull/7; APPROVED by espino2233 at 2026-11-21T16:36:19Z on 6325db571a14a059ea39ac0d94afa5e8223269bb; merged as eb861e060993ee20bb561246ca5f745d6300dff0 at 2026-11-21T16:37:00Z."
+        - "PR #7 workflow evidence: https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44925212277 and https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44925551661; completed/success."
+        - "PR #9: https://github.com/Howindy/Teamproject-Tradingagents/pull/9; APPROVED by espino2233 at 2026-11-21T16:21:14Z on ff3e32bf952538a1f8c5c37b8129e765f6865d1d; merged as 43ac0bb27ca29e7eff797d06689bfbb61e084046 at 2026-11-21T16:21:26Z."
+        - "PR #9 workflow evidence: https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44923393413 and https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44924133256; completed/success."
+        - "Existing templates/rules and AI-038/AI-045/AI-047 user-reported local results"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/10"
+    limitations:
+      - "The drafts were not applied in this activity, so files_changed remains empty."
+      - "No exported transcript reference was supplied."
+      - "Workflow-level success does not imply separate inspection of every job. Empty review bodies provide no written rationale."
+      - "Historical local results remain user-reported; the macOS issue remains open."
+
+  - id: "AI-052"
+    date: "2026-11-22"
+    round: null
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "round1_closeout_document_maintenance"
+    task: "Apply and correct the authorized Round 1 closeout documentation sync"
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "AGENTS.md"
+      - "CI.md"
+      - "docs/ci/README.md"
+      - "architecture-blueprint.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/code-governance/structural-constraints.md"
+      - "docs/code-governance/verification-constraints.md"
+      - "docs/migration/permission-path-changes.md"
+    ai_contribution: "Under the closeout role, edited the ten authorized candidate documents to synchronize Round 1 approval/status, C-08/FR-04/IR-14 evidence and test mappings, and the real PR #7/#9 records. Then applied targeted corrections: restored the test-approval rule text in verification-constraints.md, qualified the 58-top-level-function count as a documentation-sync-time historical snapshot, and recorded the PR #10 fixed-version Round 2 plan/test-specification pre-approval. No source, test, frozen specification, requirements, ADR, workflow, dependency, or baseline was changed, and C-09 was not started. The closeout permission configuration was prepared under separate user authorization; OpenCode did not modify permissions in this task. This AI-052 entry itself appends docs/ai-use-log.yaml and is not counted among the ten documents."
+    human_intervention: "The user authorized only the ten candidate document paths and, separately, this log-only append; the user executed all verification and supplied terminal screenshots. The user prohibited source, test, frozen-specification, requirements, ADR, workflow, dependency, or baseline edits, C-09 work, commands, Git, and GitHub operations. The closeout role/permission setup was separately authorized and prepared by the user; OpenCode did not edit permission controls."
+    approval:
+      subject: "Fixed Round 2 plan/test specification and Round 1 closeout documentation maintenance"
+      status: "approved"
+      approved_at: "2026-11-22T03:06:51Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/10"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663"
+        - "Approved specification: docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535. This pre-approves the plan/test specification and immediate documentation closeout; it is not safety-critical C-09 implementation approval, execution evidence, or final acceptance."
+    verification:
+      status: "completed_with_findings"
+      summary: "User-executed verification only, reported from terminal screenshots: permissions errors=[] and warnings=[]; api errors=[]; schema errors=[] with active requirements=9, active FC=40, deferred requirements=4, deferred FC=15; test/offline/test_ci_gates.py reported 76 passed in 6.90s; git diff --check produced no output. JUnit output was written to /private/tmp/cs5351-round02-closeout/governance.xml from the user's command; this AI did not read the XML and does not claim independent inspection of the raw report. Interpreter: /Users/ichihann/Desktop/CS5351/round1-runtime/bin/python. This is governance-check scope only, not a full application regression or runtime permission authentication."
+      evidence:
+        - "User-provided terminal screenshots and conversation; commands were executed by the user, not OpenCode."
+        - "/private/tmp/cs5351-round02-closeout/governance.xml (user-supplied output path; not read by the AI; not repository or remote CI evidence)"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/10"
+    limitations:
+      - "All verification results are user-reported; OpenCode did not run the commands or read the JUnit XML."
+      - "The JUnit path comes from the user's command; raw report contents and independent inspection were not confirmed."
+      - "Verification covers the listed governance checks only; it is not a full application regression, live run, or runtime permission-enforcement proof."
+      - "No commit, remote CI, final review, or merge is pre-filled or claimed."
+      - "No exported transcript exists; no transcript filename or line number is invented."
+      - "files_changed lists the ten closeout documents; this AI-052 entry itself additionally appended docs/ai-use-log.yaml and is not counted among those ten."
+      - "PR #10 pre-approves the fixed Round 2 plan/test specification; it is not safety-critical C-09 implementation approval, execution evidence, or final acceptance."
+
+  - id: "AI-053"
+    date: "2026-11-22"
+    round: "Round 2"
+    human_operator: null
+    tool: "OpenCode"
+    model: "DeepSeek Flash"
+    activity: "round02_c09_core_test_and_implementation"
+    task: "Author the approved SB-01 C-09 offline tests, implement the pure IF-09 core, and apply the user-reported SIM114 and mypy union-attr corrections"
+    requirement_ids:
+      - "SB-01"
+    fit_criterion_ids:
+      - "SB-01-FC01"
+      - "SB-01-FC02"
+      - "SB-01-FC03"
+      - "SB-01-FC04"
+    files_changed:
+      - "src/tradingagents/final_recommendation.py"
+      - "test/offline/test_sb01_final_check.py"
+      - "docs/ai-use-log.yaml"
+      - "docs/review-memo.md"
+      - "docs/bug-diary.md"
+    ai_contribution: >-
+      OpenCode authored the SB-01 C-09 offline tests first, then implemented the
+      pure IF-09 core after Codex performed a read-only review and identified
+      issues in cause/notice separation, original-proposal separation,
+      unrelated-field key checking, and the tentative internal-exception
+      injection; OpenCode applied the corresponding test/code corrections. The
+      implementation provides safe
+      proposal projection, exact legal-rating and non-whitespace-conclusion
+      handling, complete/incomplete/not_applicable availability consumption,
+      exact stock Buy/Overweight risk-status gating, JSON-compatible
+      passed/blocked/error results, and handled-error preservation of the safe
+      proposal. After user-executed Ruff reported SIM114, OpenCode merged the
+      equivalent R02-02 branch; after user-executed mypy reported a union-attr on
+      note.strip, OpenCode added an isinstance(note, str) type narrowing without
+      changing business behavior. No baseline, assertion, dependency,
+      specification, permission, CI, or historical record was weakened. Codex
+      performed read-only source review and directly read the target/regression
+      JUnit and mypy report; OpenCode did not execute any verification command.
+    human_intervention: >-
+      The user supplied the frozen Round 2 plan/test-specification approval and
+      the C-09 safety-critical implementation approval, reported an Approve
+      without supplying the complete review object, time, or reviewed SHA,
+      authorized only the test file and then only
+      src/tradingagents/final_recommendation.py, and executed all verification
+      commands. The user reported target Ruff pass, target tests 99 passed in
+      0.58s, pip check clean, mypy baseline errors=[]/fixed=[], schema errors=[],
+      permissions errors=[]/warnings=[], API errors=[], full Ruff initially 38
+      errors from untracked historical tmp/round-01/regression-pytest artifacts,
+      and default regression 3 failed/1615 passed/1 skipped/1 deselected/20
+      warnings/100 subtests passed. The user required preserving the initial Ruff
+      failure and not deleting artifacts, changing configuration, lowering rules,
+      modifying the baseline, or treating the default run as a full/live pass.
+    approval:
+      subject: "Round 2 C-09/IF-09 core test specification and safety-critical implementation"
+      status: "approved"
+      approved_at: null
+      evidence:
+        - "Test specification: https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7073333663"
+        - "C-09 safety-critical implementation: https://github.com/Howindy/Teamproject-Tradingagents/pull/10#issuecomment-7074759911"
+        - "Approved specification: docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535"
+        - "User reports an Approve; the complete review object, time, and reviewed SHA were not supplied and remain unknown. These approvals cover the frozen C-09 core/test specification and do not pre-approve future additional code."
+    verification:
+      status: "completed_with_findings"
+      summary: >-
+        All commands were executed by the user; OpenCode did not execute them.
+        Codex performed read-only source review and directly read the
+        target/regression JUnit and mypy report. User-reported terminal/screenshot
+        results: interpreter resolved to the current checkout; final target Ruff
+        passed; target tests 99 passed in 0.58s; pip check reported no broken
+        requirements; mypy baseline reported errors=[] and fixed=[]; schema
+        reported errors=[] with 9 active requirements/40 active FCs and 4 deferred
+        requirements/15 deferred FCs; permissions reported errors=[] and
+        warnings=[]; API reported errors=[]. Full Ruff initially reported 38
+        errors from untracked tmp/round-01/regression-pytest historical artifacts;
+        that failure is retained. Excluding only that historical output directory
+        on the command line, full Ruff passed without deleting artifacts, changing
+        configuration, or lowering rules. Default regression reported 3 failed,
+        1615 passed, 1 skipped, 1 deselected, 20 warnings, and 100 subtests passed
+        in 15.37s; integration was excluded. The three failures are the same
+        errno.EDEADLOCK cases recorded in BUG-02, and the skip is the optional
+        langchain_aws absence. No additional failure was reported. Remote CI for
+        this code was not verified.
+      evidence:
+        - "User-provided terminal screenshots and conversation; commands were executed by the user, not OpenCode."
+        - "/private/tmp/cs5351-round02/targeted.xml (local temporary evidence; Codex read the JUnit read-only; OpenCode did not read it; not committed or remote CI evidence)"
+        - "/private/tmp/cs5351-round02/regression.xml (local temporary evidence; Codex read the JUnit read-only; OpenCode did not read it; not committed or remote CI evidence)"
+        - "/private/tmp/cs5351-round02/mypy-current.txt (local temporary evidence; Codex read the mypy report read-only; OpenCode did not read it; not committed or remote CI evidence)"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/10"
+    limitations:
+      - "The application and test files remain uncommitted; no candidate commit or reviewed SHA has been formed."
+      - "All verification commands and outputs are user-executed/reported; Codex reviewed source and read reports read-only; OpenCode did not execute or read the raw reports."
+      - "Exact tool versions, review time, reviewer identity, candidate SHA, and transcript location were not supplied; none is invented."
+      - "Remote CI for this Round 2 code was not verified."
+      - "The default regression is not a full or live pass: integration was excluded, three existing BUG-02 failures remain, and one optional test skipped."
+      - "The initial full-Ruff 38-error result came from untracked historical generated artifacts; the exclusion-only pass does not make those generated files clean or change the repository rule set."
+      - "The mypy baseline errors=[]/fixed=[] result means no new or fixed diagnostics relative to the baseline, not repository-wide zero type errors."
+      - "Schema, permissions, and API checks are governance/static checks; they do not establish runtime permission enforcement or runtime behavior."
+      - "Only the C-09/IF-09 independent core is covered: SB-01-FC01 through FC04 and local IR-01/IR-02 responsibility. SB-01-FC05, full SB-01, global invariants, IF-19, graph/entry/report/memory/checkpoint/RunContext/manifest integration, and the FR-03 producer remain excluded."
+      - "No final human review, merge, deployment, or product acceptance is claimed."
+      - "The local temporary evidence paths are not committed or remote CI evidence; no new evidence directory or transcript was created."

@@ -1499,7 +1499,7 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 
 | Layer | Planned verification |
 |---|---|
-| Pure unit | Risk evaluator boundaries/negatives; final checker truth table; query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
+| Pure unit | C-08 risk evaluator boundaries/negatives: implemented and offline-verified under Round 1. Remaining pure-unit intents are planned: final checker truth table; query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
 | Graph integration | Offline fake model/data; PM proposal only; risk and final check nodes; formal fields; no extra model/data call; recursion limit; the new flow starts from a new initial state and does not resume a checkpoint |
 | Full-execution checkpoint policy | Both entries create a new RunContext/run_id and execute the complete graph; no checkpoint session, `None` resume, old-checkpoint evidence, or old-data deletion; checkpoint-enabled notice is emitted; FR-04/SB-01 run; a second invocation is a new analysis; underlying checkpoint tests remain regression assets |
 | Formal result contract and delivery | SB-01 branches use the same five top-level fields; risk reasons and top-level reasons do not overwrite each other; merged graph/CLI state contains complete fields; consumers do not generate a formal rating from proposal text; missing formal output is an execution contract failure, not a normal REVIEW; actual outputs use the same formal rating and decision; missing/invalid SB-01 input produces complete blocked/REVIEW and a handled exception produces complete error/REVIEW |
@@ -1524,14 +1524,15 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 | Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
 | Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
 
-No test in this list has been executed for this design. Existing test files are baseline assets, not new acceptance.
+With the Round 1 exception of the C-08 offline core (`test/offline/test_fr04_risk.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
 
 ### 10.3 Evidence state
 
 - Static code analysis: complete for the paths cited in this blueprint.
 - Requirement count: independently checked against the YAML.
 - Baseline: existing behavior only; data coverage was incomplete in the recorded run.
-- New behavior: not implemented, not tested, not measured.
+- C-08 FR-04 core: implemented as the module-level callable `evaluate(...)` in `src/tradingagents/portfolio_risk.py` and offline-tested by `test/offline/test_fr04_risk.py` under the Round 1 approval (`docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1). This covers FR-04-FC01–FC04 and the core portion of IR-14 only.
+- Remaining new behavior, including C-09/SB-01, FR-04-FC05, complete IR-14, entry/graph/report integration, availability, manifest, history, and statistics: not implemented, not tested, not measured.
 - Performance/cost: no target approved; PR-01 and CR-01 remain deferred.
 
 ---

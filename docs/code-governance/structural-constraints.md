@@ -6,13 +6,13 @@ This D3 structural-constraints document is located at the course-required projec
 
 Inputs are `docs/req/requirements.yaml` (current v1.48.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
 
-D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan, initially the existing but unapproved `docs/plans/round-01.md`, to select exact files and approved tests. No code or plan-file creation is authorized by this document alone.
+D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan. `docs/plans/round-01.md` is approved at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical, and later rounds need their own approval. No code or plan-file creation is authorized by this document alone.
 
 ## 2. Existing baseline and implementation status
 
 Preserve the imported TradingAgents application under `src/`. Its packages are `src/tradingagents/` and `src/cli/`; tests are under `test/offline/` and `test/live/`. Do not replace the baseline, introduce another source/test layout, reformat unrelated code, or rewrite existing vendors and agent workflows merely to implement governance.
 
-Static inspection shows that `src/tradingagents/graph/setup.py` currently connects Portfolio Manager directly to END. `src/tradingagents/graph/trading_graph.py` currently saves state and memory through `record_decision()`, uses `run_rating()` for the baseline rating, and contains checkpoint behavior. These are existing behaviors to adapt at approved integration points, not evidence that the proposed deterministic tail or new requirements are already implemented.
+Static inspection shows that `src/tradingagents/graph/setup.py` currently connects Portfolio Manager directly to END. `src/tradingagents/graph/trading_graph.py` currently saves state and memory through `record_decision()`, uses `run_rating()` for the baseline rating, and contains checkpoint behavior. These are existing behaviors to adapt at approved integration points, not evidence that the proposed deterministic tail or other new requirements are already implemented. The C-08 FR-04 core is implemented separately under Round 1; it is not wired into the graph or formal-authority path.
 
 The active scope is FR-01–FR-05, SB-01, INV-01, SR-01, and SR-02. FR-06, FR-07, PR-01, and CR-01 remain deferred. Do not add recovery, analyst briefs, performance/cost experiments, or reserved future interfaces for them.
 
@@ -20,7 +20,7 @@ The active scope is FR-01–FR-05, SB-01, INV-01, SR-01, and SR-02. FR-06, FR-07
 
 Each logical architecture element must have exactly one primary owning module. Multiple related elements may share a module; an element does not require its own class, service, or file. Other modules may provide explicit call-site adapters or consume its outputs, but must not duplicate its decision logic.
 
-The table below is a proposed implementation allocation for review, not a claim that new files exist or an authorization to create them. Paths start at the project root; application paths use `src/`. A round may approve a different equally small allocation before implementation, provided the affected ownership table and D2 references remain consistent. Do not silently introduce a second owner.
+The table below is a proposed implementation allocation for review, except that Round 1 created the C-08 module. It is not a claim that other new files exist or an authorization to create them. Paths start at the project root; application paths use `src/`. A round may approve a different equally small allocation before implementation, provided the affected ownership table and D2 references remain consistent. Do not silently introduce a second owner.
 
 | D2 element | Primary owner | Existing integration sites / constraints |
 |---|---|---|
@@ -31,8 +31,8 @@ The table below is a proposed implementation allocation for review, not a claim 
 | C-05 QueryReuseService | `src/tradingagents/dataflows/query_reuse.py` (proposed) | Supported news executor delegates here; existing vendor flow remains intact |
 | C-06 Observation protocol / local helper | `src/tradingagents/dataflows/availability.py` (proposed) | Local attachments remain at D2-listed tool/prefetch sites; they delegate to one protocol owner |
 | C-07 Availability registry/summarizer/renderer | `src/tradingagents/dataflows/availability.py` (proposed) | One completeness calculation; independent plain snapshots |
-| C-08 PortfolioRiskEvaluator | `src/tradingagents/portfolio_risk.py` (proposed) | Local parse/validate/compare/project helpers, not a generic numeric framework |
-| C-09 FinalRecommendationChecker | `src/tradingagents/final_recommendation.py` (proposed) | Sole formal business-value authority; shared lightweight formal contract can live here |
+| C-08 PortfolioRiskEvaluator | `src/tradingagents/portfolio_risk.py` (exists; Round 1) | Public module-level callable `evaluate(...)` (IF-08) plus local parse/validate/compare/project helpers, not a generic numeric framework. Offline tests: `test/offline/test_fr04_risk.py`; only FR-04-FC01–FC04/core IR-14 are verified. |
+| C-09 FinalRecommendationChecker | `src/tradingagents/final_recommendation.py` (proposed; not implemented) | Sole formal business-value authority; shared lightweight formal contract can live here |
 | C-10 Graph wiring / deterministic nodes | `src/tradingagents/graph/setup.py` (existing, adapted) | Existing agent factories remain; wrapper and thin nodes delegate business logic |
 | C-11 Report writer | `src/tradingagents/reporting.py` (existing) | HTML and CLI renderers consume prepared values, not new business decisions |
 | C-12 Memory decision adapter | `src/tradingagents/memory/log.py` (existing) | Existing reflection/settlement modules retain their responsibilities |
@@ -95,7 +95,7 @@ Do not invent an invariant for an unrelated utility. State that no specific inva
 
 Each round declares exact module/file ownership, interfaces, and approved FC/IR assertions. Product behavior follows D1; architecture conformity follows approved D2. Structural checks can use review, narrow static inspection, or equivalent verification; this file does not mandate a custom AST engine, new framework, coverage percentage, or separate test file per component.
 
-Run the D4 structural, prior-suite regression, and behavioral checks required for the change. Use independent expected results, controlled external substitutes, and negative scenarios. Do not modify implementation during a pure verification role or weaken tests to conceal failure. No test, permission enforcement, or acceptance is claimed by this draft.
+Run the D4 structural, prior-suite regression, and behavioral checks required for the change. Use independent expected results, controlled external substitutes, and negative scenarios. Do not modify implementation during a pure verification role or weaken tests to conceal failure. This draft itself claims no new test execution, permission enforcement, or acceptance; the Round 1 C-08 results are recorded in their own approval and review records.
 
 Changes to authority, interfaces, requirement semantics, or security-critical behavior require the affected architecture decision and human approval before implementation. Ordinary internal details within an approved contract need no new architecture gate. If a proposed module allocation conflicts with D2, resolve only the affected allocation before coding rather than silently changing D2 or expanding the round.
 

@@ -1,6 +1,8 @@
 # Permission Path Changes for Human Application
 
-- Status: Proposed human-maintained changes. No permission control was edited by this task.
+- Status: Historical proposed human-maintained changes, not a current edit request. No permission control was edited by this task.
+- Historical reference only: the old `TradingAgents/` paths and line numbers below describe a prior permission-file state. They are retained for traceability and must not be reapplied merely because a line number or JSONC syntax appears valid. File presence or valid syntax is not proof of effective enforcement.
+- No permission migration was applied by this documentation task, and no current permission is changed.
 - Files requiring human application:
   - `.opencode/permissions.jsonc`
   - `docs/architecture/permission-model.md`
@@ -11,8 +13,9 @@
 ## 1. `.opencode/permissions.jsonc`
 
 The file uses absolute project paths. Replace only the listed rules; keep the
-same role profile, action and permission value. Line numbers refer to the
-current file before human edits.
+same role profile, action and permission value. Line numbers are historical and
+may not match the current file; treat them as descriptive references only. This
+migration must not be re-applied from this document.
 
 ### Plan read
 
@@ -100,14 +103,17 @@ current file before human edits.
 - `main.py` and root `assets/**` permissions are removed because those paths
   were deleted.
 
-After application, verify the effective merged policy and that the old paths
-are gone. File presence or JSONC validity is not proof of enforcement.
+This documentation task did not apply the migration and does not claim any
+permission is currently in effect. If a human ever re-checks the historical
+migration, verify the effective merged policy and that the old paths are gone.
+File presence or JSONC validity is not proof of enforcement.
 
 ## 2. `docs/architecture/permission-model.md`
 
 This human-maintained document still contains migration-era paths and stale
-file-presence statements. Apply the following corrections without changing role
-authority or write boundaries.
+file-presence statements. The corrections below are a historical reference, not
+a current edit request. Apply them only under a separate authorized task and
+without changing role authority or write boundaries.
 
 ### Path replacements
 
