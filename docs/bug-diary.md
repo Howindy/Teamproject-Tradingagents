@@ -154,3 +154,16 @@ Important bugs may remain open with partial information. Leave unresolved fields
 - Fix: None recorded. No application/test change, guard, skip policy, or waiver is approved here.
 - Remaining work: Decide how to handle the affected cases on non-Windows hosts and verify the selected treatment. No owner or closure evidence is recorded. Successful remote workflows are distinct evidence and do not fix the macOS issue.
 - Requirement/IR/ADR/debt linkage: None assigned; no additional product acceptance condition is introduced.
+
+#### Round 2 post-implementation reproduction update (2026-11-22)
+
+- Context: default offline regression after the C-09 core work; integration was excluded.
+- User-reported result: `3 failed, 1615 passed, 1 skipped, 1 deselected, 20 warnings, 100 subtests passed in 15.37s`.
+- Same three affected cases in `test/offline/test_cache_writes.py`:
+  - `test_on_windows_the_lock_is_waited_for_while_another_writer_holds_it`
+  - `test_on_windows_a_lock_that_cannot_be_taken_is_reported_not_retried_forever`
+  - `test_on_windows_a_held_lock_is_reported_when_not_waiting`
+- Assessment: the failures remain consistent with the missing `errno.EDEADLOCK` cause already recorded above. No additional failure was reported in this run. This does not prove zero regressions on all platforms or replace the historical failure with a pass.
+- State: remains `Open`. No fix, guard, skip policy, waiver, or cross-platform treatment is approved by this update.
+- Evidence: `/private/tmp/cs5351-round02/regression.xml` (local temporary evidence; user-reported; Codex read the JUnit read-only; OpenCode did not execute the run or read the report; not committed or remote CI evidence).
+- Remaining work: unchanged; decide and verify a non-Windows treatment, with no owner or closure evidence recorded.
