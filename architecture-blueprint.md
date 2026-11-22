@@ -17,6 +17,8 @@
 
 This blueprint is the main constraint document for implementation planning. It contains architecture decisions and interfaces, not application implementation, test results, measurements, or acceptance claims. A statement marked `[Planned]` is not evidence that the behavior exists.
 
+Implementation-evidence clarification (2026-11-22): the C-08/FR-04 and C-09/IF-09 independent cores exist and were merged through their separate reviewed PRs; the C-09 core covers only SB-01-FC01–FC04 and local IR-01/IR-02 responsibility. This does not change the blueprint's overall `Proposed` status or approve production graph/entry/report/state/memory integration, IF-19, the FR-03 producer, full SB-01, or global invariants.
+
 ---
 
 ## 1. Purpose, scope, and authority
@@ -1499,7 +1501,7 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 
 | Layer | Planned verification |
 |---|---|
-| Pure unit | C-08 risk evaluator boundaries/negatives: implemented and offline-verified under Round 1. Remaining pure-unit intents are planned: final checker truth table; query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
+| Pure unit | C-08 risk evaluator boundaries/negatives and the C-09 final-checker truth table: implemented and offline-verified under Round 1 and Round 2 respectively. Remaining pure-unit intents are planned: query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
 | Graph integration | Offline fake model/data; PM proposal only; risk and final check nodes; formal fields; no extra model/data call; recursion limit; the new flow starts from a new initial state and does not resume a checkpoint |
 | Full-execution checkpoint policy | Both entries create a new RunContext/run_id and execute the complete graph; no checkpoint session, `None` resume, old-checkpoint evidence, or old-data deletion; checkpoint-enabled notice is emitted; FR-04/SB-01 run; a second invocation is a new analysis; underlying checkpoint tests remain regression assets |
 | Formal result contract and delivery | SB-01 branches use the same five top-level fields; risk reasons and top-level reasons do not overwrite each other; merged graph/CLI state contains complete fields; consumers do not generate a formal rating from proposal text; missing formal output is an execution contract failure, not a normal REVIEW; actual outputs use the same formal rating and decision; missing/invalid SB-01 input produces complete blocked/REVIEW and a handled exception produces complete error/REVIEW |
@@ -1524,7 +1526,7 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 | Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
 | Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
 
-With the Round 1 exception of the C-08 offline core (`test/offline/test_fr04_risk.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
+With the exceptions of the Round 1 C-08 offline core (`test/offline/test_fr04_risk.py`) and the Round 2 C-09 offline core (`test/offline/test_sb01_final_check.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
 
 ### 10.3 Evidence state
 
@@ -1532,7 +1534,8 @@ With the Round 1 exception of the C-08 offline core (`test/offline/test_fr04_ris
 - Requirement count: independently checked against the YAML.
 - Baseline: existing behavior only; data coverage was incomplete in the recorded run.
 - C-08 FR-04 core: implemented as the module-level callable `evaluate(...)` in `src/tradingagents/portfolio_risk.py` and offline-tested by `test/offline/test_fr04_risk.py` under the Round 1 approval (`docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1). This covers FR-04-FC01–FC04 and the core portion of IR-14 only.
-- Remaining new behavior, including C-09/SB-01, FR-04-FC05, complete IR-14, entry/graph/report integration, availability, manifest, history, and statistics: not implemented, not tested, not measured.
+- C-09/IF-09 core: implemented as the module-level callable `evaluate(proposal, availability, risk, asset_type)` in `src/tradingagents/final_recommendation.py` with no default parameters, and offline-tested by `test/offline/test_sb01_final_check.py` under `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535`. PR #10 reviewed H `fbba457a9235ef53de52604f9b591aaf89a1972b` and merged M `cc8b17596a81751bd6165899423dd511e93dc394`. This covers SB-01-FC01–FC04 and local IR-01/IR-02 responsibility only.
+- Remaining new behavior, including the production C-09 node/consumer wiring, SB-01-FC05, full SB-01, global IR-01/IR-02/IR-03/IR-04, IF-19, FR-03 producer, FR-04-FC05, complete IR-14, entry/graph/report/state/memory integration, availability, manifest, history, and statistics: not implemented, not tested, not measured.
 - Performance/cost: no target approved; PR-01 and CR-01 remain deferred.
 
 ---

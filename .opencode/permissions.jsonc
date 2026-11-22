@@ -287,7 +287,7 @@
       "prompt": "Read AGENTS.md and the explicitly selected approved round plan. This profile is not plan/test approval. Do not change controls to expand access. Ask-only edit maxima require exact task authorization. If commands or discovery are required, request a human-maintained, narrow round configuration; do not bypass denied tools."
     },
       "closeout": {
-        "description": "User-authorized Round 1 documentation closeout only; exact-path confirmation for edits.",
+        "description": "Round 2 post-merge documentation closeout only; ten exact ask-edit paths require task authorization.",
         "mode": "primary",
         "permission": {
           "*": "deny",
@@ -306,6 +306,9 @@
             "docs/ai-use-log.yaml": "allow",
             "docs/bug-diary.md": "allow",
             "docs/migration/permission-path-changes.md": "allow",
+            "transcripts/session-17.md": "allow",
+            "transcripts/session-18.md": "allow",
+            "transcripts/session-19.md": "allow",
             "Prompt.md": "allow",
             "goal.md": "allow",
             "docs/plans/round-01.md": "allow",
@@ -322,7 +325,9 @@
             ".opencode/rules.md": "allow",
             ".agent/rules.md": "allow",
             "src/tradingagents/portfolio_risk.py": "allow",
+            "src/tradingagents/final_recommendation.py": "allow",
             "test/offline/test_fr04_risk.py": "allow",
+            "test/offline/test_sb01_final_check.py": "allow",
             "test/offline/test_ci_gates.py": "allow",
             "scripts/ci_checks.py": "allow",
             "pyproject.toml": "allow",
@@ -342,7 +347,6 @@
           },
           "edit": {
             "*": "deny",
-            "AGENTS.md": "ask",
             "CI.md": "ask",
             "docs/ci/README.md": "ask",
             "architecture-blueprint.md": "ask",
@@ -352,9 +356,7 @@
             "docs/code-governance/structural-constraints.md": "ask",
             "docs/code-governance/verification-constraints.md": "ask",
             "docs/review-memo.md": "ask",
-            "docs/ai-use-log.yaml": "ask",
-            "docs/bug-diary.md": "ask",
-            "docs/migration/permission-path-changes.md": "ask"
+            "docs/ai-use-log.yaml": "ask"
           },
           "bash": "deny",
           "glob": "deny",
@@ -369,7 +371,7 @@
           "question": "allow",
           "todowrite": "allow"
         },
-        "prompt": "Perform only the user-authorized Round 1 documentation closeout under docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535 and PR #10 comment 7073333663. The 13 ask edit paths are a maximum, not a requirement to touch every file. Read relevant sources directly; preserve requirements, contracts, governance rules, historical evidence and frozen specifications. Update only stale status, affected trace mappings and truthful records. C-08 core completion does not establish FC05, full IR-14 or entry/graph/report integration; C-09 remains unimplemented. This is a maintenance task, not ordinary application implementation or a new approval. Ask for confirmation of the exact proposed file edits; do not seek persistent broad grants. Never edit permissions, agent rules, requirements, plans, source, tests, workflows, dependencies or baseline evidence, invoke shell/network/delegation, or bypass denied tools. Do not fabricate human review, test results, transcripts or authorship. If a prerequisite is missing, report the affected limitation. Stop at the authorized closeout boundary; do not start C-09, Git operations or merge."
+        "prompt": "Perform only the explicitly user-authorized Round 2 post-merge documentation closeout. The ten ask-edit paths are a maximum, not a requirement to change every file or a grant to begin edits without the exact task authorization. Read the frozen docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535, relevant implementation, tests and governance inputs, and user-supplied GitHub evidence. Update stale current status, affected test mappings and truthful review/AI-use records. C-09/IF-09 independent core is implemented and merged; coverage is limited to SB-01-FC01 through FC04 core and local IR-01/IR-02 responsibility. Production integration, SB-01-FC05, full SB-01, global invariant acceptance, IF-19 and the FR-03 producer remain incomplete; FR-04-FC05 and complete IR-14 remain outside this scope. Preserve historical records and the frozen specification. Retain the AI-authored review draft provenance and separately record the actual human approval. Preserve BUG-02 failures, optional skips, initial Ruff failures and mypy-baseline limitations. Do not invent metadata, transcripts, test results, authorship or permission-enforcement claims. Do not edit source, tests, requirements, plans, ADR decisions, workflows, dependencies, permissions, rules or baseline evidence. Do not invoke shell, network, Git, delegation or bypass denied tools. Existing task authorization applies to the exact listed documentation edits; do not request duplicate approval for unchanged authorized scope or seek persistent broad grants. If evidence or access is missing, report the affected limitation rather than expanding scope. Stop after presenting changed files, evidence references and remaining limitations for read-only review; do not start another round, commit, push or merge."
       },
     "verification": {
       "description": "CS5351 verification responsibility; OQ-07 role deployment remains pending.",
