@@ -1,7 +1,7 @@
 # D4 Bug Diary
 
-- Document status: Reusable significant-bug record template. No actual bug has been registered yet.
-- Registered records: None yet.
+- Document status: Reusable significant-bug record template with two registered records; this does not claim that no other bugs exist.
+- Registered records: BUG-01 (contract-test placeholder path, Closed) and BUG-02 (reported macOS errno.EDEADLOCK failures, Open).
 - Purpose: Preserve symptoms, reproduction, classification, root cause, fix history, regression evidence, and any exposed invariant or test gap for important bugs.
 - Related records: [Review memo](review-memo.md) and [Debt register](debt-register.md).
 
@@ -125,3 +125,32 @@ If the test was not run or was skipped, do not record `Re-verified`.
 - Closure evidence: `<re-verification and human review link, or "not closed">`
 
 Important bugs may remain open with partial information. Leave unresolved fields explicit rather than inventing completeness.
+
+## 4. Registered records
+
+### BUG-01-contract-test-placeholder-path
+
+- State: `Closed`. Related review: [RM-9-R1](review-memo.md#rm-9-r1).
+- Discovery: PR #7 [CI run 44921168528](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44921168528), `contract-tests`; symptoms are recorded in `docs/plans/ci-contract-test-paths-fix.md`.
+- Classification/impact: CI test-path contract defect causing a false contract-test failure; no application behavior change.
+- Symptom: An explanatory placeholder was extracted as a real test path and failed existence checking, although a real test path was also present.
+- Expected behavior: Ignore only the basename consisting of three ASCII periods followed by `py`; still extract, sort, deduplicate and existence-check real paths. Missing real tests and placeholder-only specifications still fail.
+- Root cause: `CONTRACT_TEST_PATTERN` permits periods in path segments; `plan_test_paths` did not filter the exact placeholder before existence checking. Reproduce with the old extractor and the mixed real/placeholder specification. Why earlier tests missed the case was not recorded.
+- Fix: A narrow exact-basename filter at the extraction boundary; no existence-based filtering or weakening of `contract_test_plan`. Implementation: `scripts/ci_checks.py` and `test/offline/test_ci_gates.py`, commit `ff3e32bf952538a1f8c5c37b8129e765f6865d1d`.
+- Specification: `docs/plans/ci-contract-test-paths-fix.md @ fbbafc61dcd5bf6c527cabfa6af3b9a3a3942de1`; six approved regression scenarios T1-T6 map to the existing test functions.
+- Review/merge: [PR #9](https://github.com/Howindy/Teamproject-Tradingagents/pull/9), APPROVED by `espino2233` at `2026-11-21T16:21:14Z`; empty review body, no written rationale. Merged at `2026-11-21T16:21:26Z` as `43ac0bb27ca29e7eff797d06689bfbb61e084046`.
+- Closure evidence: [PR run 44923393413](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44923393413) completed/success at head `ff3e32bf952538a1f8c5c37b8129e765f6865d1d`; [main run 44924133256](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/44924133256) completed/success at head `43ac0bb27ca29e7eff797d06689bfbb61e084046`. These are user-provided, checked workflow-level facts, not separate inspection of every job.
+- Local re-verification: AI-038 preserves user-reported `76 passed in 8.07s`, pre-fix `5 failed, 1 passed in 0.36s`, target Ruff passed, mypy baseline `errors=[]`/`fixed=[]`, and clean diff check. No new test run is claimed by this record.
+- Remaining work: None recorded for this defect. No product FC, business invariant, new debt, or unrelated repair is introduced.
+
+### BUG-02-macos-windows-lock-tests
+
+- State: `Open`.
+- Discovery/evidence: User-reported local macOS post-implementation regression, summarized in AI-045. Affected file: `test/offline/test_cache_writes.py`.
+- Symptom: Three Windows-lock test cases fail because `errno.EDEADLOCK` is absent in the reported macOS environment. The historical full run had `3 failed, 1 skipped, 1 deselected`; it was not fully green.
+- Classification/impact: Test/environment/platform failure; not established as an application-introduced regression. The baseline/current comparison in AI-045 reports the same three failures in both versions.
+- Root cause of the observed failure: The cases reference a constant absent in that environment. No claim about all platforms or a complete cross-platform policy is made.
+- Historical verification: `Failed` in the reported macOS runs. This closeout task did not rerun those cases; it does not replace their historical result with `Not run`.
+- Fix: None recorded. No application/test change, guard, skip policy, or waiver is approved here.
+- Remaining work: Decide how to handle the affected cases on non-Windows hosts and verify the selected treatment. No owner or closure evidence is recorded. Successful remote workflows are distinct evidence and do not fix the macOS issue.
+- Requirement/IR/ADR/debt linkage: None assigned; no additional product acceptance condition is introduced.
