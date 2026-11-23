@@ -410,7 +410,7 @@ def test_p04_subprocess_package_discovery_and_origin_gates(tmp_path: Path):
     )
     assert res_stale["status"] == "failed"
     assert res_stale["request_count"] == 0 and len(calls) == 0
-    assert any("escapes" in e for e in res_stale["errors"])
+    assert any("escapes" in e for e in res_stale["errors"]), res_stale["errors"]
 
     # Candidate missing financials fails (never falls back to baseline).
     res_no_fin = fm_eval.evaluate(
@@ -489,7 +489,7 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
         model_transport=_ok_transport,
         python_executable=cand_py,
     )
-    assert res_pass["status"] == "passed"
+    assert res_pass["status"] == "passed", res_pass
     assert res_pass["request_count"] == 4
     assert res_pass["candidate_summary"]["passed_checks"] == 20
     assert Path(res_pass["details_path"]).is_file()
