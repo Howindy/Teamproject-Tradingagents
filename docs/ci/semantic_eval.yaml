@@ -3,7 +3,7 @@ status: "unapproved"
 dataset:
   version: "fr10-sec-reference-projection-v1"
   path: "docs/ci/financial-metrics-cases.json"
-  sha256: "0e77cf0ea3e700c74be096f00fad1f54132342d0afe1dfbb2b63d8e202002b4c"
+  sha256: "9b49df4640993ccd48f3c5a2ca8a308711a5a70df2ee4883b208b725683371ac"
   cases:
     - id: "FM-S01"
       ticker: "AAPL"

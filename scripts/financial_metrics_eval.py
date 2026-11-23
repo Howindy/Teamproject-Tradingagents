@@ -252,7 +252,9 @@ print(json.dumps({
 
 
 def sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Git stores these text materials with LF; Windows checkouts can use CRLF.
+    # Normalize only that checkout conversion, not whitespace or JSON content.
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def _resolve_trusted_file(value: str | Path, default_path: Path, root: Path) -> Path:

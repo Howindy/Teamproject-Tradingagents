@@ -3081,3 +3081,45 @@ entries:
       - "No genuine current-session raw transcript export is available in the repository; none fabricated."
       - "Seven pre-existing Windows-environment test failures remain recorded honestly and unwaived; remote Ubuntu CI is checked separately after push."
       - "No PR 2 src/ migration, live DeepSeek evaluation requests, or merge occurred."
+
+  - id: "AI-FM-PREP-004"
+    date: "2026-11-23"
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-sol"
+    activity: "preparation_ci_repair"
+    task: "Continue authorized PR #14 preparation CI diagnosis and scoped fixes."
+    files_changed:
+      - "scripts/financial_metrics_eval.py"
+      - "docs/ci/semantic_eval.yaml"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "docs/ai-use-log.yaml"
+      - "docs/review-memo.md"
+    ai_contribution: >-
+      Verified the real Howindy approval comment and successful remote test-approval gate, PR draft=false,
+      and initial Ubuntu CI failures. Added subprocess assertion diagnostics in e842657; the resulting
+      Linux log identified a dataset hash mismatch, not an installation failure. The original config hash
+      had been calculated on Windows CRLF bytes, whereas the frozen Git blob at f08bcab has LF and digest
+      9b49df4640993ccd48f3c5a2ca8a308711a5a70df2ee4883b208b725683371ac. Corrected that hash and
+      normalized only CRLF-to-LF for trusted text hashing; added LF/CRLF equivalence and content-mutation
+      assertions without changing the dataset, rubric, oracle, or thresholds.
+    human_intervention: "User authorized scoped fixes, tests, commits, pushes, PR updates and Ready-for-review; user then requested continuation."
+    approval:
+      status: "approved"
+      approved_at: "2026-11-23T11:29:36Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477"
+    verification:
+      status: "local_pass_remote_pending"
+      summary: >-
+        Isolated Python 3.12: pytest -q test/offline/test_financial_metrics_evaluation.py: 6 passed;
+        ruff check .: passed. Remote run 45198004951 had two new evaluation-test failures on Linux
+        from the hash mismatch; contract-tests and aggregate consequently failed. Other gates passed.
+        Earlier AI-FM-PREP-003's model attribution is not substantiated by the available checkpoint;
+        this continuation uses openai/gpt-6.1-sol. Its blanket pre-existing label for seven Windows
+        failures is not a completed full-baseline reproduction in this continuation.
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951/job/137773536552"
+    transcript_refs: []
+    limitations:
+      - "No raw session export is available; none fabricated."
+      - "No live model requests or merge; remote result after this fix must be verified separately."

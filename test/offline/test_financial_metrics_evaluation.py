@@ -307,6 +307,18 @@ def test_p02_fixed_projection_provenance_and_mutation_detection(tmp_path: Path):
     assert res["request_count"] == 0
     assert any("dataset hash mismatch" in e for e in res["errors"])
 
+    # Git LF and Windows CRLF checkouts bind the same frozen text; content
+    # mutations still change the digest (no JSON reserialization/whitespace trim).
+    lf = CASES_PATH.read_bytes().replace(b"\r\n", b"\n")
+    lf_path, crlf_path = tmp_path / "lf.json", tmp_path / "crlf.json"
+    lf_path.write_bytes(lf)
+    crlf_path.write_bytes(lf.replace(b"\n", b"\r\n"))
+    expected_hash = _approved_config()["dataset"]["sha256"]
+    assert fm_eval.sha256_file(lf_path) == expected_hash
+    assert fm_eval.sha256_file(crlf_path) == expected_hash
+    crlf_path.write_bytes(crlf_path.read_bytes().replace(b"94036000000", b"94036000001", 1))
+    assert fm_eval.sha256_file(crlf_path) != expected_hash
+
 
 def test_p03_scorer_passes_valid_and_rejects_critical_ambiguous_and_dim5_regressions():
     """P03 / FR-10-FC02, FR-10-FC03, FR-10-FC06, FR-10-FC08: critical/ambiguous/baseline scoring."""

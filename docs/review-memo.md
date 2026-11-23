@@ -371,3 +371,17 @@ The user requested tracking the actual session-20 export and making the local im
 ### Final human review
 
 - Final verdict: Pending human review (`APPROVE`, `CHANGES REQUIRED`, or `REJECT` to be supplied by `Howindy` after inspecting PR #14 and CI).
+
+### CI follow-up (not a human review verdict)
+
+PR is now Ready for review. Run [45198004951](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951)
+passed approval, evidence, AI-use, security, schema, type, static, dependency and installation gates,
+but failed the two new loader/evaluation tests (and consequently contract-tests/aggregate).
+Diagnostics at `e842657` identified the frozen dataset's Windows-CRLF versus Git-LF digest mismatch.
+The correction binds trusted text hashes to LF, preserves the original case/rubric bytes in Git, and
+tests both checkout line endings plus a real numeric mutation. Local targeted tests: 6 passed;
+Ruff: passed. Remote result for the correction remains pending until checked.
+
+The earlier blanket description of all seven Windows failures as pre-existing is not established
+by a complete baseline reproduction in this continuation; retain them as local environment findings,
+not waived passes. No live semantic score, final human approval, or merge is claimed.
