@@ -2946,3 +2946,146 @@ entries:
         Staged schema and AI-use association pass. Full staged diff --check exits 2 with 1328 whitespace notices confined to the original session-20 export; the other 19 staged files pass.
         Raw transcript was preserved without formatting edits. Earlier diff-check passes predate staging this export; no full staged whitespace pass is claimed.
       boundary: No source/workflow/gate-script/schema/permission/frozen-plan changes staged. Commit SHA is not invented in this pre-commit record; no remote CI or merge claim.
+  - id: AI-060
+    date: '2026-11-23'
+    round: Round 3 planning; necessity-target contract maintenance only
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: requirements_architecture_verification_alignment
+    task: Specify the user-approved first-eligible-request necessity-target rule without implementing FR-03.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC02]
+    files_changed:
+    - docs/req/requirements.yaml
+    - architecture-blueprint.md
+    - docs/architecture/adr/001-graph-internal-final-check.md
+    - docs/architecture/invariants.md
+    - docs/architecture/memory-design.md
+    - docs/architecture/trace-matrix.md
+    - docs/code-governance/verification-constraints.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Added the narrowly scoped necessity-target contract: first eligible effective request binds before fetch
+      under the registry lock, bindings do not consume completion sequence or depend on success, other targets
+      cannot substitute, and matching updates retain last-accepted semantics. Distinguished fixed snapshot
+      date and Reddit prefetch targets, statement date/frequency, and global-news effective overrides.
+      Synchronized only affected D1/D2/D4 statements and verification intent. No application or test implementation.
+    human_intervention: >-
+      The user adopted the minimal target-selection proposal and then explicitly requested the unambiguous
+      contract and affected D1/D2/D4 edits only. This is design-maintenance authorization, not Round 3 test pre-approval.
+    approval:
+      status: user_authorized_documentation_maintenance
+      evidence:
+      - User messages in this Codex conversation adopting the proposal and authorizing only affected contract edits; no exported message timestamps or immutable Round 3 specification supplied.
+    verification:
+      status: focused_document_checks_passed
+      summary: >-
+        Draft202012 schema validation returned no errors. Counts remain 13 requirements / 55 FCs,
+        six active / 27 FCs, seven deferred / 28 FCs. Compared with HEAD: only FR-03 statement and
+        FR-03-FC02 content changed among requirement objects; scope, other requirements, IDs,
+        zero_tolerance values and other FCs preserved. git diff --check passed before this record was appended.
+      evidence:
+      - /private/tmp/cs5351-fr03-target-contract/checks.json
+      - architecture-blueprint.md, section 8.3, Necessary-target binding contract
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - No genuine export of this Codex conversation is available; transcript_refs is intentionally empty.
+    - No Round 3 application tests, model evaluation, remote CI, commit, push or final human review performed.
+    - This entry covers this documentation amendment only; earlier exploratory data-source probes are not claimed as FR-03 acceptance.
+  - id: AI-061
+    date: '2026-11-23'
+    round: Round 3 partial planning and isolated attachment exploration
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: partial_plan_and_feasibility_evidence
+    task: Record confirmed necessity-target decisions and the actual isolated attachment-feasibility results; defer the concrete execution/test specification.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC02, FR-03-FC05]
+    files_changed:
+    - docs/plans/round-03.md
+    - architecture-blueprint.md
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Performed the preceding user-authorized exploration in a fresh source/environment copy under test for round3,
+      using runtime-only harness prototypes, controlled data and fake models. Recorded the final 21 attachment
+      probes and 36 related regressions, the retained first-attempt harness failure and unchanged source snapshots.
+      Created only a partial Round 3 planning record and synchronized the directly affected D2 evidence/OQ status
+      and pre-PR review summary. No original or copied production source was modified by that exploration.
+    human_intervention: >-
+      The user required a before/after original-project snapshot and execution only in the isolated copy, then
+      requested that the new plan contain only the agreed target rule and confirmed feasibility. Detailed plans
+      and concrete tests were explicitly deferred. No formal Round 3 approval or original-project implementation granted.
+    approval:
+      status: user_authorized_exploration_and_partial_documentation
+      evidence:
+      - User instructions in this Codex conversation authorizing the isolated attachment checks and this partial planning/evidence update; no immutable test specification or non-author approval event supplied.
+    verification:
+      status: isolated_feasibility_only
+      summary: >-
+        Final exploratory runs: 21 attachment probes and 36 related regression cases passed, no final failures/skips.
+        Original project's 10064 snapshot entries and 202 copied source/test/script/fixture files remained unchanged.
+        No original/stale-source access attempts observed. Controlled summary fixtures and experimental adapters do
+        not establish a working FR-03 producer or complete FC acceptance. No real-model evaluation performed.
+      evidence:
+      - /Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/evidence/summary.json
+      - /Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/evidence/source-integrity.json
+      - docs/plans/round-03.md
+      - 'docs/review-memo.md: Pre-PR Round 3 planning and isolated feasibility'
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - This Codex conversation has no genuine exported repository transcript; transcript_refs remains empty.
+    - Local external artifacts are exploratory evidence, not committed or portable CI acceptance evidence.
+    - Concrete Round 3 implementation/test scope, semantic evaluation and actual role readiness remain to be prepared.
+    - No implementation start, final human verdict, commit, push, remote CI or merge is claimed.
+  - id: AI-062
+    date: '2026-11-23'
+    round: Round 3 proposed execution and test specification
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: implementation_plan_and_test_specification
+    task: Complete the FR-03 execution and independent test proposal; leave immutable freeze and non-author pre-approval to final PR operations.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC01, FR-03-FC02, FR-03-FC03, FR-03-FC04, FR-03-FC05]
+    files_changed:
+    - docs/plans/round-03.md
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Expanded the existing partial plan with exact ownership/file boundaries, target/registry/failure and
+      research/terminal contracts, twelve concrete controlled scenario groups with independent expectations,
+      isolated commands, phase boundaries and truthful prerequisite status. Identified two existing entry-test
+      files needing bounded no-resume expectation changes while retaining explicit checkpoint API tests.
+      Did not implement application/tests or restore withdrawn semantic configuration.
+    human_intervention: >-
+      The user requested completing the outstanding Round 3 plan, explicitly leaving version freeze and
+      non-author prior approval to the final PR operations. The earlier request to pause/revert semantic-gate
+      configuration remains in force; this plan does not treat it as a course exemption.
+    approval:
+      status: user_authorized_planning_only
+      evidence:
+      - Current user instruction in this Codex conversation; no frozen specification, non-author approval or implementation authorization is claimed.
+    verification:
+      status: focused_document_checks_passed
+      summary: >-
+        D1 schema validation returned no errors; 13 requirements remain. The existing copied CI test selector
+        selects exactly the four intended test paths. All plan relative links resolve; twelve unique scenario
+        groups exist; AI log IDs are unique. Source/test/scripts/workflow/permission/dependency/semantic config
+        paths remain identical to HEAD. New FR-03 test files are still unimplemented. git diff --check passed.
+        First document-check attempt used an incorrect case-label regex; corrected only that checker and retained
+        its failed output. These are documentation checks, not Round 3 test execution or acceptance.
+      evidence:
+      - docs/plans/round-03.md
+      - /private/tmp/cs5351-round3-plan-completion/checks.json
+      - /private/tmp/cs5351-round3-plan-completion/checks-attempt1.json
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - No genuine raw export of this Codex conversation is available; transcript_refs is intentionally empty.
+    - No application/test implementation, acceptance run, real-model evaluation, Git write, remote CI or human approval was performed.
+    - Semantic delivery arrangements remain paused/unapproved; effective implementation role readiness must be checked before build.

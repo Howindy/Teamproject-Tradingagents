@@ -54,6 +54,8 @@ C-03 owns only ephemeral scope binding, reuse and availability objects. Restore 
 
 ### 3.2 Available summaries and research delivery
 
+C-07 also owns the private per-run necessity-target bindings from blueprint §8.3. The first eligible effective request binds before fetch under the registry lock; it creates no completion sequence. Bindings and accepted updates are copied consistently for each snapshot. A bound target never changes within that run; an unbound item may bind on its first eligible later request. The mapping ends with the run and is not serialized into graph state, summaries, checkpoints, files or memory entries. No public binding API or new summary field is added.
+
 - The research wrapper obtains one summary at research start. It stores a five-field mapping or `null`; the unavailable display sentence is renderer text, not a third stored type. Later observations do not refresh it.
 - The risk node obtains a separate check-time summary for SB-01. After the formal check, the entry may prepare a terminal delivery summary from the current run's registry and place it in `data_availability_summary` for the final/report state.
 - Refreshing the terminal delivery field is not a formal re-check. It does not rerun SB-01 or change `gate_status`, `reasons`, `final_rating`, or `final_trade_decision`.

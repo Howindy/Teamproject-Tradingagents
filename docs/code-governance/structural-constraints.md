@@ -75,7 +75,7 @@ Use the blueprint IF-* contracts rather than inventing duplicate DTOs or a secon
 - Restrict run reuse to D2's P-09/P-13 news paths. Query identity excludes call path and follows effective business parameters. Preserve vendor selection, fallback/retry, original return/failure, and cross-run vendor caches.
 - Attach observation at the 15 supported business call positions, not in router/vendor/callback layers. P-03 observes individual indicators before concatenation; the two news paths delegate to a shared execution boundary without double observation.
 - Availability classification and tracking failures must not replace fetch results, strand reuse waiters, or trigger refetches. Follow D2's local failure-mark, pre-fetch-note, and tracking-error distinctions; do not add new statuses or a global public veto.
-- Match necessary targets before selecting the last accepted result. Do not substitute another object/window/item or prefer success. Unresolved multi-window/frequency choices remain unresolved, not guessed.
+- Match necessary targets before selecting the last accepted result. Do not substitute another object/window/item or prefer success. Follow the user-confirmed target-binding contract in D2 blueprint §8.3; implementation and verification remain pending, not the target-selection design choice.
 - Obtain and deliver the research snapshot in the same first Bull call. Later research roles use the stored stage mapping. Terminal delivery is prepared by the entry; report writers and independent saves read passed state only. No refresh reruns a model or changes the already formed formal result.
 
 ### 4.4 Risk, history, and security
