@@ -2677,6 +2677,13 @@ entries:
       failure, and mypy-baseline limits. No source, test, requirements, plan, ADR
       decision, workflow, dependency, permission, rule, baseline, or transcript
       was changed, and no command was executed.
+      The exported session-20 (ses_dfcae336affeeGsmWmr1vFmtE1) also records the
+      same-activity follow-up correction of RP-16, RP-17 and R-V07 evidence
+      columns: independently verified C-08 behavior and C-09 consumption of
+      controlled risk-status inputs are distinct from the still-unimplemented
+      production C-08-to-C-09 connection, entries and report integration. The
+      existing test_r02_08_only_passed_risk_satisfies_stock_buy_or_overweight
+      and RM-10-R1 are evidence references, not tests executed by this session.
     human_intervention: >-
       The user authorized exactly the nine target documentation paths plus a new
       AI-use-log entry (ten changed files), and explicitly prohibited source,
@@ -2688,6 +2695,10 @@ entries:
       historical records and distinguishing AI-055's transcript coverage
       maintenance from this documentation sync; AI-054, AI-055, and AI-056 were
       not to be overwritten, renumbered, or duplicated.
+      In session-20's final user turn (lines 10990-11010), the user narrowed
+      the follow-up to those three evidence columns, prohibited changes to
+      policies, expectations, interfaces and acceptance rules, and identified
+      it as the same AI-057 activity rather than a new log ID.
     approval:
       subject: "Round 2 post-merge documentation sync"
       status: "approved"
@@ -2713,7 +2724,11 @@ entries:
         - "https://github.com/Howindy/Teamproject-tradingagents/actions/runs/44993034732"
         - "https://github.com/Howindy/Teamproject-tradingagents/actions/runs/44993981274"
         - "docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535; src/tradingagents/final_recommendation.py; test/offline/test_sb01_final_check.py"
-    transcript_refs: []
+        - "transcripts/session-20.md:1-11224 — complete supplied export; Session ID ses_dfcae336affeeGsmWmr1vFmtE1."
+        - "transcripts/session-20.md:9119-9135 — successful edit adding the already-existing AI-057; this export is not a new independent activity."
+        - "transcripts/session-20.md:10990-11224 — bounded follow-up instruction, three successful runtime-policy evidence edits and final scope statement."
+    transcript_refs:
+      - "transcripts/session-20.md"
     commit: null
     pull_request: null
     limitations:
@@ -2726,3 +2741,208 @@ entries:
       - "AI-055 remains the separate transcript coverage/activity-matching maintenance. This entry records the later documentation sync only."
       - "AI-053's uncommitted/unreviewed statements were retained as historical snapshots with later H/M/review links; original events were not backfilled."
       - "No YAML validator, test, shell, network, Git, or GitHub operation was run; no commit, PR, or CI result is claimed for this documentation sync."
+      - "session-20 export headers show Created 11/22/2026 8:53:42 PM and Updated 11/22/2026 9:45:56 PM without an explicit timezone; no UTC conversion or approval timestamp is inferred."
+      - "session-20 contains 78 successful edit calls across the ten already-listed files, 41 read calls and two todowrite calls; it contains no shell/test/network/Git tool execution. Tool-output inspection is not application verification."
+      - "This transcript covers Round 2 closeout and the same-activity evidence correction only. It does not establish authorship, approval or verification of the later six-active requirement revision or its count-test change."
+  - id: AI-058
+    date: '2026-11-23'
+    round: six-active-scope-revision
+    human_operator: null
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: six_active_scope_maintenance_and_count_test_sync
+    task: 'Implement the user-confirmed six-active scope revision under the frozen PR #12 specification and verified
+      pre-approval.'
+    requirement_ids:
+    - FR-01
+    - FR-02
+    - FR-03
+    - FR-04
+    - FR-05
+    - SB-01
+    - INV-01
+    - SR-01
+    - SR-02
+    fit_criterion_ids:
+    - FR-04-FC05
+    - SB-01-FC05
+    - INV-01-FC01
+    - SR-01-FC01
+    - SR-01-FC04
+    files_changed:
+    - .agent/rules.md
+    - AGENTS.md
+    - CI.md
+    - architecture-blueprint.md
+    - docs/architecture/adr/001-graph-internal-final-check.md
+    - docs/architecture/evaluation-table.md
+    - docs/architecture/invariants.md
+    - docs/architecture/memory-design.md
+    - docs/architecture/permission-model.md
+    - docs/architecture/runtime-policy-catalog.md
+    - docs/architecture/trace-matrix.md
+    - docs/ci/README.md
+    - docs/code-governance/mcp-tool-manifest.md
+    - docs/code-governance/structural-constraints.md
+    - docs/code-governance/verification-constraints.md
+    - docs/req/requirements.yaml
+    - test/offline/test_ci_gates.py
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    ai_contribution: 'Codex prepared the specification in prior chat turns and then performed the local D1/D2/governance
+      revision after verifying non-author pre-approval. D1 became v1.49.0: 13 requirements/55 FCs retained, six active/27
+      FCs and seven deferred/28 FCs; only five authorized FC objects lost manifest-specific clauses. Synchronized
+      exactly four count expectations in test/offline/test_ci_gates.py and maintained review records. No application
+      source, workflow, gate algorithm, schema, permission configuration, dependency or frozen plan changed. Prior
+      design material was retained as explicitly future/historical archive. This record attributes the actual activity
+      to Codex, not OpenCode.'
+    human_intervention: The user confirmed scope, performed specification commit/push/PR creation and provided the
+      approval link. Non-author jyy722 approved the frozen scope/test/architecture amendment. Later the user requested
+      removal of Codex log entries, then explicitly requested accurate restoration of AI-058 and AI-059. These user
+      actions do not establish final review or merge.
+    approval:
+      subject: Six-active scope and exact count-test/minimal architecture revision
+      status: preapproved
+      approved_at: '2026-11-23T01:37:12Z'
+      reviewer: jyy722
+      specification: docs/plans/six-active-scope-revision.md @ cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044
+      limitations: Verified through read-only gh API before edits; this is non-author pre-approval, not final review,
+        merge or product acceptance.
+    verification:
+      status: completed_with_findings
+      summary: 'Unchanged schema check passed 13/55/6/27/7/28. Requirement/FC IDs preserved and only five approved
+        FC objects differed. Gate suite first had 70 passes/6 sandbox loopback-bind failures; authorized rerun using
+        the same suite had 76 passes with no skips. Mypy baseline returned errors=[] and fixed=[]. pip check, selected
+        API and permission checks passed. Full-directory Ruff failed with 38 errors in pre-existing untracked tmp;
+        tracked Python/pyi Ruff passed without rule changes. Default regression: 1615 passed, 3 failed, 1 skipped,
+        1 deselected, 100 subtests passed; failures were the previously recorded macOS Windows-lock errno.EDEADLOCK
+        cases and skip was missing optional langchain_aws. No failures were waived or fixed by expanding this task.'
+      evidence:
+      - /private/tmp/cs5351-six-active/gates.xml
+      - /private/tmp/cs5351-six-active/gates-unrestricted.xml
+      - /private/tmp/cs5351-six-active/regression.xml
+      - /private/tmp/cs5351-six-active/mypy-current.txt
+      - 'docs/review-memo.md: RM-12-SCOPE'
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/12
+    limitations:
+    - This Codex chat has not been exported to a repository transcript; transcript_refs is intentionally empty and
+      must be supplemented with a real export, not fabricated.
+    - session-20.md records a separate OpenCode Round 2 closeout activity under AI-057; it is not evidence of this
+      Codex implementation.
+    - Full local regression and full-directory Ruff are not green; tracked-only lint is distinct evidence.
+    - Implementation T/final H were not committed by Codex; remote post-implementation CI, final human review and
+      merge are not established.
+    - Actual path classification gives approval_applicable=false, security_applicable=true, ai_log_required=true and
+      semantic_required=false because the changed test is governance-only. Pre-approval was independently verified,
+      not machine-validated by a skipped test-approval job.
+    - No remaining product integration, live/semantic evaluation or full course-compliance claim is made.
+  - id: AI-059
+    date: '2026-11-23'
+    round: six-active-scope-revision
+    human_operator: null
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: six_active_design_review_and_consistency_corrections
+    task: Review the working-tree design for minimal incremental scope, resolve D2/D3/D4 conflicts and check that
+      acceptance was not expanded.
+    requirement_ids:
+    - FR-01
+    - FR-03
+    - FR-04
+    - SB-01
+    - INV-01
+    - SR-01
+    fit_criterion_ids: []
+    files_changed:
+    - architecture-blueprint.md
+    - docs/architecture/adr/001-graph-internal-final-check.md
+    - docs/architecture/invariants.md
+    - docs/architecture/runtime-policy-catalog.md
+    - docs/architecture/evaluation-table.md
+    - docs/architecture/memory-design.md
+    - docs/code-governance/structural-constraints.md
+    - docs/code-governance/verification-constraints.md
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    - AGENTS.md
+    ai_contribution: Codex identified and corrected surviving current C-04 callback/new-statistics, manifest, timing/status
+      and lifecycle duties after deferral. Aligned C-03 ephemeral ownership and binding restoration across D2/D3/D4;
+      preserved resource-owner cleanup and original errors. Restored complete seven-column IR-05/IR-07 verification
+      rows with concrete violations and independent must-fail assertions. Clarified existing primitive/mapping C-08/C-09
+      inputs and all five formal fields; report delivery uses existing writer/save options without a new registry.
+      Corrected current metadata/security scope. Retained existing archive organization and historical ADD decisions
+      as requested. Performed a later read-only acceptance audit and accurately removed/restored log entries at the
+      user's direction. This records Codex review and corrections, not a separate OpenCode execution.
+    human_intervention: The user requested a substantive audit, then authorized fixing conflicts while postponing
+      diff-size/archive cleanup. The user later required that no activity be falsely attributed to OpenCode and explicitly
+      authorized accurate restoration of AI-058/AI-059.
+    approval:
+      status: within_existing_preapproved_scope
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044
+      - User instructions in this Codex chat to resolve substantive conflicts and restore accurate records; no precise
+        message timestamps supplied.
+    verification:
+      status: local_consistency_checks_passed
+      summary: Schema passed exact 13/55/6/27/7/28. All requirement/FC IDs and all FC verification/zero_tolerance
+        values preserved; only the five approved FC objects changed. Deferred FR-02/FR-05/SR-02 statements/FCs unchanged.
+        Checked dependency sets, exact 27 current FC rows in trace and D4, and 14 current invariant verification rows
+        with seven columns. Finite focused checks confirmed removal of identified contradictory obligations, approved
+        file scope and unchanged source/workflow/scripts/schema/permissions/frozen specification. The test file equals
+        the original except four authorized count values. git diff --check passed. No full-suite rerun or new full-suite
+        green result is claimed for the documentation-only corrections.
+      evidence:
+      - 'docs/review-memo.md: Follow-up consistency correction'
+      - docs/architecture/trace-matrix.md
+      - docs/code-governance/verification-constraints.md
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/12
+    limitations:
+    - This Codex chat has no exported repository transcript yet; transcript_refs remains empty pending a genuine export.
+    - The structured/focused checks are not a mechanical proof of every architecture statement or runtime integration.
+    - Entry input/UI decisions, actual role setup and producer/framework attachment checks remain pending where applicable.
+    - Course context-budget/compaction/reinjection alignment remains unresolved and outside this revision.
+    - Prior full-regression/Ruff findings remain; no thresholds, tests or controls were relaxed.
+    - No commit, push, final human review, remote final CI or merge performed by Codex.
+    follow_up_review:
+      date: '2026-11-23'
+      scope: Same six-active revision; user requested fixing all remaining findings and reviewing again.
+      corrections: >-
+        Corrected the current ADR diagram so check-time availability/risk precede SB-01 and terminal report summary preparation follows END and IF-19, without rechecking or changing formal fields.
+        Restricted D4 IR-17 to supported report/final-state configuration-summary fields, endpoint preferences and listed diagnostics; report bodies and unlisted channels remain out of scope.
+        Limited the general invariant-test rule to current applicable IRs. Updated CI.md's seven-deferred list and separated deferred work from current gaps.
+        Marked D2 OQ-16 propagation as future-only in the evidence summary and corrected the tool manifest's stale Round 1 approval statement.
+      checks: >-
+        Unchanged schema passed exact 13/55/6/27/7/28. Requirement/FC ID sets retained; only five approved FC objects differ and their verification methods/zero_tolerance values are unchanged.
+        Deferred statement/FC content retained; dependency sets correct; 27 unique current FC rows in trace and D4; 14 current IR rows with seven columns.
+        Checked corrected diagram ordering, security scope, current status, approved path list, exact four count changes, and no source/workflow/script/schema/permission/dependency/frozen-plan change.
+        Current local AI-use check has errors=[], changed_entries=3, unassociated_paths=[]. Current design Markdown link targets exist; git diff --check passed.
+      limits: >-
+        This is a documentation and focused consistency review, not a complete runtime proof. No new full-suite run, remote CI query, commit, push, final human verdict or merge was performed.
+        Prior gate-suite results and local regression/Ruff failures remain historical evidence with their stated limits. Existing OQs and course context-budget alignment remain unresolved where applicable.
+    scope_tightening:
+      date: '2026-11-23'
+      authorization: User adopted the read-only review's minimal-scope recommendations and asked for implementation plus explanation of runtime-prompt semantic gates.
+      changes: >-
+        Removed new statistics isolation from M-V01 and deferred OQ-16 from current technical-verification tasks.
+        Relaxed C-03 binding from before graph construction to after effective config/basic validation and before the first supported data call, retaining isolation, explicit delegation and exit restoration.
+        IF-01 permits a small internal helper/context manager and ordinary mapping values, not a required DTO/public API.
+        Added FR-02/FR-05/SR-02 to the blueprint's deferred boundary table. Replaced the mixed D4 self-check with current 27 FC / 14 applicable IR / 28 deferred FC documentation coverage, distinct from execution evidence.
+        OQ-04 checks retained baseline save/display behavior rather than requiring a new product decision unless interaction changes.
+      verification: >-
+        Schema passed 13/55/6/27/7/28; active FC sets still match 27 unique trace and D4 rows; only five pre-approved FC objects differ; seven deferred boundary rows present.
+        No current new-statistics verification or constructor-timing obligation introduced; source, workflows, gate scripts, schema, permissions, semantic config and frozen plan unchanged. git diff --check passed.
+        Current working-tree path classification has semantic_required=false. Inspected actual AST classifier and trusted-evaluation configuration/evidence logic without executing a model or trusted workflow. No new full-suite, remote CI, final-review or merge claim.
+    local_submission_preparation:
+      date: '2026-11-23'
+      authorization: User requested tracking session-20.md and making the local implementation commit; no push or merge requested.
+      actions: Staged the 19 approved revision paths and the user-selected raw transcript; excluded tmp; verified transcript staged bytes match the supplied file.
+      checks: >-
+        Staged schema and AI-use association pass. Full staged diff --check exits 2 with 1328 whitespace notices confined to the original session-20 export; the other 19 staged files pass.
+        Raw transcript was preserved without formatting edits. Earlier diff-check passes predate staging this export; no full staged whitespace pass is claimed.
+      boundary: No source/workflow/gate-script/schema/permission/frozen-plan changes staged. Commit SHA is not invented in this pre-commit record; no remote CI or merge claim.

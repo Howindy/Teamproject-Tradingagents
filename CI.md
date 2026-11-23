@@ -1,5 +1,8 @@
 # CI Governance Plan
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 - Status: **Approved for implementation by the human user; implemented locally. Round 1, PR #9, and the Round 2 C-09 independent core (PR #10) have real approvals, merges, and successful workflow-level PR/main runs; individual job results, trusted semantic evaluation, permission enforcement, and remote branch protection remain unverified; live execution is optional and not a merge gate.**
 - Scope: minimum viable implementation of the six course CI gates and branch-protection requirements for this repository.
 - This document is a design and test specification. It does not approve a round plan, application implementation, branch protection, semantic-evaluation standards, or a live-test environment.
@@ -15,13 +18,13 @@
 
 ### Requirement and architecture inputs
 
-- D1 is v1.48.0 with 13 requirements and 55 fit criteria: 9 active requirements with 40 active fit criteria, and 4 deferred requirements with 15 future fit criteria.
-- Active requirements: FR-01, FR-02, FR-03, FR-04, FR-05, SB-01, INV-01, SR-01, SR-02.
-- Deferred requirements: FR-06, FR-07, PR-01, CR-01.
+- D1 is v1.49.0 with 13 requirements and 55 fit criteria: 6 active requirements with 27 active fit criteria, and 7 deferred requirements with 28 future fit criteria.
+- Active requirements: FR-01, FR-03, FR-04, SB-01, INV-01, SR-01.
+- Deferred requirements: FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01.
 - D2 includes the blueprint, ADR 001, invariants, trace matrix, memory/state design, permission model, runtime policy catalog, and evaluation table.
 - The current ADR and architecture package remain Proposed; they are not implementation or test acceptance.
 - D4 defines verification obligations. Its `V-*` identifiers are planned verification intents, not actual test coverage.
-- The C-08 FR-04 and C-09/IF-09 independent cores have offline tests and merged review records. Production C-09 integration, availability, manifest, history, and broader security paths do not yet have dedicated tests; the C-09 test file covers only SB-01-FC01–FC04 core and local IR-01/IR-02 responsibility.
+- The C-08 FR-04 and C-09/IF-09 independent cores have offline tests and merged review records. Current remaining product work is FR-01 reuse, FR-03 production availability, FR-04/SB-01 entry/graph/report integration, INV-01 and scoped SR-01 protection. Manifest, new precise statistics, history and SR-02-specific path checks are deferred, not current missing acceptance. The C-09 test file covers only SB-01-FC01–FC04 core and local IR-01/IR-02 responsibility.
 
 ### Application and test layout
 

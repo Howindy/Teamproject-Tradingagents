@@ -1,8 +1,11 @@
 # D2 Architecture Blueprint — Graph-Internal Final Check with Run-Scoped Governance
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 - Status: Proposed for human review
 - Date: 2026-11-17
-- Requirements baseline: `docs/req/requirements.yaml` (document version 1.48.0, 13 requirements, 55 fit criteria)
+- Requirements baseline: `docs/req/requirements.yaml` (document version 1.49.0, 13 requirements, 55 fit criteria)
 - Code baseline: `src/` imported from TradingAgents v0.7.0 (`UPSTREAM.md`)
 - Module-path note: references such as `cli/run.py` and `tradingagents/graph/setup.py` are relative to the application source root; the current paths are `src/cli/run.py` and `src/tradingagents/graph/setup.py`.
 - Runtime evidence baseline: `baseline/runs/baseline-20261020-01` (existing behavior only; not new-requirement acceptance)
@@ -25,9 +28,7 @@ Implementation-evidence clarification (2026-11-22): the C-08/FR-04 and C-09/IF-0
 
 ### 1.1 Purpose
 
-The architecture extends the existing TradingAgents LangGraph application with a deterministic, auditable final-decision boundary, a run-scoped lifecycle and manifest, a run-scoped data-availability summary, run-scoped reuse of supported queries, deterministic purchase-scenario risk checks, a read-only historical report lookup, and limited credential and path protections.
-
-The design is incremental. It retains the existing graph, agents, data vendors, CLI, report writer, memory log, and checkpoint mechanism, and adds narrow components at existing boundaries.
+Extend the existing graph with query reuse, program-produced availability, deterministic purchase risk and final checks, consistent delivery and limited credential protection. Retain the existing agents, vendors, CLI, reports, memory and baseline statistics. RunContext owns ephemeral per-analysis reuse and availability state; it adds no current persistent run identity, timer, status machine, statistics collector, manifest or historical lookup.
 
 ### 1.2 Requirement inventory used by this design
 
@@ -35,11 +36,11 @@ Independent count from `docs/req/requirements.yaml`:
 
 | Scope | Requirements | Fit criteria |
 |---|---|---|
-| Active | 9: FR-01, FR-02, FR-03, FR-04, FR-05, SB-01, INV-01, SR-01, SR-02 | 40 |
-| Deferred | 4: FR-06, FR-07, PR-01, CR-01 | 15 |
+| Active | 6: FR-01, FR-03, FR-04, SB-01, INV-01, SR-01 | 27 |
+| Deferred | 7: FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01 | 28 |
 | Total | 13 | 55 |
 
-The count matches the expected 13 requirements / 55 fit criteria / 9 active / 40 active fit criteria / 4 deferred / 15 deferred fit criteria. No requirement was modified by this design.
+The count matches the expected 13 requirements / 55 fit criteria / 6 active / 27 active fit criteria / 7 deferred / 28 deferred fit criteria. The five scoped FC wording amendments are recorded in D1 and the frozen PR #12 specification.
 
 ### 1.3 Evidence rules
 
@@ -75,7 +76,7 @@ Historical D2 drafts in git history are not evidence. They were based on require
 `cli/main.py:37` → `cli/run.py:99` `run_analysis()`:
 
 1. Collect selections and build configuration (`cli/run.py:111`).
-2. Create `StatsCallbackHandler` and `TradingAgentsGraph` (`cli/run.py:115-128`). The current CLI also binds this handler at model construction and passes it in graph config for tools; the new design creates it per run and injects it only through that execution's config.
+2. Create `StatsCallbackHandler` and `TradingAgentsGraph` (`cli/run.py:115-128`). The current CLI also binds this handler at model construction and passes it in graph config for tools; the existing callback behavior is retained; a new precise per-analysis collector is deferred.
 3. Build the initial state. Current code can optionally open a checkpoint (`cli/run.py:219-234`); the new flow in §6.7 does not use that resume path.
 4. Stream the graph through `TradingAgentsGraph.stream_run()` (`cli/run.py:241`).
 5. Merge streamed chunks into `final_state` (`cli/run.py:346-348`).
@@ -132,11 +133,11 @@ The Portfolio Manager currently writes `final_rating` and `final_trade_decision`
 |---|---|---|
 | LangGraph agent graph and node names | `graph/setup.py` | Retained; two deterministic nodes added after Portfolio Manager. |
 | Vendor routing, fallback, historical withholding | `dataflows/router.py`, `dataflows/date_window.py` | Retained unchanged; governance observes results. |
-| Existing report layouts | `reporting.py`, `cli/run.py:36-42` | Retained; manifest records actual paths. |
+| Existing report layouts | `reporting.py`, `cli/run.py:36-42` | Retained; no new manifest registration. |
 | Memory log format and settlement | `memory/log.py`, `memory/settlement.py` | Retained; new records use the formal result. |
 | Checkpoint support | `graph/checkpointer.py`, `graph/trading_graph.py:192-253` | Underlying checkpoint implementation and existing tests are retained, but the new analysis flow does not acquire a checkpoint session, resume, or use old checkpoint data. Each analysis fully re-executes. |
-| Existing stats callback shape | `cli/stats_handler.py`, `graph/trading_graph.py:78-80` | Keep the callback-handler concept; replace constructor-level permanent binding with one handler per analysis injected through that execution's config. |
-| CLI interaction and save failure display | `cli/run.py:426-464` | Behavior retained; save and display phases separated in the lifecycle. |
+| Existing stats callback shape | `cli/stats_handler.py`, `graph/trading_graph.py:78-80` | Retain baseline behavior; no new FR-02 collector or propagation work is current. |
+| CLI interaction and save failure display | `cli/run.py:426-464` | Behavior retained; save and display behavior retained; terminal availability is prepared before save/return. |
 | `propagate()` return shape | `trading_graph.py:404` | Retained: `(final_state, signal)`; `signal` is the formal final rating. |
 | Existing security helpers | `dataflows/net.py:6`, `dataflows/symbols.py:155` | Retained and reused; scope remains limited. |
 
@@ -145,7 +146,7 @@ The Portfolio Manager currently writes `final_rating` and `final_trade_decision`
 - Python >= 3.11; LangGraph/LangChain; pytest and ruff (`pyproject.toml`).
 - Two supported entry points only: the CLI analysis entry and `TradingAgentsGraph.propagate()`.
 - Governance must not add model, data-source, broker, or network calls.
-- Manifest persistence is best-effort and never changes the run outcome or formal result. Final-state JSON, new-memory append, and CLI-requested report failures preserve existing exception or save-failure behavior and may make the run `failed`; they never recompute or rewrite the SB-01 formal result. Availability behavior does not change the run outcome.
+- Existing state/new-memory/requested-report save failures retain their original behavior and never rewrite the SB-01 result. Availability handling does not replace execution errors.
 - No new persistence service, database, index, or background worker.
 - The design must remain testable offline with fake models and data; the existing test suite blocks network access by default (`test/conftest.py`).
 
@@ -161,13 +162,10 @@ Ranking considers requirement priority, architectural impact, safety impact, and
 |---|---|---|---|---|
 | 1 | Single authoritative final result with fail-closed checks | SB-01, INV-01 | Adds graph-internal deterministic nodes; changes Portfolio Manager output semantics; changes all consumers | Two ratings, bypassed checks, unsafe approval |
 | 2 | Deterministic purchase risk boundary | FR-04 | Adds structured scenario input, evaluator, deterministic display | Model text or rounded values alter a pass/block decision |
-| 3 | Run lifecycle and manifest | FR-02 | Adds `RunContext`, timing, status, atomic JSON persistence | Misreported success, wrong duration, manifest failure masks an analysis or save error |
 | 4 | Data availability summary | FR-03 | Adds 15 path-specific observation sites and a run-scoped registry | False completeness, fabricated execution, model override |
 | 5 | Run-scoped identical-query reuse | FR-01 | Adds single-flight service for two `get_news` paths | Cross-run leakage, merged different queries, mutable-result pollution |
 | 6 | Consistent delivery across outputs | INV-01 | Constrains report, state log, CLI, memory, and return consumers | Different formal ratings in different outputs |
-| 7 | Historical report lookup | FR-05 | Adds read-only manifest discovery and report read interface | Path escape, repaired/regenerated content, collapsed errors |
-| 8 | Credential protection in limited paths | SR-01 | Adds endpoint preference rule, known-value sanitization, safe diagnostics | Secret in preference file, manifest, report header, or request error |
-| 9 | Path confinement for controlled result paths | SR-02 | Adds run-id validation and resolved-target ownership checks | Write/read outside results root |
+| 8 | Credential protection in limited paths | SR-01 | Endpoint preference, known-value sanitization, safe diagnostics | Credential in supported preferences/config summaries/request errors |
 | 10 | Deferred scope discipline | FR-06, FR-07, PR-01, CR-01 | Keep deferred behavior out of the current design; no placeholder classes, modules, flags, or fields | Accidental activation or re-introduction of deferred scope |
 
 ### 3.2 Quality attribute scenarios
@@ -177,29 +175,26 @@ All response measures reuse fit criteria. No invented latency, cost, or quality 
 | ID | Source | Stimulus | Environment | Artifact | Response | Measure |
 |---|---|---|---|---|---|---|
 | QAS-01 | Program or user | Completed analysis whose model proposal may claim approval or complete data | CLI and programmatic entry; fake model/data offline | Final result | Only SB-01 forms `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; failure becomes REVIEW plus program notice | SB-01-FC01–FC05 |
-| QAS-02 | Program or user | Analysis start, CLI object construction failure, normal finish, caught execution error, requested save failure | Writable results directory | Run manifest | Attempt running/completed/failed records; manifest failure only warns; CLI construction and requested report failures can mark the run failed while preserving the formal result | FR-02-FC01–FC05, INV-01-FC01–FC03 |
 | QAS-03 | Concurrent analysts or prefetch | Same supported `get_news` query called sequentially or concurrently | One run context | Data-fetch flow | One underlying execution per query; callers receive equivalent result or same failure type/reason | FR-01-FC01–FC05 |
 | QAS-04 | Data path | Necessity data succeeds, fails, is absent, is withheld, or is never queried | One analysis | Availability summary | Deterministic status and basic completeness; research-stage roles receive the start summary; later check/report use their own snapshots; no extra fetch | FR-03-FC01–FC05 |
 | QAS-05 | Caller | Missing, invalid, over-limit, or non-applicable purchase scenario | CLI and programmatic entry | Risk result | `blocked`, `error`, or `not_applicable`; no hard analysis failure; no model override | FR-04-FC01–FC05 |
-| QAS-06 | Caller | Valid, malformed, missing, or out-of-root historical records | Configured results root | History list/read result | Correct filtering/order/read or distinct error; no repair or regeneration | FR-05-FC01–FC05 |
-| QAS-07 | Caller or provider error | Known credential in endpoint/error; traversal or symlink escape attempt | Supported configuration/error/path paths | Preferences, diagnostics, manifest, history read | Omit/mask/reject safely; analysis continues where the limited supported handling applies | SR-01-FC01–FC04, SR-02-FC01–FC03 |
-| QAS-08 | Runtime | Manifest, report, final-state, or new-memory persistence failure | After analysis result is formed | Formal result, run outcome, manifest | Manifest warns only; final-state/new-memory keep existing exception behavior and can make the run failed; requested report failure can mark the run failed; no false success or rollback | FR-02-FC04, INV-01-FC01–FC03 |
+| QAS-07 | Caller/provider | Known credential in supported config/endpoint/error | Local app | Safe summaries/preferences/diagnostics | Omit or mask under SR-01 | SR-01-FC01–FC04 |
+| QAS-08 | Runtime | Existing state/report/new-memory save failure | Formed formal result | Existing save paths | Original error, no rollback/recompute/fake success | INV-01-FC01–FC03 |
 
 ### 3.3 Driver conflicts and resolutions
 
 | Conflict | Resolution |
 |---|---|
 | One authority vs two entry points | The authority is the graph-internal `Final Recommendation Check` node. Both entries run the same graph and consume its formal fields. |
-| Reusable graph object vs per-analysis run | Entry-specific creation: the CLI creates the run before object construction; `propagate()` creates it on an existing object. The constructor creates no run or manifest, and no RunContext or collector is stored on the object across analyses. |
-| Entry cleanup vs `RunContext.finish()` | Each resource has one release owner. The entry/execution scope coordinates necessary cleanup; wrappers release their own resources; `finish()` only records end time, stats, and terminal manifest after cleanup attempts. |
-| Graph-internal check vs checkpoint resume | The new flow does not resume checkpoints. Each outermost call is a new run with a new run_id and initial state; FR-04/SB-01 always execute. Existing checkpoint code/tests remain outside this flow, and a checkpoint-enabled configuration only produces a notice that this flow will run fully. |
+| Reusable graph object vs analysis scope | Bind one ephemeral scope at the existing analysis execution boundary, after effective config/basic validation and before the first supported data call. Constructor-only use creates no scope. Explicit delegation shares scope; independent calls do not. No constructor timing or new callback lifecycle is required. |
+| Entry cleanup vs scope exit | Resource owner closes once; finish restores binding after cleanup without persistence or new stats. |
+| Graph-internal check vs checkpoint resume | The new flow does not resume checkpoints. Each independent outermost analysis has a fresh ephemeral scope and initial state; FR-04/SB-01 always execute. Existing checkpoint code/tests remain outside this flow, and a checkpoint-enabled configuration only produces a notice that this flow will run fully. |
 | Portfolio Manager existing fields vs SB-01 authority | The Portfolio Manager writes a separate `model_proposal`. SB-01 alone decides and generates `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; downstream entries, reductions, and writers may only pass, merge, copy, or save those values unchanged. |
 | Fail-closed REVIEW vs existing rating fallback | `run_rating()` text parsing is not a formal authority. SB-01 produces a complete blocked/REVIEW for missing or invalid check inputs and a complete error/REVIEW for its own handled exceptions. If the graph ends without a valid formal result, or the result is lost in transfer or merge, that is an execution contract failure: consumers do not create REVIEW, parse text, or substitute the proposal. |
-| Run observability vs non-blocking manifest | `ManifestStore` is best-effort; no manifest outcome changes the run outcome or formal result. |
-| CLI report save inside the run vs existing interaction | Save selection and save attempt occur inside the run; display and browser opening occur after terminalization. |
+| CLI report save inside the run vs existing interaction | Save selection and save attempt occur inside the run; existing display/browser ordering is retained; scope exit is not a new persisted terminalization. |
 | FR-01 reuse vs FR-03 observation | FR-03 observes actual data-fetch execution. A reuse hit preserves the original observation and does not add a new observation. |
 | Required data completeness vs historical withholding | `withheld` remains a distinct status; completeness never bypasses historical policy. |
-| Minimal security scope vs perceived completeness | SR-01 and SR-02 remain allowlist and path-scope designs; no generic scanner or immutable archive is claimed. |
+| Minimal security scope vs perceived completeness | Current SR-01 uses the limited allowlist/credential rules; SR-02 path work is deferred. Existing ticker protection remains; no generic scanner or immutable archive is claimed. |
 
 ---
 
@@ -208,37 +203,18 @@ All response measures reuse fit criteria. No invented latency, cost, or quality 
 ### 4.1 Context
 
 ```text
-User / programmatic caller
-        │
-        ├── CLI entry (cli/main.py, cli/run.py)
-        └── propagate() entry (TradingAgentsGraph)
-                    │
-                    ▼
-         RunContext (run identity, timing, stats,
-         query reuse, availability registry, manifest)
-                    │
-                    ▼
-   Existing LangGraph analysis and debate
-                    │
-                    ▼
-   Portfolio Manager → model_proposal
-                    │
-                    ▼
-   Deterministic post-PM section:
-     availability snapshot → FR-04 risk → SB-01 final check
-                    │
-                    ▼
-   Formal final result in graph state
-        │           │            │
-        ▼           ▼            ▼
-   CLI display   Report writer  Memory log
-        │
-        ▼
-   Run manifest (auxiliary)
-        │
-        ▼
-   FR-05 history lookup (read-only)
+CLI / propagate()
+  → ephemeral RunContext (query reuse + availability)
+  → existing analysts/research/trader/risk debate
+  → Portfolio Manager: advisory model_proposal
+  → Portfolio Risk Check: check-time availability + C-08 risk
+  → C-09 Final Recommendation Check
+  → IF-19 → terminal availability preparation
+  → existing CLI / return / report / state log / new memory
+  → cleanup and restore scope
 ```
+
+No current manifest, precise statistics or history branch. Reports consume passed state, not a live registry.
 
 ### 4.2 External dependencies
 
@@ -246,7 +222,7 @@ User / programmatic caller
 |---|---|---|
 | LLM providers | Analysis, debate, managers, reflection | None in FR-04/SB-01; no new calls |
 | Data vendors | Market, fundamentals, news, social, macro, prediction markets | None in governance checks; FR-03 observes existing calls |
-| Filesystem | Results, cache, memory, checkpoints | Run manifest, reports, history read |
+| Filesystem | Existing results, cache, memory, checkpoints | Existing state/report/memory outputs; manifest/history deferred |
 | CLI terminal | Interactive selections, display | Save selection inside run; display after run |
 | GitHub CI | Project-root `.github/workflows/ci.yml` and `.github/workflows/trusted-evaluation.yml`; local gates cover schema, Ruff, mypy baseline, dependency/import, regression, test approval, contract tests, security paths, AI-use log, trusted semantic evidence, and aggregate status | Verification/governance only; CI has no application authority, and local configuration does not prove remote execution, required checks, or branch protection |
 
@@ -270,8 +246,6 @@ User / programmatic caller
 | `data_availability_summary` | Risk node writes check-time summary; entry prepares terminal summary | Deterministic program fact for final check/report delivery | Final check (check-time), CLI/display and report (entry-prepared terminal state) |
 | `portfolio_risk_result` | `PortfolioRiskEvaluator` | Deterministic program fact for the supplied scenario | Final check, CLI, final_state, report |
 | `gate_status`, `reasons`, `final_rating`, `final_trade_decision` | `FinalRecommendationChecker` (SB-01 node) | Sole formal authority | CLI, `final_state`, `propagate()` signal, report, state log, memory |
-| Run status | `RunContext` | Operational status, not a recommendation | Manifest, CLI warnings |
-| Manifest persistence result | `ManifestStore` | Auxiliary persistence status, not a recommendation | Warnings only |
 
 `final_rating` and `final_trade_decision` are never parsed from report prose, model narrative, memory, or history. `reasons` is the top-level SB-01 reason list; `portfolio_risk_result.reasons` is a separate risk-scoped list. The risk object is not flattened into the top-level formal fields.
 
@@ -293,20 +267,20 @@ Principles:
 2. Separate advisory proposal from formal result at the field level.
 3. Keep checks pure and model-free; pass them explicit program inputs.
 4. Keep run infrastructure (`RunContext`) out of serializable graph state and checkpoints.
-5. Keep manifest persistence best-effort; keep report, final-state, and new-memory failure semantics path-specific, and never let a save failure rewrite the formal result.
+5. Keep report, final-state and new-memory failures path-specific; never rewrite the formal result or add rollback. Manifest persistence is deferred.
 6. Instrument data access through path-specific local wrappers at the 15 supported call sites, not global monkeypatching.
 7. Preserve existing entry return shapes and existing failure displays.
 8. Keep security scope explicit and limited.
-9. Assign each resource release to its acquiring scope or wrapper; `RunContext.finish()` only terminalizes after cleanup attempts.
+9. Assign each resource release to its acquiring scope or wrapper; `RunContext.finish()` restores the previous context binding after entry-owned cleanup.
 
 ### 5.2 Component catalog
 
 | ID | Component | Responsibility | Does not own |
 |---|---|---|---|
-| C-01 | CLI Entry Adapter (`cli/main.py`, `cli/run.py`) | Parameter selection, basic validation, run creation before object construction, graph object construction, streaming, save coordination, post-run display | Final rating, risk computation, availability classification |
+| C-01 | CLI Entry Adapter (`cli/main.py`, `cli/run.py`) | Parameter selection, basic validation, scope binding before supported data calls, existing graph object construction, streaming, save coordination, post-run display | Final rating, risk computation, availability classification |
 | C-02 | Programmatic Entry Adapter (`TradingAgentsGraph.propagate`) | Per-call validation and effective config on an existing object, run creation, graph invocation, finalization, return shape | Final rating, risk computation, object construction timing |
-| C-03 | RunContext / RunGovernor | Unique run_id, timers, status, locks, stats, reuse registry, availability registry, output references, manifest orchestration, terminalization | Business results, reusable object lifetime, resource release |
-| C-04 | RunStatsHandler / RunStatsCollector | Per-analysis callback handler directly bound to one collector; per-call model records, tool-call ID set, one lock, snapshot; isolates callback/collector exceptions | Model-client ownership, cross-run accumulation, context-based dispatch, event router, cost estimation, billing, hidden provider retries |
+| C-03 | RunContext | Per-analysis ephemeral binding, C-05/C-07 ownership and isolation | Persistent ID, timers/status, new stats, manifests, output registration |
+| C-04 | **Deferred** RunStatsHandler / RunStatsCollector | Future-only FR-02/FR-05 responsibility; no current implementation or monitor | No current authority |
 | C-05 | QueryReuseService | FR-01 run-scoped single-flight reuse for supported `get_news` queries | Vendor fallback/retry, cross-run cache |
 | C-06 | Supported-path observation sites | 15 path-specific sites using one small local helper at the existing call point; preserve results/failures and pass the original outcome to the classifier | Router/vendor instrumentation, tool-callback observation, governance decisions, status guessing |
 | C-07 | AvailabilityRegistry / AvailabilitySummarizer | FR-03 accepted-update ordering, query-path association, query-level failure marks, private pre-fetch call-failure notes, the internal `availability_tracking_error`, the single producer of the five-field `AvailabilitySummary` or its missing result, deterministic stage/final summaries and entry-prepared terminal report summaries, and a small deterministic program-block renderer | Extra fetches, formal rating, second completeness authority, consumer-side completeness rebuilding, fake completed queries, new completion statuses, a general permanent veto, model-generated availability text |
@@ -315,9 +289,9 @@ Principles:
 | C-10 | GraphSetup and graph nodes | Existing agent wiring, research-entry wrapper around the first Bull call, plus post-PM deterministic nodes | Proposal/formal field ownership outside node contracts, separate top-level research node |
 | C-11 | ReportWriter and CLI renderers | Existing report tree plus deterministic availability/risk/decision sections and intermediate labels; Markdown and HTML read the same passed report state | Availability source lookup, registry access, formal rating generation |
 | C-12 | MemoryAdapter (`TradingMemoryLog`) | Existing append/settle/reflection behavior using formal result | Formal rating generation, report regeneration |
-| C-13 | HistoryReader | FR-05 `list_runs` / `get_report` read-only interface | Repair, reindex, re-render, immutability |
-| C-14 | ManifestStore | Atomic best-effort JSON manifest write at `<results_dir>/<run_id>/run_manifest.json` | Analysis success, formal result, recovery |
-| C-15 | SecurityGuard | SR-01 sanitization/preference rules; SR-02 run-id and resolved-target checks | Generic scanner, credential storage, archive |
+| C-13 | **Deferred** HistoryReader | Future-only FR-02/FR-05 responsibility; no current implementation or monitor | No current authority |
+| C-14 | **Deferred** ManifestStore | Future-only FR-02/FR-05 responsibility; no current implementation or monitor | No current authority |
+| C-15 | SecurityGuard | Current SR-01 omission/preference/safe diagnostics | Deferred SR-02 manifest/history path checks; generic scanner |
 | C-16 | CheckpointAdapter (existing, outside the new flow) | Retains the existing checkpointer, thread ID, signature, cleanup tools, and tests | New-flow resume, checkpoint acquisition, old-checkpoint evidence, automatic recovery |
 | C-17 | CLI Display Coordinator | Streaming sections, waiting/formal states, post-run browsing | Final rating, save success |
 | C-18 | Config/Threshold Access | `run_settings()` allowlist, shared config-summary projection, risk thresholds, provider/config values | Credential persistence, graph construction |
@@ -329,26 +303,26 @@ Components in this table are logical responsibilities. They do not require one c
 
 | ID | Interface | Contract |
 |---|---|---|
-| IF-01 | `RunContext.start(RunSpec) -> RunContext` | `RunSpec` carries analysis identity, effective config, selected analysts, scenario/thresholds. Allocate path-safe unique run_id; record timezone-aware start and monotonic start; attempt running manifest; register the active run context. |
-| IF-02 | `RunContext.finish(RunOutcome) -> ManifestWriteOutcome` | After the entry-owned cleanup attempts have completed, receive the summarized outcome, record end time, take a stats snapshot, and attempt the terminal manifest. It does not close streams, call `end_checkpoint()`, delete checkpoint data, close model clients, or perform a second resource release. Manifest failure never changes the run outcome or formal result. |
+| IF-01 | Internal analysis-scope initialization/binding | Use a small local function or context manager with existing analysis/config values; RunSpec, if used as a name, denotes ordinary internal mapping data, not a required DTO, public API or service framework. Bind C-05/C-07 ownership before supported data calls; no manifest, timers, persisted ID or new stats. |
+| IF-02 | `RunContext.finish() -> None` | Restore prior scope binding after entry-owned cleanup; no resource double-close, manifest outcome or new persisted terminal state. |
 | IF-03 | `RunContext.current() -> RunContext | None` | Context-local access for adapters; no process-global mutable run state. |
 | IF-04 | `QueryReuseService.execute(QueryKey, executing_path_id, flow) -> Result` | Register the explicit supported path association, then single-flight per run. The first caller runs the existing fetch once through the local observation helper and preserves its original value/exception. A known-query classifier exception creates a conservative `unavailable` observation with a safe “availability classification failed” reason; if normal or conservative acceptance fails, the service records a query-level failure mark. If even that fallback cannot be recorded, the run-local `availability_tracking_error` is set; later snapshots return `None` and the existing missing/invalid-summary path applies. The shared completion is published on every normal/error path; waiters/cache hits receive the original result or same failure and never receive the observation-handling exception. No public permanent veto flag or cross-run state; only the private tracking error can make later snapshots missing. |
 | IF-05 | Local observation helper (ordinary internal function, not a public API) | Executes the existing supported call body once, preserves its original return/exception, attempts one observation in isolation, and returns or propagates the original outcome. With no active `RunContext`, it calls the body directly and records nothing. A known-query classifier exception becomes a conservative per-query `unavailable` observation; a failed registry acceptance becomes a query-level failure mark. A pre-fetch parameter/date rejection with no completed query records a private call-failure note instead of a query observation. If a completed query’s observation cannot be identified or neither local record can be accepted, set the run-local `availability_tracking_error`. It never refetches, retries, calls a model, monkeypatches, or acts as middleware. |
 | IF-06 | `AvailabilitySummarizer.snapshot(asset_type, enabled_analysts, analysis_context) -> AvailabilitySummary | None` | Returns one JSON-compatible mapping with `basic_completeness`, `applicability_note`, `observations`, `necessary_items`, and `supplementary_limitations`. It reads the current registry, applies query-level failure marks, selects the current decision update by existing match and accepted-update order, builds the necessary items and supplementary limitations, and computes completeness once. `analysis_context` carries the existing ticker/date/range information needed for matching; no new config system. No I/O, extra fetch, mutable registry exposure, or consumer-side completeness step. Any `necessity_status` helper is internal to the summarizer, not a consumer interface. If `availability_tracking_error` is set, return `None`; if this snapshot construction alone fails, return `None` for this call without setting that error fact. `None` is missing, not a fourth completeness state. |
 | IF-08 | `PortfolioRiskEvaluator.evaluate(analysis_ticker, proposal, scenario, thresholds, asset_type) -> PortfolioRiskResult` | Pure deterministic evaluation using the explicit current analysis ticker. Internal decisions use exact rational values; output is one JSON-compatible result with decimal-string metrics/null and risk-scoped reasons. Parse/validate, decide, and project are local responsibilities, not a required class/service/API split. No global state, model/data call, manifest, text extraction, or default Decimal-context dependence. |
-| IF-09 | `FinalRecommendationChecker.evaluate(proposal, availability, risk, asset_type) -> FinalDecision` | Pure deterministic final decision; returns `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`. Risk reasons stay inside the risk result. |
-| IF-10 | `ManifestStore.write(record) -> PersistenceOutcome` | Atomic best-effort write; returns written/failed/missing; never raises into analysis path. |
-| IF-11 | `RunStatsHandler.snapshot() -> StatsSnapshot` | Per-analysis counts, token totals, and `usage_complete` from the handler's directly bound collector; nulls for incomplete/unreliable data. The handler/collector is owned by one `RunContext`, never by a reusable graph/model object. |
-| IF-12 | `HistoryReader.list_runs(ticker=None, analysis_date=None) -> list[RunSummary]` | Read-only manifest discovery and filtering/order. |
-| IF-13 | `HistoryReader.get_report(run_id) -> str` | Read UTF-8 merged Markdown under the configured root. |
-| IF-14 | `SecurityGuard.validate_run_id(value) -> str` | Single safe path component or rejection. |
-| IF-15 | `SecurityGuard.resolve_under_root(root, candidate) -> Path` | Resolved-target ownership check or rejection. |
+| IF-09 | `FinalRecommendationChecker.evaluate(proposal, availability, risk, asset_type) -> FinalDecision` | Pure deterministic final decision; returns the five-field formal result: `model_proposal`, `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`. Risk reasons stay inside the risk result. |
+| IF-10 | **Deferred** `ManifestStore.write(record) -> PersistenceOutcome` | Future FR-02/FR-05/SR-02 only; not a current contract. |
+| IF-11 | **Deferred** `RunStatsHandler.snapshot() -> StatsSnapshot` | Future FR-02/FR-05/SR-02 only; not a current contract. |
+| IF-12 | **Deferred** `HistoryReader.list_runs(ticker=None, analysis_date=None) -> list[RunSummary]` | Future FR-02/FR-05/SR-02 only; not a current contract. |
+| IF-13 | **Deferred** `HistoryReader.get_report(run_id) -> str` | Future FR-02/FR-05/SR-02 only; not a current contract. |
+| IF-14 | **Deferred** `SecurityGuard.validate_run_id(value) -> str` | Future FR-02/FR-05/SR-02 only; not a current contract. |
+| IF-15 | **Deferred** `SecurityGuard.resolve_under_root(root, candidate) -> Path` | Future FR-02/FR-05/SR-02 only; not a current contract. |
 | IF-16 | `SecurityGuard.safe_endpoint_for_preference(url, known_secrets) -> PreferenceDecision` | Save/restore only safe endpoint or omit with re-entry notice. |
 | IF-17 | `SecurityGuard.safe_error_summary(exc, known_secrets) -> SafeErrorSummary` | Sanitized type/message; no traceback or attached request/response. |
-| IF-18 | `ReportWriter.write(final_state, output_refs) -> OutputRefs` | Renders the existing report tree plus deterministic availability/risk/check sections from the passed state. Availability comes from `data_availability_summary` in that state; Markdown and HTML use the same input. The same writer serves run-in save and independent `save_reports(final_state, ...)`, which is read-only over that state. It does not read `RunContext.current()`, the registry, the summarizer, a graph last-run cache, or model text, and does not derive a formal rating. |
+| IF-18 | Existing report writer over passed `final_state` and existing save options | Renders the existing report tree plus deterministic availability/risk/check sections from the passed state. Availability comes from `data_availability_summary` in that state; Markdown and HTML use the same input. The same writer serves run-in save and independent `save_reports(final_state, ...)`, which is read-only over that state. It does not read `RunContext.current()`, the registry, the summarizer, a graph last-run cache, or model text, and does not derive a formal rating. |
 | IF-19 | `FormalResultContract.validate(result) -> ValidatedResult | ContractFailure` | Lightweight shared structural check: the five required fields exist with correct types; `model_proposal` is a nested `{rating, text}` object or `null` (an illegal proposal rating is SB-01 input, not a contract failure); formal gate and rating sets are legal; passed has a five-tier formal rating; blocked/error has REVIEW; `final_trade_decision` is a non-whitespace string; `reasons` is a string list and blocked/error has at least one actual reason. Returns the result unchanged or reports an execution contract failure. No business judgment, data/risk recheck, text parsing, model/data call, repair, second status set, or new module/API requirement. |
-| IF-20 | `SaveCoordinator.save(...) -> SaveOutcome` | Internal CLI save interface: `not_requested`, `succeeded`, or `failed`, plus confirmed output references. It reports captured save failures to the lifecycle without adding an external diagnostic system or changing `propagate()` success shape. |
-| IF-21 | `ConfigSummary.project(effective_config, selected_analysts) -> dict` | Shared projection using the existing `run_settings()` allowlist; usable before graph construction; the instance `run_settings()` reuses the same projection. If an allowlisted field value contains a known credential used in this run as a literal exact substring, omit the entire affected field; equality with the whole field is not required. Empty credential strings do not participate. Do not decode, fuzzy-match, detect unknown credentials, scan report bodies, or perform whole-output cleanup. Normal non-sensitive fields remain. No second rule set, extra graph construction, or credential-policy expansion. |
+| IF-20 | Existing CLI save coordination | Preserve optional save interaction and existing failure display/exception behavior; no manifest-reference registration or new save protocol. |
+| IF-21 | `ConfigSummary.project(effective_config, selected_analysts) -> dict` | Existing run_settings allowlist shared by report/final-state configuration summaries; omit whole fields containing a nonempty known credential literally. No pre-construction manifest obligation. |
 | IF-23 | `DataResultClassifier.classify(method, effective_params, raw_result_or_exception, source_hint) -> DataObservation or ClassificationFailure` | Apply the verified per-method branch table; return status, short safe reason, and source (known or null). A normal unrecognized format is the existing `unavailable` classification; an internal exception is `ClassificationFailure`, not a data-source status. With a known query key, the local observation helper/registry converts that failure into a conservative per-query `unavailable` observation; it does not mean all registry data is corrupt. Preserve the original return/exception; no fetch, model call, global source inference, or fuzzy keyword guessing. |
 | IF-24 | `ResearchEntry.prepare(state, first_bull_call) -> (state_update, bull_result)` | On the first research entry after analyst join, obtain one `AvailabilitySummary` from the summarizer using existing asset type, enabled analysts, and analysis context, or `null` when none can be formed. Render the mapping to a labeled program block; for `null`, the renderer emits the fixed display text “program summary currently unavailable.” Inject that block directly into the same first Bull invocation and return `research_availability_summary` as the mapping or `null` in state. It is a wrapper, not a top-level node; no extra data/model call, compression, truncation, refresh loop, seal, version view, registry exposure, or second completeness authority. |
 | IF-25 | Risk-module internal helpers | Small local functions for input parsing/validation, exact comparison, one JSON-compatible result projection, and display formatting. They are not public interfaces, separate services, or a generic numeric framework; no canonical state protocol, digest, round-trip proof, consumer-specific float conversion, or implicit encoder is added. |
@@ -357,7 +331,7 @@ Components in this table are logical responsibilities. They do not require one c
 
 | State/data | Owner | Persistence | Serializable | Notes |
 |---|---|---|---|---|
-| `run_id`, timers, status, locks, futures, counters | `RunContext` | In-memory; manifest projection only | No | Never enters LangGraph state or checkpoint; not stored on the reusable graph object across analyses |
+| Binding, locks, reuse and availability state | RunContext | In-memory only | No | One analysis; no new persistent identity/timers/status/counters |
 | Query reuse outcomes | `RunContext` / `QueryReuseService` | In-memory for one run | No | Vendor caches remain separate |
 | Availability observations | `RunContext` / `AvailabilityRegistry` | In-memory; snapshot can enter graph state | Registry: no; snapshot: yes | Snapshot is a plain dict/list |
 | `model_proposal` | Graph state | Serializable/final state | Yes | Nested `{rating, text}` or `null`; inner values may be `null`; advisory only; never a formal result. No `present` boolean. |
@@ -369,7 +343,6 @@ Components in this table are logical responsibilities. They do not require one c
 | `data_availability_summary` | Risk node writes check-time snapshot; entry/report preparation replaces it with the terminal delivery snapshot before return/save | Serializable/final state | Yes | Five-field `AvailabilitySummary` plain mapping or null/absent when unavailable; final check keeps using its check-time input; report/independent save read only this terminal state field, never the live registry. |
 | `portfolio_risk_result` | Graph state | Serializable/final state | Yes | JSON-compatible result with decimal-string metrics/null and its own `reasons`; exact status is decided before result generation; the new flow does not restore old risk data or flatten this object into top-level formal fields. |
 | `gate_status`, `reasons`, `final_rating`, `final_trade_decision` | Graph state; SB-01 alone decides/generates the values | Serializable/final state/report/state log | Yes | Top-level formal authority for the current run; entries, reducers, and writers may pass/merge/copy/save unchanged values but may not recompute, re-parse, replace, or fabricate them; `reasons` does not replace `portfolio_risk_result.reasons`; old persisted values are not used by the new flow. |
-| Run manifest | `ManifestStore` | JSON file | Yes | Auxiliary; no rating, gate, or reason field |
 | Memory entries | `TradingMemoryLog` | Markdown file | Yes | Cross-run; formal rating/body only |
 | Checkpoints | Existing checkpointer | SQLite | Yes | Existing code/tests outside the new flow; not acquired, read, or deleted by the new flow |
 
@@ -377,19 +350,19 @@ The persistence column records whether a value is serializable for existing stru
 
 ### 5.5 Dependency rules
 
-- C-08 and C-09 depend on data classes (`RunSpec`, `AvailabilitySummary`, `PortfolioRiskResult`, `FinalDecision`), not on entry adapters.
+- C-08 and C-09 consume the explicit primitive/mapping inputs defined by IF-08/IF-09. They do not import RunSpec, RunContext, entry adapters or required DTO classes. Existing core signatures and plain JSON-compatible results remain unchanged.
 - C-09 does not depend on C-14, C-12, C-13, or any network client.
 - C-07 depends on C-06 observations and existing data-fetch semantics; it does not trigger fetches.
 - C-05 is used only by the two supported `get_news` paths; it does not wrap other methods.
 - C-01 and C-02 depend on C-03 and C-10; they do not implement business checks.
 - C-11 reads formal fields only for the formal section; it reads `model_proposal` only for the labeled proposal section.
-- C-15 is a utility dependency of C-01, C-02, C-03, C-11, C-13, and C-14; it has no business authority.
+- Current C-15 credential helpers serve the supported entry/config/report/error paths only. C-13/C-14 and their SR-02 path checks are deferred. No business authority is added.
 - C-01, C-02, C-11, and C-12 invoke the shared `FormalResultContract` before normal final output. The contract is a validation seam, not a new authority and not necessarily a separate component or file.
-- C-01 creates the `RunContext` before constructing the graph object; C-02 creates it inside `propagate()` on an already existing object. Neither creates an analysis run in the object constructor.
-- C-18 supplies the initial config-summary projection before a graph object exists. C-04 is per-run and directly receives callbacks through this execution's graph config; model clients remain reusable object-level resources and are not permanently bound to this analysis's handler.
+- C-01/C-02 bind scope before the first supported data call in an analysis, after effective config/basic validation. Binding before graph-object construction is not required. Constructor-only use creates no scope; explicit delegation shares the caller scope and independent invocations create fresh scope.
+- C-18 retains risk thresholds and the shared existing run_settings allowlist for current report/final-state summaries. No pre-construction projection or C-04 callback refactor is required; baseline statistics remain unchanged.
 - C-06 observation sites call C-20 with the original result/exception and effective parameters; C-20 does not fetch or infer the configured vendor as the actual source. C-08 receives the analysis ticker explicitly from graph state and does not read a global or report text.
 - C-08 contains its own parsing/validation, exact comparison, one result projection, and local display formatting. C-09 consumes only the risk status and needed explanation, and C-01/C-11 consume the same result without re-parsing, recalculating, or re-judging risk.
-- C-01 and C-02 coordinate entry-owned cleanup and outcome summary; C-16 describes existing checkpoint code outside the new flow; the new flow acquires no checkpoint session. C-03 / `RunContext.finish()` does not release resources.
+- C-01 and C-02 coordinate entry-owned cleanup and original error propagation; C-16 describes existing checkpoint code outside the new flow; the new flow acquires no checkpoint session. C-03 / `RunContext.finish()` does not release resources.
 
 ---
 
@@ -445,84 +418,37 @@ Node contracts:
 
 ### 6.2 CLI workflow
 
-1. Select parameters, resolve configuration, and perform basic validation (`cli/run.py`). If `checkpoint_enabled` is set, emit a safe notice that this flow does not resume and will run fully; do not change the configuration or default.
-2. Create `RunContext`: allocate run_id, start clocks, create this analysis's `RunStatsHandler`/collector, and attempt the running manifest using the shared config-summary projection, before a graph object exists.
-3. Construct the graph object for this CLI operation: initialize clients, perform the initial workflow compile, and prepare per-run state and output paths. Do not pass the per-analysis stats handler to the model constructors. No checkpoint session is acquired. This construction time is inside the analysis operation elapsed time.
-4. If object construction, client initialization, initial compile, or per-run preparation fails, take the existing execution-error path: attempt a failed manifest while preserving the original error; a manifest error does not replace it.
-5. Stream the graph with the per-analysis handler in this execution's config (`callbacks`), preserving any existing custom callbacks; update intermediate display sections. A partial streaming chunk is never promoted to a formal result.
-6. Merge final state; the post-PM nodes have already produced the formal result.
-7. Validate the merged formal result with the shared `FormalResultContract` before `record_decision()`, normal report save, formal display, or successful return.
-8. Prepare the delivery/report availability input while this analysis's registry is still accessible: take one current summary, put its plain mapping into the final-state/report-state copy, or leave the field null/absent when no valid summary can be formed. This does not rerun SB-01 or change formal fields.
-9. Save phase inside the run: ask save/path/HTML, perform save attempt from that prepared report state, collect confirmed output references; Markdown and HTML use the same input.
-10. Exit the entry execution scope: ensure the outer streaming session is exhausted or explicitly ended, and `stream_run()` closes its own underlying graph stream. No checkpoint session is acquired or closed by this flow.
-11. Summarize the run outcome and call `RunContext.finish(outcome)`: after the cleanup attempts, it records end time, takes a stats snapshot, and attempts the terminal manifest. `finish()` does not repeat any close.
-12. Restore the prior RunContext binding on scope exit, then run the post-run phase: print completion, display formal report and the prepared availability input, offer full report/browser.
-
-The CLI must not display or record a formal rating before the Final Recommendation Check node completes. After the graph, a contract failure takes the execution error path; the CLI does not display a diagnostic as a formal REVIEW and does not claim normal completion.
+Use the existing entry/return shape. Validate parameters, initialize one ephemeral scope, execute the full graph with the retained baseline callback behavior, validate SB-01 output, prepare terminal availability, save existing required outputs and any requested report, then clean up and restore scope. No running/terminal manifest or new precise statistics are required. CLI and propagate() pass the same formal fields unchanged. Explicit delegation shares its caller scope; independent calls do not.
 
 ### 6.3 Programmatic workflow
 
-1. Start from an existing `TradingAgentsGraph` object. Its earlier construction, client initialization, initial workflow compile, and idle time are not part of this analysis run. If object construction failed before `propagate()`, no analysis run or manifest is created.
-2. Invoke `propagate()`: validate `trade_date`, asset type, and effective configuration for this call. If `checkpoint_enabled` is set, emit a safe notice that this flow does not resume and will run fully; do not change the configuration or default.
-3. Read optional `purchase_scenario` input at the caller boundary. An explicitly provided file that cannot be read or parsed is an entry parameter error; an omitted scenario is not an entry error and is passed to FR-04 as missing input. After successful parsing, business-field validity, object matching, and explicit threshold validity are decided by FR-04, which returns structured `blocked` rather than causing an entry hard failure.
-4. Create a new `RunContext`: allocate a new run_id, start clocks, attempt the running manifest, and create this analysis's `RunStatsHandler`/collector together with reuse state.
-5. Build initial state including `purchase_scenario` and resolved thresholds. The graph object was already constructed; the new flow does not acquire or recompile a checkpoint, and it does not bind the handler to model constructors.
-6. Run the graph fully with the handler in this execution's config (`callbacks`), preserving existing custom callbacks; no checkpoint scope is entered even when checkpointing is configured.
-7. Validate the final formal result with the shared `FormalResultContract` before normal final saving and successful return.
-8. While this analysis's registry is still accessible, prepare one terminal `data_availability_summary` plain mapping in `final_state`; if no valid summary can be formed, leave it null/absent. This does not rerun SB-01 or change formal fields.
-9. After the terminal delivery summary is prepared, use the existing save flow to save final-state JSON and then attempt the existing new-memory append when its conditions create a record. A final-state failure prevents the later memory append; a memory failure does not roll back an already successful final-state save. Preserve the existing exceptions and run/outcome handling; add no transaction, compensation, recovery, or file rollback.
-10. After those save attempts complete or fail, exit the execution scope and follow the existing error path for cleanup. Then call `RunContext.finish(outcome)` to record end time, take a stats snapshot, and attempt the terminal manifest.
-11. Restore the prior RunContext binding, then return `(final_state, final_rating)` where `final_rating` is the SB-01 formal field and `final_state` carries the terminal delivery summary. The return shape is unchanged. The new flow does not call `run_rating()` or parse the formal text; the existing helper may remain for older callers.
-12. On a contract failure, take the execution error path; do not return a fabricated `(final_state, REVIEW)` or parse the decision text. No specific exception class name is fixed.
-13. Do not force report saving. A later `save_reports()` call is outside the run and reads only the returned `final_state`; it does not update the manifest.
+Use the existing entry/return shape. Validate parameters, initialize one ephemeral scope, execute the full graph with the retained baseline callback behavior, validate SB-01 output, prepare terminal availability, save existing required outputs and any requested report, then clean up and restore scope. No running/terminal manifest or new precise statistics are required. CLI and propagate() pass the same formal fields unchanged. Explicit delegation shares its caller scope; independent calls do not.
 
 ### 6.4 Normal path sequence
 
 ```text
-entry validation
-  → RunContext.start (running manifest attempt)
-  → graph execution
-      → analysts + memory
-      → research/trader/risk debate
-      → Portfolio Manager: model_proposal
-      → risk node: availability snapshot + FR-04 result
-      → final check node: SB-01 formal result
-  → shared FormalResultContract validation
-  → prepare terminal availability summary into final/report state
-  → CLI save attempt (if requested, same report state) / no save for propagate
-  → entry-owned cleanup attempts complete
-  → RunContext.finish: end clock + stats snapshot
-  → terminal manifest attempt
-  → post-run display/browser (CLI only)
-  → caller receives formal result
+Validate invocation → start ephemeral scope → execute full graph
+→ validate formal result → prepare terminal availability in delivery state
+→ existing state save → conditional new-memory append
+→ optional CLI report save → cleanup/restore scope → normal delivery
 ```
+
+Independent report saves use passed final state only. No terminal manifest, new statistics snapshot or file registration occurs.
 
 ### 6.5 Failure paths
 
-| Failure | Graph/entry behavior | Manifest status | Formal result |
-|---|---|---|---|
-| Analysis execution exception | Existing error propagates after entry-owned cleanup attempts and terminal attempt | `failed` with safe summary | None produced; no fake result |
-| CLI graph-object construction, client initialization, or initial workflow compile fails after RunContext start | Existing execution error path; original error preserved; failed manifest attempted | `failed` (attempted); manifest failure only warns | None produced; no fake result |
-| Per-run state preparation fails after RunContext start | Existing execution error path; original error preserved; failed manifest attempted | `failed` (attempted) | None produced; no fake result |
-| Program object construction fails before `propagate()` is invoked | No analysis run is created; object construction error remains | No run manifest | None |
-| Formal result missing/invalid after graph, or lost in transfer/merge | Shared `FormalResultContract` reports an execution contract failure; entry takes the existing execution error path | `failed` (attempted); manifest write failure only warns | None; no consumer-generated REVIEW, no parsed rating, no substitute decision text |
-| Independent public report save called with missing/invalid formal result | Contract failure; that save operation fails; no new normal report or memory decision; no failed snapshot file | Existing run manifest unchanged; no run reopen | None |
-| CLI requested save fails | Existing save error message; run ends | `failed` | Existing formal result remains displayable |
-| Final-state JSON save fails | Existing exception propagates; new memory append is not attempted | `failed` (attempted) | Existing formal result in memory remains unchanged; no successful state file is claimed |
-| New memory decision append fails after final-state save | Existing exception propagates; saved final state is not rolled back | `failed` (attempted) | Existing formal result remains unchanged; no replacement record |
-| Memory disabled or existing same-day record makes no new append | Not a save failure; no record is forced | `completed` if other required work succeeds | Unchanged |
-| Historical settlement, reflection, or memory-read failure handled by `_memory_step()` | Existing degradation and notes; not promoted to run failure | `completed` if other required work succeeds | Unchanged |
-| User declines report save | Not requested, not failed | `completed` if other required work succeeds | Unchanged |
-| Requested report save partially writes Markdown and then fails on HTML | Existing save exception and error display; overall save outcome `failed`; confirmed Markdown reference retained | `failed` | Unchanged; no fabricated HTML reference and no rollback |
-| Manifest running or terminal write fails | Warning only; analysis and requested save continue | May be missing/running | Unchanged; run outcome unchanged |
-| FR-04 missing/invalid scenario (stock Buy/Overweight) | Risk node returns `blocked`; SB-01 returns REVIEW/blocked | `completed` (business REVIEW) | REVIEW + program notice |
-| FR-04 evaluator exception | Risk node returns `error`; SB-01 blocks | `completed` | REVIEW + program notice |
-| FR-03 incomplete | SB-01 blocks | `completed` | REVIEW + missing-data notice |
-| FR-03 missing/illegal/contradictory | SB-01 blocks | `completed` | REVIEW + notice |
-| Model rating missing/illegal/REVIEW | SB-01 blocks | `completed` | REVIEW + notice |
-| SB-01 internal exception it handles | Check node catches and returns `error` | `completed` | REVIEW + notice |
-| Unhandled exception escaping SB-01 or the graph | Existing execution exception path; formal contract not satisfied | `failed` (attempted) | None; no fabricated REVIEW or formal text |
-| User interrupt/forced termination | No completed claim | May remain running/missing | Not guaranteed |
+| Failure | Current handling | Formal result |
+|---|---|---|
+| Entry/graph/setup error | Preserve original execution error; clean up acquired resources and restore scope | No fabricated normal result |
+| Missing/invalid formal result at IF-19 | Execution contract failure; no proposal parsing, replacement REVIEW or normal save | Not delivered as valid |
+| Ordinary risk/final-check condition failure | Existing pure core returns blocked/REVIEW as applicable; entry does not hard-fail solely for missing scenario | C-09 result retained |
+| Final-state save failure | Original error; do not attempt subsequent new-memory append | Never recomputed |
+| New-memory append failure | Original error; retain saved state | Never recomputed |
+| Requested report partially/fully fails | Existing save error/display; keep files actually saved; no rollback/fake success | Never recomputed |
+| Terminal availability preparation fails | Safe warning, unavailable display region; no new fetch/model/check | Already formed formal fields retained |
+| Cleanup fails | Attempt remaining cleanup; preserve primary error; no double-close | Never recomputed |
+
+No persistent run status or manifest attempt is required on these paths.
 
 ### 6.6 Intermediate content vs formal output
 
@@ -565,10 +491,10 @@ parameter validation
   → SB-01
   → unified formal output
   → existing save flow
-  → terminal manifest
+  → restore ephemeral scope
 ```
 
-Execution failure follows FR-02: the run is failed, no automatic recovery or retry is added, and a subsequent invocation is a new analysis with a new run_id. This flow does not add text-completion recovery, cross-analysis evidence inheritance, or automatic model replay.
+Execution failure preserves existing error handling; no automatic recovery/retry is added. A subsequent invocation owns a fresh ephemeral scope. This flow does not add text-completion recovery, cross-analysis evidence inheritance, or automatic model replay.
 
 Explicit compatibility cost: an interrupted analysis is re-run from the beginning on the next invocation, including model and data calls; time and call cost may increase. No performance or cost benefit is claimed.
 
@@ -606,243 +532,19 @@ No unified context assembler, cross-role deduplication, quick/deep budget, globa
 
 ## 7. Run lifecycle
 
-### 7.1 Creation point and object lifecycle
+### 7.1 Current in-memory analysis scope
 
-The program interface uses a reusable `TradingAgentsGraph` object: the object is constructed first, then `propagate()` may be called one or more times. Creating the object is not creating an analysis run. The object constructor does not allocate a run_id, create a manifest, or retain a RunContext.
+C-03 RunContext is created for each outer analysis and bound only for that execution. Both entries bind it at their existing analysis execution boundary after effective config/basic validation and before the first supported data call. There is no requirement to bind it before graph-object construction; propagate() operates on an existing graph object. Explicit internal delegation shares the same scope. Construction alone creates no analysis context. Scope carries effective analysis identity/config needed by C-05/C-07, reuse state, availability registry and local failure notes; it owns no current manifest, new statistics or persistent identity.
 
-Entry-specific boundaries:
+IF-01 start initializes these objects and binds the context. IF-03 current provides context-local access. IF-02 finish restores the prior binding after entry-owned resource cleanup; it does not close resources twice, persist a terminal status or return ManifestWriteOutcome. Initialization failure follows the existing execution-error path; cleanup preserves the primary error. Independently invoked analyses never share mutable scope state.
 
-| Entry | Boundary |
-|---|---|
-| CLI | Parameter selection, configuration resolution, and basic validation → create RunContext, record start clocks, attempt running manifest → construct the graph object, initialize clients, perform the initial workflow compile → prepare per-run state and output paths → execute |
-| Program | An existing graph object → `propagate()` invocation → per-call basic validation and effective configuration → create a new RunContext, record start clocks, attempt running manifest → prepare per-run state → execute |
+### 7.2 Delivery and cleanup
 
-Consequences:
+Graph completion produces the formal result. Entries validate it with IF-19, prepare the terminal availability summary into delivery state, preserve final-state-save then conditional new-memory append ordering, and retain existing optional report-save behavior. Requested save failures preserve their existing exception/display behavior; completed files are not rolled back and the formal result is not rewritten. Independent save reads passed state and opens no analysis context. No manifest references are collected. Full new-flow execution and the existing checkpoint exclusion remain.
 
-- CLI object construction, client initialization, initial workflow compile, and per-run preparation occur after the run starts and are included in Analysis Operation Elapsed Time.
-- A CLI construction/client/compile/preparation failure is a post-start execution failure: preserve the original error, attempt a failed manifest, and do not let a manifest error replace the construction error.
-- The program entry excludes the object's earlier construction, client initialization, initial workflow compile, and idle time. A construction failure before `propagate()` creates no analysis run or manifest.
-- Both entries create the RunContext before their per-run execution preparation. This does not promise identical object-initialization scope and does not support a direct performance comparison between entries.
-- Each independent `propagate()` creates a new RunContext, run_id, statistics handler/collector, query-reuse registry, and availability registry. The object may be reused, but neither its models nor the graph object retain this run's handler, and the run context is not reused across analyses.
-- The initial workflow compile is object construction for the CLI and pre-existing for the program entry. The new flow does not perform a checkpoint recompile.
-- The design does not add a requirement to reconstruct model clients or the whole graph for every analysis. The existing CLI construction per operation remains, while a program caller may reuse an existing object. It does not move run creation into the constructor or require lazy initialization.
+### 7.3 Deferred lifecycle
 
-Configuration summary:
-
-- The initial running manifest cannot depend on a constructed graph instance. A shared config-summary projection uses the existing `run_settings()` allowlist from the effective configuration and selected analysts.
-- The instance `run_settings()` method reuses the same projection. There is no second allowlist, no extra graph construction, and no expansion of the credential-protection scope.
-
-Internal reuse:
-
-- Only an explicit internal delegation within the same analysis, such as the CLI delegating to common execution logic, shares the active RunContext.
-- An independent `propagate()` call, another graph object, or another ticker analysis is not merged merely because a context variable already holds a context.
-- Leaving the context restores the previous binding so a later call cannot inherit it.
-- The design does not promise concurrent execution on the same graph instance.
-
-CLI report saving is included in the same run. `propagate()` does not force a report save; a later independent save is outside the run.
-
-### 7.2 Run identity
-
-- `run_id` is a single safe path component: UTC compact timestamp plus a random suffix, e.g. `20261117T101530123456Z-a1b2c3d4`.
-- Collision handling: attempt unique directory creation with `mkdir(exist_ok=False)` up to a bounded number of attempts (proposed 5); on each collision generate a new suffix. Never overwrite an existing run directory.
-- If no directory can be created, manifest persistence is unavailable; the analysis continues and a safe warning is emitted.
-- Manifest path: `<results_dir>/<run_id>/run_manifest.json`.
-- Existing report directories are retained. Report references in the manifest point to actual files; relative references are resolved against the configured results root. Existing same-path report saving may overwrite an earlier file; no immutable report version is promised.
-- Explicit user-chosen report locations outside the results root remain allowed by the existing save feature but are not automatically eligible for FR-05 history read.
-
-### 7.3 Timing
-
-“Analysis Operation Elapsed Time” is measured with a monotonic clock.
-
-| Included | Excluded |
-|---|---|
-| Post-start preparation: CLI graph-object construction, client initialization, initial workflow compile, per-run state/output preparation | Pre-start parameter selection and basic validation |
-| Graph execution | Post-terminal browser opening and full-report browsing |
-| CLI save selection wait, path/HTML selection, save attempt | Final manifest record construction/serialization/write |
-| Resource cleanup before terminalization | Program object construction, client initialization, initial workflow compile, and idle time before `propagate()` |
-| — | Time after the terminal write attempt returns |
-
-`started_at` is timezone-aware ISO 8601. `finished_at` is recorded before building the terminal record. `duration_seconds` is the monotonic difference between start and end, excluding final manifest serialization/write.
-
-### 7.4 Manifest lifecycle
-
-1. Attempt a `running` record with `finished_at = null`, `duration_seconds = null`, and available identity/configuration.
-2. Execute the graph, then the existing final-state JSON save and new-memory append, then the requested CLI report save. An exception in an earlier write prevents later writes in the existing order.
-3. The entry execution scope ensures necessary cleanup attempts for resources it acquired, coordinates their order, and summarizes the run outcome. Wrappers release only their own resources.
-4. Call `RunContext.finish(outcome)`: after the cleanup attempts, record end clock, take a stats snapshot, build the terminal record, and attempt the terminal write.
-5. Restore the prior RunContext binding on scope exit and then return or enter the post-run phase.
-
-Rules:
-
-- `completed` only when analysis execution succeeded, any requested report save succeeded or was not requested, and required final-state JSON and new-memory writes succeeded or no new memory append was required. A historical settlement/reflection/memory-read degradation handled by `_memory_step()` is not a failure.
-- `failed` when a caught execution error ends the analysis, the final-state JSON save raises, a new memory decision append raises, a requested CLI report save outcome is `failed`, or the formal result contract fails.
-- A CLI graph-object construction, client initialization, initial workflow compile, or per-run preparation failure after RunContext start is a caught execution failure: preserve the original error, attempt a failed manifest, and do not let a manifest error replace it.
-- A final-state JSON failure prevents the later memory append in the existing order; the original exception is preserved.
-- The entry catches a final-state or new-memory exception only to record the failed outcome and attempt the terminal manifest, then re-raises the original exception unchanged. It does not suppress it or replace it with a manifest error.
-- A final-state save success followed by a new-memory append failure does not roll back the saved state and does not become a normal success.
-- Memory disabled or an existing same-day record causing no new append is not a save failure.
-- Initial manifest write failure does not prevent a later terminal write attempt.
-- `RunContext.finish()` does not close streams, call `end_checkpoint()`, delete checkpoint data, close clients, or repeat a close; those responsibilities are defined in §7.8.
-- Manifest failure does not re-trigger cleanup and does not block context-binding restoration.
-- A `finally` path never writes `completed` unconditionally. `completed` is set only when the normal execution path reached the terminalization step.
-- Terminal write uses a temporary file plus atomic replace; a reader sees complete old JSON or complete new JSON.
-- Serialization failure does not damage an existing valid file.
-- Manifest warnings are safe and short; no raw credential, complete configuration, or uncontrolled traceback.
-- Manifest failure does not re-run a model, roll back report/memory, change the run outcome, or replace the original analysis or save error. A failed manifest does not force a new CLI non-zero exit code.
-- A remaining `running` record after terminal failure means only that the terminal record is missing; it does not prove the analysis is still running or failed.
-
-Proposed manifest fields (architecture interface, not a new requirement):
-
-| Field | Type | Notes |
-|---|---|---|
-| `manifest_version` | string | Literal `"1"` for the shared writer/reader contract; any other value is an invalid record |
-| `run_id` | string | Safe path component |
-| `status` | `running` / `completed` / `failed` | Run status, not recommendation |
-| `analysis` | object | Required: `ticker` string, `analysis_date` `YYYY-MM-DD` string, `asset_type` string, `analysts` list of strings |
-| `started_at` | string | Timezone-aware ISO 8601 |
-| `finished_at` | string or null | Null while running |
-| `duration_seconds` | number or null | Monotonic analysis operation elapsed |
-| `run_settings` | object | Existing `run_settings()` allowlist only |
-| `llm_calls` | integer or null | Started application-level model calls |
-| `tool_calls` | integer or null | Started tool calls; direct prefetch excluded |
-| `tokens_in` | integer or null | Exact sum only when complete |
-| `tokens_out` | integer or null | Exact sum only when complete |
-| `usage_complete` | boolean | False if any counted call lacks valid usage |
-| `result_files` | list | Required list of confirmed files actually produced by this run; `[]` when none was confirmed. Writer never guesses, fabricates, or scans old files |
-| `report` | object or null | Required key. `null` when no confirmed merged report; otherwise exactly `{"complete_report_md": string}` |
-| `error_summary` | object or null | `error_type` and safe message; no traceback |
-
-Minimal shared writer/reader contract for `manifest_version = "1"`:
-
-- Writer obligation: `analysis` and `report` use the shapes above. The writer records every confirmed produced-file reference in `result_files`, using `[]` when none exists; it does not omit an existing confirmed file, guess a path, fabricate a reference, or scan old directories to claim a file as current. “Optional output” means a report or other optional artifact is not forced to be generated; once produced and confirmed, its reference is still recorded.
-- Writer obligation: `report.complete_report_md` is a string path relative to the configured results root. An absolute value is allowed only when it resolves inside that root under the existing SR-02 checks. When no merged report was confirmed, the normal writer emits `report: null`, not an inferred path and not an empty object.
-- Reader obligation: history validates only the fields needed for registration, filtering, ordering, and report lookup. It does not expand validation over `result_files` or other unrelated content. A missing `report` key is format damage: list skips the record with a safe warning, and direct get treats it as an invalid record. A legal `report: null` is a valid no-registration record: it is absent from list and direct get returns not found.
-- If `report` is non-null, it must contain the `complete_report_md` string and satisfy the root/ownership checks; a missing member, wrong type, or illegal reference is an invalid record. A legally registered report that is later deleted or unreadable remains registered for list availability purposes and direct read returns a report-read error.
-- Missing other required metadata, wrong field types, an unsupported `manifest_version`, or an illegal report reference follows the existing invalid-record/skip rules. No independent schema file, migration, old-version compatibility, hash, archive, index, or new validation system is added.
-
-No rating, gate, reason, or decision fields are added to the manifest. A newly created memory record uses the formal rating and body; it is not required to store the complete gate metadata.
-
-### 7.5 Outcome dimensions
-
-| Dimension | Values | Meaning |
-|---|---|---|
-| Formal business result | `gate_status` `passed`/`blocked`/`error`, top-level `reasons`, `final_rating`, and `final_trade_decision` | SB-01 output; risk reasons remain inside the risk result; persistence failures never recompute or rewrite it |
-| Run outcome | `completed` / `failed` | This analysis operation, including required save outcomes |
-| External control flow | Normal return, existing exception propagation, existing CLI error display/exit | Existing behavior; a failed manifest does not force a new non-zero exit code |
-| Artifact persistence | Per artifact: `not_requested` / `succeeded` / `failed` | Manifest, report, final-state, and new-memory outcomes; partial success is possible |
-
-A formal result contract failure is an execution failure, not a business REVIEW. A business REVIEW is a `completed` run; a contract failure is `failed` with a best-effort failed manifest.
-
-The formal business result is unchanged by persistence failure. That does not mean every save failure returns normal success: final-state, new-memory, and CLI-requested report failures can make the run `failed`. Manifest failure alone does not.
-
-### 7.6 CLI save boundary
-
-- Save selection wait, path/HTML selection, and save attempt are inside the run.
-- The internal `SaveCoordinator` returns `not_requested`, `succeeded`, or `failed`, plus confirmed output references. This is internal coordination, not a new external diagnostic system.
-- The CLI catches its report-save exception for display, so the lifecycle uses the internal save outcome rather than inferring success from the absence of an escaping exception.
-- After the save attempt and the entry-owned cleanup attempts, `RunContext.finish()` attempts the terminal manifest.
-- Post-run display and browser opening occur after the terminal attempt; their duration is excluded.
-- Existing save failure messages and exit behavior are preserved. A failed manifest record does not require a new CLI non-zero exit code.
-- `propagate()` never forces a report save. A later independent `save_reports()` failure keeps that operation's behavior and does not reopen or update the completed run manifest.
-- If Markdown is written and HTML then fails, the overall requested save is `failed`; the confirmed Markdown reference may be recorded, no HTML success is fabricated, and neither file is rolled back or deleted. The lifecycle does not scan old directories to claim files as current outputs.
-- A failed manifest that contains a report reference does not make the record eligible for the FR-05 `completed` history list.
-
-Report availability source:
-
-- Run-in report: after graph execution and before save, the entry/save coordination takes one current summary from this run's registry and places the five-field mapping in `data_availability_summary` of the final/report state used for delivery. It leaves the field null/absent if no valid summary can be formed. If a separate report-state copy is used, Markdown, HTML, and post-run CLI display all use that same copy, and the returned final_state retains the same terminal mapping. Showing an already generated report uses that report's data; post-run display of the just-finished analysis uses the prepared final state.
-- Updating this delivery/display `data_availability_summary` is a summary refresh only. SB-01 already used its check-time summary; the refresh does not rerun SB-01 or modify `gate_status`, top-level `reasons`, `final_rating`, or `final_trade_decision`. No digest, version, snapshot history, second result, or re-check binding is added.
-- The report writer and renderers only read the passed state's `data_availability_summary`. They do not use `RunContext.current()`, the registry, the summarizer, a graph last-analysis cache, or the research-stage summary.
-- Independent `save_reports(final_state, ...)` after the run reads only that final_state's terminal `data_availability_summary`. It never uses another analysis's context/registry, never re-summarizes or queries data, and does not reopen or update the ended run/manifest.
-- A null/missing/unusable summary in the deterministic report area is stated as “program summary unavailable”; it is not replaced by complete/incomplete/not_applicable and is not reconstructed from the model or research snapshot. A preparation failure only warns and leaves the field null/absent; it does not block report generation/save, replace the formal result, or make the run fail. This notice is failure handling, not normal FR-03 delivery. A missing/invalid formal result still follows `FormalResultContract` and is a separate failure.
-- “Report-preparation time” means results already recorded in this run up to that point; it does not mean fetching newer market data at save time. The graph has completed before this preparation, and no later data-fetch/background stage is added, so the prepared terminal summary is the final data available to independent saves. Different-time summaries need not differ; no time-proof/version/hash protocol is added.
-- No `report_availability_summary`, availability history, snapshot ID, persistence of the registry, or cross-analysis availability protocol is added.
-
-### 7.7 Persistence and recovery-path classification
-
-| Path | Required behavior |
-|---|---|
-| Manifest directory creation, serialization, and write | Safe warning only; does not change run outcome or formal result |
-| Final-state JSON save | Preserve existing exception propagation; `failed` run and best-effort failed manifest attempt |
-| New memory decision append | Preserve existing exception propagation; `failed` run; no replacement record or rewritten recommendation |
-| Memory disabled or existing same-day record causes no new append | Not a save failure; do not force a record or mark the run failed |
-| Historical settlement/reflection or memory-read failures already handled by `_memory_step()` | Preserve existing degradation and notes; do not automatically promote to run failure |
-| CLI report save requested during this operation | Preserve existing exception capture and error display; report the internal save outcome to the lifecycle and mark the run `failed` |
-| User declines report save | `not_requested`, not failed; `completed` if other required work succeeds |
-| Independent `save_reports()` after `propagate()` returns | Preserve that save operation's failure behavior; do not reopen or modify the completed run manifest |
-
-Additional boundaries:
-
-- The four dimensions above stay separate: a save failure may change the run outcome without changing the formal result.
-- Not every optional artifact must exist for a `completed` run: an unrequested report and a memory disabled/same-day no-op are not failures. The table applies to requested or required writes that actually fail.
-- No publication transaction, cross-file atomicity, rollback, automatic repair, or recovery protocol is added.
-- A successfully saved final state is not rolled back because the later memory append failed.
-- A successfully written Markdown report is not rolled back or deleted because HTML failed.
-- The existing `record_decision()` no-decision branch is not a normal path after formal-result contract validation; a missing formal result is an execution contract failure, not a silent memory no-op success.
-
-### 7.8 Resource ownership and cleanup coordination
-
-Three layers, with no duplicate release:
-
-1. **Outermost entry or execution scope**: ensures necessary cleanup for resources it acquired is attempted, coordinates the order, and summarizes the run outcome.
-2. **Resource wrapper**: releases only the resource it created.
-3. **`RunContext.finish()`**: after the necessary cleanup attempts, receives the summarized outcome, records end time, takes the stats snapshot, and attempts the terminal manifest.
-
-| Resource | Owner and responsibility |
-|---|---|
-| Outer streaming session | CLI or debug streaming caller; ensure exhaustion or explicit termination |
-| Underlying graph stream | `stream_run()`; close in its own `finally` |
-| Existing checkpoint code (not used by the new flow) | Existing implementation and tests own their behavior; the new flow does not acquire, release, or delete checkpoint resources |
-| Persisted checkpoint data | Left untouched by the new flow; never used as current evidence |
-| RunContext binding | Scope that created the current context; restore the previous binding on exit |
-| Reusable graph and model clients | Object/caller lifecycle; not automatically destroyed by each run finish |
-| Output file handles | Local save-function scopes |
-
-`RunContext.finish()` must not close a stream, call `end_checkpoint()`, delete checkpoint data, close model clients, or perform a second resource release.
-
-Execution order on the normal path:
-
-```text
-graph execution and complete formal result
-  → requested save attempt
-  → necessary cleanup attempts complete
-  → summarized run outcome
-  → RunContext.finish()
-  → restore prior RunContext binding
-  → return or post-run browsing
-```
-
-A resource may be released earlier once it is no longer used. For example, a normally exhausted stream is closed without being held until after report saving.
-
-Cleanup rules:
-
-- Do not close a resource that is still in use.
-- End clock and stats snapshot occur after the necessary cleanup attempts.
-- `finish()` does not repeat a close.
-- Manifest failure does not re-trigger cleanup.
-- Context-binding restoration has an exit guarantee and does not depend on manifest success.
-
-Partial initialization:
-
-- The resource-acquisition scope starts at the acquisition attempt.
-- If a resource was acquired and a later setup or use fails, it is still released.
-- Resources not yet acquired are not treated as open.
-- `finish()` is not a fallback for resource leaks.
-
-Cleanup failure:
-
-- If an execution or save primary error already exists, a cleanup error must not replace it.
-- If there is no primary error, a cleanup exception follows the existing error style and is not recorded as `completed`.
-- One close failure does not prevent attempts to release other acquired resources.
-- Manifest errors remain warnings only.
-- No infinite retry, fabricated close success, or persistent diagnostic system is added.
-
-Existing checkpoint boundary:
-
-- The new flow does not acquire a checkpoint session or call `clear_checkpoint_on_success()`.
-- Existing checkpoint storage, thread IDs, signatures, cleanup tools, and tests remain outside this flow and are preserved.
-- Old checkpoint data is neither used as current evidence nor deleted by the new flow.
-
----
+Persisted run_id, timers, running/completed/failed record transitions, exact new call/token collection, atomic manifest writes, produced-file registration and manifest-based history belong to deferred FR-02/FR-05/SR-02. Their previous detailed design is retained in the future-design archive, not as current instructions.
 
 ## 8. Data and state design
 
@@ -1340,6 +1042,524 @@ Rules:
 
 ### 8.6 FR-05 history read
 
+**Deferred.** No current implementation, acceptance, component wiring or monitor. Retained prior design appears in the future-design archive. Existing baseline statistics and save behavior are not removed.
+
+### 8.7 Run statistics
+
+**Deferred.** No current implementation, acceptance, component wiring or monitor. Retained prior design appears in the future-design archive. Existing baseline statistics and save behavior are not removed.
+
+### 8.8 Concurrency model
+
+| Shared resource | Protection | Scope |
+|---|---|---|
+| Query reuse registry | Lock + per-query single-flight completion primitive | One run |
+| Availability registry | Lock; append with increasing sequence | One run |
+| Active RunContext binding | Context-local; restore previous binding on exit | One active run per execution context |
+| Memory log | Existing cross-thread/process file lock | Cross-run (existing) |
+| Graph state | LangGraph reducers/state updates; no shared mutable RunContext in state | One run |
+
+Analysts may run concurrently. Reuse and availability adapters must be thread-safe; new precise statistics are deferred. The final post-PM nodes run after the graph's existing risk debate and Portfolio Manager, so they are not concurrent with analyst data calls. Any future new-statistics callback propagation belongs to deferred D2 OQ-16; current baseline callbacks are retained.
+
+---
+
+## 9. Security and permissions
+
+### 9.1 SR-01 credential protection
+
+Supported scope only:
+
+1. Existing report and final-state configuration summaries.
+2. CLI endpoint preference save/load.
+3. Existing `get_scrubbed()` request-error paths in `dataflows/net.py`, Alpha Vantage `common.py` and its notice helper, and FRED `fred.py` including the passthrough 400 `error_message` path.
+4. Warnings from these handlers.
+
+Rules:
+
+- Configuration summary reuses `run_settings()` allowlist. Credential fields do not enter the summary.
+- Known credentials are only values configured or used by this application in this run; no collection of all environment variables and no credential registry file. Empty strings do not match; IF-21 defines the literal exact-substring matching contract; no long-string or provider-key heuristic.
+- If an allowlisted field contains a known credential as defined by IF-21, omit the entire affected field.
+- Endpoint preference: do not save/restore endpoints with userinfo, query, fragment (including an explicit empty separator), a known credential in host/path, or an unparseable form. Omit the item and require re-entry; do not save a masked pseudo-endpoint; do not strip query/fragment and save a different address; do not modify `.env` or migrate credentials.
+- Supported request errors: replace known credentials with a fixed marker (`***`); do not reattach unprocessed request/response objects, exception chains, or raw bodies; preserve safe error category and necessary diagnostics.
+- Handling failure: omit the field or use a fixed safe message; no raw sensitive fallback; no hard exit.
+- Out of scope: model-generated report bodies, arbitrary third-party logs, raw debug/stream output, complete API return objects, historical files, recovery material, future outputs.
+- Existing `get_scrubbed` and `.env` 0600 behavior are retained as existing protections, not claimed as new results.
+
+### 9.2 SR-02 path confinement
+
+**Deferred FR-02/FR-05/SR-02 only.** Prior controlled manifest/history path design is archived. Keep existing ticker-safe-component checks and user-explicit report save behavior unchanged; no new generic path system.
+
+### 9.3 Coding-agent permissions
+
+The full whitelist is defined in [`docs/architecture/permission-model.md`](docs/architecture/permission-model.md). This summary reflects the current design constraint:
+
+- Default: no read and no write.
+- Each role has explicit path allowlists and read-only/frozen paths.
+- Human-maintained: `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, governance configuration, `.env*`.
+- Architecture agent: write only `architecture-blueprint.md` and `docs/architecture/**`; no application code.
+- Implementation agent: write only approved application/test paths after human approval; read requirements and architecture.
+- Verification agent: read-only repository; write only declared test/report paths.
+- Enforcement limits: tool-level permissions are not an OS security boundary; CI path checks and human review are required. No governance configuration is changed by this design.
+
+Application runtime permissions remain separate: the AI has no trade-execution authority; SB-01 is the formal recommendation authority; risk evaluation is caller-scenario-based, not account verification.
+
+---
+
+## 10. Observability and verification
+
+### 10.1 Runtime observability
+
+| Signal | Location | Use |
+|---|---|---|
+| Availability/risk/formal fields and safe diagnostics | Existing state/report/CLI outputs | Current FR-03/FR-04/SB-01/INV-01/SR-01 observability |
+| Availability summary and basic completeness | Graph state, final report, deterministic CLI section | FR-03 |
+| Risk status, safe input, metrics, thresholds, reasons | CLI, `final_state`, report | FR-04 |
+| Gate status, reasons, formal rating/decision | `final_state`, CLI, report, state log | SB-01, INV-01 |
+| Memory decision rating/body | Existing memory log | INV-01 |
+
+No new metrics backend, tracing service, diagnostic database, or warning file is added. When a requirement has no suitable runtime monitor, the trace matrix will state the reason and use test/evidence instead.
+
+### 10.2 Verification strategy
+
+| Layer | Planned verification |
+|---|---|
+| Pure unit | C-08 risk evaluator boundaries/negatives and the C-09 final-checker truth table: implemented and offline-verified under Round 1 and Round 2 respectively. Remaining pure-unit intents are planned: query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
+| Graph integration | Offline fake model/data; PM proposal only; risk and final check nodes; formal fields; no extra model/data call; recursion limit; the new flow starts from a new initial state and does not resume a checkpoint |
+| Full-execution checkpoint policy | Both entries use fresh ephemeral scope and initial state and execute the full graph. No old checkpoint acquire/resume/read/delete; both checks execute. No new persistent run_id is required. |
+| Formal result contract and delivery | SB-01 branches use the same five top-level fields; risk reasons and top-level reasons do not overwrite each other; merged graph/CLI state contains complete fields; consumers do not generate a formal rating from proposal text; missing formal output is an execution contract failure, not a normal REVIEW; actual outputs use the same formal rating and decision; missing/invalid SB-01 input produces complete blocked/REVIEW and a handled exception produces complete error/REVIEW |
+| FR-04 numeric and result contract | Equality passes, a small over-limit blocks, and double over-limit keeps both reasons; display rounding does not change status; invalid input and explicit invalid thresholds are handled; each metric's nullability follows its own operands; a different set of model numbers does not change the calculation or appear verified; both entries, CLI, final_state, and report consume the same risk result; no model/network call is added; expected values are independent of the evaluator; save-failure and checkpoint policies are unchanged |
+| Research-stage context delivery | The first research call actually receives the research-start FR-03 summary; later research roles receive the same stage summary; full reports, identity, language, tool-message relationships, and structured-output paths remain; summary attachment adds no model call and triggers no query or research re-run; the Portfolio Manager proposal does not become the formal result |
+| Context limitations | Context budgets, compression thresholds, and compressed-constraint reinjection are deferred by ADR 001 D-10c and are not current acceptance; existing role inputs/client limits/error paths remain; no arbitrary-length success or token/cost benefit is claimed |
+| Observation ordering and minimum content | Interleaved updates use registry acceptance order to decide the latest result; ordinary observations and query marks share that sequence; a later accepted update for one query replaces its earlier mark without affecting another query; a recordable supplementary failure is disclosed but does not alone cause REVIEW; different objects/windows/queries do not contaminate each other; original fetch result/exception and FR-01 waiter semantics remain; minimum-content rules still distinguish unavailable from available |
+| Tracking error and snapshots | A local fallback failure sets `availability_tracking_error`, and every later snapshot returns `None` rather than an old complete summary; a single snapshot-construction failure returns `None` but does not set the sticky error, and a later snapshot may reconstruct; a new run starts with no inherited error; consumers see only missing/invalid summaries and never read the tracking fact; no query/retry/model call is added |
+| Pre-fetch parameter failures | Existing date adjustment/rejection semantics are unchanged and no stricter validation is added; a rejected pre-fetch call creates no valid query, observation, sequence, FR-01 entry, or tracking error; it does not overwrite a prior valid result; a necessary item without a valid result stays `not_attempted` with a parameter reason; a supplementary failure is disclosed without alone blocking; P-03 early failure creates no per-indicator fake records; original return/exception is preserved and the summary uses only fixed safe reasons; no extra fetch/retry/model call is added |
+| AvailabilitySummary producer/consumer | The summarizer is the only completeness calculator; completeness uses only the selected `necessary_items` and does not separately re-veto marks; seven mappings and three states are correct; supplementary limitations are not necessary gaps; failure marks appear only as affected query `unavailable`; research stores a summary mapping or `null`, never a sentinel object; later updates do not change an existing research snapshot; same-time consumers agree; SB-01 does not recompute completeness; report rendering is not model-overwritten; no query/model call is added |
+| Statistics handler and propagation | Deferred FR-02/IR-15 only; no current new collector, usage accounting or callback propagation acceptance. Existing baseline callbacks are retained. |
+| Report availability source | A result added after research start appears in the run-in report; returned final_state contains this analysis's terminal summary; saving A after consecutive A/B analyses does not use B's data; independent save does not access active registry, query, or rerun; Markdown and HTML use one prepared input; missing summary is disclosed without a fake state; availability refresh does not change formal fields; independent save creates no new scope |
+| Path observation attachment | All 15 paths have exactly one attachment site; early returns are observed without missing the outcome; router/vendor and callback layers add no duplicate observation; each split indicator is observed separately; P-09/P-13 with the same query cause one fetch, one observation, and two path associations; direct StockTwits/Reddit prefetches are covered; internal fallback attempts add no business observation; original return/exception/call count behavior is retained; no active run produces no new observation behavior |
+| FR-03 completion and path association | P-09/P-13 same parameters: one fetch, one completed observation, both paths associated; different windows do not merge; concurrent success and failure release waiters; cache hit preserves sequence/status; observation is visible before shared result; association alone is not success; FR-03 works without FR-01; path identity is absent from model parameters and query key |
+| FR-03 per-method recognition | Each of the 15 paths and 14 methods: success, empty, unavailable/not-configured, withheld, and exception; non-empty error text is not success; fallback, FR-01 reuse, no completed result, object/window isolation, indicator concatenation, and necessity versus supplementary distinction; expectations come from an independent fixture table, not the classifier’s own output |
+| Resource cleanup ownership | Acquiring scopes close streams/resources exactly once on normal/error/save-failure paths. Attempt remaining cleanup; preserve primary error over cleanup error; restore prior binding. No clocks, stats snapshot, manifest write or persisted terminal status. |
+| Run creation and object lifecycle | Both entries bind ephemeral scope after effective config/basic validation and before the first supported data call. Constructor-only use creates none; no constructor-timing obligation is added. Constructor alone owns no analysis scope. Explicit delegation shares scope, independent calls isolate reuse/availability. Scope failure preserves original error; no new run_id/count/timing/status obligation. |
+| Entry integration | CLI and propagate normal/failure paths; current scenario/threshold passing; real availability/risk/check flow; IF-19, terminal summary, original saves and scope restoration; unchanged return shape. No manifest/history/new-stat acceptance. |
+| Output consistency | CLI streaming sections, immediate files, final report, final state, state log, memory, return value; waiting/unchecked/failed labels |
+| Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
+| Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
+
+With the exceptions of the Round 1 C-08 offline core (`test/offline/test_fr04_risk.py`) and the Round 2 C-09 offline core (`test/offline/test_sb01_final_check.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
+
+### 10.3 Evidence state
+
+- Static code analysis: complete for the paths cited in this blueprint.
+- Requirement count: independently checked against the YAML.
+- Baseline: existing behavior only; data coverage was incomplete in the recorded run.
+- C-08 FR-04 core: implemented as the module-level callable `evaluate(...)` in `src/tradingagents/portfolio_risk.py` and offline-tested by `test/offline/test_fr04_risk.py` under the Round 1 approval (`docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1). This covers FR-04-FC01–FC04 and the core portion of IR-14 only.
+- C-09/IF-09 core: implemented as the module-level callable `evaluate(proposal, availability, risk, asset_type)` in `src/tradingagents/final_recommendation.py` with no default parameters, and offline-tested by `test/offline/test_sb01_final_check.py` under `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535`. PR #10 reviewed H `fbba457a9235ef53de52604f9b591aaf89a1972b` and merged M `cc8b17596a81751bd6165899423dd511e93dc394`. This covers SB-01-FC01–FC04 and local IR-01/IR-02 responsibility only.
+- Remaining new behavior, including the production C-09 node/consumer wiring, SB-01-FC05, full SB-01, global IR-01/IR-02/IR-03/IR-04, IF-19, FR-03 producer, FR-04-FC05, complete IR-14, entry/graph/report/state/memory integration, availability, manifest, history, and statistics: not implemented, not tested, not measured.
+- Performance/cost: no target approved; PR-01 and CR-01 remain deferred.
+
+---
+
+## 11. Change policy
+
+### 11.1 When to update artifacts
+
+| Change class | Required updates |
+|---|---|
+| Formal-result authority, component responsibility, interface, requirement semantics, or security boundary | Architecture review; update the affected ADR, blueprint, and directly affected invariants, trace matrix, runtime policy, or tests |
+| Internal naming, file layout, or refactor with no semantic change | No automatic D2 rewrite; update a document only if it mentions the changed name or structure |
+| Implementation detail within an approved interface | Update the applicable tests and trace/evidence entries; do not rewrite unrelated architecture |
+| Deferred requirement activation | New human decision, requirements revision, re-open only the affected architecture and tests |
+| Governance, agent permissions, or security-critical behavior | Human approval retained; never changed by an implementation agent alone |
+
+Update artifacts by actual impact, not as a mandatory full-D2 checklist.
+
+### 11.2 Re-open conditions
+
+- A requirement changes the final authority, entry-point set, or output consumers.
+- A supported data path is added/removed, its actual call location changes, or its existing semantics/default parameter handling changes.
+- Acceptance-order semantics, pre-fetch call-failure note behavior, query-level failure-marker behavior, `availability_tracking_error` triggers/lifecycle, basic-completeness rules, the `AvailabilitySummary` field contract, or report availability ownership/preparation timing change.
+- A future requirement asks the new flow to resume interrupted analyses; reopen the ADR before designing identity, observation inheritance, statistics, or formal-result semantics.
+- The top-level formal field set, field types, or reason ownership changes.
+- A requirement adds a unified context assembler, cross-role normalization, input budgets, automatic trimming/compression, or different role input obligations.
+- A future decision approves context compression; its design must preserve role tasks, required evidence, and trusted FR-03 program facts.
+- A security scope expansion is requested beyond SR-01/SR-02.
+- A deferred requirement (FR-06/FR-07/PR-01/CR-01) is activated.
+- Evidence shows the two deterministic nodes cannot fit the recursion limit or the existing graph contract.
+
+---
+
+## 12. Deferred requirement boundary
+
+| Requirement | Current status | Architecture treatment |
+|---|---|---|
+| FR-02 run manifest | Deferred | No native manifest, new precise statistics, persisted run-status/timing or output-registration work in current implementation/acceptance. |
+| FR-05 history lookup | Deferred | No reader/list/get API, registration, index or history task in current implementation/acceptance. |
+| SR-02 manifest/history path confinement | Deferred | No new manifest/history-specific path helpers or tests; existing ticker protection and explicit user-selected save behavior remain. |
+| FR-06 local report recovery | Deferred | No recovery component, task material, auto-recovery, CLI flow, placeholder seam, or interface promise is designed. |
+| FR-07 analyst briefs | Deferred | No analyst-generated brief field, character limit, full-report replacement, or token/cost claim is added. The current FR-03 research-stage program summary is separate and does not activate FR-07. |
+| PR-01 manifest overhead measurement | Deferred | No threshold, benchmark, low-overhead claim, or reserved measurement interface. Activation requires a new decision and measurement plan. |
+| CR-01 brief cost comparison | Deferred | No cost formula, price input, OFF/ON experiment, or saving claim. |
+
+These items must not be presented as current acceptance, implementation, or evidence.
+
+---
+
+## 13. Open decisions and risks
+
+### 13.1 Open decisions for review
+
+| ID | Decision | Current proposal | Status |
+|---|---|---|---|
+| OQ-01 | Exact CLI flag/file shape for `purchase_scenario` | `--purchase-scenario <json-file>`; optional `purchase_scenario` kwarg | Pending before entry implementation; parameter/input form and file read/parse error contract remain unconfirmed |
+| OQ-02 | Threshold configuration key names | `max_projected_weight`, `max_stop_distance` | Key names decided by the current user instruction; no other configuration mechanism is approved |
+| OQ-04 | Existing CLI save/display behavior and terminal summary timing | Preserve existing interaction; prepare terminal summary before its consumers; no manifest timing | Verification only; a new interaction decision is needed only if baseline behavior is intentionally changed |
+| OQ-07 | Coding-agent role names and whitelists | Four-role proposal | Pending D3-stage confirmation and implementation |
+| OQ-08 | Recursion-limit reservation size | Reserve at least four post-analyst steps | Pending technical verification; four steps is not a product acceptance value |
+| OQ-16 (deferred) | Future new-statistics callback propagation | If FR-02 is reactivated, verify handler propagation and call-ID/usage extraction without a global collector | Future FR-02 only; no current task or blocker |
+| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes with finite, sourced samples; unrecognized formats remain `unavailable` until confirmed | Pending verification; no generic recognizer, network probe, or vendor call is added |
+| OQ-13 | Shared news executor and research-wrapper integration | Confirm the plain internal news executor calls from P-09/P-13, explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending offline integration verification within the existing scope |
+| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 fixtures | Pending verification under the existing contract; no new state, recovery, or global veto |
+
+### 13.2 Risks
+
+| ID | Risk | Impact | Mitigation |
+|---|---|---|---|
+| RSK-01 | Formal fields missing, invalid, or written by a non-SB-01 path | Two authorities, fabricated REVIEW, or unsafe success | Shared `FormalResultContract`; execution contract failure; no consumer-generated REVIEW |
+| RSK-02 | New flow accidentally resumes or uses stale checkpoint evidence | Bypass of required checks; old result treated as current | Full execution from a new RunContext/initial state; no checkpoint acquisition or `None` resume; old checkpoint data left untouched and unused |
+| RSK-03 | Availability classification misreads a sentinel | False completeness or false failure | Table-driven per-method mapping with fixtures; no model judgment |
+| RSK-04 | Query reuse leaks across runs | Wrong data in another analysis | RunContext-owned service; no module global |
+| RSK-11 | Report/final-state/new-memory failure misclassified as best-effort | False success and hidden failed save | Path-specific persistence classification; run outcome can be failed; formal result unchanged |
+| RSK-13 | Duplicate resource ownership between entry and `RunContext.finish()` | Unclear close order, masked primary error, or double release | Entry/wrapper ownership table; `finish()` restores binding after entry-owned cleanup; no persisted terminalization |
+| RSK-14 | FR-04 implemented with float arithmetic, display rounding, or different field rules | Boundary decisions diverge; unsafe pass/block | Field contract, exact rational cross-multiplication, one JSON-compatible result, independent boundary checks |
+| RSK-15 | FR-03 classifier treats non-empty error text as available | False completeness and model overconfidence | Per-method producer-branch table; narrow classifier; unrecognized format is unavailable |
+| RSK-16 | Research stage reads a summary only after first Bull or refreshes it on every round | First Bull lacks data context; later observations change research inputs | Research-entry wrapper injects same-call snapshot; stage field fixed after first entry |
+| RSK-17 | Query path is included in query identity or inferred from shared function name | P-09/P-13 fail to share or associate incorrectly; concurrency misattribution | Query key excludes path; explicit path ID from the two news callers; separate association map |
+| RSK-18 | Decimal/Fraction values or default Decimal precision decide the risk check or break serialization | Context-dependent decisions, wrong boundary result, or non-JSON state | Exact rational decision; JSON-compatible result values; local parsing/formatting; no global Decimal context |
+| RSK-19 | Classifier/registry failure replaces the fetch outcome, blocks shared publication, or is expanded beyond actual observation loss | Lost original error/result; waiters hang; unrelated recordable failures wrongly invalidated | Observation handling isolated; query-level conservative observation or local failure mark; tracking error only for unlocatable/unrecordable loss; publish in all normal/error paths; no refetch or general public flag |
+| RSK-20 | Normal-looking heading or arbitrary number counted as available | False completeness and model overclaim | Minimum content rules; fixed producer structures; unrecognized format unavailable |
+| RSK-21 | A consumer rebuilds completeness or necessary gaps from a different rule | Conflicting summaries and SB-01 decisions | Summarizer is the sole producer; consumers read one plain mapping and only filter non-available necessary items for display/contradiction checks |
+| RSK-22 | A path is observed twice at different layers or missed on an early return | Duplicate/no observations; false availability or gaps | One curated attachment table; local helper at the existing call point; no router/vendor/callback observation |
+| RSK-23 | Observation metadata copies a second default table or invents effective values | Wrong query identity or summary claims | Reuse existing config keys/constants and known requested values; record unknown/null honestly |
+| RSK-06 | CLI save phase misclassified | Wrong run status or duration | Explicit save outcome and timing boundary |
+| RSK-07 | Stats double-count, lose identity, or fabricate tokens | Misleading observability | One callback-handler site; call-ID dedupe; per-call usage; incomplete/unreliable => null totals |
+| RSK-24 | Execution-config callbacks do not propagate through a nested boundary | Under-counted calls or missing reflection | Treat as unverified; add local explicit config handoff at that boundary, not a global collector/router |
+| RSK-25 | Report writer sources availability from another run or the live registry | Cross-analysis contamination; report changes after run end | Writer reads only passed state; run-in entry prepares terminal summary; independent save uses final_state only |
+| RSK-26 | Unrecordable observation loss is silently ignored, leaving an old success to look current | False completeness from lost observations | Run-local `availability_tracking_error`; later snapshots return `None`; not exposed as a public status/gate |
+| RSK-27 | Pre-fetch parameter rejection is misrecorded as a completed query, overwrites a valid result, or sets tracking error | Fake availability/completeness and false lost-observation state | Private call-failure notes with no key/sequence/FR-01; necessary gap reason or supplementary limitation only; no tracking error |
+| RSK-08 | Report/state/memory divergence | INV-01 violation | Formal-field-only consumers; cross-output tests |
+| RSK-09 | Path check uses string prefix or follows link | Out-of-root access | Resolved-target/component ownership; sentinel tests |
+| RSK-10 | Long histories or large reports exceed a provider's context limit | Request failure or incomplete analysis with no automatic recovery | Keep the existing client error path; context budget/compression is deferred by ADR 001 D-10c; do not claim arbitrary-length success |
+
+---
+
+## 14. Traceability summary
+
+The detailed fit-criterion mapping is in [`docs/architecture/trace-matrix.md`](docs/architecture/trace-matrix.md). This blueprint covers:
+
+- FR-01: P-09/P-13 query reuse service and observation boundary.
+- FR-02 (deferred, no current task): RunContext lifecycle, manifest, stats, result references.
+- FR-03: 15 path-specific observation sites, availability registry, necessity list, consumer snapshots.
+- FR-04: structured scenario, evaluator, deterministic display.
+- FR-05 (deferred, no current task): manifest registration, list/read interface, path/error rules.
+- SB-01: graph-internal final check, proposal/formal separation, fail-closed REVIEW.
+- INV-01: formal-field-only consumers across CLI, final state, report, state log, memory.
+- SR-01: limited credential protection paths and endpoint preference rule.
+- SR-02 (deferred, no current task): run-id and resolved-target path confinement.
+- FR-06/FR-07/PR-01/CR-01: explicitly deferred and not designed as current behavior.
+
+---
+
+## 15. Review checklist
+
+- [ ] The fixed graph sequence Portfolio Manager → FR-04 → SB-01 → END is accepted.
+- [ ] Portfolio Manager writes only `model_proposal` as a nested `{rating, text}` object or `null`; SB-01 alone decides/generates `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; unchanged pass-through/merge/save is allowed and is not a second authority.
+- [ ] Risk reasons remain in `portfolio_risk_result.reasons`; SB-01 reasons remain at the top level; no `present`, `gate_reasons`, or flattened risk object is required.
+- [ ] Missing/invalid formal output is an execution contract failure, not a consumer-generated REVIEW.
+- [ ] The availability snapshot is plumbing, not an approval authority.
+- [ ] Each of the 15 paths has one curated observation site; P-09/P-13 share one news executor/single-flight, P-03 observes each split indicator, and P-14/P-15 are observed at their direct prefetch calls.
+- [ ] No router, vendor, callback, monkeypatch, or middleware layer adds a second availability observation; defaults come from existing config/constants and early failures do not invent a valid query.
+- [ ] `AvailabilitySummary` has exactly the five agreed fields; the summarizer is the only completeness calculator, and consumers read one plain mapping without rebuilding it.
+- [ ] Necessary gaps are only a filter over non-available `necessary_items`; no duplicate `missing_necessary_items` field or second completeness state exists.
+- [ ] Observation, conservative unavailable, and query marks share one acceptance-order sequence; a later accepted update replaces an earlier one for that query, with no external-time ordering. Failure marks appear only as affected-query `unavailable`.
+- [ ] Pre-fetch parameter rejection creates only a private safe call-failure note, with no fake query/observation/sequence/FR-01 and no tracking error; it does not overwrite a valid result and appears as necessary-gap reason or supplementary limitation as appropriate.
+- [ ] Unlocatable/unrecordable observation loss sets private `availability_tracking_error`; later snapshots are `None`, not old complete data, while a single snapshot-construction failure is not sticky. A new run starts clean, and consumers see only missing/invalid summaries.
+- [ ] Each independent analysis binds fresh ephemeral scope before its first supported data call; explicit internal delegation shares scope; every exit restores the prior binding. No pre-construction binding or constructor timing is required.
+- [ ] Resource cleanup belongs to the entry or resource wrapper; `RunContext.finish()` does not close streams or clients; the new flow acquires no checkpoint session.
+- [ ] FR-04 uses the field/threshold contract and exact rational comparisons; no float arithmetic, default Decimal context, or display rounding decides a check.
+- [ ] The risk result is one JSON-compatible object with decimal-string/null metrics; display formatting is local and never feeds back into status.
+- [ ] The deterministic risk area says only the listed caller scenario is checked and that other amounts/prices in the model proposal are not verified by this check.
+- [ ] Observation handling failure never replaces the fetch outcome or blocks shared publication; recordable failures stay at the query, and only unlocatable/unrecordable observation loss sets the private tracking error that makes later snapshots missing. No public permanent veto exists.
+- [ ] Title-only, placeholder, error text, or arbitrary numbers are not sufficient for `available`; minimum content rules are applied per P-02/P-04/P-09/P-10.
+- [ ] Every FR-03 path uses the verified per-method branch table; non-empty error text is not treated as `available`.
+- [ ] The first Bull call receives the research-start summary directly; later Bull/Bear and the Research Manager use the same stage summary; later observations do not refresh it or re-run research.
+- [ ] Existing role prompt assembly, full reports, identity/language, tool-message relationships, and structured-output/fallback paths remain; the context classes are logical, not a shared layer order.
+- [ ] Context budgets, compression thresholds, and compressed-constraint reinjection are deferred per ADR 001 D-10c and are not current behavior or acceptance; existing role inputs/client limits/error paths remain, and no unified budget/trim/reinjection flow is added.
+- [ ] Query identity excludes call path; completion observations and path associations are separate and ordered correctly.
+- [ ] `propagate()` never forces a report save, its return shape is unchanged, and returned final_state carries this analysis's terminal `data_availability_summary`.
+- [ ] Run-in reports use one entry-prepared terminal summary; independent `save_reports(final_state)` uses only that state, and the writer never reads active context, registry, summarizer, graph cache, research summary, or model text.
+- [ ] Duplicate callbacks are deduped by callback call ID; per-call usage drives null totals; graph-internal reflection is included, independent settlement is not; propagation gaps are treated as unverified with local config handoff, not a new router.
+- [ ] Intermediate proposal labels and formal waiting/failed states are accepted.
+- [ ] The new flow always executes fully from a new RunContext and initial state; it does not resume, read, or delete checkpoint data, and checkpoint-enabled configurations emit a no-resume notice.
+- [ ] Current SR-01 remains limited to the stated paths; SR-02 has no current task and existing ticker protection is retained.
+- [ ] Deferred scope is not re-introduced.
+- [ ] All remaining open decisions are resolved or explicitly deferred by the human reviewer.
+
+## Deferred and historical design archive — not current implementation instructions
+
+The material below preserves prior design rationale/details and identifiers. Any mandatory wording here applies only if the deferred scope is explicitly reactivated and reviewed. It is not a current task, monitor, acceptance condition or permission grant. Historical mixed clauses are superseded by the current sections above.
+
+### 1.1 Purpose
+
+The architecture extends the existing TradingAgents LangGraph application with a deterministic, auditable final-decision boundary, a run-scoped lifecycle and manifest, a run-scoped data-availability summary, run-scoped reuse of supported queries, deterministic purchase-scenario risk checks, a read-only historical report lookup, and limited credential and path protections.
+
+The design is incremental. It retains the existing graph, agents, data vendors, CLI, report writer, memory log, and checkpoint mechanism, and adds narrow components at existing boundaries.
+
+
+
+## 7. Run lifecycle
+
+### 7.1 Creation point and object lifecycle
+
+The program interface uses a reusable `TradingAgentsGraph` object: the object is constructed first, then `propagate()` may be called one or more times. Creating the object is not creating an analysis run. The object constructor does not allocate a run_id, create a manifest, or retain a RunContext.
+
+Entry-specific boundaries:
+
+| Entry | Boundary |
+|---|---|
+| CLI | Parameter selection, configuration resolution, and basic validation → create RunContext, record start clocks, attempt running manifest → construct the graph object, initialize clients, perform the initial workflow compile → prepare per-run state and output paths → execute |
+| Program | An existing graph object → `propagate()` invocation → per-call basic validation and effective configuration → create a new RunContext, record start clocks, attempt running manifest → prepare per-run state → execute |
+
+Consequences:
+
+- CLI object construction, client initialization, initial workflow compile, and per-run preparation occur after the run starts and are included in Analysis Operation Elapsed Time.
+- A CLI construction/client/compile/preparation failure is a post-start execution failure: preserve the original error, attempt a failed manifest, and do not let a manifest error replace the construction error.
+- The program entry excludes the object's earlier construction, client initialization, initial workflow compile, and idle time. A construction failure before `propagate()` creates no analysis run or manifest.
+- Both entries create the RunContext before their per-run execution preparation. This does not promise identical object-initialization scope and does not support a direct performance comparison between entries.
+- Each independent `propagate()` creates a new RunContext, run_id, statistics handler/collector, query-reuse registry, and availability registry. The object may be reused, but neither its models nor the graph object retain this run's handler, and the run context is not reused across analyses.
+- The initial workflow compile is object construction for the CLI and pre-existing for the program entry. The new flow does not perform a checkpoint recompile.
+- The design does not add a requirement to reconstruct model clients or the whole graph for every analysis. The existing CLI construction per operation remains, while a program caller may reuse an existing object. It does not move run creation into the constructor or require lazy initialization.
+
+Configuration summary:
+
+- The initial running manifest cannot depend on a constructed graph instance. A shared config-summary projection uses the existing `run_settings()` allowlist from the effective configuration and selected analysts.
+- The instance `run_settings()` method reuses the same projection. There is no second allowlist, no extra graph construction, and no expansion of the credential-protection scope.
+
+Internal reuse:
+
+- Only an explicit internal delegation within the same analysis, such as the CLI delegating to common execution logic, shares the active RunContext.
+- An independent `propagate()` call, another graph object, or another ticker analysis is not merged merely because a context variable already holds a context.
+- Leaving the context restores the previous binding so a later call cannot inherit it.
+- The design does not promise concurrent execution on the same graph instance.
+
+CLI report saving is included in the same run. `propagate()` does not force a report save; a later independent save is outside the run.
+
+### 7.2 Run identity
+
+- `run_id` is a single safe path component: UTC compact timestamp plus a random suffix, e.g. `20261117T101530123456Z-a1b2c3d4`.
+- Collision handling: attempt unique directory creation with `mkdir(exist_ok=False)` up to a bounded number of attempts (proposed 5); on each collision generate a new suffix. Never overwrite an existing run directory.
+- If no directory can be created, manifest persistence is unavailable; the analysis continues and a safe warning is emitted.
+- Manifest path: `<results_dir>/<run_id>/run_manifest.json`.
+- Existing report directories are retained. Report references in the manifest point to actual files; relative references are resolved against the configured results root. Existing same-path report saving may overwrite an earlier file; no immutable report version is promised.
+- Explicit user-chosen report locations outside the results root remain allowed by the existing save feature but are not automatically eligible for FR-05 history read.
+
+### 7.3 Timing
+
+“Analysis Operation Elapsed Time” is measured with a monotonic clock.
+
+| Included | Excluded |
+|---|---|
+| Post-start preparation: CLI graph-object construction, client initialization, initial workflow compile, per-run state/output preparation | Pre-start parameter selection and basic validation |
+| Graph execution | Post-terminal browser opening and full-report browsing |
+| CLI save selection wait, path/HTML selection, save attempt | Final manifest record construction/serialization/write |
+| Resource cleanup before terminalization | Program object construction, client initialization, initial workflow compile, and idle time before `propagate()` |
+| — | Time after the terminal write attempt returns |
+
+`started_at` is timezone-aware ISO 8601. `finished_at` is recorded before building the terminal record. `duration_seconds` is the monotonic difference between start and end, excluding final manifest serialization/write.
+
+### 7.4 Manifest lifecycle
+
+1. Attempt a `running` record with `finished_at = null`, `duration_seconds = null`, and available identity/configuration.
+2. Execute the graph, then the existing final-state JSON save and new-memory append, then the requested CLI report save. An exception in an earlier write prevents later writes in the existing order.
+3. The entry execution scope ensures necessary cleanup attempts for resources it acquired, coordinates their order, and summarizes the run outcome. Wrappers release only their own resources.
+4. Call `RunContext.finish(outcome)`: after the cleanup attempts, record end clock, take a stats snapshot, build the terminal record, and attempt the terminal write.
+5. Restore the prior RunContext binding on scope exit and then return or enter the post-run phase.
+
+Rules:
+
+- `completed` only when analysis execution succeeded, any requested report save succeeded or was not requested, and required final-state JSON and new-memory writes succeeded or no new memory append was required. A historical settlement/reflection/memory-read degradation handled by `_memory_step()` is not a failure.
+- `failed` when a caught execution error ends the analysis, the final-state JSON save raises, a new memory decision append raises, a requested CLI report save outcome is `failed`, or the formal result contract fails.
+- A CLI graph-object construction, client initialization, initial workflow compile, or per-run preparation failure after RunContext start is a caught execution failure: preserve the original error, attempt a failed manifest, and do not let a manifest error replace it.
+- A final-state JSON failure prevents the later memory append in the existing order; the original exception is preserved.
+- The entry catches a final-state or new-memory exception only to record the failed outcome and attempt the terminal manifest, then re-raises the original exception unchanged. It does not suppress it or replace it with a manifest error.
+- A final-state save success followed by a new-memory append failure does not roll back the saved state and does not become a normal success.
+- Memory disabled or an existing same-day record causing no new append is not a save failure.
+- Initial manifest write failure does not prevent a later terminal write attempt.
+- `RunContext.finish()` does not close streams, call `end_checkpoint()`, delete checkpoint data, close clients, or repeat a close; those responsibilities are defined in §7.8.
+- Manifest failure does not re-trigger cleanup and does not block context-binding restoration.
+- A `finally` path never writes `completed` unconditionally. `completed` is set only when the normal execution path reached the terminalization step.
+- Terminal write uses a temporary file plus atomic replace; a reader sees complete old JSON or complete new JSON.
+- Serialization failure does not damage an existing valid file.
+- Manifest warnings are safe and short; no raw credential, complete configuration, or uncontrolled traceback.
+- Manifest failure does not re-run a model, roll back report/memory, change the run outcome, or replace the original analysis or save error. A failed manifest does not force a new CLI non-zero exit code.
+- A remaining `running` record after terminal failure means only that the terminal record is missing; it does not prove the analysis is still running or failed.
+
+Proposed manifest fields (architecture interface, not a new requirement):
+
+| Field | Type | Notes |
+|---|---|---|
+| `manifest_version` | string | Literal `"1"` for the shared writer/reader contract; any other value is an invalid record |
+| `run_id` | string | Safe path component |
+| `status` | `running` / `completed` / `failed` | Run status, not recommendation |
+| `analysis` | object | Required: `ticker` string, `analysis_date` `YYYY-MM-DD` string, `asset_type` string, `analysts` list of strings |
+| `started_at` | string | Timezone-aware ISO 8601 |
+| `finished_at` | string or null | Null while running |
+| `duration_seconds` | number or null | Monotonic analysis operation elapsed |
+| `run_settings` | object | Existing `run_settings()` allowlist only |
+| `llm_calls` | integer or null | Started application-level model calls |
+| `tool_calls` | integer or null | Started tool calls; direct prefetch excluded |
+| `tokens_in` | integer or null | Exact sum only when complete |
+| `tokens_out` | integer or null | Exact sum only when complete |
+| `usage_complete` | boolean | False if any counted call lacks valid usage |
+| `result_files` | list | Required list of confirmed files actually produced by this run; `[]` when none was confirmed. Writer never guesses, fabricates, or scans old files |
+| `report` | object or null | Required key. `null` when no confirmed merged report; otherwise exactly `{"complete_report_md": string}` |
+| `error_summary` | object or null | `error_type` and safe message; no traceback |
+
+Minimal shared writer/reader contract for `manifest_version = "1"`:
+
+- Writer obligation: `analysis` and `report` use the shapes above. The writer records every confirmed produced-file reference in `result_files`, using `[]` when none exists; it does not omit an existing confirmed file, guess a path, fabricate a reference, or scan old directories to claim a file as current. “Optional output” means a report or other optional artifact is not forced to be generated; once produced and confirmed, its reference is still recorded.
+- Writer obligation: `report.complete_report_md` is a string path relative to the configured results root. An absolute value is allowed only when it resolves inside that root under the existing SR-02 checks. When no merged report was confirmed, the normal writer emits `report: null`, not an inferred path and not an empty object.
+- Reader obligation: history validates only the fields needed for registration, filtering, ordering, and report lookup. It does not expand validation over `result_files` or other unrelated content. A missing `report` key is format damage: list skips the record with a safe warning, and direct get treats it as an invalid record. A legal `report: null` is a valid no-registration record: it is absent from list and direct get returns not found.
+- If `report` is non-null, it must contain the `complete_report_md` string and satisfy the root/ownership checks; a missing member, wrong type, or illegal reference is an invalid record. A legally registered report that is later deleted or unreadable remains registered for list availability purposes and direct read returns a report-read error.
+- Missing other required metadata, wrong field types, an unsupported `manifest_version`, or an illegal report reference follows the existing invalid-record/skip rules. No independent schema file, migration, old-version compatibility, hash, archive, index, or new validation system is added.
+
+No rating, gate, reason, or decision fields are added to the manifest. A newly created memory record uses the formal rating and body; it is not required to store the complete gate metadata.
+
+### 7.5 Outcome dimensions
+
+| Dimension | Values | Meaning |
+|---|---|---|
+| Formal business result | `gate_status` `passed`/`blocked`/`error`, top-level `reasons`, `final_rating`, and `final_trade_decision` | SB-01 output; risk reasons remain inside the risk result; persistence failures never recompute or rewrite it |
+| Run outcome | `completed` / `failed` | This analysis operation, including required save outcomes |
+| External control flow | Normal return, existing exception propagation, existing CLI error display/exit | Existing behavior; a failed manifest does not force a new non-zero exit code |
+| Artifact persistence | Per artifact: `not_requested` / `succeeded` / `failed` | Manifest, report, final-state, and new-memory outcomes; partial success is possible |
+
+A formal result contract failure is an execution failure, not a business REVIEW. A business REVIEW is a `completed` run; a contract failure is `failed` with a best-effort failed manifest.
+
+The formal business result is unchanged by persistence failure. That does not mean every save failure returns normal success: final-state, new-memory, and CLI-requested report failures can make the run `failed`. Manifest failure alone does not.
+
+### 7.6 CLI save boundary
+
+- Save selection wait, path/HTML selection, and save attempt are inside the run.
+- The internal `SaveCoordinator` returns `not_requested`, `succeeded`, or `failed`, plus confirmed output references. This is internal coordination, not a new external diagnostic system.
+- The CLI catches its report-save exception for display, so the lifecycle uses the internal save outcome rather than inferring success from the absence of an escaping exception.
+- After the save attempt and the entry-owned cleanup attempts, `RunContext.finish()` attempts the terminal manifest.
+- Post-run display and browser opening occur after the terminal attempt; their duration is excluded.
+- Existing save failure messages and exit behavior are preserved. A failed manifest record does not require a new CLI non-zero exit code.
+- `propagate()` never forces a report save. A later independent `save_reports()` failure keeps that operation's behavior and does not reopen or update the completed run manifest.
+- If Markdown is written and HTML then fails, the overall requested save is `failed`; the confirmed Markdown reference may be recorded, no HTML success is fabricated, and neither file is rolled back or deleted. The lifecycle does not scan old directories to claim files as current outputs.
+- A failed manifest that contains a report reference does not make the record eligible for the FR-05 `completed` history list.
+
+Report availability source:
+
+- Run-in report: after graph execution and before save, the entry/save coordination takes one current summary from this run's registry and places the five-field mapping in `data_availability_summary` of the final/report state used for delivery. It leaves the field null/absent if no valid summary can be formed. If a separate report-state copy is used, Markdown, HTML, and post-run CLI display all use that same copy, and the returned final_state retains the same terminal mapping. Showing an already generated report uses that report's data; post-run display of the just-finished analysis uses the prepared final state.
+- Updating this delivery/display `data_availability_summary` is a summary refresh only. SB-01 already used its check-time summary; the refresh does not rerun SB-01 or modify `gate_status`, top-level `reasons`, `final_rating`, or `final_trade_decision`. No digest, version, snapshot history, second result, or re-check binding is added.
+- The report writer and renderers only read the passed state's `data_availability_summary`. They do not use `RunContext.current()`, the registry, the summarizer, a graph last-analysis cache, or the research-stage summary.
+- Independent `save_reports(final_state, ...)` after the run reads only that final_state's terminal `data_availability_summary`. It never uses another analysis's context/registry, never re-summarizes or queries data, and does not reopen or update the ended run/manifest.
+- A null/missing/unusable summary in the deterministic report area is stated as “program summary unavailable”; it is not replaced by complete/incomplete/not_applicable and is not reconstructed from the model or research snapshot. A preparation failure only warns and leaves the field null/absent; it does not block report generation/save, replace the formal result, or make the run fail. This notice is failure handling, not normal FR-03 delivery. A missing/invalid formal result still follows `FormalResultContract` and is a separate failure.
+- “Report-preparation time” means results already recorded in this run up to that point; it does not mean fetching newer market data at save time. The graph has completed before this preparation, and no later data-fetch/background stage is added, so the prepared terminal summary is the final data available to independent saves. Different-time summaries need not differ; no time-proof/version/hash protocol is added.
+- No `report_availability_summary`, availability history, snapshot ID, persistence of the registry, or cross-analysis availability protocol is added.
+
+### 7.7 Persistence and recovery-path classification
+
+| Path | Required behavior |
+|---|---|
+| Manifest directory creation, serialization, and write | Safe warning only; does not change run outcome or formal result |
+| Final-state JSON save | Preserve existing exception propagation; `failed` run and best-effort failed manifest attempt |
+| New memory decision append | Preserve existing exception propagation; `failed` run; no replacement record or rewritten recommendation |
+| Memory disabled or existing same-day record causes no new append | Not a save failure; do not force a record or mark the run failed |
+| Historical settlement/reflection or memory-read failures already handled by `_memory_step()` | Preserve existing degradation and notes; do not automatically promote to run failure |
+| CLI report save requested during this operation | Preserve existing exception capture and error display; report the internal save outcome to the lifecycle and mark the run `failed` |
+| User declines report save | `not_requested`, not failed; `completed` if other required work succeeds |
+| Independent `save_reports()` after `propagate()` returns | Preserve that save operation's failure behavior; do not reopen or modify the completed run manifest |
+
+Additional boundaries:
+
+- The four dimensions above stay separate: a save failure may change the run outcome without changing the formal result.
+- Not every optional artifact must exist for a `completed` run: an unrequested report and a memory disabled/same-day no-op are not failures. The table applies to requested or required writes that actually fail.
+- No publication transaction, cross-file atomicity, rollback, automatic repair, or recovery protocol is added.
+- A successfully saved final state is not rolled back because the later memory append failed.
+- A successfully written Markdown report is not rolled back or deleted because HTML failed.
+- The existing `record_decision()` no-decision branch is not a normal path after formal-result contract validation; a missing formal result is an execution contract failure, not a silent memory no-op success.
+
+### 7.8 Resource ownership and cleanup coordination
+
+Three layers, with no duplicate release:
+
+1. **Outermost entry or execution scope**: ensures necessary cleanup for resources it acquired is attempted, coordinates the order, and summarizes the run outcome.
+2. **Resource wrapper**: releases only the resource it created.
+3. **`RunContext.finish()`**: after the necessary cleanup attempts, receives the summarized outcome, records end time, takes the stats snapshot, and attempts the terminal manifest.
+
+| Resource | Owner and responsibility |
+|---|---|
+| Outer streaming session | CLI or debug streaming caller; ensure exhaustion or explicit termination |
+| Underlying graph stream | `stream_run()`; close in its own `finally` |
+| Existing checkpoint code (not used by the new flow) | Existing implementation and tests own their behavior; the new flow does not acquire, release, or delete checkpoint resources |
+| Persisted checkpoint data | Left untouched by the new flow; never used as current evidence |
+| RunContext binding | Scope that created the current context; restore the previous binding on exit |
+| Reusable graph and model clients | Object/caller lifecycle; not automatically destroyed by each run finish |
+| Output file handles | Local save-function scopes |
+
+`RunContext.finish()` must not close a stream, call `end_checkpoint()`, delete checkpoint data, close model clients, or perform a second resource release.
+
+Execution order on the normal path:
+
+```text
+graph execution and complete formal result
+  → requested save attempt
+  → necessary cleanup attempts complete
+  → summarized run outcome
+  → RunContext.finish()
+  → restore prior RunContext binding
+  → return or post-run browsing
+```
+
+A resource may be released earlier once it is no longer used. For example, a normally exhausted stream is closed without being held until after report saving.
+
+Cleanup rules:
+
+- Do not close a resource that is still in use.
+- End clock and stats snapshot occur after the necessary cleanup attempts.
+- `finish()` does not repeat a close.
+- Manifest failure does not re-trigger cleanup.
+- Context-binding restoration has an exit guarantee and does not depend on manifest success.
+
+Partial initialization:
+
+- The resource-acquisition scope starts at the acquisition attempt.
+- If a resource was acquired and a later setup or use fails, it is still released.
+- Resources not yet acquired are not treated as open.
+- `finish()` is not a fallback for resource leaks.
+
+Cleanup failure:
+
+- If an execution or save primary error already exists, a cleanup error must not replace it.
+- If there is no primary error, a cleanup exception follows the existing error style and is not recorded as `completed`.
+- One close failure does not prevent attempts to release other acquired resources.
+- Manifest errors remain warnings only.
+- No infinite retry, fabricated close success, or persistent diagnostic system is added.
+
+Existing checkpoint boundary:
+
+- The new flow does not acquire a checkpoint session or call `clear_checkpoint_on_success()`.
+- Existing checkpoint storage, thread IDs, signatures, cleanup tools, and tests remain outside this flow and are preserved.
+- Old checkpoint data is neither used as current evidence nor deleted by the new flow.
+
+---
+
+
+
+### 8.6 FR-05 history read
+
 Interface:
 
 - `list_runs(ticker=None, analysis_date=None) -> list[RunSummary]`.
@@ -1393,6 +1613,8 @@ Bad records are skipped in list with a short safe warning; other valid records c
 
 No pagination, limit/offset, total count, scan budget, index, cross-request snapshot promise, immutability, hash, section validation, repair, or background rebuild is added.
 
+
+
 ### 8.7 Run statistics
 
 - One analysis owns one `RunStatsHandler` and its directly bound collector; they may be two responsibilities of one local class. The handler is created with the RunContext, never accumulated on a reusable graph/model object.
@@ -1412,44 +1634,166 @@ No pagination, limit/offset, total count, scan budget, index, cross-request snap
 
 The following propagation boundaries remain unverified and must not be stated as guarantees: analyst subgraphs and parallel nodes; structured-output runnable to actual model; graph-internal reflection nested call; start/end/error call-ID association; and the exact usage extraction location in supported responses. If a boundary does not inherit, the preferred fix is to pass the same execution config locally into that call or graph node; do not switch to a global collector or dispatcher. Independent settlement outside the graph remains outside this run's statistics.
 
-### 8.8 Concurrency model
 
-| Shared resource | Protection | Scope |
-|---|---|---|
-| Query reuse registry | Lock + per-query single-flight completion primitive | One run |
-| Availability registry | Lock; append with increasing sequence | One run |
+
+### 6.2 CLI workflow
+
+1. Select parameters, resolve configuration, and perform basic validation (`cli/run.py`). If `checkpoint_enabled` is set, emit a safe notice that this flow does not resume and will run fully; do not change the configuration or default.
+2. Create `RunContext`: allocate run_id, start clocks, create this analysis's `RunStatsHandler`/collector, and attempt the running manifest using the shared config-summary projection, before a graph object exists.
+3. Construct the graph object for this CLI operation: initialize clients, perform the initial workflow compile, and prepare per-run state and output paths. Do not pass the per-analysis stats handler to the model constructors. No checkpoint session is acquired. This construction time is inside the analysis operation elapsed time.
+4. If object construction, client initialization, initial compile, or per-run preparation fails, take the existing execution-error path: attempt a failed manifest while preserving the original error; a manifest error does not replace it.
+5. Stream the graph with the per-analysis handler in this execution's config (`callbacks`), preserving any existing custom callbacks; update intermediate display sections. A partial streaming chunk is never promoted to a formal result.
+6. Merge final state; the post-PM nodes have already produced the formal result.
+7. Validate the merged formal result with the shared `FormalResultContract` before `record_decision()`, normal report save, formal display, or successful return.
+8. Prepare the delivery/report availability input while this analysis's registry is still accessible: take one current summary, put its plain mapping into the final-state/report-state copy, or leave the field null/absent when no valid summary can be formed. This does not rerun SB-01 or change formal fields.
+9. Save phase inside the run: ask save/path/HTML, perform save attempt from that prepared report state, collect confirmed output references; Markdown and HTML use the same input.
+10. Exit the entry execution scope: ensure the outer streaming session is exhausted or explicitly ended, and `stream_run()` closes its own underlying graph stream. No checkpoint session is acquired or closed by this flow.
+11. Summarize the run outcome and call `RunContext.finish(outcome)`: after the cleanup attempts, it records end time, takes a stats snapshot, and attempts the terminal manifest. `finish()` does not repeat any close.
+12. Restore the prior RunContext binding on scope exit, then run the post-run phase: print completion, display formal report and the prepared availability input, offer full report/browser.
+
+The CLI must not display or record a formal rating before the Final Recommendation Check node completes. After the graph, a contract failure takes the execution error path; the CLI does not display a diagnostic as a formal REVIEW and does not claim normal completion.
+
+
+
+### 6.3 Programmatic workflow
+
+1. Start from an existing `TradingAgentsGraph` object. Its earlier construction, client initialization, initial workflow compile, and idle time are not part of this analysis run. If object construction failed before `propagate()`, no analysis run or manifest is created.
+2. Invoke `propagate()`: validate `trade_date`, asset type, and effective configuration for this call. If `checkpoint_enabled` is set, emit a safe notice that this flow does not resume and will run fully; do not change the configuration or default.
+3. Read optional `purchase_scenario` input at the caller boundary. An explicitly provided file that cannot be read or parsed is an entry parameter error; an omitted scenario is not an entry error and is passed to FR-04 as missing input. After successful parsing, business-field validity, object matching, and explicit threshold validity are decided by FR-04, which returns structured `blocked` rather than causing an entry hard failure.
+4. Create a new `RunContext`: allocate a new run_id, start clocks, attempt the running manifest, and create this analysis's `RunStatsHandler`/collector together with reuse state.
+5. Build initial state including `purchase_scenario` and resolved thresholds. The graph object was already constructed; the new flow does not acquire or recompile a checkpoint, and it does not bind the handler to model constructors.
+6. Run the graph fully with the handler in this execution's config (`callbacks`), preserving existing custom callbacks; no checkpoint scope is entered even when checkpointing is configured.
+7. Validate the final formal result with the shared `FormalResultContract` before normal final saving and successful return.
+8. While this analysis's registry is still accessible, prepare one terminal `data_availability_summary` plain mapping in `final_state`; if no valid summary can be formed, leave it null/absent. This does not rerun SB-01 or change formal fields.
+9. After the terminal delivery summary is prepared, use the existing save flow to save final-state JSON and then attempt the existing new-memory append when its conditions create a record. A final-state failure prevents the later memory append; a memory failure does not roll back an already successful final-state save. Preserve the existing exceptions and run/outcome handling; add no transaction, compensation, recovery, or file rollback.
+10. After those save attempts complete or fail, exit the execution scope and follow the existing error path for cleanup. Then call `RunContext.finish(outcome)` to record end time, take a stats snapshot, and attempt the terminal manifest.
+11. Restore the prior RunContext binding, then return `(final_state, final_rating)` where `final_rating` is the SB-01 formal field and `final_state` carries the terminal delivery summary. The return shape is unchanged. The new flow does not call `run_rating()` or parse the formal text; the existing helper may remain for older callers.
+12. On a contract failure, take the execution error path; do not return a fabricated `(final_state, REVIEW)` or parse the decision text. No specific exception class name is fixed.
+13. Do not force report saving. A later `save_reports()` call is outside the run and reads only the returned `final_state`; it does not update the manifest.
+
+
+
+
+### 4.1 Context
+
+```text
+User / programmatic caller
+        │
+        ├── CLI entry (cli/main.py, cli/run.py)
+        └── propagate() entry (TradingAgentsGraph)
+                    │
+                    ▼
+         RunContext (run identity, timing, stats,
+         query reuse, availability registry, manifest)
+                    │
+                    ▼
+   Existing LangGraph analysis and debate
+                    │
+                    ▼
+   Portfolio Manager → model_proposal
+                    │
+                    ▼
+   Deterministic post-PM section:
+     availability snapshot → FR-04 risk → SB-01 final check
+                    │
+                    ▼
+   Formal final result in graph state
+        │           │            │
+        ▼           ▼            ▼
+   CLI display   Report writer  Memory log
+        │
+        ▼
+   Run manifest (auxiliary)
+        │
+        ▼
+   FR-05 history lookup (read-only)
+```
+
+
+
+### 6.4 Normal path sequence
+
+```text
+entry validation
+  → RunContext.start (running manifest attempt)
+  → graph execution
+      → analysts + memory
+      → research/trader/risk debate
+      → Portfolio Manager: model_proposal
+      → risk node: availability snapshot + FR-04 result
+      → final check node: SB-01 formal result
+  → shared FormalResultContract validation
+  → prepare terminal availability summary into final/report state
+  → CLI save attempt (if requested, same report state) / no save for propagate
+  → entry-owned cleanup attempts complete
+  → RunContext.finish: end clock + stats snapshot
+  → terminal manifest attempt
+  → post-run display/browser (CLI only)
+  → caller receives formal result
+```
+
+
+
+### 6.5 Failure paths
+
+| Failure | Graph/entry behavior | Manifest status | Formal result |
+|---|---|---|---|
+| Analysis execution exception | Existing error propagates after entry-owned cleanup attempts and terminal attempt | `failed` with safe summary | None produced; no fake result |
+| CLI graph-object construction, client initialization, or initial workflow compile fails after RunContext start | Existing execution error path; original error preserved; failed manifest attempted | `failed` (attempted); manifest failure only warns | None produced; no fake result |
+| Per-run state preparation fails after RunContext start | Existing execution error path; original error preserved; failed manifest attempted | `failed` (attempted) | None produced; no fake result |
+| Program object construction fails before `propagate()` is invoked | No analysis run is created; object construction error remains | No run manifest | None |
+| Formal result missing/invalid after graph, or lost in transfer/merge | Shared `FormalResultContract` reports an execution contract failure; entry takes the existing execution error path | `failed` (attempted); manifest write failure only warns | None; no consumer-generated REVIEW, no parsed rating, no substitute decision text |
+| Independent public report save called with missing/invalid formal result | Contract failure; that save operation fails; no new normal report or memory decision; no failed snapshot file | Existing run manifest unchanged; no run reopen | None |
+| CLI requested save fails | Existing save error message; run ends | `failed` | Existing formal result remains displayable |
+| Final-state JSON save fails | Existing exception propagates; new memory append is not attempted | `failed` (attempted) | Existing formal result in memory remains unchanged; no successful state file is claimed |
+| New memory decision append fails after final-state save | Existing exception propagates; saved final state is not rolled back | `failed` (attempted) | Existing formal result remains unchanged; no replacement record |
+| Memory disabled or existing same-day record makes no new append | Not a save failure; no record is forced | `completed` if other required work succeeds | Unchanged |
+| Historical settlement, reflection, or memory-read failure handled by `_memory_step()` | Existing degradation and notes; not promoted to run failure | `completed` if other required work succeeds | Unchanged |
+| User declines report save | Not requested, not failed | `completed` if other required work succeeds | Unchanged |
+| Requested report save partially writes Markdown and then fails on HTML | Existing save exception and error display; overall save outcome `failed`; confirmed Markdown reference retained | `failed` | Unchanged; no fabricated HTML reference and no rollback |
+| Manifest running or terminal write fails | Warning only; analysis and requested save continue | May be missing/running | Unchanged; run outcome unchanged |
+| FR-04 missing/invalid scenario (stock Buy/Overweight) | Risk node returns `blocked`; SB-01 returns REVIEW/blocked | `completed` (business REVIEW) | REVIEW + program notice |
+| FR-04 evaluator exception | Risk node returns `error`; SB-01 blocks | `completed` | REVIEW + program notice |
+| FR-03 incomplete | SB-01 blocks | `completed` | REVIEW + missing-data notice |
+| FR-03 missing/illegal/contradictory | SB-01 blocks | `completed` | REVIEW + notice |
+| Model rating missing/illegal/REVIEW | SB-01 blocks | `completed` | REVIEW + notice |
+| SB-01 internal exception it handles | Check node catches and returns `error` | `completed` | REVIEW + notice |
+| Unhandled exception escaping SB-01 or the graph | Existing execution exception path; formal contract not satisfied | `failed` (attempted) | None; no fabricated REVIEW or formal text |
+| User interrupt/forced termination | No completed claim | May remain running/missing | Not guaranteed |
+
+
+
+| 3 | Run lifecycle and manifest | FR-02 | Adds `RunContext`, timing, status, atomic JSON persistence | Misreported success, wrong duration, manifest failure masks an analysis or save error |
+
+| 7 | Historical report lookup | FR-05 | Adds read-only manifest discovery and report read interface | Path escape, repaired/regenerated content, collapsed errors |
+
+| 9 | Path confinement for controlled result paths | SR-02 | Adds run-id validation and resolved-target ownership checks | Write/read outside results root |
+
+| QAS-02 | Program or user | Analysis start, CLI object construction failure, normal finish, caught execution error, requested save failure | Writable results directory | Run manifest | Attempt running/completed/failed records; manifest failure only warns; CLI construction and requested report failures can mark the run failed while preserving the formal result | FR-02-FC01–FC05, INV-01-FC01–FC03 |
+
+| QAS-06 | Caller | Valid, malformed, missing, or out-of-root historical records | Configured results root | History list/read result | Correct filtering/order/read or distinct error; no repair or regeneration | FR-05-FC01–FC05 |
+
+| Run observability vs non-blocking manifest | `ManifestStore` is best-effort; no manifest outcome changes the run outcome or formal result. |
+
+| Run status | `RunContext` | Operational status, not a recommendation | Manifest, CLI warnings |
+
+| Manifest persistence result | `ManifestStore` | Auxiliary persistence status, not a recommendation | Warnings only |
+
+| Run manifest | `ManifestStore` | JSON file | Yes | Auxiliary; no rating, gate, or reason field |
+
 | Stats handler/collector | One lock; model record map + tool ID set | One analysis, passed through that execution's config |
-| Active RunContext binding | Context-local; restore previous binding on exit | One active run per execution context |
+
 | Manifest writes | Unique run directory + atomic replace; single writer | One run |
-| Memory log | Existing cross-thread/process file lock | Cross-run (existing) |
-| Graph state | LangGraph reducers/state updates; no shared mutable RunContext in state | One run |
 
-Analysts may run concurrently. Adapters must be thread-safe, and the per-run stats handler serializes its model map/tool ID set with one lock. The final post-PM nodes run after the graph's existing risk debate and Portfolio Manager, so they are not concurrent with analyst data calls. Config propagation to parallel/nested runnables remains to be verified locally; the design does not rely on ContextVar lookup for stats ownership.
 
----
+| Safe warnings | Existing logging/CLI warning mechanism | Manifest/history/security failures |
 
-## 9. Security and permissions
+| Persistence outcomes | Manifest failure with analysis and requested save succeeding keeps run completed; final-state JSON failure skips memory and preserves the original exception; final-state success plus memory append failure does not roll back state; memory disabled or same-day skip is not a failure; `_memory_step()` settlement/read degradation is not promoted to run failure; CLI report failure keeps error display and attempts failed manifest; Markdown success plus HTML failure makes the requested save failed with truthful refs; user declines save yields completed when other work succeeds; independent post-run save failure leaves the manifest unchanged; original save error is not overwritten by a manifest error and original state/memory exceptions are re-raised unchanged; no case recomputes or rewrites the SB-01 formal result |
 
-### 9.1 SR-01 credential protection
+| Fault injection | Manifest running/terminal/serialization failures; save failure; corrupt manifest; missing report; invalid UTF-8; unsafe endpoint; symlink escape |
 
-Supported scope only:
+| RSK-05 | Manifest write interferes with analysis | Masked error or false success | Manifest-only best-effort writer; original error/result priority; no run-outcome change |
 
-1. FR-02 manifest configuration and error summaries.
-2. Existing report and final-state configuration summaries.
-3. CLI endpoint preference save/load.
-4. Existing `get_scrubbed()` request-error paths in `dataflows/net.py`, Alpha Vantage `common.py` and its notice helper, and FRED `fred.py` including the passthrough 400 `error_message` path.
-5. Warnings from these handlers.
-
-Rules:
-
-- Configuration summary reuses `run_settings()` allowlist. Credential fields do not enter the summary.
-- Known credentials are only values configured or used by this application in this run; no collection of all environment variables and no credential registry file. Empty strings do not match; IF-21 defines the literal exact-substring matching contract; no long-string or provider-key heuristic.
-- If an allowlisted field contains a known credential as defined by IF-21, omit the entire affected field.
-- Endpoint preference: do not save/restore endpoints with userinfo, query, fragment (including an explicit empty separator), a known credential in host/path, or an unparseable form. Omit the item and require re-entry; do not save a masked pseudo-endpoint; do not strip query/fragment and save a different address; do not modify `.env` or migrate credentials.
-- Supported request errors: replace known credentials with a fixed marker (`***`); do not reattach unprocessed request/response objects, exception chains, or raw bodies; preserve safe error category and necessary diagnostics.
-- Handling failure: omit the field or use a fixed safe message; manifest handling failure skips the record and warns; no raw sensitive fallback; no hard exit.
-- Out of scope: model-generated report bodies, arbitrary third-party logs, raw debug/stream output, complete API return objects, historical files, recovery material, future outputs.
-- Existing `get_scrubbed` and `.env` 0600 behavior are retained as existing protections, not claimed as new results.
 
 ### 9.2 SR-02 path confinement
 
@@ -1466,225 +1810,16 @@ Rules:
 - Failure: FR-02 abandons the manifest write and warns; analysis continues. FR-05 illegal run_id is a parameter error; out-of-root reference is an invalid record; list skips bad records with warnings; direct read is rejected.
 - Threat model: local single-user controlled directory without malicious concurrent modification. Check-then-replace races, hard links, mounts, and all platform link mechanisms are not guaranteed.
 
-### 9.3 Coding-agent permissions
 
-The full whitelist is defined in [`docs/architecture/permission-model.md`](docs/architecture/permission-model.md). This summary reflects the current design constraint:
 
-- Default: no read and no write.
-- Each role has explicit path allowlists and read-only/frozen paths.
-- Human-maintained: `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, governance configuration, `.env*`.
-- Architecture agent: write only `architecture-blueprint.md` and `docs/architecture/**`; no application code.
-- Implementation agent: write only approved application/test paths after human approval; read requirements and architecture.
-- Verification agent: read-only repository; write only declared test/report paths.
-- Enforcement limits: tool-level permissions are not an OS security boundary; CI path checks and human review are required. No governance configuration is changed by this design.
-
-Application runtime permissions remain separate: the AI has no trade-execution authority; SB-01 is the formal recommendation authority; risk evaluation is caller-scenario-based, not account verification.
-
----
-
-## 10. Observability and verification
-
-### 10.1 Runtime observability
-
-| Signal | Location | Use |
-|---|---|---|
-| Run status, timestamps, duration, call counts, token totals, result references | Run manifest | FR-02 observability |
-| Availability summary and basic completeness | Graph state, final report, deterministic CLI section | FR-03 |
-| Risk status, safe input, metrics, thresholds, reasons | CLI, `final_state`, report | FR-04 |
-| Gate status, reasons, formal rating/decision | `final_state`, CLI, report, state log | SB-01, INV-01 |
-| Safe warnings | Existing logging/CLI warning mechanism | Manifest/history/security failures |
-| Memory decision rating/body | Existing memory log | INV-01 |
-
-No new metrics backend, tracing service, diagnostic database, or warning file is added. When a requirement has no suitable runtime monitor, the trace matrix will state the reason and use test/evidence instead.
-
-### 10.2 Verification strategy
-
-| Layer | Planned verification |
-|---|---|
-| Pure unit | C-08 risk evaluator boundaries/negatives and the C-09 final-checker truth table: implemented and offline-verified under Round 1 and Round 2 respectively. Remaining pure-unit intents are planned: query identity/single-flight; availability mapping/latest-result; manifest timing/atomic writes; stats usage rules; history filters/order/errors; sanitizers and path guard |
-| Graph integration | Offline fake model/data; PM proposal only; risk and final check nodes; formal fields; no extra model/data call; recursion limit; the new flow starts from a new initial state and does not resume a checkpoint |
-| Full-execution checkpoint policy | Both entries create a new RunContext/run_id and execute the complete graph; no checkpoint session, `None` resume, old-checkpoint evidence, or old-data deletion; checkpoint-enabled notice is emitted; FR-04/SB-01 run; a second invocation is a new analysis; underlying checkpoint tests remain regression assets |
-| Formal result contract and delivery | SB-01 branches use the same five top-level fields; risk reasons and top-level reasons do not overwrite each other; merged graph/CLI state contains complete fields; consumers do not generate a formal rating from proposal text; missing formal output is an execution contract failure, not a normal REVIEW; actual outputs use the same formal rating and decision; missing/invalid SB-01 input produces complete blocked/REVIEW and a handled exception produces complete error/REVIEW |
-| FR-04 numeric and result contract | Equality passes, a small over-limit blocks, and double over-limit keeps both reasons; display rounding does not change status; invalid input and explicit invalid thresholds are handled; each metric's nullability follows its own operands; a different set of model numbers does not change the calculation or appear verified; both entries, CLI, final_state, and report consume the same risk result; no model/network call is added; expected values are independent of the evaluator; save-failure and checkpoint policies are unchanged |
-| Research-stage context delivery | The first research call actually receives the research-start FR-03 summary; later research roles receive the same stage summary; full reports, identity, language, tool-message relationships, and structured-output paths remain; summary attachment adds no model call and triggers no query or research re-run; the Portfolio Manager proposal does not become the formal result |
-| Context limitations | Context budgets, compression thresholds, and compressed-constraint reinjection are deferred by ADR 001 D-10c and are not current acceptance; existing role inputs/client limits/error paths remain; no arbitrary-length success or token/cost benefit is claimed |
-| Observation ordering and minimum content | Interleaved updates use registry acceptance order to decide the latest result; ordinary observations and query marks share that sequence; a later accepted update for one query replaces its earlier mark without affecting another query; a recordable supplementary failure is disclosed but does not alone cause REVIEW; different objects/windows/queries do not contaminate each other; original fetch result/exception and FR-01 waiter semantics remain; minimum-content rules still distinguish unavailable from available |
-| Tracking error and snapshots | A local fallback failure sets `availability_tracking_error`, and every later snapshot returns `None` rather than an old complete summary; a single snapshot-construction failure returns `None` but does not set the sticky error, and a later snapshot may reconstruct; a new run starts with no inherited error; consumers see only missing/invalid summaries and never read the tracking fact; no query/retry/model call is added |
-| Pre-fetch parameter failures | Existing date adjustment/rejection semantics are unchanged and no stricter validation is added; a rejected pre-fetch call creates no valid query, observation, sequence, FR-01 entry, or tracking error; it does not overwrite a prior valid result; a necessary item without a valid result stays `not_attempted` with a parameter reason; a supplementary failure is disclosed without alone blocking; P-03 early failure creates no per-indicator fake records; original return/exception is preserved and the summary uses only fixed safe reasons; no extra fetch/retry/model call is added |
-| AvailabilitySummary producer/consumer | The summarizer is the only completeness calculator; completeness uses only the selected `necessary_items` and does not separately re-veto marks; seven mappings and three states are correct; supplementary limitations are not necessary gaps; failure marks appear only as affected query `unavailable`; research stores a summary mapping or `null`, never a sentinel object; later updates do not change an existing research snapshot; same-time consumers agree; SB-01 does not recompute completeness; report rendering is not model-overwritten; no query/model call is added |
-| Statistics handler and propagation | Both entries and parallel analyst subgraphs cover the per-analysis handler; consecutive analyses of one graph object isolate counts; duplicate callbacks/stream fragments do not double-count; failed calls, graph-internal reflection, and structured-to-free-text fallback count correctly; direct prefetch is not a tool; missing/invalid usage makes both token totals null; independent settlement does not contaminate analysis; callback failure leaves business results unchanged. The exact config-propagation boundaries remain a later small offline integration check, not an asserted guarantee. |
-| Report availability source | A result added after research start appears in the run-in report; returned final_state contains this analysis's terminal summary; saving A after consecutive A/B analyses does not use B's data; independent save does not access active registry, query, or rerun; Markdown and HTML use one prepared input; missing summary is disclosed without a fake state; availability refresh does not change formal fields; independent save does not modify an ended manifest |
-| Path observation attachment | All 15 paths have exactly one attachment site; early returns are observed without missing the outcome; router/vendor and callback layers add no duplicate observation; each split indicator is observed separately; P-09/P-13 with the same query cause one fetch, one observation, and two path associations; direct StockTwits/Reddit prefetches are covered; internal fallback attempts add no business observation; original return/exception/call count behavior is retained; no active run produces no new observation behavior |
-| FR-03 completion and path association | P-09/P-13 same parameters: one fetch, one completed observation, both paths associated; different windows do not merge; concurrent success and failure release waiters; cache hit preserves sequence/status; observation is visible before shared result; association alone is not success; FR-03 works without FR-01; path identity is absent from model parameters and query key |
-| FR-03 per-method recognition | Each of the 15 paths and 14 methods: success, empty, unavailable/not-configured, withheld, and exception; non-empty error text is not success; fallback, FR-01 reuse, no completed result, object/window isolation, indicator concatenation, and necessity versus supplementary distinction; expectations come from an independent fixture table, not the classifier’s own output |
-| Resource cleanup ownership | CLI, `propagate()`, and debug streaming paths clean up normally; chunk-processing exceptions end the outer and underlying streams; save failure still releases resources; primary and cleanup errors preserve the primary; cleanup-only failure is not `completed`; manifest failure does not repeat cleanup; context binding restores; reusable objects remain usable; cleanup timing precedes end clock and stats snapshot |
-| Run creation and object lifecycle | CLI attempts running before graph construction and includes construction time; CLI construction failure attempts failed with original error preserved; program entry excludes object construction/idle and creates no run if construction fails before propagate; consecutive propagate calls isolate run_id, counts, cache, and observations; construct-only creates no manifest; pre-start validation failure creates no fake run; post-start state preparation failure is a failed run; explicit internal delegation shares one run while independent calls do not; config summary matches the existing allowlist; each execution uses its own handler, so prior-run callback events do not accumulate; context exit restores the previous binding |
-| Persistence outcomes | Manifest failure with analysis and requested save succeeding keeps run completed; final-state JSON failure skips memory and preserves the original exception; final-state success plus memory append failure does not roll back state; memory disabled or same-day skip is not a failure; `_memory_step()` settlement/read degradation is not promoted to run failure; CLI report failure keeps error display and attempts failed manifest; Markdown success plus HTML failure makes the requested save failed with truthful refs; user declines save yields completed when other work succeeds; independent post-run save failure leaves the manifest unchanged; original save error is not overwritten by a manifest error and original state/memory exceptions are re-raised unchanged; no case recomputes or rewrites the SB-01 formal result |
-| Entry integration | CLI and `propagate()` normal/failure paths; save inside/outside run; return shape; manifest lifecycle; history list/read |
-| Output consistency | CLI streaming sections, immediate files, final report, final state, state log, memory, return value; waiting/unchecked/failed labels |
-| Fault injection | Manifest running/terminal/serialization failures; save failure; corrupt manifest; missing report; invalid UTF-8; unsafe endpoint; symlink escape |
-| Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
-| Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
-
-With the exceptions of the Round 1 C-08 offline core (`test/offline/test_fr04_risk.py`) and the Round 2 C-09 offline core (`test/offline/test_sb01_final_check.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
-
-### 10.3 Evidence state
-
-- Static code analysis: complete for the paths cited in this blueprint.
-- Requirement count: independently checked against the YAML.
-- Baseline: existing behavior only; data coverage was incomplete in the recorded run.
-- C-08 FR-04 core: implemented as the module-level callable `evaluate(...)` in `src/tradingagents/portfolio_risk.py` and offline-tested by `test/offline/test_fr04_risk.py` under the Round 1 approval (`docs/plans/round-01.md @ a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; RM-7-R1). This covers FR-04-FC01–FC04 and the core portion of IR-14 only.
-- C-09/IF-09 core: implemented as the module-level callable `evaluate(proposal, availability, risk, asset_type)` in `src/tradingagents/final_recommendation.py` with no default parameters, and offline-tested by `test/offline/test_sb01_final_check.py` under `docs/plans/round-02.md @ 8ad99c25ea1acd77b6e019fbe3c357899e8fc535`. PR #10 reviewed H `fbba457a9235ef53de52604f9b591aaf89a1972b` and merged M `cc8b17596a81751bd6165899423dd511e93dc394`. This covers SB-01-FC01–FC04 and local IR-01/IR-02 responsibility only.
-- Remaining new behavior, including the production C-09 node/consumer wiring, SB-01-FC05, full SB-01, global IR-01/IR-02/IR-03/IR-04, IF-19, FR-03 producer, FR-04-FC05, complete IR-14, entry/graph/report/state/memory integration, availability, manifest, history, and statistics: not implemented, not tested, not measured.
-- Performance/cost: no target approved; PR-01 and CR-01 remain deferred.
-
----
-
-## 11. Change policy
-
-### 11.1 When to update artifacts
-
-| Change class | Required updates |
-|---|---|
-| Formal-result authority, component responsibility, interface, requirement semantics, or security boundary | Architecture review; update the affected ADR, blueprint, and directly affected invariants, trace matrix, runtime policy, or tests |
-| Internal naming, file layout, or refactor with no semantic change | No automatic D2 rewrite; update a document only if it mentions the changed name or structure |
-| Implementation detail within an approved interface | Update the applicable tests and trace/evidence entries; do not rewrite unrelated architecture |
-| Deferred requirement activation | New human decision, requirements revision, re-open only the affected architecture and tests |
-| Governance, agent permissions, or security-critical behavior | Human approval retained; never changed by an implementation agent alone |
-
-Update artifacts by actual impact, not as a mandatory full-D2 checklist.
-
-### 11.2 Re-open conditions
-
-- A requirement changes the final authority, entry-point set, or output consumers.
-- A supported data path is added/removed, its actual call location changes, or its existing semantics/default parameter handling changes.
-- Acceptance-order semantics, pre-fetch call-failure note behavior, query-level failure-marker behavior, `availability_tracking_error` triggers/lifecycle, basic-completeness rules, the `AvailabilitySummary` field contract, or report availability ownership/preparation timing change.
-- A future requirement asks the new flow to resume interrupted analyses; reopen the ADR before designing identity, observation inheritance, statistics, or formal-result semantics.
-- The top-level formal field set, field types, or reason ownership changes.
-- A requirement adds a unified context assembler, cross-role normalization, input budgets, automatic trimming/compression, or different role input obligations.
-- A future decision approves context compression; its design must preserve role tasks, required evidence, and trusted FR-03 program facts.
-- A security scope expansion is requested beyond SR-01/SR-02.
-- A deferred requirement (FR-06/FR-07/PR-01/CR-01) is activated.
-- Evidence shows the two deterministic nodes cannot fit the recursion limit or the existing graph contract.
-
----
-
-## 12. Deferred requirement boundary
-
-| Requirement | Current status | Architecture treatment |
-|---|---|---|
-| FR-06 local report recovery | Deferred | No recovery component, task material, auto-recovery, CLI flow, placeholder seam, or interface promise is designed. |
-| FR-07 analyst briefs | Deferred | No analyst-generated brief field, character limit, full-report replacement, or token/cost claim is added. The current FR-03 research-stage program summary is separate and does not activate FR-07. |
-| PR-01 manifest overhead measurement | Deferred | No threshold, benchmark, low-overhead claim, or reserved measurement interface. Activation requires a new decision and measurement plan. |
-| CR-01 brief cost comparison | Deferred | No cost formula, price input, OFF/ON experiment, or saving claim. |
-
-These items must not be presented as current acceptance, implementation, or evidence.
-
----
-
-## 13. Open decisions and risks
-
-### 13.1 Open decisions for review
-
-| ID | Decision | Current proposal | Status |
-|---|---|---|---|
-| OQ-01 | Exact CLI flag/file shape for `purchase_scenario` | `--purchase-scenario <json-file>`; optional `purchase_scenario` kwarg | Pending before entry implementation; parameter/input form and file read/parse error contract remain unconfirmed |
-| OQ-02 | Threshold configuration key names | `max_projected_weight`, `max_stop_distance` | Key names decided by the current user instruction; no other configuration mechanism is approved |
-| OQ-04 | CLI save/display split | Save inside run; display/browser after terminal attempt | Pending before CLI entry implementation; not approved by this document |
-| OQ-07 | Coding-agent role names and whitelists | Four-role proposal | Pending D3-stage confirmation and implementation |
-| OQ-08 | Recursion-limit reservation size | Reserve at least four post-analyst steps | Pending technical verification; four steps is not a product acceptance value |
-| OQ-16 | Execution-config callback propagation | Verify the per-analysis handler reaches model/tool calls in analyst subgraphs, parallel nodes, structured-output runnables, and graph-internal reflection; if a boundary does not inherit, pass the same execution config locally; call-ID/usage extraction details remain pending | Pending offline integration verification; local same-config handoff only, no global collector |
-| OQ-12 | Unverified FR-03 producer branches | Confirm Alpha Vantage empty JSON/feed and header-only CSV shapes with finite, sourced samples; unrecognized formats remain `unavailable` until confirmed | Pending verification; no generic recognizer, network probe, or vendor call is added |
-| OQ-13 | Shared news executor and research-wrapper integration | Confirm the plain internal news executor calls from P-09/P-13, explicit path argument, and first-Bull wrapper mechanism without a framework API claim | Pending offline integration verification within the existing scope |
-| OQ-15 | Observation ordering, pre-fetch parameter failures, tracking error, AvailabilitySummary, and report source | Verify acceptance-order updates, shared observation/mark sequence, later-accepted replacement, pre-fetch note projection without fake queries, local fallback plus tracking-error behavior, snapshot-construction versus observation-loss distinction, new-run isolation, shared publication, summary/report contracts, and P-02/P-04/P-09/P-10 fixtures | Pending verification under the existing contract; no new state, recovery, or global veto |
-
-### 13.2 Risks
-
-| ID | Risk | Impact | Mitigation |
-|---|---|---|---|
-| RSK-01 | Formal fields missing, invalid, or written by a non-SB-01 path | Two authorities, fabricated REVIEW, or unsafe success | Shared `FormalResultContract`; execution contract failure; no consumer-generated REVIEW |
-| RSK-02 | New flow accidentally resumes or uses stale checkpoint evidence | Bypass of required checks; old result treated as current | Full execution from a new RunContext/initial state; no checkpoint acquisition or `None` resume; old checkpoint data left untouched and unused |
-| RSK-03 | Availability classification misreads a sentinel | False completeness or false failure | Table-driven per-method mapping with fixtures; no model judgment |
-| RSK-04 | Query reuse leaks across runs | Wrong data in another analysis | RunContext-owned service; no module global |
-| RSK-05 | Manifest write interferes with analysis | Masked error or false success | Manifest-only best-effort writer; original error/result priority; no run-outcome change |
-| RSK-11 | Report/final-state/new-memory failure misclassified as best-effort | False success and hidden failed save | Path-specific persistence classification; run outcome can be failed; formal result unchanged |
 | RSK-12 | RunContext or stats handler tied to reusable graph/model object or a different run | Cross-run statistics contamination or wrong attribution | RunContext-owned handler; per-execution config injection; no constructor binding or context-based lookup |
-| RSK-13 | Duplicate resource ownership between entry and `RunContext.finish()` | Unclear close order, masked primary error, or double release | Entry/wrapper ownership table; `finish()` terminalizes only after cleanup attempts; context restoration guaranteed |
-| RSK-14 | FR-04 implemented with float arithmetic, display rounding, or different field rules | Boundary decisions diverge; unsafe pass/block | Field contract, exact rational cross-multiplication, one JSON-compatible result, independent boundary checks |
-| RSK-15 | FR-03 classifier treats non-empty error text as available | False completeness and model overconfidence | Per-method producer-branch table; narrow classifier; unrecognized format is unavailable |
-| RSK-16 | Research stage reads a summary only after first Bull or refreshes it on every round | First Bull lacks data context; later observations change research inputs | Research-entry wrapper injects same-call snapshot; stage field fixed after first entry |
-| RSK-17 | Query path is included in query identity or inferred from shared function name | P-09/P-13 fail to share or associate incorrectly; concurrency misattribution | Query key excludes path; explicit path ID from the two news callers; separate association map |
-| RSK-18 | Decimal/Fraction values or default Decimal precision decide the risk check or break serialization | Context-dependent decisions, wrong boundary result, or non-JSON state | Exact rational decision; JSON-compatible result values; local parsing/formatting; no global Decimal context |
-| RSK-19 | Classifier/registry failure replaces the fetch outcome, blocks shared publication, or is expanded beyond actual observation loss | Lost original error/result; waiters hang; unrelated recordable failures wrongly invalidated | Observation handling isolated; query-level conservative observation or local failure mark; tracking error only for unlocatable/unrecordable loss; publish in all normal/error paths; no refetch or general public flag |
-| RSK-20 | Normal-looking heading or arbitrary number counted as available | False completeness and model overclaim | Minimum content rules; fixed producer structures; unrecognized format unavailable |
-| RSK-21 | A consumer rebuilds completeness or necessary gaps from a different rule | Conflicting summaries and SB-01 decisions | Summarizer is the sole producer; consumers read one plain mapping and only filter non-available necessary items for display/contradiction checks |
-| RSK-22 | A path is observed twice at different layers or missed on an early return | Duplicate/no observations; false availability or gaps | One curated attachment table; local helper at the existing call point; no router/vendor/callback observation |
-| RSK-23 | Observation metadata copies a second default table or invents effective values | Wrong query identity or summary claims | Reuse existing config keys/constants and known requested values; record unknown/null honestly |
-| RSK-06 | CLI save phase misclassified | Wrong run status or duration | Explicit save outcome and timing boundary |
-| RSK-07 | Stats double-count, lose identity, or fabricate tokens | Misleading observability | One callback-handler site; call-ID dedupe; per-call usage; incomplete/unreliable => null totals |
-| RSK-24 | Execution-config callbacks do not propagate through a nested boundary | Under-counted calls or missing reflection | Treat as unverified; add local explicit config handoff at that boundary, not a global collector/router |
-| RSK-25 | Report writer sources availability from another run or the live registry | Cross-analysis contamination; report changes after run end | Writer reads only passed state; run-in entry prepares terminal summary; independent save uses final_state only |
-| RSK-26 | Unrecordable observation loss is silently ignored, leaving an old success to look current | False completeness from lost observations | Run-local `availability_tracking_error`; later snapshots return `None`; not exposed as a public status/gate |
-| RSK-27 | Pre-fetch parameter rejection is misrecorded as a completed query, overwrites a valid result, or sets tracking error | Fake availability/completeness and false lost-observation state | Private call-failure notes with no key/sequence/FR-01; necessary gap reason or supplementary limitation only; no tracking error |
-| RSK-08 | Report/state/memory divergence | INV-01 violation | Formal-field-only consumers; cross-output tests |
-| RSK-09 | Path check uses string prefix or follows link | Out-of-root access | Resolved-target/component ownership; sentinel tests |
-| RSK-10 | Long histories or large reports exceed a provider's context limit | Request failure or incomplete analysis with no automatic recovery | Keep the existing client error path; context budget/compression is deferred by ADR 001 D-10c; do not claim arbitrary-length success |
 
----
-
-## 14. Traceability summary
-
-The detailed fit-criterion mapping is in [`docs/architecture/trace-matrix.md`](docs/architecture/trace-matrix.md). This blueprint covers:
-
-- FR-01: P-09/P-13 query reuse service and observation boundary.
-- FR-02: RunContext lifecycle, manifest, stats, result references.
-- FR-03: 15 path-specific observation sites, availability registry, necessity list, consumer snapshots.
-- FR-04: structured scenario, evaluator, deterministic display.
-- FR-05: manifest registration, list/read interface, path/error rules.
-- SB-01: graph-internal final check, proposal/formal separation, fail-closed REVIEW.
-- INV-01: formal-field-only consumers across CLI, final state, report, state log, memory.
-- SR-01: limited credential protection paths and endpoint preference rule.
-- SR-02: run-id and resolved-target path confinement.
-- FR-06/FR-07/PR-01/CR-01: explicitly deferred and not designed as current behavior.
-
----
-
-## 15. Review checklist
-
-- [ ] The fixed graph sequence Portfolio Manager → FR-04 → SB-01 → END is accepted.
-- [ ] Portfolio Manager writes only `model_proposal` as a nested `{rating, text}` object or `null`; SB-01 alone decides/generates `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; unchanged pass-through/merge/save is allowed and is not a second authority.
-- [ ] Risk reasons remain in `portfolio_risk_result.reasons`; SB-01 reasons remain at the top level; no `present`, `gate_reasons`, or flattened risk object is required.
-- [ ] Missing/invalid formal output is an execution contract failure, not a consumer-generated REVIEW.
-- [ ] The availability snapshot is plumbing, not an approval authority.
-- [ ] Each of the 15 paths has one curated observation site; P-09/P-13 share one news executor/single-flight, P-03 observes each split indicator, and P-14/P-15 are observed at their direct prefetch calls.
-- [ ] No router, vendor, callback, monkeypatch, or middleware layer adds a second availability observation; defaults come from existing config/constants and early failures do not invent a valid query.
-- [ ] `AvailabilitySummary` has exactly the five agreed fields; the summarizer is the only completeness calculator, and consumers read one plain mapping without rebuilding it.
-- [ ] Necessary gaps are only a filter over non-available `necessary_items`; no duplicate `missing_necessary_items` field or second completeness state exists.
-- [ ] Observation, conservative unavailable, and query marks share one acceptance-order sequence; a later accepted update replaces an earlier one for that query, with no external-time ordering. Failure marks appear only as affected-query `unavailable`.
-- [ ] Pre-fetch parameter rejection creates only a private safe call-failure note, with no fake query/observation/sequence/FR-01 and no tracking error; it does not overwrite a valid result and appears as necessary-gap reason or supplementary limitation as appropriate.
-- [ ] Unlocatable/unrecordable observation loss sets private `availability_tracking_error`; later snapshots are `None`, not old complete data, while a single snapshot-construction failure is not sticky. A new run starts clean, and consumers see only missing/invalid summaries.
-- [ ] CLI creates the run before graph-object construction; `propagate()` creates it after invocation on an existing object; object construction is not an analysis run.
-- [ ] Resource cleanup belongs to the entry or resource wrapper; `RunContext.finish()` does not close streams or clients; the new flow acquires no checkpoint session.
-- [ ] FR-04 uses the field/threshold contract and exact rational comparisons; no float arithmetic, default Decimal context, or display rounding decides a check.
-- [ ] The risk result is one JSON-compatible object with decimal-string/null metrics; display formatting is local and never feeds back into status.
-- [ ] The deterministic risk area says only the listed caller scenario is checked and that other amounts/prices in the model proposal are not verified by this check.
-- [ ] Observation handling failure never replaces the fetch outcome or blocks shared publication; recordable failures stay at the query, and only unlocatable/unrecordable observation loss sets the private tracking error that makes later snapshots missing. No public permanent veto exists.
-- [ ] Title-only, placeholder, error text, or arbitrary numbers are not sufficient for `available`; minimum content rules are applied per P-02/P-04/P-09/P-10.
-- [ ] Every FR-03 path uses the verified per-method branch table; non-empty error text is not treated as `available`.
-- [ ] The first Bull call receives the research-start summary directly; later Bull/Bear and the Research Manager use the same stage summary; later observations do not refresh it or re-run research.
-- [ ] Existing role prompt assembly, full reports, identity/language, tool-message relationships, and structured-output/fallback paths remain; the context classes are logical, not a shared layer order.
-- [ ] Context budgets, compression thresholds, and compressed-constraint reinjection are deferred per ADR 001 D-10c and are not current behavior or acceptance; existing role inputs/client limits/error paths remain, and no unified budget/trim/reinjection flow is added.
-- [ ] Query identity excludes call path; completion observations and path associations are separate and ordered correctly.
-- [ ] `propagate()` never forces a report save, its return shape is unchanged, and returned final_state carries this analysis's terminal `data_availability_summary`.
-- [ ] Run-in reports use one entry-prepared terminal summary; independent `save_reports(final_state)` uses only that state, and the writer never reads active context, registry, summarizer, graph cache, research summary, or model text.
 - [ ] Markdown and HTML use the same report input; missing availability is disclosed as unavailable without a fabricated completeness value or SB-01 rerun; independent save does not modify an ended manifest.
+
 - [ ] One stats handler/collector is created per analysis and injected only through that graph execution's config; it is not model-constructor-bound, not stored on the reusable graph/model, and does not look up its run from context.
-- [ ] Duplicate callbacks are deduped by callback call ID; per-call usage drives null totals; graph-internal reflection is included, independent settlement is not; propagation gaps are treated as unverified with local config handoff, not a new router.
+
 - [ ] Manifest failure never changes the run outcome or formal result or masks the original error.
+
 - [ ] Report/final-state/new-memory failures use path-specific behavior and are not generalized to manifest best-effort.
+
 - [ ] FR-01/FR-03/FR-04/SB-01/manifest have independent component boundaries.
-- [ ] Intermediate proposal labels and formal waiting/failed states are accepted.
-- [ ] The new flow always executes fully from a new RunContext and initial state; it does not resume, read, or delete checkpoint data, and checkpoint-enabled configurations emit a no-resume notice.
-- [ ] SR-01 and SR-02 remain limited to the stated paths.
-- [ ] Deferred scope is not re-introduced.
-- [ ] All remaining open decisions are resolved or explicitly deferred by the human reviewer.

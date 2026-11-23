@@ -1,8 +1,11 @@
 # Architecture Evaluation Table
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 - Status: Proposed for human review
 - Date: 2026-11-17
-- Requirements baseline: `docs/req/requirements.yaml` version 1.48.0
+- Requirements baseline: `docs/req/requirements.yaml` version 1.49.0
 - Related: [Architecture Blueprint](../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md)
 
 This document compares architecture candidates and key design options. It does not contain numeric scores, performance measurements, cost estimates, test results, or approvals. Ratings are qualitative and trace to requirements or static code evidence.
@@ -31,11 +34,10 @@ Dimensions are derived from the architecture drivers in the blueprint:
 |---|---|---|
 | D1 Authority integrity | One formal result source; no bypass | SB-01, INV-01 |
 | D2 Safety determinism | Fail-closed checks; no model/data calls in checks | FR-04, SB-01 |
-| D3 Lifecycle/observability | Run identity, status, timing, manifest, stats | FR-02 |
 | D4 Data correctness | Query identity, reuse isolation, availability semantics | FR-01, FR-03 |
 | D5 Output consistency | CLI, final state, report, state log, memory, return value | INV-01, SB-01 |
 | D6 Compatibility | Existing entries, return shapes, graph, reports, memory | Constraints |
-| D7 Security | Limited credential and path scope | SR-01, SR-02 |
+| D7 Security (current SR-01 only) | Limited credential/configuration/preference/diagnostic protection; existing ticker guard retained | SR-01 |
 | D8 Maintainability/testability | Offline tests, pure components, bounded scope | Constraints |
 | D9 Deferred-scope discipline | No accidental activation of deferred requirements | FR-06, FR-07, PR-01, CR-01 |
 
@@ -70,11 +72,10 @@ No rating is a numeric score or measured result.
 |---|---|---|---|---|---|
 | D1 Authority integrity | Medium | High | Medium | High | Low |
 | D2 Safety determinism | Medium | High | Medium | High | Low |
-| D3 Lifecycle/observability | Medium | High | Medium | High | Low |
 | D4 Data correctness | Medium | High | Medium | High | Low |
 | D5 Output consistency | Medium | High | Medium | High | Low |
 | D6 Compatibility | High | Medium | High | Low | High |
-| D7 Security | High | High | High | Medium | High |
+| D7 Security (current SR-01 only) | High | High | High | Medium | High |
 | D8 Maintainability/testability | Medium | High | High | Low | Medium |
 | D9 Deferred-scope discipline | High | High | High | Low | High |
 
@@ -181,52 +182,21 @@ Rules:
 
 ### 3.6 Manifest persistence
 
-| Option | Description | Pros | Cons | Outcome |
-|---|---|---|---|---|
-| O-21 | Best-effort atomic JSON per run | Non-blocking; simple; observable | May remain running/missing | Selected |
-| O-22 | SQLite/DB record | Queryable | New persistence; migration; overkill | Rejected |
-| O-23 | In-memory only | Simple | No persistence; fails FR-02 | Rejected |
-| O-24 | Background writer | Decoupled | New lifecycle/concurrency; not required | Rejected |
-
-Selected: **O-21**.
+**Deferred options.** The prior comparison is archived below; it provides no current implementation obligation or evidence of current fitness.
 
 ### 3.7 Statistics collection
 
-| Option | Description | Pros | Cons | Outcome |
-|---|---|---|---|---|
-| O-25 | One per-analysis handler/collector, injected through that graph execution's config; call-ID dedupe and per-call usage | No cross-run binding; no permanent model binding; direct handler-to-collector ownership; incomplete-usage null rule | Config propagation through nested/parallel boundaries remains unverified | Selected |
-| O-26 | Existing counter with missing usage as zero | Minimal | Violates FR-02 token rule | Rejected |
-| O-27 | Infer usage from text length | No missing usage | Forbidden; not real usage | Rejected |
-| O-28 | Estimate hidden provider retries | More complete in theory | Fabricates calls; forbidden | Rejected |
-
-Selected: **O-25**.
-
-Rules:
-
-- Create one handler/collector per analysis with the RunContext; merge it into that graph invocation/stream's execution config, not model constructors or a replacement callback list.
-- Preserve existing custom callbacks, replace no caller callback, and add the analysis handler once. If CLI delegation and propagate share one analysis, they share one handler.
-- Callback call IDs dedupe starts/ends and are never synthesized from prompt, model name, or timestamp; per-call usage is stored and summarized. Valid usage is non-negative integers; booleans are invalid. Error/unfinished/invalid usage makes both token totals null; zero calls is true zero. If identity or association cannot be established, do not fabricate a precise count/usage; use null plus a safe warning.
-- Graph-internal reflection is included; independent settlement outside the graph is not. The same model object does not establish run ownership.
-- Structured-output request actually started counts; a later free-text fallback actually started counts again. Local binding failure, parser/chain/node work, and schema-tool declaration do not count as model/tool executions. No manual per-invoke accumulation is added.
-- No event router, global collector, context lookup per callback, hidden retry estimate, model re-call/wait to recover usage, or new diagnostic/compensation mechanism. Callback exceptions only warn and leave business results unchanged.
-- Config propagation through subgraphs, parallel nodes, structured/free-text fallback, and reflection remains pending verification; use local config handoff if a boundary does not inherit.
+**Deferred options.** The prior comparison is archived below; it provides no current implementation obligation or evidence of current fitness.
 
 ### 3.8 History read
 
-| Option | Description | Pros | Cons | Outcome |
-|---|---|---|---|---|
-| O-29 | Read-only manifest discovery + report read | Minimal; matches FR-05 | Scans run directories | Selected |
-| O-30 | Separate index | Faster queries | New index lifecycle; not required | Rejected |
-| O-31 | Regenerate reports on read | Always readable | Violates read-only rule | Rejected |
-| O-32 | Immutable archive | Strong integrity | Out of scope | Rejected |
-
-Selected: **O-29**.
+**Deferred options.** The prior comparison is archived below; it provides no current implementation obligation or evidence of current fitness.
 
 ### 3.9 Security approach
 
 | Option | Description | Pros | Cons | Outcome |
 |---|---|---|---|---|
-| O-33 | Allowlist + known-value sanitization + resolved-target path checks | Matches SR-01/SR-02 scope | Limited coverage; must be stated honestly | Selected |
+| O-33 | Allowlist + known-value sanitization for current config/preferences/diagnostics | Matches SR-01; preserves existing ticker guard | Limited supported paths only; new manifest/history resolved-target checks are deferred SR-02 | Selected for current SR-01 only |
 | O-34 | Generic secret scanner and all-output scan | Broad appearance | Exceeds scope; false positives; no guarantee | Rejected |
 | O-35 | Immutable archive/transaction system | Strong integrity | Out of scope | Rejected |
 | O-36 | No new security work | Minimal | Fails SR-01/SR-02 | Rejected |
@@ -247,7 +217,7 @@ Selected: **O-39**.
 
 Policy:
 
-- Both entries create a new RunContext, run_id, and initial state and execute the full graph.
+- Both entries create a fresh ephemeral RunContext and initial state and execute the full graph.
 - No checkpoint session is acquired; no `invoke(None)` / `stream(None)` resume; no old checkpoint is read as current evidence or deleted.
 - A checkpoint-enabled configuration emits a no-resume notice; it does not change configuration/defaults.
 - Underlying checkpoint storage, thread IDs, signatures, cleanup tools, and tests remain regression assets but are outside the new flow.
@@ -281,46 +251,16 @@ Rules:
 
 | Option | Description | Pros | Cons | Outcome |
 |---|---|---|---|---|
-| O-46 | Treat manifest, report, final-state, and memory uniformly as best-effort | Simple rule | Conflicts with FR-02/INV-01 and hides failed state/memory/report saves | Rejected |
-| O-47 | Let all save failures return normal success | Always succeeds | False success; violates existing failure behavior | Rejected |
-| O-48 | Path-specific classification | Manifest warns only; state/new-memory/requested report preserve existing failure behavior and can fail the run; disabled/same-day no-op is not failure | Requires internal save outcome and careful lifecycle wiring | Selected |
-| O-49 | Transactional rollback across artifacts | Strong consistency | Out of scope; not required by FR-02/INV-01 | Rejected |
+| O-46 | Make all existing state/report/memory saves best-effort | Simple | Hides failures, conflicts with preserved behavior | Rejected |
+| O-47 | Report normal success for every save failure | Always succeeds | False success | Rejected |
+| O-48 | Preserve existing path-specific failures | Compatible; retains primary errors, saved files and formal fields | Requires precise entry cleanup | Selected |
+| O-49 | Transactional rollback across saved outputs | Cross-file transaction | Outside current requirements | Rejected |
 
-Selected: **O-48**.
-
-Rules:
-
-- Manifest failure only warns; it does not change run outcome or formal result.
-- Final-state JSON failure preserves exception propagation and makes the run `failed`; later memory append is not attempted.
-- New-memory append failure makes the run `failed`; a saved final state is not rolled back.
-- Memory disabled or existing same-day record is not a save failure.
-- `_memory_step()` settlement/reflection/read degradation is not promoted to run failure.
-- CLI requested report failure is captured for display but reported internally as `failed`; the run is `failed`.
-- User declines report save: `not_requested`, not failed.
-- Partial Markdown/HTML failure: overall save `failed`, truthful Markdown ref retained, no rollback and no fabricated HTML success.
-- Independent `save_reports()` after `propagate()` does not reopen or modify the completed run manifest.
-
-The run outcome may change without changing the formal result. This is the same classification used by the blueprint and ADR, not a third scheme.
+State-save failure propagates before new-memory append. New-memory failure preserves saved state. Requested report failure keeps existing display/exception behavior; Markdown remains if HTML fails. Disabled/no-new-memory and declined report saves are no-ops, not failures. Independent save creates no run scope. No new persisted status, manifest or produced-file registry is required. This supports INV-01 and the existing baseline, not deferred FR-02.
 
 ### 3.13 RunContext creation versus reusable object lifecycle
 
-| Option | Description | Pros | Cons | Outcome |
-|---|---|---|---|---|
-| O-50 | Create the analysis RunContext in the graph constructor | One early point | Confuses object construction with an analysis; creates manifest without analysis; contaminates repeated use | Rejected |
-| O-51 | Require RunContext before object construction for every entry | Uniform wording | Impossible for the existing program API, where the object exists before `propagate()` | Rejected |
-| O-52 | Entry-specific creation point with reusable object and per-run stats handler/collector injected via execution config | Matches both entry lifecycles; keeps object construction distinct; isolates runs; no permanent model binding | Different timing coverage; config propagation needs verification | Selected |
-| O-53 | Store RunContext or collector on the graph and reuse it | Fewer objects | Cross-run identity/statistics/cache contamination | Rejected |
-
-Selected: **O-52**.
-
-Rules:
-
-- CLI: selection/config/basic validation → RunContext and running manifest → graph-object construction/client initialization/initial compile → per-run preparation → execution. Construction time is inside the run.
-- Program: existing object → `propagate()` → per-call validation/effective config → new RunContext and running manifest → per-run preparation → execution. Object construction and idle time are outside the run; construction failure before `propagate()` creates no run.
-- The object constructor creates no run_id or manifest and stores no RunContext. Each independent call gets a new run_id, stats handler/collector, reuse registry, and availability registry.
-- The initial config summary uses a shared projection over the existing `run_settings()` allowlist; it does not require a constructed graph.
-- Model clients may be reusable, but the stats handler/collector is per-analysis and injected only through that execution's `callbacks` config. Its callbacks directly update that collector; no active-context lookup or global router is used.
-- Existing custom callbacks are preserved; only the analysis's own stats handler is added once. Exact propagation through subgraphs, parallel nodes, structured/free-text fallback, and graph-internal reflection remains pending verification.
+Keep one ephemeral scope per independent analysis and share it only for explicit internal delegation. The reusable graph constructor owns no current analysis registry. Bind scope after effective config/basic validation and before supported data calls; do not require pre-construction binding. Retain local context binding and original cleanup behavior. Timers, new stats handler injection, persisted IDs/status and manifest writes from the prior comparison are deferred, not current reasons for selecting the graph-internal authority boundary.
 
 ### 3.14 Risk numeric handling and result representation
 
@@ -341,7 +281,7 @@ Rules:
 - Report metrics may be locally formatted; a repeating quotient is still computed and not null. Each metric is null only when its own operands are invalid; an invalid ticker, currency, or threshold does not clear a computable metric. Fixed decimal places, round-half-even, no-exponent notation, and trailing-zero rules are not acceptance requirements or approval gates.
 - Display formatting never feeds back into status. CLI and report consume the same result but may differ in layout or percentage presentation.
 - The deterministic risk area states that only the listed caller scenario is checked and that other model-proposal amounts/prices are not verified; it also keeps the classroom and non-trade-authorization statements.
-- The manifest receives no risk fields and memory is not required to store risk metadata; the current state log does not yet persist risk data. Existing save-failure and full-execution checkpoint policies are unchanged.
+- No new risk artifact or memory risk metadata is required; the current state log does not yet persist risk data. Existing save-failure and full-execution checkpoint policies are unchanged.
 
 ### 3.15 Context delivery for the research stage
 
@@ -430,7 +370,7 @@ Rules:
 - Updating delivery/display availability is only a refresh: SB-01 keeps its check-time summary and formal fields/reasons are not rerun or changed. No hash/version/history/second-result binding is added.
 - The writer only reads the passed state; it does not read active context, registry, summarizer, graph last-run cache, research summary, or model text. Report-preparation time does not mean fetching newer market data.
 - Markdown and HTML use the same prepared state. Post-run display uses the prepared final state; showing an already generated file uses that file's data.
-- Independent `save_reports(final_state, ...)` uses only that final_state's terminal summary, even while another analysis runs. It does not query, re-summarize, rerun SB-01, reopen the run, or modify the ended manifest.
+- Independent `save_reports(final_state, ...)` uses only that final_state's terminal summary, even while another analysis runs. It does not query, re-summarize, rerun SB-01, reopen the run, or create a new analysis scope.
 - Null/missing/unusable availability is disclosed as “program summary unavailable” in the deterministic region; no completeness value is fabricated and no formal-result failure is inferred. A preparation failure only warns and leaves the field null/absent, without blocking report generation/save or changing the formal result/run outcome. This is failure handling, not normal FR-03 delivery. Formal-result invalidity remains a separate `FormalResultContract` issue.
 - No `report_availability_summary`, history, version, hash, snapshot ID, persistent registry, or cross-file transaction is added.
 
@@ -458,24 +398,7 @@ Rules:
 
 ## 4. Selected architecture summary
 
-| Area | Selection | Primary requirements |
-|---|---|---|
-| Final authority | Graph-internal `Final Recommendation Check` node | SB-01, INV-01 |
-| Proposal | `model_proposal` is `{rating, text}` or `null`; PM does not write formal fields | SB-01 |
-| Risk | Pure `PortfolioRiskEvaluator` from caller scenario plus explicit analysis ticker; field/threshold contract; risk-scoped `reasons`; exact rational cross-multiplication; one JSON-compatible result; local display formatting; only the listed caller scenario is checked | FR-04 |
-| Availability | 15 path-specific observation sites; shared news executor for P-09/P-13; per-indicator P-03; direct P-14/P-15 wrappers; run-scoped registry; one acceptance sequence for observations/marks; private pre-fetch call-failure notes; private tracking error; summarizer-produced five-field `AvailabilitySummary` or None; entry-prepared terminal run-in report summary; independent saves use final_state only | FR-03 |
-| Context delivery | Existing per-role prompt paths remain; only research-stage roles receive the FR-03 program summary; no unified assembler, input budget, automatic trimming, or compression | FR-03 |
-| Query reuse | RunContext-owned single-flight for two `get_news` paths; completed observation accepted before publish; path associations separate | FR-01, FR-03 |
-| Lifecycle | CLI creates RunContext before graph-object construction; `propagate()` creates a new one after invocation; manifest best-effort; report/state/memory path-specific; run outcome can fail without rewriting the formal result | FR-02, INV-01 |
-| Statistics | One per-analysis handler/collector injected via execution config; call-ID dedupe, per-call usage, graph-internal reflection included; no cross-run accumulation; incomplete/unreliable usage => null | FR-02 |
-| History | Read-only manifest discovery and report read | FR-05 |
-| Credentials | Limited allowlist/known-value sanitization | SR-01 |
-| Paths | run_id validation + resolved-target ownership | SR-02 |
-| Checkpoint | New flow always executes fully; no resume or old-checkpoint evidence; underlying checkpoint code/tests retained outside the flow | Compatibility constraint, FR-02, SB-01 |
-| Formal result contract | Shared validation of `model_proposal`, `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; missing/invalid formal output is execution failure, not consumer REVIEW | SB-01, INV-01 |
-| Deferred scope | No implementation or acceptance claim | FR-06, FR-07, PR-01, CR-01 |
-
----
+Select the existing graph with two deterministic post-PM nodes, separate proposal/formal fields and IF-19. Ephemeral C-03 owns C-05 reuse and C-07 availability only. Keep 15 observation positions, stage-specific summaries, pure C-08/C-09, existing output/optional memory/save behavior and limited SR-01 protection. These safety, data-isolation and compatibility drivers support the choice without relying on deferred manifest, exact stats, history or SR-02 path features. No new measurement or score is claimed.
 
 ## 5. Evidence ledger
 
@@ -548,8 +471,7 @@ Rules:
 |---|---|---|
 | Graph-internal final check | ADR 001 §2, §3.2, §4.2 | Proposed |
 | `model_proposal` separation and nested-or-null shape | ADR 001 §3.2, §6.1, §6.5 | Proposed |
-| RunContext and manifest lifecycle | ADR 001 §3.3, §6.3 | Proposed |
-| Stats handler, config injection, and reflection attribution | ADR 001 §3.3, §6.3, §6.4 | Proposed; propagation unverified |
+| Ephemeral RunContext isolation and cleanup | Current ADR 001 §6.3/§6.7; historical §3.3 narrowed by scope amendment | Proposed current integration; no manifest obligation |
 | Data adapters and reuse | ADR 001 §3.4 | Proposed |
 | Risk input and thresholds | ADR 001 §3.4, §6.1 | Proposed |
 | Security and history scope | ADR 001 §3.5 | Proposed |
@@ -577,15 +499,120 @@ Rules:
 6. Are the security and history scopes accepted without expansion?
 7. Is the full-execution checkpoint policy accepted: new RunContext/initial state every time, no new-flow resume or old-checkpoint evidence, underlying checkpoint code/tests retained?
 8. Is the shared `FormalResultContract` accepted with exactly `model_proposal`, `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`, including the rule that missing/invalid output is an execution failure rather than REVIEW?
-9. Is the path-specific persistence classification accepted: manifest warns only, while final-state/new-memory/requested report failures can make the run `failed` without rewriting the formal result?
-10. Is the entry-specific RunContext creation boundary accepted, with CLI object construction inside the run, program object construction/idle outside it, and one per-analysis stats handler/collector injected through execution config?
 11. Are the FR-04 field/threshold and caller-scenario-only contract, and the FR-03 per-method recognition table, accepted, including conservative handling of unverified branches?
 12. Are the research-start summary attachment to the first Bull call, the five-field `AvailabilitySummary`, and the separation of completed observations from path associations accepted?
 13. Are the exact-rational decision, one JSON-compatible result with decimal-string/null metrics, local display formatting, and caller-scenario-only boundary accepted?
 14. Are query-level observation failure handling, conservative classification failures, one shared acceptance sequence for observations and marks, later-accepted replacement, guaranteed shared publication, and the minimum available-content rules accepted?
 15. Is the five-field `AvailabilitySummary` accepted as the sole completeness output, with consumers reading it without rebuilding completeness or receiving failure marks/tracking error as public states?
 16. Is the path-specific attachment accepted: 15 unique observation sites, shared P-09/P-13 news execution, per-indicator P-03, direct P-14/P-15 wrappers, and no router/vendor/callback duplication?
-17. Is the stats design accepted: one per-analysis handler bound to one collector and injected through execution config, call-ID dedupe, per-call usage/null totals, graph-internal reflection attribution, no EventRouter, and unverified propagation treated as a local handoff question?
+17. Are new statistics, usage accounting and callback propagation clearly deferred, with baseline callbacks retained and no current C-04 task?
 18. Is the report source design accepted: run-in reports use one entry-prepared terminal summary; independent saves use only passed final_state; writer has no registry/context/query lookup; missing availability is disclosed without a fabricated state or SB-01 rerun?
 19. Is the ordering/tracking design accepted: registry acceptance order only, private pre-fetch call-failure notes with no fake query/single-flight/tracking error, private sticky tracking error only for unlocatable/unrecordable completed-query loss, later snapshots None rather than old success, and single snapshot-construction failure non-sticky?
 20. Are all deferred requirements explicitly excluded from current acceptance?
+
+## Deferred and historical design archive — not current implementation instructions
+
+The material below preserves prior design rationale/details and identifiers. Any mandatory wording here applies only if the deferred scope is explicitly reactivated and reviewed. It is not a current task, monitor, acceptance condition or permission grant. Historical mixed clauses are superseded by the current sections above.
+
+### 3.6 Manifest persistence
+
+| Option | Description | Pros | Cons | Outcome |
+|---|---|---|---|---|
+| O-21 | Best-effort atomic JSON per run | Non-blocking; simple; observable | May remain running/missing | Selected |
+| O-22 | SQLite/DB record | Queryable | New persistence; migration; overkill | Rejected |
+| O-23 | In-memory only | Simple | No persistence; fails FR-02 | Rejected |
+| O-24 | Background writer | Decoupled | New lifecycle/concurrency; not required | Rejected |
+
+Selected: **O-21**.
+
+
+
+### 3.7 Statistics collection
+
+| Option | Description | Pros | Cons | Outcome |
+|---|---|---|---|---|
+| O-25 | One per-analysis handler/collector, injected through that graph execution's config; call-ID dedupe and per-call usage | No cross-run binding; no permanent model binding; direct handler-to-collector ownership; incomplete-usage null rule | Config propagation through nested/parallel boundaries remains unverified | Selected |
+| O-26 | Existing counter with missing usage as zero | Minimal | Violates FR-02 token rule | Rejected |
+| O-27 | Infer usage from text length | No missing usage | Forbidden; not real usage | Rejected |
+| O-28 | Estimate hidden provider retries | More complete in theory | Fabricates calls; forbidden | Rejected |
+
+Selected: **O-25**.
+
+Rules:
+
+- Create one handler/collector per analysis with the RunContext; merge it into that graph invocation/stream's execution config, not model constructors or a replacement callback list.
+- Preserve existing custom callbacks, replace no caller callback, and add the analysis handler once. If CLI delegation and propagate share one analysis, they share one handler.
+- Callback call IDs dedupe starts/ends and are never synthesized from prompt, model name, or timestamp; per-call usage is stored and summarized. Valid usage is non-negative integers; booleans are invalid. Error/unfinished/invalid usage makes both token totals null; zero calls is true zero. If identity or association cannot be established, do not fabricate a precise count/usage; use null plus a safe warning.
+- Graph-internal reflection is included; independent settlement outside the graph is not. The same model object does not establish run ownership.
+- Structured-output request actually started counts; a later free-text fallback actually started counts again. Local binding failure, parser/chain/node work, and schema-tool declaration do not count as model/tool executions. No manual per-invoke accumulation is added.
+- No event router, global collector, context lookup per callback, hidden retry estimate, model re-call/wait to recover usage, or new diagnostic/compensation mechanism. Callback exceptions only warn and leave business results unchanged.
+- Config propagation through subgraphs, parallel nodes, structured/free-text fallback, and reflection remains pending verification; use local config handoff if a boundary does not inherit.
+
+
+
+### 3.8 History read
+
+| Option | Description | Pros | Cons | Outcome |
+|---|---|---|---|---|
+| O-29 | Read-only manifest discovery + report read | Minimal; matches FR-05 | Scans run directories | Selected |
+| O-30 | Separate index | Faster queries | New index lifecycle; not required | Rejected |
+| O-31 | Regenerate reports on read | Always readable | Violates read-only rule | Rejected |
+| O-32 | Immutable archive | Strong integrity | Out of scope | Rejected |
+
+Selected: **O-29**.
+
+
+### 3.13 RunContext creation versus reusable object lifecycle
+
+| Option | Description | Pros | Cons | Outcome |
+|---|---|---|---|---|
+| O-50 | Create the analysis RunContext in the graph constructor | One early point | Confuses object construction with an analysis; creates manifest without analysis; contaminates repeated use | Rejected |
+| O-51 | Require RunContext before object construction for every entry | Uniform wording | Impossible for the existing program API, where the object exists before `propagate()` | Rejected |
+| O-52 | Entry-specific creation point with reusable object and per-run stats handler/collector injected via execution config | Matches both entry lifecycles; keeps object construction distinct; isolates runs; no permanent model binding | Different timing coverage; config propagation needs verification | Selected |
+| O-53 | Store RunContext or collector on the graph and reuse it | Fewer objects | Cross-run identity/statistics/cache contamination | Rejected |
+
+Selected: **O-52**.
+
+Rules:
+
+- CLI: selection/config/basic validation → RunContext and running manifest → graph-object construction/client initialization/initial compile → per-run preparation → execution. Construction time is inside the run.
+- Program: existing object → `propagate()` → per-call validation/effective config → new RunContext and running manifest → per-run preparation → execution. Object construction and idle time are outside the run; construction failure before `propagate()` creates no run.
+- The object constructor creates no run_id or manifest and stores no RunContext. Each independent call gets a new run_id, stats handler/collector, reuse registry, and availability registry.
+- The initial config summary uses a shared projection over the existing `run_settings()` allowlist; it does not require a constructed graph.
+- Model clients may be reusable, but the stats handler/collector is per-analysis and injected only through that execution's `callbacks` config. Its callbacks directly update that collector; no active-context lookup or global router is used.
+- Existing custom callbacks are preserved; only the analysis's own stats handler is added once. Exact propagation through subgraphs, parallel nodes, structured/free-text fallback, and graph-internal reflection remains pending verification.
+
+
+
+## 4. Selected architecture summary
+
+| Area | Selection | Primary requirements |
+|---|---|---|
+| Final authority | Graph-internal `Final Recommendation Check` node | SB-01, INV-01 |
+| Proposal | `model_proposal` is `{rating, text}` or `null`; PM does not write formal fields | SB-01 |
+| Risk | Pure `PortfolioRiskEvaluator` from caller scenario plus explicit analysis ticker; field/threshold contract; risk-scoped `reasons`; exact rational cross-multiplication; one JSON-compatible result; local display formatting; only the listed caller scenario is checked | FR-04 |
+| Availability | 15 path-specific observation sites; shared news executor for P-09/P-13; per-indicator P-03; direct P-14/P-15 wrappers; run-scoped registry; one acceptance sequence for observations/marks; private pre-fetch call-failure notes; private tracking error; summarizer-produced five-field `AvailabilitySummary` or None; entry-prepared terminal run-in report summary; independent saves use final_state only | FR-03 |
+| Context delivery | Existing per-role prompt paths remain; only research-stage roles receive the FR-03 program summary; no unified assembler, input budget, automatic trimming, or compression | FR-03 |
+| Query reuse | RunContext-owned single-flight for two `get_news` paths; completed observation accepted before publish; path associations separate | FR-01, FR-03 |
+| Lifecycle | CLI creates RunContext before graph-object construction; `propagate()` creates a new one after invocation; manifest best-effort; report/state/memory path-specific; run outcome can fail without rewriting the formal result | FR-02, INV-01 |
+| Statistics | One per-analysis handler/collector injected via execution config; call-ID dedupe, per-call usage, graph-internal reflection included; no cross-run accumulation; incomplete/unreliable usage => null | FR-02 |
+| History | Read-only manifest discovery and report read | FR-05 |
+| Credentials | Limited allowlist/known-value sanitization | SR-01 |
+| Paths | run_id validation + resolved-target ownership | SR-02 |
+| Checkpoint | New flow always executes fully; no resume or old-checkpoint evidence; underlying checkpoint code/tests retained outside the flow | Compatibility constraint, FR-02, SB-01 |
+| Formal result contract | Shared validation of `model_proposal`, `gate_status`, top-level `reasons`, `final_rating`, and `final_trade_decision`; missing/invalid formal output is execution failure, not consumer REVIEW | SB-01, INV-01 |
+| Deferred scope | No implementation or acceptance claim | FR-06, FR-07, PR-01, CR-01 |
+
+---
+
+
+
+| D3 Lifecycle/observability (deferred) | Run identity, status, timing, manifest, stats | FR-02 |
+
+| D3 Lifecycle/observability (deferred) | Medium | High | Medium | High | Low |
+
+| Stats handler, config injection, and reflection attribution | ADR 001 §3.3, §6.3, §6.4 | Proposed; propagation unverified |
+
+9. Is the path-specific persistence classification accepted: manifest warns only, while final-state/new-memory/requested report failures can make the run `failed` without rewriting the formal result?
+
+10. Is the entry-specific RunContext creation boundary accepted, with CLI object construction inside the run, program object construction/idle outside it, and one per-analysis stats handler/collector injected through execution config?

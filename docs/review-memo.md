@@ -251,3 +251,102 @@ Uncovered integration: no graph/Portfolio Manager/state/CLI/report/memory/checkp
 - Review time: `2026-11-22T06:25:52Z`; reviewed implementation commit H `fbba457a9235ef53de52604f9b591aaf89a1972b`.
 - Approval record or signature: PR #10 formal review event on H; the rationale is the linked ordinary comment, not the empty review body. Merge M `cc8b17596a81751bd6165899423dd511e93dc394` at `2026-11-22T06:29:54Z`.
 - Evidence limit: The review event, comment, commit, merge, and workflow-level CI facts are user-provided GitHub output. The AI did not query GitHub or inspect individual CI jobs; the approval covers only the frozen independent core and limited closeout, not production integration or full SB-01.
+
+## RM-12-SCOPE — Six-active scope revision (AI review draft; final human verdict pending)
+
+- PR: https://github.com/Howindy/Teamproject-Tradingagents/pull/12
+- Baseline: main closeout merge `91dc374e8ff6ddd770a7eb693fc98af710f187ad`.
+- Frozen specification P: `cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`; unchanged after approval.
+- Pre-approval: non-author `jyy722`, 2026-11-23T01:37:12Z; exact test-spec line and explicit architecture/scope amendment verified through GitHub API at comment 7089283044. PR author Howindy; remote head was P before local implementation edits.
+- Implementation T / final H: not committed yet; populate using the actual first classifier-relevant commit. No publication/merge performed by the assistant.
+
+### Scope and architecture alignment
+
+Keep 13 requirements / 55 FCs; current six active / 27 FCs, seven deferred / 28 FCs. Only FR-04-FC05, SB-01-FC05, INV-01-FC01, SR-01-FC01 and SR-01-FC04 lose the approved manifest-specific clauses. FR-02/FR-05/SR-02 future FCs remain intact. Current trace and D4 each have 27 unique active rows. C-03 remains ephemeral reuse/availability scope; manifest/new precise stats/history/path work is deferred. Mixed save/cleanup rules retain primary-error and formal-result protection. Prior design details are explicitly archived as future/historical, not silently applied to current implementation. R1/R2 core evidence, business contracts, 15 observation paths, seven necessity items and three summary times remain.
+
+### Actual local verification and limitations
+
+Interpreter: existing round1-runtime Python; temporary results under `/private/tmp/cs5351-six-active/`. No dependency installation, live call or application change.
+
+| Check | Observed result |
+|---|---|
+| Existing schema checker | No errors; exact counts 13 / 55 / 6 / 27 / 7 / 28 |
+| Requirement/FC preservation | Same ID sets; only five approved FC objects changed |
+| Gate suite in restricted sandbox | 70 passed, 6 failed because loopback socket binding was denied |
+| Gate suite with authorized loopback execution | 76 passed, no skips; gates-unrestricted.xml |
+| Default prior regression | 1615 passed, 3 failed, 1 skipped, 1 deselected; 100 subtests passed; regression.xml |
+| Regression failures | Three unchanged Windows-lock emulation cases use errno.EDEADLOCK unavailable on macOS; matches existing BUG-02 limitation; not waived or fixed by this task |
+| Optional skip | langchain_aws unavailable; not installed by this task |
+| Full repository Ruff | Failed: 38 errors in pre-existing untracked tmp generated probe files; no cleanup/rule relaxation performed |
+| Tracked Python Ruff | Passed using git ls-files Python/pyi list and unchanged Ruff configuration |
+| Mypy baseline | errors=[] and fixed=[]; unchanged baseline |
+| Dependency / API / permission checks | Passed; permission file and public APIs unchanged |
+
+Full local regression and full-directory Ruff are **not green**. Tracked-file lint does not replace or erase the failed full-directory command. The existing records already identify BUG-02 and generated-artifact Ruff limitations; remote Linux outcomes remain separate evidence. No remote final gate result, product acceptance, safety escape claim or final human verdict is fabricated.
+
+### Human review / next handoff
+
+Pending real final human review. This section is AI-authored preparation, not an APPROVE/CHANGES REQUIRED/REJECT verdict on a human's behalf. Required next facts: actual T/H and completed PR fields, current PR-event CI including aggregate, resolution/review of reported limitations, final review and authorized merge. AI-use logging is pending user consolidation; the assistant-authored AI-058/AI-059 entries were removed at the user's explicit request. No raw transcript was invented.
+
+### Classifier applicability clarification
+
+Working-tree path classification using unchanged classify_paths returned approval_applicable=false, ai_log_required=true, security_applicable=true, semantic_required=false. The governance-only test is excluded from application_tests; no executable script/application path changes. Consequently this diff uses governance contract mode (the fixed gate suite), rather than automatic test-approval mode. The specification anticipated automatic approval applicability; this expectation does not match the existing classifier. Real prior non-author approval was nevertheless independently verified and preserved. No classifier edit or artificial application change was made to force applicability; do not report a skipped test-approval job as machine-verified pre-approval. The exact test pre-approval remains manual/API-reviewed evidence for this PR. This clarification requires human review of the applicability discrepancy, not retroactive alteration of frozen P.
+
+AI-use association check: errors=[], required=true, changed_entries=1, unassociated_paths=[]. Final source/schema/workflow/control and frozen-plan preservation checks are local working-tree checks, not remote CI.
+
+### Follow-up consistency correction — 2026-11-23
+
+The user requested resolving substantive review findings without reducing/restructuring the documentation diff or archive. This follow-up is within the existing six-active scope; frozen specification P remains unchanged.
+
+- D2 dependency rules and current verification tables no longer require C-04 callbacks, pre-construction manifest projection, timing/counts, new persistent IDs/status or manifest attempts. Baseline callbacks and saves remain.
+- C-03 consistently owns ephemeral binding/reuse/availability only. CLI scope starts after effective config/basic validation and before graph-object construction; propagate scope is per validated invocation. Explicit delegation shares scope. Acquiring owners clean up, then finish restores binding. No resource double-close or persisted terminalization.
+- C-08/C-09 use their existing primitive/mapping signatures, without a RunSpec/DTO import or framework. IF-09 explicitly lists all five required result fields. IF-18 uses existing writer/save options with passed state, not a new output-reference registry.
+- Current ADR selected-design failure semantics, invariants, runtime vocabulary/intents, candidate-selection rationale and D3 component allocation now match that scope. Historical ADD decisions and future archives are retained as history, not current tasks.
+- IR-05/IR-07 D4 rows again have seven columns, specific injected violations and independent must-fail assertions. Current setup/save/cleanup verification removes deferred FR-02 duties while preserving error priority, no rollback and formal-result protection.
+- Current SR-01 candidate/verification covers credentials; new SR-02 resolved-target controls remain deferred. Existing ticker guards remain.
+
+Executed follow-up checks: schema no errors and exact 13/55/6/27/7/28; requirement and FC ID sets preserved; only the five approved FC objects changed; deferred statements/FCs retained; dependency sets checked; exact 27 unique current FC mappings in trace and D4; 14 current invariant verification rows, all seven columns; approved-file boundary and unchanged source/workflow/scripts/schema/permission/frozen-plan checks; git diff --check passed. These finite checks and focused review do not mechanically prove every architecture statement or implement any feature. Prior gate-suite result and full regression/Ruff findings remain as recorded above; no new full-suite green claim.
+
+Residual preconditions: entry input/UI choices, actual role configuration and producer/framework attachment verification remain pending where applicable. Context budget/compaction/reinjection remains an unresolved course alignment item; no implementation or full course-compliance claim is added. Final human review and remote CI remain pending. This follow-up is not added to ai-use-log at the user's request.
+
+
+### User-directed logging handoff — 2026-11-23 (historical intermediate state; superseded below)
+
+The user instructed that this assistant's modifications must not be recorded in ai-use-log and requested removal of Codex entries for later user consolidation. Only the newly added Codex-authored AI-058/AI-059 were removed; pre-existing OpenCode entries, including historical prose mentioning Codex, are preserved byte-for-byte. The AI-use log is now identical to the specification baseline. Prior successful association-check results above describe the earlier local state, not the current candidate: unchanged log plus a changed test does not satisfy the current AI-use-log gate. The user will supply/consolidate the actual record before merge. No gate was disabled or made optional, and no new activity entry is added by this review.
+
+
+### Accurate Codex log restoration — 2026-11-23
+
+The user explicitly requested restoring AI-058/AI-059 with accurate authorship. They now record Codex desktop implementation and subsequent design review/corrections separately; no OpenCode/deepseek-flash attribution is made. Exact model identifier is not independently recorded. Both transcript_refs lists are empty because this chat has no exported repository transcript; the missing export is explicit. AI-057 and its session-20 OpenCode evidence remain unchanged. The earlier removal/failed-association statements above are historical intermediate states, not the restored candidate. Local AI-use association is checked separately after restoration; remote CI remains unverified and no commit/merge is implied.
+
+### Latest local review — remaining five findings corrected (2026-11-23)
+
+Current working-tree status supersedes the earlier read-only finding list; final human review/remote CI/commit/merge remain pending.
+
+| Finding | Current disposition |
+|---|---|
+| ADR report-summary arrow precedes the formal check despite saying after-check | Corrected: check-time summary/risk → SB-01 → END → IF-19 → entry-prepared terminal summary → unchanged formal delivery |
+| IR-17 negative cases might require full-report scanning | Corrected: only supported config-summary fields, endpoint preference and listed diagnostics; model-generated bodies/unlisted channels explicitly excluded |
+| Generic Every IR rule could activate deferred invariant tests | Corrected: current applicable IRs only; IR-06/15/16/18 excluded from current obligations |
+| CI current baseline omitted three newly deferred requirements | Corrected: seven deferred IDs listed; manifest/new stats/history/SR-02 work separated from current remaining features |
+| Trace evidence row and tool manifest retain stale OQ-16/Round 1 status | Corrected: new-stat propagation future-only; frozen Round 1 Proposed cells distinguished from actual approval and merged C-08 scope |
+
+Executed local checks: unchanged schema errors=[] with 13/55/6/27/7/28; all IDs preserved; exact five approved FC-object changes and unchanged verification/zero_tolerance; deferred contracts unchanged; dependency sets correct; trace/D4 each exactly 27 current FCs; 14 current invariant verification rows each seven columns; diagram ordering and bounded security scenarios checked; exact four test count changes; approved paths and unchanged source/CI mechanisms/schema/permission/dependencies/frozen specification; no missing current design Markdown link targets; git diff --check passed. AI-use association passed locally (three changed records, zero unassociated paths). No new full-suite or remote result is implied.
+
+No additional business feature, quality threshold, generic scan/platform, new required DTO or test-count requirement was introduced. Archive organization/diff-size cleanup remains deliberately untouched. Historical baseline functions, tests and records are retained rather than treated as current new scope. Runtime production integration, applicable entry/UI and producer/framework decisions, actual role setup and course context-budget alignment remain explicit preconditions/gaps, not completed facts. Codex follow-up stays within AI-059; no new activity ID or transcript is fabricated.
+
+### Current minimal-scope tightening — 2026-11-23
+
+The user adopted the next read-only review recommendations. This current amendment supersedes earlier constructor-before-scope timing statements in intermediate review notes; those notes remain historical.
+
+- C-03 binds after effective config/basic validation and before the first supported data call. Binding before graph-object construction is not required. Keep independent-call isolation, explicit delegation sharing and restoration on every exit; no new constructor timing/statistics/status coverage.
+- M-V01 verifies current scope/reuse/availability only. New-statistics OQ-16 is future-only across current state, trace, blueprint and D4 descriptions.
+- Blueprint deferred boundary lists all seven requirements; the D4 self-check now describes 27 current FCs, 14 applicable IRs and 28 deferred FCs as documentation coverage, not test execution.
+- OQ-04 preserves existing UI/save/display interaction and verifies terminal summary placement. A separate product decision is necessary only if interaction is deliberately changed; OQ-01 still affects the genuinely undecided purchase-scenario input.
+- No product FC, model-quality threshold or runtime prompt was added. Existing scope helpers/mappings are enough; no mandatory RunSpec DTO/service framework or output registry.
+
+Local schema/FC-set/deferred-row/boundary/diff checks passed. Actual path classification for this working tree is semantic_required=false; docs/ci/semantic_eval.yaml remains unapproved and unchanged. Future runtime prompt/model changes must be classified on their real diff. Formal semantic evaluation requires a genuinely approved fixed dataset/rubric/threshold/model/runner and candidate-bound trusted evidence from the default-branch workflow; this scope-maintenance PR neither prepares nor claims that evaluation. A genuine human not-applicable determination is a separate existing path, not a substitute for required evaluation of real behavior changes. No workflow, classifier or evidence rule was relaxed. AI-059 records the same-activity follow-up. Prior regression/Ruff findings, absent Codex transcript export, remote CI and final human review remain as recorded.
+
+### Authorized local submission preparation — 2026-11-23
+
+The user requested tracking the actual session-20 export and making the local implementation commit. Staged scope is the 19 approved revision paths plus the user-selected transcripts/session-20.md; tmp remains excluded. The staged transcript matches the supplied working-tree bytes exactly. Full staged git diff --check returns exit 2 with 1328 whitespace notices, all confined to the original transcript (trailing spaces and final blank line). The other 19 staged files pass the same whitespace check. Raw evidence was not reformatted to manufacture a green check; this transcript-specific finding supersedes earlier diff-check passes before the raw export was staged. Staged schema and AI-use association checks pass. No source, workflow, gate script, schema, permission or frozen specification is staged. Local commit is authorized; push/remote CI/final review/merge are separate and not performed by this preparation.
