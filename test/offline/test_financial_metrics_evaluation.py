@@ -55,6 +55,7 @@ def _approved_config() -> dict[str, Any]:
 
 
 def _good_report(case: dict[str, Any]) -> str:
+    facts = json.loads(CASES_PATH.read_text(encoding="utf-8"))["reference_data"]["selected_facts"]
     rows_md = ["| metric_id | value | period | source |", "|---|---|---|---|"]
     for row in case["expected_rows"]:
         mid = row["metric_id"]
@@ -67,7 +68,8 @@ def _good_report(case: dict[str, Any]) -> str:
                 cell = f"{val}x"
             else:
                 cell = f"{val} USD_millions"
-            rows_md.append(f"| {mid} | {cell} | {row['period']} | SEC 10-Q/10-K |")
+            refs = sorted({facts[fid]["accession"] for fid in row["input_fact_ids"] if fid in facts})
+            rows_md.append(f"| {mid} | {cell} | {row['period']} | SEC 10-Q/10-K {'; '.join(refs)} |")
         else:
             rows_md.append(f"| {mid} | n/a ({row['reason']}) | {row['period']} | n/a |")
 
@@ -86,6 +88,12 @@ def _good_report(case: dict[str, Any]) -> str:
         f"Fundamental Analysis for {case['company_name']} ({case['ticker']}) as of {case['as_of']}.\n\n"
         f"Based on disclosed SEC 10-Q and 10-K filings, {period_note} "
         "All computed figures follow the program financial metrics table and unavailable rows are kept explicitly as n/a without zero-fill or proxy substitution."
+        " Growth and sequential decline describe different comparisons and must not be conflated. "
+        "Profitability reflects disclosed margins, not proxies for absent concepts. Liquidity is indicated "
+        "by current assets relative to current liabilities; leverage reflects liabilities relative to assets. "
+        "Cash generation is the reported YTD operating flow less PP&E payments. Valuation uses fiscal-year "
+        "earnings and an eligible completed price, not trailing earnings. Limitations include missing "
+        "inputs and the historical disclosure cutoff; these ratios alone are not a trade authorization."
         + extra
         + "\n\n"
         + "\n".join(rows_md)
@@ -340,6 +348,27 @@ def test_p03_scorer_passes_valid_and_rejects_critical_ambiguous_and_dim5_regress
     assert ok_score["critical_failures"] == []
     assert ok_score["needs_review_reasons"] == []
 
+    # A correct mention elsewhere cannot mask a contradictory asserted value,
+    # and neighbouring metric rows cannot supply a missing value.
+    contradictory = _good_report(cases["FM-S01"]) + "\nGross margin was 146.5%."
+    contradiction_score = fm_eval.score_candidate_case(
+        cases["FM-S01"], _prompts_for(cases["FM-S01"]), contradictory,
+    )
+    assert "wrong_metric_value:gross_margin" in contradiction_score["critical_failures"]
+
+    # Mere number mentions/table presence do not establish semantic acceptance.
+    source_free = _good_report(cases["FM-S01"])
+    import re
+
+    source_free = re.sub(r"\d{10}-\d{2}-\d{6}", "unverified filing", source_free)
+    source_score = fm_eval.score_candidate_case(cases["FM-S01"], _prompts_for(cases["FM-S01"]), source_free)
+    assert source_score["dimensions"]["D3"] is False
+    assert source_score["needs_review_reasons"]
+    table_only = "\n".join(line for line in _good_report(cases["FM-S01"]).splitlines() if line.startswith("|"))
+    table_score = fm_eval.score_candidate_case(cases["FM-S01"], _prompts_for(cases["FM-S01"]), table_only)
+    assert table_score["dimensions"]["D4"] is False
+    assert table_score["dimensions"]["D5"] is False
+
     # 2. XOM fabricated gross margin triggers critical failure.
     bad_xom = _good_report(cases["FM-S02"]).replace("n/a (missing_input)", "41.2%")
     s_xom = fm_eval.score_candidate_case(cases["FM-S02"], _prompts_for(cases["FM-S02"]), bad_xom)
@@ -411,6 +440,13 @@ def test_p04_subprocess_package_discovery_and_origin_gates(tmp_path: Path):
     assert res_bad_sha["status"] == "failed"
     assert res_bad_sha["request_count"] == 0 and len(calls) == 0
 
+    base_py = _install_site_pth(tmp_path, "base", base_dir / "src")
+    cfg["execution"].update({
+        "baseline_root": str(base_dir),
+        "baseline_sha": base_sha,
+        "baseline_python_executable": base_py,
+    })
+
     # Stale installed package outside candidate/src fails before any model call.
     res_stale = fm_eval.evaluate(
         cfg,
@@ -437,7 +473,6 @@ def test_p04_subprocess_package_discovery_and_origin_gates(tmp_path: Path):
     assert res_no_fin["request_count"] == 0 and len(calls) == 0
 
     # Baseline missing financials succeeds when paired in baseline mode; candidate + baseline = 6 calls.
-    base_py = _install_site_pth(tmp_path, "base", base_dir / "src")
     res_paired = fm_eval.evaluate(
         cfg,
         cand_sha,
@@ -455,6 +490,7 @@ def test_p04_subprocess_package_discovery_and_origin_gates(tmp_path: Path):
     assert res_paired["baseline_summary"]["paired_cases"] == ["FM-S01", "FM-S02"]
 
     # Wrong baseline environment (cand_py instead of base_py) is rejected by origin containment.
+    calls.clear()
     res_bad_base_env = fm_eval.evaluate(
         cfg,
         cand_sha,
@@ -468,6 +504,7 @@ def test_p04_subprocess_package_discovery_and_origin_gates(tmp_path: Path):
     )
     assert res_bad_base_env["status"] == "failed"
     assert any("escapes" in e for e in res_bad_base_env["errors"])
+    assert res_bad_base_env["request_count"] == 0 and calls == []
 
 
 def test_p04_p05_full_candidate_run_budget_failures_and_details(
@@ -481,14 +518,26 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
     payload = json.loads(CASES_PATH.read_text(encoding="utf-8"))
     cases_by_id = {c["case_id"]: c for c in payload["cases"]}
     cfg = _approved_config()
+    base_dir = tmp_path / "base"
+    base_sha = _init_git_repo(base_dir, _synthetic_candidate_files(include_financials=False))
+    base_py = _install_site_pth(tmp_path, "base_full", base_dir / "src")
+    cfg["execution"].update({
+        "baseline_root": str(base_dir),
+        "baseline_sha": base_sha,
+        "baseline_python_executable": base_py,
+    })
 
-    # 1. Valid 4-case candidate run passes with 20/20 checks.
+    # 1. Four candidate cases plus both required baselines: six calls, 20/20 checks.
     calls: list[dict[str, Any]] = []
 
     def _ok_transport(req: dict[str, Any]) -> dict[str, Any]:
         calls.append(req)
         return {
-            "content": _good_report(cases_by_id[req["case_id"]]),
+            "content": (
+                _good_report(cases_by_id[req["case_id"]])
+                if req["variant"] == "candidate"
+                else _baseline_report(cases_by_id[req["case_id"]])
+            ),
             "finish_reason": "stop",
             "usage": {"prompt_tokens": 50, "completion_tokens": 40, "total_tokens": 90},
         }
@@ -502,10 +551,21 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
         python_executable=cand_py,
     )
     assert res_pass["status"] == "passed", res_pass
-    assert res_pass["request_count"] == 4
+    assert res_pass["request_count"] == 6
     assert res_pass["candidate_summary"]["passed_checks"] == 20
     assert Path(res_pass["details_path"]).is_file()
     assert res_pass["details_sha256"] == hashlib.sha256(Path(res_pass["details_path"]).read_bytes()).hexdigest()
+
+    missing_base = copy.deepcopy(cfg)
+    del missing_base["execution"]["baseline_sha"]
+    calls.clear()
+    res_missing_base = fm_eval.evaluate(
+        missing_base, cand_sha, candidate_root=cand_dir,
+        output_dir=tmp_path / "missing-base", model_transport=_ok_transport,
+        python_executable=cand_py,
+    )
+    assert res_missing_base["status"] == "failed"
+    assert res_missing_base["request_count"] == 0 and calls == []
 
     # 2. Unapproved config fails before any model call.
     unapproved = copy.deepcopy(cfg)

@@ -114,6 +114,15 @@ python scripts/ci_semantic_eval.py \
 
 Preparation PR 1 adds only this trusted infrastructure and offline gate/runner tests; it does not migrate `src/` modules or run live model requests.
 
+The trusted runner requires `execution.baseline_root`, `execution.baseline_sha`
+and `execution.baseline_python_executable` (or equivalent direct Python arguments).
+PR 2 must pin that comparison checkout and separately installed environment as
+specified by FM-PREP-2; these are intentionally not invented in this preparation
+configuration. Missing baseline prerequisites fail before any completion request,
+as do invalid origins in any of the six preflight captures. A candidate-only
+four-request run cannot produce passing paired-evaluation evidence. Trusted text
+hashes use Git's LF representation (only checkout CRLF-to-LF is normalized).
+
 ## Test pre-approval fields
 
 An applicable code/test or runtime-prompt PR must put these fields in its body. Code outside `src/` (including `scripts/**/*.py`, `scripts/**/*.sh`, `tools/**/*.py`, `setup.py`, root executables, and `docs/**/*.py`/`docs/**/*.sh`) is still code; non-code documentation and `pyproject.toml`/`requirements.txt` configuration do not require them:

@@ -312,13 +312,13 @@ def _load_and_verify_materials(
     )
     actual_cases_sha = sha256_file(cases_path)
     expected_cases_sha = str(dataset_cfg.get("sha256") or "")
-    if expected_cases_sha and actual_cases_sha != expected_cases_sha:
+    if actual_cases_sha != expected_cases_sha:
         raise CiError(
             f"dataset hash mismatch: expected {expected_cases_sha}, got {actual_cases_sha}"
         )
     actual_rubric_sha = sha256_file(rubric_path)
     expected_rubric_sha = str(rubric_cfg.get("sha256") or "")
-    if expected_rubric_sha and actual_rubric_sha != expected_rubric_sha:
+    if actual_rubric_sha != expected_rubric_sha:
         raise CiError(
             f"rubric hash mismatch: expected {expected_rubric_sha}, got {actual_rubric_sha}"
         )
@@ -337,8 +337,8 @@ def _load_and_verify_materials(
         )
 
     max_requests = int(exec_cfg.get("max_completion_requests", MAX_REQUEST_BUDGET))
-    if max_requests <= 0 or max_requests > MAX_REQUEST_BUDGET:
-        raise CiError(f"max_completion_requests exceeds cap ({max_requests} > {MAX_REQUEST_BUDGET})")
+    if max_requests != MAX_REQUEST_BUDGET:
+        raise CiError(f"max_completion_requests must be {MAX_REQUEST_BUDGET} for the required paired cases")
 
     provider = str(model_cfg.get("provider") or "")
     model_name = str(model_cfg.get("model") or "")
@@ -350,6 +350,15 @@ def _load_and_verify_materials(
     thinking = (model_inner.get("extra_body") or {}).get("thinking") or {}
     if thinking.get("type") != "disabled":
         raise CiError("model configuration must explicitly disable thinking")
+    if str(model_cfg.get("base_url")) != EXPECTED_BASE_URL:
+        raise CiError("model endpoint must be the approved official DeepSeek URL")
+    fixed_controls = {
+        "temperature": 0, "max_tokens": 4096, "stream": False, "n": 1,
+        "language": "English", "max_retries": 0, "timeout_seconds": 120,
+        "extra_body": {"thinking": {"type": "disabled"}},
+    }
+    if dict(model_inner) != fixed_controls:
+        raise CiError("model request controls differ from the fixed approved specification")
 
     return cases_payload, actual_cases_sha, actual_rubric_sha
 
@@ -415,15 +424,20 @@ def _build_deepseek_transport(
     )
 
     def call(request_spec: Mapping[str, Any]) -> dict[str, Any]:
-        response = client.chat.completions.create(
-            model=str(model_cfg["model"]),
-            messages=list(request_spec["messages"]),
-            temperature=float(cfg.get("temperature", 0)),
-            max_tokens=int(cfg.get("max_tokens", 4096)),
-            stream=False,
-            n=1,
-            extra_body=dict(cfg.get("extra_body") or {"thinking": {"type": "disabled"}}),
-        )
+        try:
+            response = client.chat.completions.create(
+                model=str(model_cfg["model"]),
+                messages=list(request_spec["messages"]),
+                temperature=float(cfg.get("temperature", 0)),
+                max_tokens=int(cfg.get("max_tokens", 4096)),
+                stream=False,
+                n=1,
+                extra_body=dict(cfg.get("extra_body") or {"thinking": {"type": "disabled"}}),
+            )
+        except Exception as exc:
+            # Never serialize SDK request objects/headers or credential-bearing
+            # exception bodies into a published evidence artifact.
+            raise CiError(f"completion transport failed: {type(exc).__name__}") from None
         choice = response.choices[0]
         content = getattr(getattr(choice, "message", None), "content", "") or ""
         usage = response.usage.model_dump() if getattr(response, "usage", None) else {}
@@ -460,7 +474,8 @@ def _find_metric_windows(report_lower: str, metric_id: str) -> list[str]:
                 break
             line_start = report_lower.rfind("\n", 0, idx)
             lo = line_start + 1 if line_start != -1 else max(0, idx - 60)
-            hi = min(len(report_lower), idx + 220)
+            line_end = report_lower.find("\n", idx)
+            hi = line_end if line_end != -1 else len(report_lower)
             windows.append(report_lower[lo:hi])
             start = idx + len(alias)
     return windows
@@ -472,6 +487,18 @@ def _extract_numeric_tokens(text: str) -> list[str]:
 
 def _norm_num(token: str) -> str:
     return token.replace(",", "")
+
+
+def _asserted_values(window: str, metric_id: str) -> list[str]:
+    values = []
+    for alias in METRIC_ALIASES.get(metric_id, (metric_id,)):
+        pattern = (
+            re.escape(alias)
+            + r"[\s|:=`*]*(?:(?:is|was|of|stands at)\s+)?"
+            + r"(-?\d[\d,]*(?:\.\d+)?)(?![\d.])"
+        )
+        values.extend(_norm_num(value) for value in re.findall(pattern, window))
+    return values
 
 
 def _asserts_numeric_for_na_metric(window: str, metric_id: str) -> bool:
@@ -486,6 +513,7 @@ def score_candidate_case(
     case: Mapping[str, Any],
     captured_prompts: Sequence[Mapping[str, str]],
     response_text: str,
+    reference_data: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Deterministically score one candidate report against independent expectations."""
     system_prompt = "\n".join(
@@ -493,6 +521,9 @@ def score_candidate_case(
     )
     report_lower = response_text.lower()
     expected_rows: Sequence[Mapping[str, Any]] = case["expected_rows"]
+    if reference_data is None:
+        reference_data = json.loads(DEFAULT_CASES_PATH.read_text(encoding="utf-8"))["reference_data"]
+    facts = reference_data["selected_facts"]
 
     critical_failures: list[str] = []
     needs_review_reasons: list[str] = []
@@ -519,14 +550,32 @@ def score_candidate_case(
             per_metric[mid] = "missing"
             continue
         combined = "\n".join(windows)
+        period = row.get("period") or {}
+        # Unrecognized period descriptions are reviewable, never a silent pass
+        # just because some unrelated year occurs elsewhere in the report.
+        dates = [str(period[key]) for key in ("period_start", "period_end") if period.get(key)]
+        if any(date not in combined for date in dates):
+            d2_ok = False
+            needs_review_reasons.append(f"unresolved_period:{mid}")
+        if row["status"] == "computed":
+            accessions = {
+                facts[fid]["accession"] for fid in row.get("input_fact_ids", ()) if fid in facts
+            }
+            if not accessions or any(acc not in combined for acc in accessions):
+                d3_ok = False
+                needs_review_reasons.append(f"unresolved_source:{mid}")
         if row["status"] == "computed":
             target = str(row["expected_display"])
-            target_comma = f"{int(target):,}" if target.isdigit() else target
-            has_val = (target in combined) or (target_comma in combined)
+            from decimal import Decimal
+
+            claims = [value for window in windows for value in _asserted_values(window, mid)]
+            has_val = any(Decimal(value) == Decimal(target) for value in claims)
+            if any(Decimal(value) != Decimal(target) for value in claims):
+                critical_failures.append(f"wrong_metric_value:{mid}")
+                d1_ok = False
             if not has_val:
                 d1_ok = False
-                nums = {_norm_num(n) for n in _extract_numeric_tokens(combined)}
-                if nums:
+                if claims:
                     critical_failures.append(f"wrong_metric_value:{mid}")
                     per_metric[mid] = "wrong_value"
                 else:
@@ -587,17 +636,33 @@ def score_candidate_case(
     if "sec" not in report_lower and "10-q" not in report_lower and "10-k" not in report_lower and "filing" not in report_lower and "accession" not in report_lower:
         d3_ok = False
 
+    known_accessions = {row["accession"] for row in facts.values()}
+    if any(acc not in known_accessions for acc in re.findall(r"\b\d{10}-\d{2}-\d{6}\b", response_text)):
+        critical_failures.append("invented_filing_source")
+
     # D4: useful interpretation without treating n/a as zero
+    prose = "\n".join(line for line in response_text.splitlines() if not line.lstrip().startswith("|"))
+    prose_lower = prose.lower()
+    interpretation_groups = (
+        ("growth", "decline"), ("profitability",), ("liquidity",),
+        ("leverage",), ("cash generation",), ("valuation",),
+    )
+    interpretation_present = all(any(term in prose_lower for term in group) for group in interpretation_groups)
     d4_ok = (
-        len(response_text.strip()) >= 120
+        len(prose.split()) >= 60
+        and interpretation_present
         and not re.search(r"(?:gross|operating)\s+margin\s+(?:is|of|=)\s*0(?:\.0+)?%", report_lower)
         and d1_ok
     )
+    if not interpretation_present:
+        needs_review_reasons.append("interpretation_requires_claim_review")
     # D5: retained ordinary fundamental task coverage (structured sections + markdown table)
     d5_ok = (
         "|" in response_text
         and "---" in response_text
         and len(response_text.split()) >= 40
+        and str(case["ticker"]).lower() in prose_lower
+        and any(term in prose_lower for term in ("limitation", "qualification"))
     )
 
     dims = {
@@ -638,10 +703,15 @@ def evaluate(
     """Execute the trusted FR-10 fixed semantic evaluation and return a structured record."""
     root = (trusted_root or PROJECT_ROOT).resolve()
     cand_root = (candidate_root or (root / "candidate")).resolve()
+    execution = config.get("execution") or {}
+    baseline_root = baseline_root or (
+        Path(execution["baseline_root"]) if execution.get("baseline_root") else None
+    )
+    baseline_sha = baseline_sha or execution.get("baseline_sha")
     out_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="fr10-semantic-"))
     out_dir.mkdir(parents=True, exist_ok=True)
     py_exe = python_executable or sys.executable
-    base_py_exe = baseline_python_executable or py_exe
+    base_py_exe = baseline_python_executable or execution.get("baseline_python_executable")
 
     details: dict[str, Any] = {
         "schema_version": "1.0",
@@ -654,6 +724,7 @@ def evaluate(
         "import_origins": {},
         "cases": [],
         "baseline_cases": [],
+        "attempts": [],
         "errors": [],
     }
 
@@ -682,10 +753,9 @@ def evaluate(
         }
 
         _verify_git_head(cand_root, candidate_sha, "candidate")
-        if baseline_root is not None:
-            if not baseline_sha:
-                raise CiError("baseline_sha is required when baseline_root is supplied")
-            _verify_git_head(baseline_root.resolve(), baseline_sha, "baseline")
+        if baseline_root is None or not baseline_sha or not base_py_exe:
+            raise CiError("paired evaluation requires pinned baseline_root, baseline_sha and baseline_python_executable")
+        _verify_git_head(baseline_root.resolve(), baseline_sha, "baseline")
 
         transport = model_transport
         if transport is None:
@@ -698,6 +768,24 @@ def evaluate(
         ref_data = cases_payload["reference_data"]
         cases_by_id = {c["case_id"]: c for c in cases_payload["cases"]}
 
+        # Validate *all* candidate and baseline installations before spending
+        # any request. A missing/wrong baseline is not a four-case-only pass.
+        captures: dict[tuple[str, str], dict[str, Any]] = {}
+        for mode, checkout, executable, case_ids in (
+            ("candidate", cand_root, py_exe, EXPECTED_CANDIDATE_CASE_IDS),
+            ("baseline", baseline_root.resolve(), base_py_exe, EXPECTED_BASELINE_CASE_IDS),
+        ):
+            for cid in case_ids:
+                captured = _run_prompt_capture_subprocess(
+                    checkout_root=checkout,
+                    mode=mode,
+                    case=cases_by_id[cid],
+                    reference_data=ref_data,
+                    python_executable=executable,
+                )
+                captures[mode, cid] = captured
+                details["import_origins"][f"{mode}:{cid}"] = captured["origins"]
+
         all_critical: list[str] = []
         all_needs_review: list[str] = []
         total_passed_checks = 0
@@ -707,14 +795,7 @@ def evaluate(
 
         for cid in EXPECTED_CANDIDATE_CASE_IDS:
             case = cases_by_id[cid]
-            captured = _run_prompt_capture_subprocess(
-                checkout_root=cand_root,
-                mode="candidate",
-                case=case,
-                reference_data=ref_data,
-                python_executable=py_exe,
-            )
-            details["import_origins"][f"candidate:{cid}"] = captured["origins"]
+            captured = captures["candidate", cid]
 
             if details["request_count"] >= max_requests:
                 raise CiError(f"request budget exceeded before {cid}")
@@ -724,7 +805,10 @@ def evaluate(
                 {"role": "system" if m["role"] == "system" else "user", "content": m["content"]}
                 for m in captured["prompts"]
             ]
-            resp = transport({"case_id": cid, "variant": "candidate", "messages": messages})
+            attempt = {"case_id": cid, "variant": "candidate", "messages": messages}
+            details["attempts"].append(attempt)
+            resp = transport(attempt)
+            attempt["response"] = dict(resp)
             finish_reason = str(resp.get("finish_reason") or "")
             content = str(resp.get("content") or "")
             usage = resp.get("usage") or {}
@@ -737,7 +821,7 @@ def evaluate(
             if not content.strip():
                 raise CiError(f"candidate output empty for {cid}")
 
-            scored = score_candidate_case(case, captured["prompts"], content)
+            scored = score_candidate_case(case, captured["prompts"], content, ref_data)
             scored["finish_reason"] = finish_reason
             scored["usage"] = usage
             scored["captured_prompt_chars"] = sum(len(m["content"]) for m in messages)
@@ -754,17 +838,9 @@ def evaluate(
 
         baseline_d5: dict[str, bool] = {}
         if baseline_root is not None:
-            b_root = baseline_root.resolve()
             for cid in EXPECTED_BASELINE_CASE_IDS:
                 case = cases_by_id[cid]
-                captured = _run_prompt_capture_subprocess(
-                    checkout_root=b_root,
-                    mode="baseline",
-                    case=case,
-                    reference_data=ref_data,
-                    python_executable=base_py_exe,
-                )
-                details["import_origins"][f"baseline:{cid}"] = captured["origins"]
+                captured = captures["baseline", cid]
 
                 if details["request_count"] >= max_requests:
                     raise CiError(f"request budget exceeded before baseline {cid}")
@@ -774,7 +850,10 @@ def evaluate(
                     {"role": "system" if m["role"] == "system" else "user", "content": m["content"]}
                     for m in captured["prompts"]
                 ]
-                resp = transport({"case_id": cid, "variant": "baseline", "messages": messages})
+                attempt = {"case_id": cid, "variant": "baseline", "messages": messages}
+                details["attempts"].append(attempt)
+                resp = transport(attempt)
+                attempt["response"] = dict(resp)
                 finish_reason = str(resp.get("finish_reason") or "")
                 content = str(resp.get("content") or "")
                 usage = resp.get("usage") or {}

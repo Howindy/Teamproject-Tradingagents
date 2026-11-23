@@ -3094,6 +3094,7 @@ entries:
       - "test/offline/test_financial_metrics_evaluation.py"
       - "docs/ai-use-log.yaml"
       - "docs/review-memo.md"
+      - "docs/ci/README.md"
     ai_contribution: >-
       Verified the real Howindy approval comment and successful remote test-approval gate, PR draft=false,
       and initial Ubuntu CI failures. Added subprocess assertion diagnostics in e842657; the resulting
@@ -3102,6 +3103,12 @@ entries:
       9b49df4640993ccd48f3c5a2ca8a308711a5a70df2ee4883b208b725683371ac. Corrected that hash and
       normalized only CRLF-to-LF for trusted text hashing; added LF/CRLF equivalence and content-mutation
       assertions without changing the dataset, rubric, oracle, or thresholds.
+      Follow-up runner review requires both pinned baseline cases and all six import preflights before
+      any external completion, verifies exact request controls and mandatory material hashes, prevents
+      correct mentions from masking conflicting asserted values, and routes missing source/period or
+      qualitative interpretation to review instead of accepting number mentions alone. Details now retain
+      captured requests and returned model/usage/finish/content even on truncation; SDK exception bodies
+      are not published. These are fixes to the approved fail-closed contracts, not new expectations.
     human_intervention: "User authorized scoped fixes, tests, commits, pushes, PR updates and Ready-for-review; user then requested continuation."
     approval:
       status: "approved"
@@ -3114,11 +3121,15 @@ entries:
         Isolated Python 3.12: pytest -q test/offline/test_financial_metrics_evaluation.py: 6 passed;
         ruff check .: passed. Remote run 45198004951 had two new evaluation-test failures on Linux
         from the hash mismatch; contract-tests and aggregate consequently failed. Other gates passed.
+        Correction b20d8a8 passed all applicable remote PR gates in run 45198769895, including Python
+        3.11/3.12-New-York/3.13/3.14, contract-tests and aggregate. Subsequent fail-closed runner fixes
+        passed local targeted tests (6) and Ruff; their remote result is pending.
         Earlier AI-FM-PREP-003's model attribution is not substantiated by the available checkpoint;
         this continuation uses openai/gpt-6.1-sol. Its blanket pre-existing label for seven Windows
         failures is not a completed full-baseline reproduction in this continuation.
       evidence:
         - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951/job/137773536552"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198769895"
     transcript_refs: []
     limitations:
       - "No raw session export is available; none fabricated."

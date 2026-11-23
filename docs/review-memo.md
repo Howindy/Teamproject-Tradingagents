@@ -385,3 +385,12 @@ Ruff: passed. Remote result for the correction remains pending until checked.
 The earlier blanket description of all seven Windows failures as pre-existing is not established
 by a complete baseline reproduction in this continuation; retain them as local environment findings,
 not waived passes. No live semantic score, final human approval, or merge is claimed.
+
+Run [45198769895](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198769895)
+at `b20d8a8` subsequently passed all applicable PR jobs, including four Python regression jobs,
+contract-tests and aggregate. Follow-up fixes within P03–P06 require a pinned, separately installed
+baseline and all six import preflights before any completion; missing baseline cannot become a
+candidate-only pass. Exact model controls/hashes are enforced, conflicting asserted numbers fail,
+and absent source/period/interpretation claims route to review. Captured request/response details
+are retained on truncation. Local targeted tests: 6 passed; Ruff: passed. These fixes retain the
+frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be checked again.
