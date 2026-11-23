@@ -1,24 +1,65 @@
 schema_version: "1.0"
 status: "unapproved"
 dataset:
-  version: null
-  cases: []
-  notes: "No approved semantic dataset exists. Do not invent cases or standards."
+  version: "fr10-sec-reference-projection-v1"
+  path: "docs/ci/financial-metrics-cases.json"
+  sha256: "0e77cf0ea3e700c74be096f00fad1f54132342d0afe1dfbb2b63d8e202002b4c"
+  cases:
+    - id: "FM-S01"
+      ticker: "AAPL"
+      run_candidate: true
+      run_baseline: true
+    - id: "FM-S02"
+      ticker: "XOM"
+      run_candidate: true
+      run_baseline: true
+    - id: "FM-S03"
+      ticker: "AAPL"
+      run_candidate: true
+      run_baseline: false
+    - id: "FM-S04"
+      ticker: "AAPL"
+      run_candidate: true
+      run_baseline: false
+  notes: "Fixed lossless projection of independent fr07-sec-reference-v1 answers and controlled counterexamples."
 rubric:
-  version: null
-  definition: null
-  notes: "No approved rubric exists."
+  version: "fr10-eval-rubric-v1"
+  path: "docs/ci/financial-metrics-rubric.md"
+  sha256: "2dda8923903dff3587cf8d35a456f91caf905725d5c9539737a26c8ebd705bfc"
+  definition: "Five binary dimensions per candidate case (20 candidate checks total); critical failures fail regardless of average; ambiguous claims yield needs_review; baseline paired Dim-5 non-regression on FM-S01 and FM-S02 only."
 thresholds:
-  notes: "No approved quality threshold exists. Null means undetermined, not zero or pass."
+  candidate_checks_total: 20
+  candidate_min_passed_checks: 18
+  min_pass_rate: 0.90
+  require_dimensions_1_to_3_all_cases: true
+  max_critical_failures: 0
+  paired_baseline_non_regression_cases:
+    - "FM-S01"
+    - "FM-S02"
+  notes: "Proposed thresholds pending separate human execution authorization against PR 2 candidate."
 model:
-  provider: null
-  model: null
-  configuration: null
-  notes: "No approved semantic-evaluation model configuration exists."
-repetition:
-  rule: null
+  provider: "deepseek"
+  model: "deepseek-flash"
+  base_url: "https://api.deepseek.com"
+  configuration:
+    temperature: 0
+    max_tokens: 4096
+    stream: false
+    n: 1
+    language: "English"
+    max_retries: 0
+    timeout_seconds: 120
+    extra_body:
+      thinking:
+        type: "disabled"
+  notes: "Matches historical pilot deepseek-flash with thinking explicitly disabled; optional sampling controls unset."
+execution:
+  runner: "financial_metrics_eval:evaluate"
+  max_completion_requests: 6
+  repetitions: 1
+  llm_judge: false
 approval:
   approved_by: null
   approved_at: null
   evidence: []
-  notes: "Human approval is required before this file can become approved."
+  notes: "Remains unapproved until PR 2 feature candidate readiness and explicit human authorization for the 6 live requests."
