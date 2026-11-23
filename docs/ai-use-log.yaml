@@ -2946,3 +2946,42 @@ entries:
         Staged schema and AI-use association pass. Full staged diff --check exits 2 with 1328 whitespace notices confined to the original session-20 export; the other 19 staged files pass.
         Raw transcript was preserved without formatting edits. Earlier diff-check passes predate staging this export; no full staged whitespace pass is claimed.
       boundary: No source/workflow/gate-script/schema/permission/frozen-plan changes staged. Commit SHA is not invented in this pre-commit record; no remote CI or merge claim.
+
+  - id: "AI-FM-PREP-001"
+    date: "2026-11-23"
+    activity: "integration_preparation_planning"
+    tool: "OpenCode"
+    model: "GPT-6.1 Sol"
+    task: "Freeze a two-PR deterministic financial-metrics integration proposal from current origin/main; stop for real independent human approval."
+    files_changed:
+      - "docs/plans/financial-metrics-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Read current D1/D2/D3/D4 and CI approval/trusted-evaluation controls; fetched remote refs over existing SSH;
+      created an independent prep worktree at main 5c6e2caed5e4baceb136b5544ba5e283c0822cdb.
+      Inspected historical implementation/evidence at haoxi 7e676fb00fff319930685a9fa059265f3061aeff.
+      Proposed unused registry ID FR-10 with ten FCs, a maintenance allowlist, fixed cases/rubric/runner interface,
+      concrete runner tests, and separate preparation/migration approvals. No application, test, requirements,
+      architecture, evaluator, workflow, dependency or permission file was changed by this planning submission.
+    human_intervention: "User explicitly authorized fetch, isolated worktree/branch, plan commit/push and Draft PR; instructed no contact with Yifan and no reuse of old approvals."
+    approval:
+      subject: "FM-PREP-1 post-freeze execution and specific tests"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "planning_checks_only"
+      summary: >-
+        git diff --check passed. Using the unchanged scripts/ci_checks.py functions, verified that the plan selects
+        exactly the two PR1 contract-test paths and mentions all four proposed code/test paths; specification and
+        approval-phrase parsing, AI-use-log structure and docs-only classification passed. The example parser SHA
+        was synthetic and is not approval evidence. Schema CLI was attempted but blocked by missing jsonschema
+        in the existing Python environment; no dependency was installed. No application or semantic evaluation
+        executed; planned P01-P07 are not passing evidence.
+      evidence: []
+    transcript_refs: []
+    limitations:
+      - "No genuine current-session raw transcript export is available in the repository; do not fabricate one."
+      - "Existing permission-file effective loading and GitHub branch/environment protection are not verified."
+      - "GitHub CLI was not found in PATH or checked standard local installation paths; in-app GitHub browser is signed out. Draft PR creation may require human authentication; SSH Git access does not grant GitHub API authentication."
+      - "Old development/freeze/approval records are historical and do not authorize this preparation execution or migration."
