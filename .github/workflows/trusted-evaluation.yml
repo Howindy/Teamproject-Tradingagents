@@ -91,6 +91,8 @@ jobs:
           python -m pip install -e "candidate[dev]" -r .github/requirements-ci.txt
       - name: Write semantic evidence record
         if: inputs.mode == 'semantic'
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           python scripts/ci_semantic_eval.py \
             --config docs/ci/semantic_eval.yaml \
@@ -98,6 +100,7 @@ jobs:
             --workflow-sha "${{ github.sha }}" \
             --run-id "${{ github.run_id }}" \
             --output record.json \
+            --details-output "${{ runner.temp }}/semantic-details.json" \
             --runner "${{ inputs.semantic_runner }}"
       - name: Write reviewed not-applicable record
         if: inputs.mode == 'semantic-not-applicable'
@@ -141,6 +144,13 @@ jobs:
           name: ci-evidence-${{ inputs.candidate_sha }}-${{ inputs.mode }}
           path: record.json
           if-no-files-found: error
+      - name: Upload semantic details artifact
+        if: always() && inputs.mode == 'semantic'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-semantic-details-${{ inputs.candidate_sha }}
+          path: ${{ runner.temp }}/semantic-details.json
+          if-no-files-found: ignore
       - name: Write candidate status
         if: always()
         env:

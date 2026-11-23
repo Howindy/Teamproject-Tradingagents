@@ -3020,3 +3020,64 @@ entries:
       - "No current-session raw transcript export is available; none fabricated."
       - "Previous schema CLI block (missing jsonschema) remains unresolved; installation not authorized."
       - "Real independent GitHub plan/test approval, preparation execution and merge remain pending."
+
+  - id: "AI-FM-PREP-003"
+    date: "2026-11-23"
+    activity: "integration_preparation_implementation"
+    tool: "OpenCode"
+    model: "Gemini 4 Hydrogen"
+    task: "Verify Howindy PR #14 test-spec approval and execute FM-PREP-2 preparation deliverables (D1 v1.50.0, ADR 002, D2/D4 alignment, fixed lossless projection/rubric, trusted semantic runner, workflow handoff, and offline evaluation/gate tests)."
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/adr/002-deterministic-financial-metrics.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/code-governance/structural-constraints.md"
+      - "docs/code-governance/verification-constraints.md"
+      - "docs/ci/financial-metrics-cases.json"
+      - "docs/ci/financial-metrics-rubric.md"
+      - "docs/ci/semantic_eval.yaml"
+      - "docs/ci/README.md"
+      - "scripts/financial_metrics_eval.py"
+      - "scripts/ci_semantic_eval.py"
+      - ".github/workflows/trusted-evaluation.yml"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "test/offline/test_ci_gates.py"
+      - "docs/review-memo.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Verified PR #14 issuecomment 7099714477 by Howindy (2026-11-23T11:29:36Z) binding e99ab57b6e460fad59bb4bf4a81cffa5c717c8da;
+      created an isolated temporary Python 3.12.14 venv installing editable main plus dev/CI requirements without altering sibling worktrees;
+      updated D1 to v1.50.0 (FR-10 with ten FCs, 14/65 total, 7/37 active, 7/28 deferred), authored ADR 002, aligned D2/D3/D4,
+      froze the lossless reference projection and rubric at implementation start f08bcab058dac13ec8b5898e4521b630aa221fbd,
+      implemented scripts/financial_metrics_eval.py and semantic details serialization/workflow handoff,
+      and added offline P01-P07 tests without migrating src/ or activating deferred FR-07 briefs.
+    human_intervention: "Non-author owner Howindy posted APPROVED test-spec in PR #14 comment 7099714477 (2026-11-23T11:29:36Z); user authorized isolated test-environment installation, preparation execution, commit/push, PR body update, and Ready-for-review transition."
+    approval:
+      subject: "FM-PREP-2 preparation implementation and P01-P07 offline tests"
+      status: "approved"
+      approved_at: "2026-11-23T11:29:36Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477"
+    verification:
+      status: "completed_with_baseline_findings"
+      summary: >-
+        In isolated venv (Python 3.12.14, tradingagents resolved to prep worktree src/tradingagents/__init__.py):
+        ruff check . passed; ci_checks.py schema passed (14/65, 7/37 active, 7/28 deferred); permissions, api, and mypy baseline passed (0 new errors);
+        test/offline/test_financial_metrics_evaluation.py passed (6 passed); full offline pytest recorded 1616 passed, 7 pre-existing Windows-environment failures
+        (2 test_chatgpt_auth POSIX 0o600, 2 test_ci_gates 127.1 DNS, 2 test_cli_updates upgrade-command, 1 test_suite_isolation Temp-under-home),
+        4 skipped, 1 deselected, 100 subtests passed (JUnit XML saved in temp output). No live semantic model requests executed; semantic_eval.yaml remains unapproved.
+      evidence:
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/full.xml"
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/mypy-current.txt"
+    transcript_refs: []
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/14"
+    limitations:
+      - "No genuine current-session raw transcript export is available in the repository; none fabricated."
+      - "Seven pre-existing Windows-environment test failures remain recorded honestly and unwaived; remote Ubuntu CI is checked separately after push."
+      - "No PR 2 src/ migration, live DeepSeek evaluation requests, or merge occurred."

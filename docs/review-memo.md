@@ -350,3 +350,24 @@ Local schema/FC-set/deferred-row/boundary/diff checks passed. Actual path classi
 ### Authorized local submission preparation — 2026-11-23
 
 The user requested tracking the actual session-20 export and making the local implementation commit. Staged scope is the 19 approved revision paths plus the user-selected transcripts/session-20.md; tmp remains excluded. The staged transcript matches the supplied working-tree bytes exactly. Full staged git diff --check returns exit 2 with 1328 whitespace notices, all confined to the original transcript (trailing spaces and final blank line). The other 19 staged files pass the same whitespace check. Raw evidence was not reformatted to manufacture a green check; this transcript-specific finding supersedes earlier diff-check passes before the raw export was staged. Staged schema and AI-use association checks pass. No source, workflow, gate script, schema, permission or frozen specification is staged. Local commit is authorized; push/remote CI/final review/merge are separate and not performed by this preparation.
+
+## RM-14-R1 — FR-10 Integration Preparation (AI-authored review summary; final human verdict pending)
+
+- PR: [#14](https://github.com/Howindy/Teamproject-Tradingagents/pull/14)
+- Baseline: `origin/main` `5c6e2caed5e4baceb136b5544ba5e283c0822cdb` (D1 v1.49.0)
+- Frozen specification: `docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da` (unchanged after approval)
+- Test-spec pre-approval: [comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) by `Howindy` (non-author owner) at `2026-11-23T11:29:36Z`, matching `APPROVED test-spec: docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`
+- Implementation start: `f08bcab058dac13ec8b5898e4521b630aa221fbd` (freeze of `docs/ci/financial-metrics-cases.json`, `docs/ci/financial-metrics-rubric.md`, and `docs/ci/semantic_eval.yaml`, strictly after pre-approval timestamp)
+- Scope: `FR-10`, `FR-10-FC01`–`FR-10-FC10`; PR 1 D1 v1.50.0 / ADR 002 / D2 / D3 / D4 alignment, lossless projection, trusted semantic evaluation runner/workflow handoff, and `P01`–`P07` offline tests. Excluded: `src/` feature migration (deferred to PR 2), deferred `FR-07` analyst briefs, and live 6-request `deepseek-flash` execution (`docs/ci/semantic_eval.yaml` remains `unapproved`).
+
+### Actual local verification (isolated Python 3.12.14 venv)
+
+- `scripts/ci_checks.py schema`: 0 errors; `14` requirements / `65` FCs (`7` active / `37` FCs, `7` deferred / `28` FCs).
+- `ruff check .`: passed (0 errors).
+- `scripts/ci_checks.py permissions`, `api`, `mypy --baseline mypy-baseline.txt`: 0 new errors (`errors=[]`).
+- `pytest -q test/offline/test_financial_metrics_evaluation.py`: `6 passed` (`P01`–`P07`).
+- `pytest -q`: `1616 passed, 7 failed, 4 skipped, 1 deselected, 100 subtests passed` — all 7 failures are pre-existing Windows-environment assertions (`test_chatgpt_auth.py` POSIX `0o600`, `test_ci_gates.py` `127.1` DNS, `test_cli_updates.py` upgrade commands, `test_suite_isolation.py` Temp under home).
+
+### Final human review
+
+- Final verdict: Pending human review (`APPROVE`, `CHANGES REQUIRED`, or `REJECT` to be supplied by `Howindy` after inspecting PR #14 and CI).
