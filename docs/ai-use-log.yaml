@@ -2985,3 +2985,38 @@ entries:
       - "Existing permission-file effective loading and GitHub branch/environment protection are not verified."
       - "GitHub CLI was not found in PATH or checked standard local installation paths; in-app GitHub browser is signed out. Draft PR creation may require human authentication; SSH Git access does not grant GitHub API authentication."
       - "Old development/freeze/approval records are historical and do not authorize this preparation execution or migration."
+
+  - id: "AI-FM-PREP-002"
+    date: "2026-11-23"
+    activity: "integration_preparation_plan_revision"
+    tool: "OpenCode"
+    model: "GPT-6.1 Sol"
+    task: "Apply the user's five targeted FM-PREP-2 planning corrections; push the same preparation branch and attempt normal Draft PR creation."
+    files_changed:
+      - "docs/plans/financial-metrics-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Kept FR-10, two PRs and feature boundaries. Specified official deepseek-flash with thinking explicitly disabled;
+      withdrew 16 requests in favor of four candidate and two normal-case baseline requests, once each,
+      with 20 candidate scoring checks and paired non-regression only for AAPL/XOM. Removed source-path discovery
+      overrides, retained import-origin verification and documented the installation prerequisite. Submitted existing
+      independent expectations/counterexamples/projection rules together, avoiding a redundant approval for later
+      lossless copying after real plan approval. Clarified that the allowlist is a maximum, not mandatory file churn.
+    human_intervention: "User reviewed 4799b33b26dd97823dec937d3b8264eb7f9007aa and authorized only these plan revisions, same-branch commit/push and Draft PR creation attempt; actual execution approval remains pending."
+    approval:
+      subject: "FM-PREP-2 preparation execution and specific tests"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "planning_checks_only"
+      summary: >-
+        Normal package discovery in the existing project .venv resolves tradingagents to
+        D:/CityU/cs5351/project/tradingagents/__init__.py rather than this worktree; recorded the installation
+        prerequisite without overriding discovery or installing dependencies. No model requests, application
+        migration or product tests executed. Final documentation/parser checks are reported with the revision SHA.
+    transcript_refs: []
+    limitations:
+      - "No current-session raw transcript export is available; none fabricated."
+      - "Previous schema CLI block (missing jsonschema) remains unresolved; installation not authorized."
+      - "Real independent GitHub plan/test approval, preparation execution and merge remain pending."
