@@ -1,7 +1,7 @@
 # Coding-Agent Permission Model
 
 - Document status: Proposed role-permission design. A machine-readable project permission file exists and CI includes a static configuration check, but effective OpenCode loading, merged policy, runtime access restriction, and enforcement are not verified; this is not a security certification.
-- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.48.0, independently counted as 13 requirements and 55 fit criteria: 9 active requirements with 40 FCs and 4 deferred requirements with 15 FCs.
+- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.49.0, independently counted as 13 requirements and 55 fit criteria: 6 active requirements with 27 FCs and 7 deferred requirements with 28 FCs.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md), especially §9.3 and §11, and [`ADR 001`](adr/001-graph-internal-final-check.md).
 - Cross-check basis: [`invariants.md`](invariants.md), [`trace-matrix.md`](trace-matrix.md), [`memory-design.md`](memory-design.md), [`runtime-policy-catalog.md`](runtime-policy-catalog.md), and [`evaluation-table.md`](evaluation-table.md).
 - Project guidance checked: `goal.md`. `D2.md` was a deleted copy of course instructions, not a required project deliverable; the course D2 delivery basis is the course PDF (pages 5 and 9), and project architecture is read through the existing blueprint and `docs/architecture/` artifacts.

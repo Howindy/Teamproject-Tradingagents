@@ -1,10 +1,13 @@
 # Structural Constraints
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 ## 1. Scope and authority
 
 This D3 structural-constraints document is located at the course-required project path `docs/code-governance/structural-constraints.md`. All paths below are relative to the application project root containing `AGENTS.md` and `architecture-blueprint.md`. Module allocations marked proposed remain proposals; this document neither implements code nor grants file permissions or architecture approval.
 
-Inputs are `docs/req/requirements.yaml` (current v1.48.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
+Inputs are `docs/req/requirements.yaml` (current v1.49.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
 
 D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan. `docs/plans/round-01.md` is approved at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical, and later rounds need their own approval. No code or plan-file creation is authorized by this document alone.
 
@@ -14,7 +17,7 @@ Preserve the imported TradingAgents application under `src/`. Its packages are `
 
 Static inspection shows that `src/tradingagents/graph/setup.py` currently connects Portfolio Manager directly to END. `src/tradingagents/graph/trading_graph.py` currently saves state and memory through `record_decision()`, uses `run_rating()` for the baseline rating, and contains checkpoint behavior. These are existing behaviors to adapt at approved integration points, not evidence that the proposed deterministic tail or other new requirements are already implemented. The C-08 FR-04 and C-09/IF-09 cores are implemented separately under their rounds; neither is wired into the production graph or formal-authority path. C-09 is the independent final-check callable only, not a production node or consumer contract.
 
-The active scope is FR-01–FR-05, SB-01, INV-01, SR-01, and SR-02. FR-06, FR-07, PR-01, and CR-01 remain deferred. Do not add recovery, analyst briefs, performance/cost experiments, or reserved future interfaces for them.
+The active scope is FR-01, FR-03, FR-04, SB-01, INV-01, SR-01. FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01 remain deferred. Do not add recovery, analyst briefs, performance/cost experiments, or reserved future interfaces for them.
 
 ## 3. Unique primary module ownership
 
@@ -26,8 +29,8 @@ The table below is a proposed implementation allocation for review, except that 
 |---|---|---|
 | C-01 CLI Entry Adapter | `src/cli/run.py` (existing) | `src/cli/main.py` delegates; entry coordinates, never decides formal rating |
 | C-02 Programmatic Entry Adapter | `src/tradingagents/graph/trading_graph.py` (existing) | Preserve `propagate()` return shape and entry-specific lifecycle |
-| C-03 RunContext / RunGovernor | `src/tradingagents/run_context.py` (proposed) | Per-run identity, infrastructure ownership, terminalization; no business authority |
-| C-04 Run statistics | `src/cli/stats_handler.py` (existing, adapted) | One run-owned callback handler/collector; no CLI UI dependency in reusable statistics logic |
+| C-03 RunContext / RunGovernor | `src/tradingagents/run_context.py` (proposed) | Ephemeral scope binding/restoration and reuse/availability ownership/isolation only; no persisted identity, timers, new stats/status or business authority |
+| **Deferred** C-04 Run statistics | `src/cli/stats_handler.py` (existing, adapted) | Future-only handler/collector; existing baseline statistics retained |
 | C-05 QueryReuseService | `src/tradingagents/dataflows/query_reuse.py` (proposed) | Supported news executor delegates here; existing vendor flow remains intact |
 | C-06 Observation protocol / local helper | `src/tradingagents/dataflows/availability.py` (proposed) | Local attachments remain at D2-listed tool/prefetch sites; they delegate to one protocol owner |
 | C-07 Availability registry/summarizer/renderer | `src/tradingagents/dataflows/availability.py` (proposed) | One completeness calculation; independent plain snapshots |
@@ -36,12 +39,12 @@ The table below is a proposed implementation allocation for review, except that 
 | C-10 Graph wiring / deterministic nodes | `src/tradingagents/graph/setup.py` (existing, adapted) | Existing agent factories remain; wrapper and thin nodes delegate business logic |
 | C-11 Report writer | `src/tradingagents/reporting.py` (existing) | HTML and CLI renderers consume prepared values, not new business decisions |
 | C-12 Memory decision adapter | `src/tradingagents/memory/log.py` (existing) | Existing reflection/settlement modules retain their responsibilities |
-| C-13 HistoryReader | `src/tradingagents/history.py` (proposed) | Read-only manifest/report lookup |
-| C-14 ManifestStore | `src/tradingagents/run_context.py` (proposed) | Small atomic JSON helper alongside lifecycle, no separate persistence platform |
+| **Deferred** C-13 HistoryReader | `src/tradingagents/history.py` (proposed) | Read-only manifest/report lookup |
+| **Deferred** C-14 ManifestStore | `src/tradingagents/run_context.py` (proposed) | Future-only manifest helper; no current implementation |
 | C-15 Limited security helpers | `src/tradingagents/security.py` (proposed) | Existing `src/tradingagents/dataflows/net.py`, `src/tradingagents/dataflows/symbols.py`, and CLI preferences delegate/reuse helpers as applicable; retain their existing interfaces |
 | C-16 Existing checkpoint adapter | `src/tradingagents/graph/checkpointer.py` (existing) | Outside the selected new flow; preserve baseline tooling/tests |
 | C-17 CLI display coordinator | `src/cli/display.py` (existing) | Streaming labels and prepared formal display; no rating generation |
-| C-18 Configuration/threshold access | `src/tradingagents/default_config.py` (existing, adapted) | Small shared allowlist projection accessible before graph construction; instance `run_settings()` delegates rather than owns a second rule |
+| C-18 Configuration/threshold access | `src/tradingagents/default_config.py` (existing, adapted) | Shared current-output allowlist and threshold access; preserve instance run_settings behavior; no pre-construction manifest-driven refactor |
 | C-20 DataResultClassifier | `src/tradingagents/dataflows/availability.py` (proposed) | Narrow producer-format recognition, no fetching or model judgment |
 
 Do not create a missing C-19 or renumber D2 IDs. Exact new filenames are organizational proposals; approval must identify them in the round's file list. Reuse an existing suitable module when that makes the approved change smaller; do not create all proposed modules upfront.
@@ -62,11 +65,9 @@ Use the blueprint IF-* contracts rather than inventing duplicate DTOs or a secon
 
 ### 4.2 Run, statistics, and persistence
 
-- Create one RunContext per analysis; explicit internal delegation shares it. Independent analyses do not share query reuse, availability, statistics, or identity. Reusable model/graph objects must not retain prior-run handlers.
-- Inject the run's statistics handler through that execution's configuration and preserve existing callbacks. If propagation fails at a nested boundary, use a local handoff; do not add global collection or infer invisible provider calls.
-- Resource release belongs to the acquiring scope/wrapper. `finish()` terminalizes after cleanup attempts and does not close resources twice.
+- Create one ephemeral RunContext per analysis; explicit delegation shares it. Independent analyses isolate query reuse and availability. No new stats collector or persistent identity/status is current.
+- Resource release belongs to the acquiring scope/wrapper. `finish()` restores prior scope binding after entry-owned cleanup and does not close resources twice.
 - Validate formal results before normal delivery/save. Preserve final-state-save then conditional new-memory-append ordering. The programmatic path does not force report saving.
-- Manifest persistence is best-effort. Preserve analysis results/errors and path-specific state/memory/report failures; no rollback or cross-file transaction. Writer and history reader use the blueprint's minimal version-1 contract and their distinct validation responsibilities.
 - The selected new flow executes fully, does not acquire/resume/read old checkpoints as current evidence, and does not delete them. Preserve underlying checkpoint code/tests outside this flow.
 
 ### 4.3 Queries and availability
@@ -99,4 +100,20 @@ Run the D4 structural, prior-suite regression, and behavioral checks required fo
 
 Changes to authority, interfaces, requirement semantics, or security-critical behavior require the affected architecture decision and human approval before implementation. Ordinary internal details within an approved contract need no new architecture gate. If a proposed module allocation conflicts with D2, resolve only the affected allocation before coding rather than silently changing D2 or expanding the round.
 
-OQ-01/OQ-04 remain pending before affected entry implementation; OQ-07 belongs to D3 permission setup. OQ-08/12/13/15/16 remain technical verification items; OQ-02 fixes only the two threshold key names. Do not confirm OQs through this document. Context budgeting/compression/reinjection and the deferred requirements are not activated here; the known course-alignment question remains for human decision.
+OQ-01 remains pending before affected scenario-input implementation; OQ-04 checks retained baseline save/display behavior and adds no new approval gate unless that behavior changes; OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) remain technical verification items; OQ-02 fixes only the two threshold key names. Do not confirm OQs through this document. Context budgeting/compression/reinjection and the deferred requirements are not activated here; the known course-alignment question remains for human decision.
+
+## Deferred and historical design archive — not current implementation instructions
+
+Prior mixed/current design text below is retained only for historical rationale or future reactivation review. Its mandatory wording is not current acceptance.
+
+
+
+| C-04 Run statistics | `src/cli/stats_handler.py` (existing, adapted) | One run-owned callback handler/collector; no CLI UI dependency in reusable statistics logic |
+
+| C-13 HistoryReader | `src/tradingagents/history.py` (proposed) | Read-only manifest/report lookup |
+
+| C-14 ManifestStore | `src/tradingagents/run_context.py` (proposed) | Small atomic JSON helper alongside lifecycle, no separate persistence platform |
+
+- Inject the run's statistics handler through that execution's configuration and preserve existing callbacks. If propagation fails at a nested boundary, use a local handoff; do not add global collection or infer invisible provider calls.
+
+- Manifest persistence is best-effort. Preserve analysis results/errors and path-specific state/memory/report failures; no rollback or cross-file transaction. Writer and history reader use the blueprint's minimal version-1 contract and their distinct validation responsibilities.

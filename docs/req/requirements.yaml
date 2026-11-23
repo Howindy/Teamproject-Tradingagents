@@ -2,13 +2,13 @@ schema_version: "1.0"
 
 document:
   id: "D1-REQ"
-  title: "D1 Requirements: Data Query Reuse, Run Manifest, Data Availability, Safety Gate, Portfolio Risk, Result Consistency, History Lookup, Deferred Recovery and Briefs, and Security"
-  version: "1.48.0"
+  title: "D1 Requirements: Query Reuse, Data Availability, Portfolio Risk, Final Check, Consistent Results and Credential Protection"
+  version: "1.49.0"
   status: "approved"
-  date: "2026-11-17"
+  date: "2026-11-23"
   language: "en"
   description: >-
-    This document defines the current D1 requirements for the TradingAgents baseline. It contains 13 requirement objects with 55 fit criteria: 9 approved active requirements (FR-01, FR-02, FR-03, FR-04, FR-05, SB-01, INV-01, SR-01, SR-02) and 4 deferred requirements (FR-06, FR-07, PR-01, CR-01). The active scope covers run-scoped reuse of identical supported get_news queries, an auxiliary per-analysis run manifest, a run-scoped data-availability summary, deterministic checks for a stock purchase-scenario risk evaluation and the final recommendation, consistent delivery of the final result, minimal history lookup, limited credential protection, and basic confinement of controlled result paths. The deferred scope covers saved-text report completion, analyst short summaries, run-manifest operation timing, and a brief usage/cost comparison; deferred items are future conditions and are not part of current acceptance. The surrounding narrative, definitions, conflict resolutions, traceability, and open questions explain and track these requirements; they do not add obligations beyond the 13 requirement objects. Approval is requirement-design approval only and does not assert application implementation, tests, live evaluation, or attainment of provisional performance/cost/quality targets.
+    Current v1.49.0 scope: 13 requirements / 55 FCs; six approved active requirements (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01) / 27 FCs; seven deferred requirements / 28 FCs. FR-02, FR-05 and SR-02 join the existing deferred requirements; no IDs or FCs are deleted. Current acceptance excludes native manifests, new precise statistics, history lookup and their dedicated path controls. Existing baseline saves, statistics and protections remain. The scope and specified minimal architecture/test changes were pre-approved by jyy722 (non-author) in PR #12, comment 7089283044 at 2026-11-23T01:37:12Z, binding specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is design/test pre-approval, not final review, merge or product acceptance.
     The version paragraphs that follow record historical revision lineage. They preserve their original historical meaning and are not current additional constraints. Where an older paragraph mentions a removed, renamed, or deferred concept, the current 13 requirement objects and the opening statement of this description control.
     Version 1.1.0 revises FR-01 to limit logical query executions rather than external requests, defines data_query_key, and adds concurrency, terminal-outcome, vendor-cache, retry/fallback, and offline/live acceptance criteria. Version 1.2.0 revises FR-02 to define the run lifecycle, a concrete manifest schema, identity/path coverage, measurement boundaries, missing-token handling, end-to-end overhead, and write-failure integrity. Version 1.3.0 revises FR-03 to define the minimal availability record, source identity, closed record/requirement status sets, the effective critical profile defaults, fallback clearing, multi-query aggregation, and deterministic reporting. Version 1.4.0 revises SB-01 to define the trusted gate input, the formal decision body, model-proposal separation, the complete blocked-input decision table, fail-closed gate-failure behavior, all formal and intermediate output boundaries, and entry-point coverage. Version 1.5.0 revises INV-01 to define the completed checkpoint, artifact binding and per-artifact contract, canonicalization, source-status comparison granularity, legal fallback versus silent substitution, retry and partial- write behavior, and the separate memory decision/settlement lifecycle. Version 1.6.0 revises SR-01 to separate known-secret from versioned pattern checks, define the fixed scan scope and its limits, resolve the preference audit/restore endpoint conflict, add fail-closed failure behavior, preserve existing scrub and .env controls, and add over-redaction controls. Version 1.7.0 renumbers the requirement IDs to match their types: FR-01, FR-02, and FR-03 for functional requirements, SB-01 for safety, INV-01 for invariant, and SR-01 for security. No requirement semantics changed in that renumbering. Version 1.8.0 synchronizes the manifest schema with INV-01, SB-01, FR-03, and SR-01; adds completed-state schema constraints; refines cache A/B comparison, canonicalization and hash inputs, memory entry binding, synthetic missing component records, mandatory capability ownership, security incident records, and external manifest timing. Version 1.9.0 adds the gate error stage, separates write-scan from run-scan results, carries critical profile, coverage snapshot, provenance and input hashes in the manifest, links evidence to multiple requirement components, counts HTTP requests, selects review wording by gate reason, fixes the run clock, and defines same-day rerun, memory-disabled, cross-field semantic, and empty query-set rules. Version 1.10.0 merged two draft requirements from Jiang Yiyang's proposal: FR-04 deterministic portfolio-risk evaluation of a structured candidate trade, and INV-02 deterministic portfolio-risk authority and zero unsafe approvals. Version 1.11.0 rewrites both requirements around one applicability rule, explicit first-entry and add-long fields, timezone-aware historical valuation cutoff, exact amount/price/cash/currency consistency, a locatable policy snapshot with provisional-threshold boundaries, current versus reused historical memory evidence, and separate cache and risk-policy evaluations. Version 1.12.0 fixes the FR-04-AC1 arithmetic, separates normalized risk-input artifacts from safe invalid-input diagnostics, defines the unique timezone-aware valuation cutoff and future analysis-date rejection, fixes the combined coverage-failure plus evaluator-exception result, and adds local evidence fixtures with digest, metric, policy, tamper, wrong-metric, and invalid-input checks. The 30% concentration and 5% stop-distance defaults remain provisional until human approval. Version 1.14.0 merges the corrected valuable parts of yhx: FR-07 deterministic derived financial metrics from structured filing facts and FR-08 unified downstream analyst-report brief. Version 1.13.0 merges the adoptable parts of pxs: FR-05 historical formal-publication retrieval, FR-06 startup recovery of pending formal publication, and QR-02 a provisional recovery-performance target. It merges pxs identity, section-isolation, truthful-completion, and model-free idempotent-recovery rules into FR-02, INV-01, and the existing publication contract; it reuses SR-01 for credentials and adds path-safety and export-conflict criteria. Version 1.14.0 adds FR-07 structured-fact financial metrics with period identity, TTM formulas, program metric blocks, narrative-conflict disclosure, and independent reference requirements, and FR-08 a downstream brief view with canonical gaps, separate mandatory and compressible budgets, downstream-role boundaries, and controlled token/quality evaluation. Version 1.14.1 corrects fiscal-period matching and coverage, fact subject/accession identity, metric persistence and model-free recovery, metric-claim conflict scope, brief budget precedence and audit metadata, and unified quality/lifecycle acceptance. Version 1.15.0 changes every requirement status to draft pending human review, marks QR-02 deferred, and removes unretained personal-proposal source paths. Version 1.16.0 applies the limited split into PR-01, CR-01, GR-01, QR-01, and SR-02, and defers FR-05 export, FR-06 multi-worker recovery, FR-07 TTM/FCF YoY, and QR-02 performance. Version 1.17.0 fixes PR-01 write and overhead statistics, GR-01 prerequisite direction and evidence conditions, CR-01 measurement/improvement semantics and brief-contract alignment, FR-01/QR-01 responsibility duplication, QR-02 type, and deferred-scope and validator consistency. Version 1.18.0 aligns the shared brief-evaluation definition and CR-01 with contract v2, fixes the four-state evidence model and cost-claim boundary, completes the local cost measurement disclosure, and splits GR-01 pre-implementation freeze readiness from post-implementation timing. Version 1.19.0 clarifies query identity/budgets, manifest timing and immutable content, availability snapshot sealing, risk-input binding and reason mapping, history edge semantics, recovery sequencing, financial visibility/conflict consequences, brief deterministic defaults, benchmark boundaries, local-cost usage/aggregation, reference-freeze digest projection, live-quality aggregation, gate blocked/error uniqueness, memory reuse/status mapping, risk-evidence null handling, credential failure scanning, and path read/write boundaries. Version 1.20.0 removes remaining contradictory rules: query budget continuation, manifest timing/write-failure boundaries, coverage record identity and fallback status, invalid-rating risk handling, decimal positive/negative fixtures, FR-08 versus CR-01 acceptance, unique live-sampling rule, SB-01 blocked/error table, INV-01 historical memory projection, concrete empty/short-secret rules, and unsupported-platform path behavior.
     Version 1.21.0 completes the semantic revision of FR-01 through FR-05: versioned execution and normalization contracts, waiter/execution cancellation separation, bounded timeouts and budgets, checkpoint inheritance; non-self-referential manifest timing, truthful lifecycle nullability, call/usage coverage, discriminator and write-failure semantics; declared query plan Q, executed set E, supports contract set S, fixed quorum, period slots, evidence deduplication, sealed coverage snapshot; bounded canonical risk input, exact cross-product limits, portfolio scope, policy/input/diagnostic separation; and a minimal verified list/get history interface with exact pagination, scan-budget failure, closure, section completeness, and extra-file rejection. No requirement is approved by this revision; all active requirements remain draft.
@@ -43,27 +43,19 @@ document:
 
 scope:
   approved_ids:
-    - FR-01
-    - FR-02
-    - FR-03
-    - FR-04
-    - FR-05
-    - SB-01
-    - INV-01
-    - SR-01
-    - SR-02
+      ["FR-01", "FR-03", "FR-04", "SB-01", "INV-01", "SR-01"]
   draft_ids: []
   deferred_ids:
-    - FR-06
-    - FR-07
-    - PR-01
-    - CR-01
+      ["FR-02", "FR-05", "SR-02", "FR-06", "FR-07", "PR-01", "CR-01"]
   in_scope:
     - "FR-01: run-scoped reuse of identical supported get_news queries reached by the analyst ticker-news tool path and the sentiment-news prefetch path."
-    - "FR-02: a native, auxiliary per-analysis JSON run manifest for the CLI analysis entry and TradingAgentsGraph.propagate(); creation or update is attempted, persistence success is best-effort, and failure only warns."
+    - >-
+      Deferred future scope only; not current acceptance. FR-02: a native, auxiliary per-analysis JSON run manifest
+      for the CLI analysis entry and TradingAgentsGraph.propagate(); creation or update is attempted, persistence success
+      is best-effort, and failure only warns.
     - "FR-03: a run-scoped data-availability summary for the fixed 15 call-path positions over 14 methods, including the seven analyst-gated stock necessity items and the last-completed-result rule."
     - "FR-04: deterministic projected-concentration and stop-distance checks for a caller-supplied single-stock purchase/add-long scenario, with configurable classroom thresholds and visible outcomes."
-    - "FR-05: minimal programmatic history lookup over FR-02 completed manifests and saved merged Markdown reports, with ticker/analysis_date filters and bad-record isolation."
+    - "Deferred future scope only; not current acceptance. FR-05: minimal programmatic history lookup over FR-02 completed manifests and saved merged Markdown reports, with ticker/analysis_date filters and bad-record isolation."
     - "Deferred FR-06: single-process completion of a requested complete_report.md from saved text, without model, data, graph, renderer, manifest, history, or memory repair; not part of current active acceptance."
     - "Deferred FR-07: analyst-generated three-part short summaries for five downstream roles, generated in the same report call, with a configurable Unicode-character limit, full-report fallback, and no separate summary call; not part of current active acceptance."
     - "Deferred PR-01: separate 20-sample measurements of complete manifest creation and update operation durations, with nearest-rank p95 and thresholds undetermined until after measurement; not part of current active acceptance."
@@ -71,7 +63,7 @@ scope:
     - "SB-01: one deterministic check over the current FR-03 summary, applicable FR-04 result, and model rating, forming the final rating before the CLI or propagate() result is returned, displayed, or saved."
     - "INV-01: consistent use of the SB-01 post-check final rating and formal conclusion in outputs actually produced in the run, without atomic multi-file commit, immutability, retention, recovery, or read-time revalidation."
     - "SR-01: limited credential protection in the listed configuration, endpoint-preference, and request-error display paths; known values are omitted or replaced with a fixed marker."
-    - "SR-02: basic confinement of FR-02's automatic manifest path and FR-05's history-report read path under the configured results root, including existing symlink-escape rejection."
+    - "Deferred future scope only; not current acceptance. SR-02: basic confinement of FR-02's automatic manifest path and FR-05's history-report read path under the configured results root, including existing symlink-escape rejection."
   out_of_scope:
     - "Replacing StockTwits with another social vendor; the 403 root cause is not established."
     - "A point-in-time company profile sourced from SEC filings; current filing fields are not proven to be historical vintages."
@@ -88,15 +80,15 @@ scope:
     - "The system remains a single-user local tool for D1."
     - "REVIEW is an acceptable terminal safe state for a run whose check does not pass; it is a non-tradeable sentinel, not a sixth five-tier rating."
     - "FR-01 applies only to the explicitly listed get_news paths; existing vendor selection, fallback, retry, and vendor caches operate unchanged."
-    - "FR-02 attempts manifest creation and update, but persistence success is best-effort; a manifest failure only warns and does not affect analysis, model calls, return values, or the original error."
+    - "Future deferred assumption only: FR-02 attempts manifest creation and update, but persistence success is best-effort; a manifest failure only warns and does not affect analysis, model calls, return values, or the original error."
     - "FR-03 uses the fixed seven-item necessity list and each consumer's last completed result; adding an observation or refreshing a summary never starts a new query, refetch, retry, or model re-run."
     - "FR-04 uses a caller-supplied structured single-stock purchase/add-long scenario and configurable classroom thresholds; it does not manage broker, account, cash, historical-valuation, or policy-approval decisions."
     - "0.30 and 0.05 are demonstration defaults, not approved financial policy; a passed check is not a guarantee of maximum loss or investment outcome."
     - "SB-01 consumes the current FR-03 and applicable FR-04 results and does not recompute risk or treat a pass as trade authorization."
     - "INV-01 compares only the post-check final result in outputs actually produced in the run and does not add an atomic commit, immutability, retention, or recovery guarantee."
-    - "FR-05 covers only reports registered by an FR-02 completed manifest and does not guarantee immutability or prevent later overwrite."
+    - "Future deferred assumption only: FR-05 covers only reports registered by an FR-02 completed manifest and does not guarantee immutability or prevent later overwrite."
     - "SR-01 and SR-02 cover only their explicitly listed paths; they do not provide a general secret scanner or an all-operation path-protection system."
-    - "FR-06, FR-07, PR-01, and CR-01 are deferred; their future conditions do not block the nine active requirements."
+    - "FR-02, FR-05, SR-02, FR-06, FR-07, PR-01 and CR-01 are deferred and do not block the six active requirements."
     - "The repository analysis and baseline artifacts remain the authoritative source for observations in this document."
 stakeholders:
   - id: analyst
@@ -172,22 +164,19 @@ definitions:
     asset is outside this version's stock list. No empty-set truth, quorum, or
     profile is added.
   run_id: >-
-    The identifier for one analysis invocation. It is unique per invocation and
-    safe as one path component. It is an FR-02 auxiliary record key, not a formal
+    Deferred FR-02/FR-05 terminology only; no current implementation obligation. The identifier for one analysis invocation.
+    It is unique per invocation and safe as one path component. It is an FR-02 auxiliary record key, not a formal
     publication or commit identity.
   run_manifest: >-
-    The native, auxiliary JSON record at <results_dir>/<run_id>/run_manifest.json.
-    It records identity, lifecycle status, timezone-aware timing, basic
-    configuration, LLM and tool call counts, token totals when usage is
-    complete for every counted call, references to produced files, and a safe
-    error summary. Creation or update is attempted; persistence success is
-    best-effort and failure only warns. It is not a commit, publication, or
-    recovery authority.
+    Deferred FR-02/FR-05 terminology only; no current implementation obligation. The native, auxiliary JSON record
+    at <results_dir>/<run_id>/run_manifest.json. It records identity, lifecycle status, timezone-aware timing, basic
+    configuration, LLM and tool call counts, token totals when usage is complete for every counted call, references
+    to produced files, and a safe error summary. Creation or update is attempted; persistence success is best-effort
+    and failure only warns. It is not a commit, publication, or recovery authority.
   history_query: >-
-    The FR-05 programmatic list/get lookup over FR-02 completed manifests and
-    saved merged Markdown reports: list_runs with ticker and analysis_date
-    filters, and get_report by run_id. It does not add pagination, hashing,
-    immutability validation, or complete-artifact verification.
+    Deferred FR-02/FR-05 terminology only; no current implementation obligation. The FR-05 programmatic list/get lookup
+    over FR-02 completed manifests and saved merged Markdown reports: list_runs with ticker and analysis_date filters,
+    and get_report by run_id. It does not add pagination, hashing, immutability validation, or complete-artifact verification.
   model_proposal: >-
     The original model rating and text, retained separately. It is not an
     independent trade authorization. When SB-01 passes, the final result may use
@@ -597,7 +586,7 @@ requirements:
         threshold_status: "not_applicable"
     tradeoff: Prioritize preventing repeated ticker-news data-fetch work in one analysis run with an explicit, minimal supported scope. Accept that model tool calls may still repeat, that one wrapped data-fetch flow may still make multiple vendor or HTTP requests through existing fallback and retry behavior, and that no token, latency, cost, or live-quality benefit is claimed or guaranteed. Reuse state stays run-scoped, and existing vendor behavior is unchanged.
     implementation_dependencies: []
-    constraint_relations: [FR-02, FR-03]
+    constraint_relations: ["FR-03"]
     conflicts:
       - "Reused data could become stale within a run. Resolution: query identity includes the ticker and the resolved date window, and reuse state ends with the run; this requirement adds no TTL or capacity policy."
       - "Existing vendor caches already span runs. Resolution: vendor caches are unchanged and are not FR-01 run-scoped reuse; run-state isolation is still required."
@@ -619,7 +608,7 @@ requirements:
     type: "functional"
     title: "Native per-analysis run manifest"
     priority: "Must"
-    status: "approved"
+    status: "deferred"
     stakeholders: [reviewer, operator, analyst]
     sources:
       origin: "Repository analysis and measured baseline"
@@ -1325,14 +1314,10 @@ requirements:
           returns Buy or Overweight; separate cases cover missing input,
           over-limit, and evaluator error.
         expected_result: >-
-          Both entries compute consistently; the propagate() return shape is
-          preserved; the risk result is available from final_state; the CLI and
-          generated report deterministically show status, available input,
-          metrics, thresholds, and reasons. blocked and error explicitly require
-          manual review and are not overridden by the model; the original rating
-          is not required to change. Missing risk input does not hard-fail the
-          analysis entry, and an FR-02 manifest save failure does not affect the
-          check result.
+          Both entries compute consistently; the propagate() return shape is preserved; the risk result is available from
+          final_state; the CLI and generated report deterministically show status, available input, metrics, thresholds,
+          and reasons. blocked and error explicitly require manual review and are not overridden by the model; the original
+          rating is not required to change. Missing risk input does not hard-fail the analysis entry.
         verification: >-
           Offline real-entry adaptation, downstream result checks, and report
           inspection; no broker, vendor, or live model is called.
@@ -1367,7 +1352,7 @@ requirements:
     type: "functional"
     title: "Historical analysis report lookup"
     priority: "Must"
-    status: "approved"
+    status: "deferred"
     stakeholders: [analyst, operator, reviewer]
     sources:
       origin: "Split from pxs FR-03 and verified against the current source tree"
@@ -2671,14 +2656,11 @@ requirements:
       measurement_status: not_measured
       threshold_status: not_applicable
     - id: SB-01-FC05
-      input: >-
-        CLI and propagate() normal and blocked scenarios whose model text contains an explicit trade recommendation;
-        then generate a report. Also test a manifest save failure.
+      input: "CLI and propagate() normal and blocked scenarios whose model text contains an explicit trade recommendation; then generate a report."
       expected_result: >-
         The CLI final summary, final_state, returned signal, and generated report use the same post-check result. Under
-        REVIEW the formal conclusion is the manual-review notice, and the original recommendation appears only in a
-        separately labeled area. Intermediate output is not presented as final, the return shape is unchanged, and a
-        manifest save failure does not affect the check.
+        REVIEW the formal conclusion is the manual-review notice, and the original recommendation appears only in a separately
+        labeled area. Intermediate output is not presented as final, the return shape is unchanged.
       verification: >-
         Offline entry integration, actual output and report inspection, and extra-call counting; memory, history, and
         recovery acceptance are not expanded.
@@ -2752,36 +2734,34 @@ requirements:
     statement: >-
       Within one analysis, the final rating and formal conclusion returned, displayed, or saved by the application MUST
       come from the same final result produced by SB-01. A consumer MUST NOT regenerate the rating, re-parse the original
-      model text into a different rating, or substitute the pre-check model recommendation for the formal result.
-      The saved final-state and any memory decision record actually created in this run MUST use that final result. When
-      memory is disabled or no new record is created, no record is required.
-      The only comparison basis is SB-01's post-check final_rating and final_trade_decision. In a passed case, the SB-01
-      retained model conclusion is used. In a blocked or error case, REVIEW and the program-generated manual-review notice
-      are used. The original model_proposal may appear separately as allowed by SB-01 but MUST NOT replace the formal
-      fields. Whole report bytes are not compared; headings, layout, wrappers, and existing format differences are allowed
-      as long as the formal rating and decision content do not change meaning or get regenerated. Another rating MUST NOT
-      be inferred by parsing the full report or model narrative.
-      The consistency scope is limited to outputs actually produced in this analysis: the propagate() final_state and
-      returned signal, the CLI final summary, the final rating and formal conclusion in a generated report, the corresponding
-      saved final-state JSON fields, and any memory decision record newly created in this run. The first three overlap
-      SB-01 FC05 and may reuse its test evidence without creating a duplicate acceptance system or modifying SB-01.
-      The manifest is not included in the rating/conclusion comparison, and no FR-02 field is added for this invariant.
-      The invariant applies when the result is formed, output, and normally saved in this run; it does not require every
-      later historical read to revalidate, and it does not guarantee permanent file immutability.
-      If this run creates a new memory decision record, its rating and decision body come from the post-check result, not
-      from the pre-check recommendation, and no model call is added to restate or regenerate the decision. If memory is
-      disabled or no new record is created, no record is required, a reused historical record is not rewritten to the
-      current result, and no history-reuse or version-allocation feature is added. Existing settlement/reflection may
-      continue to update outcome, reflection, and similar fields under its normal behavior, but these updates MUST NOT
-      regenerate or replace the original recorded rating and decision body. No immutable store, hash, retention proof,
-      or tamper detection is required. Same-day versioning, reservation, high-water allocation, supersedes, duplicate-decision
-      detection, concurrent allocation, and memory recovery protocols are not added.
-      This invariant does not redefine each save flow's error policy: a manifest failure follows FR-02 and only warns;
-      report, final-state, and memory save failures follow their existing handling; a failed file is not claimed as saved;
-      other formed results are not rolled back because another artifact is missing; all-cross-file save success is not
-      a precondition for FR-02 completed; and no atomic multi-file transaction, formal commit point, read-time validation,
-      or production consistency-scan service is added. Acceptance focuses on whether actually produced outputs use the
-      correct result, not on requiring every optional output to exist.
+      model text into a different rating, or substitute the pre-check model recommendation for the formal result. The
+      saved final-state and any memory decision record actually created in this run MUST use that final result. When
+      memory is disabled or no new record is created, no record is required. The only comparison basis is SB-01's post-check
+      final_rating and final_trade_decision. In a passed case, the SB-01 retained model conclusion is used. In a blocked
+      or error case, REVIEW and the program-generated manual-review notice are used. The original model_proposal may
+      appear separately as allowed by SB-01 but MUST NOT replace the formal fields. Whole report bytes are not compared;
+      headings, layout, wrappers, and existing format differences are allowed as long as the formal rating and decision
+      content do not change meaning or get regenerated. Another rating MUST NOT be inferred by parsing the full report
+      or model narrative. The consistency scope is limited to outputs actually produced in this analysis: the propagate()
+      final_state and returned signal, the CLI final summary, the final rating and formal conclusion in a generated
+      report, the corresponding saved final-state JSON fields, and any memory decision record newly created in this
+      run. The first three overlap SB-01 FC05 and may reuse its test evidence without creating a duplicate acceptance
+      system or modifying SB-01. The manifest is not included in the rating/conclusion comparison, and no FR-02 field
+      is added for this invariant. The invariant applies when the result is formed, output, and normally saved in this
+      run; it does not require every later historical read to revalidate, and it does not guarantee permanent file immutability.
+      If this run creates a new memory decision record, its rating and decision body come from the post-check result,
+      not from the pre-check recommendation, and no model call is added to restate or regenerate the decision. If memory
+      is disabled or no new record is created, no record is required, a reused historical record is not rewritten to
+      the current result, and no history-reuse or version-allocation feature is added. Existing settlement/reflection
+      may continue to update outcome, reflection, and similar fields under its normal behavior, but these updates MUST
+      NOT regenerate or replace the original recorded rating and decision body. No immutable store, hash, retention
+      proof, or tamper detection is required. Same-day versioning, reservation, high-water allocation, supersedes, duplicate-decision
+      detection, concurrent allocation, and memory recovery protocols are not added. This invariant does not redefine
+      each save flow's error policy: report, final-state, and memory save failures follow their existing handling; a
+      failed file is not claimed as saved; other formed results are not rolled back because another artifact is missing;
+      no atomic multi-file transaction, formal commit point, read-time validation, or production consistency-scan service
+      is added. Acceptance focuses on whether actually produced outputs use the correct result, not on requiring every
+      optional output to exist.
     fit_criterion:
     - id: INV-01-FC01
       input: >-
@@ -2789,10 +2769,9 @@ requirements:
         and the post-check notice carry different test markers; produce the returned result, CLI summary, report, and
         final-state JSON.
       expected_result: >-
-        Each actually produced output uses the SB-01 result for its final rating and formal-decision area. The rating is
-        not re-parsed from the full text, and the original model recommendation does not replace the formal fields.
-        Format, heading, and other report content may differ; whole-file bytes are not compared. The manifest is not
-        required to store the rating or decision.
+        Each actually produced output uses the SB-01 result for its final rating and formal-decision area. The rating
+        is not re-parsed from the full text, and the original model recommendation does not replace the formal fields.
+        Format, heading, and other report content may differ; whole-file bytes are not compared.
       verification: >-
         Offline entry/save integration comparing the corresponding fields and formal-decision area. SB-01 FC05 evidence
         may be reused without independently repeating the same test.
@@ -2832,21 +2811,9 @@ requirements:
     - SB-01
     constraint_relations: []
     conflicts:
-    - "A short report may differ from the formal decision. Resolution: compare only the final rating and formal-decision area; whole-file bytes and layout are not compared."
-    - "A consumer could re-parse the model text. Resolution: the only comparison basis is SB-01's post-check final_rating and final_trade_decision."
-    - "The pre-check proposal could be mistaken for the formal result. Resolution: the proposal may appear separately but cannot replace the formal fields."
-    - "Settlement updates memory later. Resolution: outcome/reflection may update, but the original rating and decision body are not regenerated."
-    - "A save failure could look like a consistency failure. Resolution: each save flow keeps its existing error policy; a failed file is not claimed as saved and other results are not rolled back."
-    - "A manifest could be expected to store the rating. Resolution: the manifest is outside this comparison and no FR-02 field is added."
+      ["A short report may differ from the formal decision. Resolution: compare only the final rating and formal-decision area; whole-file bytes and layout are not compared.", "A consumer could re-parse the model text. Resolution: the only comparison basis is SB-01's post-check final_rating and final_trade_decision.", "The pre-check proposal could be mistaken for the formal result. Resolution: the proposal may appear separately but cannot replace the formal fields.", "Settlement updates memory later. Resolution: outcome/reflection may update, but the original rating and decision body are not regenerated.", "A save failure could look like a consistency failure. Resolution: each save flow keeps its existing error policy; a failed file is not claimed as saved and other results are not rolled back."]
     assumptions:
-    - "The comparison scope is the propagate() final_state and signal, CLI final summary, generated report final-decision area, saved final-state JSON fields, and any newly created memory decision record."
-    - "SB-01's post-check final_rating and final_trade_decision are the only comparison basis; consumers do not regenerate or re-parse the rating."
-    - "The original model_proposal may be shown separately as SB-01 allows but is not a formal-field substitute."
-    - "Format, headings, layout, and wrappers may differ; the formal rating and decision content must not change meaning."
-    - "Memory is compared only when this run creates a new decision record; disabled or no-new-record runs need no record, and historical records are not rewritten."
-    - "Settlement/reflection may update outcome and reflection fields without regenerating the original rating or decision body."
-    - "Manifest success is not a condition, and no rating or decision field is added to the manifest."
-    - "The invariant applies at formation/output/normal save in this run; it does not require later historical reads to revalidate or guarantee permanent immutability."
+      ["The comparison scope is the propagate() final_state and signal, CLI final summary, generated report final-decision area, saved final-state JSON fields, and any newly created memory decision record.", "SB-01's post-check final_rating and final_trade_decision are the only comparison basis; consumers do not regenerate or re-parse the rating.", "The original model_proposal may be shown separately as SB-01 allows but is not a formal-field substitute.", "Format, headings, layout, and wrappers may differ; the formal rating and decision content must not change meaning.", "Memory is compared only when this run creates a new decision record; disabled or no-new-record runs need no record, and historical records are not rewritten.", "Settlement/reflection may update outcome and reflection fields without regenerating the original rating or decision body.", "The invariant applies at formation/output/normal save in this run; it does not require later historical reads to revalidate or guarantee permanent immutability."]
     notes: >-
       Revised in v1.41.0 to consistent delivery and persistence of the final result. FC mapping from the prior eleven-FC version: prior FC01/FC03/FC05 (cross-artifact binding, identity/provenance projection, decision text) map to new FC01 for output-source consistency; prior FC02/FC04/FC09 (canonicalization, fallback disclosure, read-time tamper) are removed; prior FC06/FC07/FC11 (missing artifacts, retry, completed-status negatives) are removed; prior FC08/FC10 (settlement/rotation and memory version allocation) map to new FC02 for new memory consistency and new FC03 for normal later updates, with retention proof, high-water allocation, supersedes, and rotation removed. Removed capabilities are not re-expressed as hidden obligations. The current fit criteria count is three. At revision v1.41.0, the global FC count was 63. SB-01 is the only implementation dependency; FR-02, the formal-publication/manifest binding, full evidence-chain, and deferred recovery coupling are removed. The prior v1.25.0 approval and validation records remain historical; docs/req/requirement-mapping.csv, docs/req/requirement-contracts-v1.json, docs/req/run-manifest-schema.json, docs/req/validation-results.json, and the D2 artifacts still describe the earlier contract and were not updated by this revision. No implementation, test pass, immutability, or permanent-consistency guarantee is claimed.
 
@@ -2905,65 +2872,61 @@ requirements:
       In the explicitly supported configuration-save, CLI-preference, and provider-request-error display paths, the
       system MUST NOT save or show credential fields or known credential values used in this run. The configuration
       summary reuses the existing allowlist; an unsafe endpoint is not saved or restored as a preference; and a known
-      credential in a supported request error is replaced with a fixed marker.
-      When an item cannot be handled safely, the affected field is omitted or a fixed safe diagnostic is used; raw sensitive
-      content MUST NOT be returned as a fallback, and an auxiliary-record failure MUST NOT block analysis.
-      This version does not provide generic unknown-secret scanning, credential migration, or a no-leak guarantee for
-      arbitrary output channels.
-      Supported scope is limited to: (1) the FR-02 manifest configuration and error summaries; (2) the existing report
-      and final-state configuration summaries; (3) CLI preference save/load for the endpoint; (4) the existing get_scrubbed()
-      request-error paths at src/tradingagents/dataflows/net.py, the Alpha Vantage common.py get_scrubbed call
-      and its scrubbed notice helper, and the FRED fred.py get_scrubbed call including its passthrough 400 error_message
-      path; and (5) warnings produced by these handlers. Provider-internal logs, third-party exception frameworks, and
-      any unlisted display path are not included. If a path cannot be confirmed, it is listed as out of scope rather
-      than claimed covered.
-      Out of scope for this version: model-generated full report bodies, arbitrary third-party logs, raw debug/stream
-      output, the complete API return object, historical files, recovery material, and all future outputs. Existing
-      protections remain, but they MUST NOT be described as a comprehensive scan of those channels.
-      Configuration summary: reuse the existing run_settings() allowlist and do not save the complete configuration.
-      Credential fields such as API key, password, and Authorization do not enter the summary. If an allowlisted field
-      contains a known credential value used in this run, omit that field rather than keep the original value. Other
-      normal configuration, ticker, date, and model names MUST NOT be removed merely for length or shape. Known credentials
-      come only from credentials actually configured or used by the application; do not collect all environment variables
-      and do not write a credential registry file. Empty strings do not participate in matching. Do not add generic provider-key,
-      JWT, or arbitrary-encoding recognition, and do not use "looks like a long string" as a secret test. No rule version,
-      source, effective time, or detection counter is required. An exact known-value match may collide with normal content;
-      only the affected field or diagnostic is handled, not a whole-output cleanup system.
-      Endpoint preference rule: an ordinary endpoint with no embedded authentication may be saved and restored. The system
-      MUST NOT save or restore as a default any endpoint containing URL userinfo; containing a query or fragment, whether
-      or not it appears sensitive; having a host, path, or other part matching a known credential; or being unparseable.
-      Even an empty query or fragment counts when the input explicitly contains its separator, and the system MUST NOT
-      strip query/fragment and save a different address. Handling: omit the entire endpoint preference item, state that
-      the address was not remembered and must be re-entered next time, and do not save a "***" pseudo-endpoint. Do not
-      extract credentials into .env, environment variables, or another store, and do not add secret_ref, a credential
-      resolver, migration, or encryption. The rule limits only preference save/restore and does not change the user's
-      current explicit use of that endpoint. For old preferences: do not use an unsafe endpoint as a default on load,
-      do not automatically modify .env or migrate credentials, omit the item on the next normal preference save, do not
-      require a startup rewrite, do not guarantee erasure of every historical secret on disk, and leave other legal
-      preferences unchanged.
-      Supported error handling: in the listed request-error paths, replace a known credential value with a fixed marker
-      such as "***". Do not re-attach an unprocessed URL-bearing request/response object, exception chain, or raw exception
-      body to the visible diagnostic. Preserve the safe error category and necessary diagnostics. The same exception
-      object or original traceback is not required, and no guarantee is added for unknown tokens, arbitrary encodings,
-      or external provider logs. A real analysis exception keeps its original flow; outward diagnostics are protected,
-      but the original analysis error category is not replaced by a manifest error.
-      Handling failure: if configuration or a preference cannot be handled safely, omit the affected field; if a diagnostic
-      cannot be handled safely, use a fixed safe message and do not echo the raw exception; if the manifest cannot be
-      formed safely, skip this record and attempt a safe warning while analysis continues. A warning-handling failure
-      MUST NOT echo a sensitive original value or override the original analysis result or error. No global security
-      failure hard-exits analysis, and no incident file, publication rollback, history repair, or security state machine
-      is added. Existing get_scrubbed and .env 0600 behavior are preserved as existing protections, not claimed as new results.
+      credential in a supported request error is replaced with a fixed marker. When an item cannot be handled safely,
+      the affected field is omitted or a fixed safe diagnostic is used; raw sensitive content MUST NOT be returned as
+      a fallback, and diagnostic handling MUST NOT replace the original analysis result or error. This version does
+      not provide generic unknown-secret scanning, credential migration, or a no-leak guarantee for arbitrary output
+      channels. Supported scope is limited to: (1) the existing report and final-state configuration summaries; (2)
+      CLI preference save/load for the endpoint; (3) the existing get_scrubbed() request-error paths at src/tradingagents/dataflows/net.py,
+      the Alpha Vantage common.py get_scrubbed call and its scrubbed notice helper, and the FRED fred.py get_scrubbed
+      call including its passthrough 400 error_message path; and (4) warnings produced by these handlers. Provider-internal
+      logs, third-party exception frameworks, and any unlisted display path are not included. If a path cannot be confirmed,
+      it is listed as out of scope rather than claimed covered. Out of scope for this version: model-generated full
+      report bodies, arbitrary third-party logs, raw debug/stream output, the complete API return object, historical
+      files, recovery material, and all future outputs. Existing protections remain, but they MUST NOT be described
+      as a comprehensive scan of those channels. Configuration summary: reuse the existing run_settings() allowlist
+      and do not save the complete configuration. Credential fields such as API key, password, and Authorization do
+      not enter the summary. If an allowlisted field contains a known credential value used in this run, omit that field
+      rather than keep the original value. Other normal configuration, ticker, date, and model names MUST NOT be removed
+      merely for length or shape. Known credentials come only from credentials actually configured or used by the application;
+      do not collect all environment variables and do not write a credential registry file. Empty strings do not participate
+      in matching. Do not add generic provider-key, JWT, or arbitrary-encoding recognition, and do not use "looks like
+      a long string" as a secret test. No rule version, source, effective time, or detection counter is required. An
+      exact known-value match may collide with normal content; only the affected field or diagnostic is handled, not
+      a whole-output cleanup system. Endpoint preference rule: an ordinary endpoint with no embedded authentication
+      may be saved and restored. The system MUST NOT save or restore as a default any endpoint containing URL userinfo;
+      containing a query or fragment, whether or not it appears sensitive; having a host, path, or other part matching
+      a known credential; or being unparseable. Even an empty query or fragment counts when the input explicitly contains
+      its separator, and the system MUST NOT strip query/fragment and save a different address. Handling: omit the entire
+      endpoint preference item, state that the address was not remembered and must be re-entered next time, and do not
+      save a "***" pseudo-endpoint. Do not extract credentials into .env, environment variables, or another store, and
+      do not add secret_ref, a credential resolver, migration, or encryption. The rule limits only preference save/restore
+      and does not change the user's current explicit use of that endpoint. For old preferences: do not use an unsafe
+      endpoint as a default on load, do not automatically modify .env or migrate credentials, omit the item on the next
+      normal preference save, do not require a startup rewrite, do not guarantee erasure of every historical secret
+      on disk, and leave other legal preferences unchanged. Supported error handling: in the listed request-error paths,
+      replace a known credential value with a fixed marker such as "***". Do not re-attach an unprocessed URL-bearing
+      request/response object, exception chain, or raw exception body to the visible diagnostic. Preserve the safe error
+      category and necessary diagnostics. The same exception object or original traceback is not required, and no guarantee
+      is added for unknown tokens, arbitrary encodings, or external provider logs. A real analysis exception keeps its
+      original flow; outward diagnostics are protected, but diagnostic handling does not replace the original analysis
+      error category. Handling failure: if configuration or a preference cannot be handled safely, omit the affected
+      field; if a diagnostic cannot be handled safely, use a fixed safe message and do not echo the raw exception. A
+      warning-handling failure MUST NOT echo a sensitive original value or override the original analysis result or
+      error. No global security failure hard-exits analysis, and no incident file, publication rollback, history repair,
+      or security state machine is added. Existing get_scrubbed and .env 0600 behavior are preserved as existing protections,
+      not claimed as new results.
     fit_criterion:
     - id: SR-01-FC01
       input: >-
         A controlled configuration containing API key, Authorization, password, endpoint, and normal allowlisted fields,
         and a case where an allowlisted field contains a known test credential.
       expected_result: >-
-        The configuration summaries in the manifest, report, and final-state save only allowed fields and contain no
-        credential field. An allowed field is omitted when a known credential's literal exact string appears anywhere
-        in that field value, including a whole-value match or an occurrence inside a larger value; empty credentials do
-        not participate. No encoding recognition, fuzzy matching, or unknown-credential detection is added. Normal
-        non-sensitive fields remain, long strings are not indiscriminately removed, and the report body is not scanned.
+        The configuration summaries in the report and final-state save only allowed fields and contain no credential field.
+        An allowed field is omitted when a known credential's literal exact string appears anywhere in that field value,
+        including a whole-value match or an occurrence inside a larger value; empty credentials do not participate. No
+        encoding recognition, fuzzy matching, or unknown-credential detection is added. Normal non-sensitive fields remain,
+        long strings are not indiscriminately removed, and the report body is not scanned.
       verification: >-
         Actual configuration output inspection and independent test-secret matching.
       zero_tolerance: true
@@ -2996,48 +2959,52 @@ requirements:
       measurement_status: not_measured
       threshold_status: not_applicable
     - id: SR-01-FC04
-      input: >-
-        Configuration, preference, or error-diagnostic handling failures, and a manifest that cannot be formed safely.
+      input: "Configuration, preference, or error-diagnostic handling failures."
       expected_result: >-
-        The affected field is omitted or a fixed safe message is used, with no echo of the original content. A manifest
-        handling failure does not block analysis or override the original error. No credential file is added and .env
-        is not modified. Existing get_scrubbed and .env permission protections remain, and no scan counter or publication
-        block is added.
+        The affected field is omitted or a fixed safe message is used, with no echo of the original content. No credential
+        file is added and .env is not modified. Existing get_scrubbed and .env permission protections remain, and no scan
+        counter or publication block is added.
       verification: >-
         Finite fault injection and relevant existing regression tests; no all-boundary security-scan system is established.
       zero_tolerance: true
       measurement_status: not_measured
       threshold_status: not_applicable
 
-    tradeoff: Prioritize limited, auditable credential protection in the explicitly supported configuration and diagnostic paths. Accept that no generic unknown-secret scan, arbitrary output-channel guarantee, or credential migration is provided. Path confinement and symlink/junction escape remain SR-02.
+    tradeoff: >-
+      Prioritize limited, auditable credential protection in the explicitly supported configuration and diagnostic paths.
+      Accept that no generic unknown-secret scan, arbitrary output-channel guarantee, or credential migration is provided.
+      Manifest/history-specific path confinement remains deferred SR-02; existing ticker protection is retained.
     implementation_dependencies:
-    - FR-02
+      []
     constraint_relations:
-    - SR-02
+      []
     conflicts:
-    - "Redaction reduces debugging detail. Resolution: replace only known credential values and preserve safe error categories and necessary diagnostics."
-    - "The manifest needs a configuration summary while credential fields must not be saved. Resolution: reuse the existing allowlist and omit a field containing a known credential value."
-    - "Preferences need the endpoint for the next run, but some endpoints carry credentials. Resolution: do not save or restore endpoints with userinfo, query, fragment, a known value, or an unparseable form; omit the preference item and require re-entry."
-    - "Exact matching can collide with normal content. Resolution: handle only the affected field or diagnostic, not the whole output."
-    - "Handling failure could leak the original value. Resolution: omit the field or use a fixed safe message, and do not echo raw content."
-    - "Auxiliary record failure could block analysis. Resolution: skip the manifest record with a safe warning and continue analysis."
+      ["Redaction reduces debugging detail. Resolution: replace only known credential values and preserve safe error categories and necessary diagnostics.", "Reports and final-state saves need configuration summaries while credential fields must not be saved. Resolution: reuse the existing allowlist and omit a field containing a known credential value.", "Preferences need the endpoint for the next run, but some endpoints carry credentials. Resolution: do not save or restore endpoints with userinfo, query, fragment, a known value, or an unparseable form; omit the preference item and require re-entry.", "Exact matching can collide with normal content. Resolution: handle only the affected field or diagnostic, not the whole output.", "Handling failure could leak the original value. Resolution: omit the field or use a fixed safe message, and do not echo raw content."]
     assumptions:
-    - "Supported scope is the FR-02 manifest config/error summary, existing report and final-state config summaries, CLI endpoint preference save/load, the listed get_scrubbed request-error paths, and warnings from these handlers."
-    - "Configuration summary reuses the existing run_settings() allowlist; credential fields and known credential values are not saved."
-    - "Known credentials come only from credentials actually configured or used by the application; all environment variables are not collected and no credential registry file is written."
-    - "Empty strings do not match; no generic provider-key, JWT, arbitrary-encoding, or long-string heuristic is added."
-    - "An endpoint with userinfo, query, fragment, a known credential in host/path, or an unparseable form is never saved or restored as a preference; the item is omitted and re-entry is required."
-    - "Supported request errors replace known credentials with a fixed marker and do not reattach unprocessed URL-bearing objects, exception chains, or raw bodies."
-    - "If handling fails, omit the field or use a fixed safe diagnostic; an auxiliary-record failure does not block analysis."
-    - "Existing get_scrubbed and .env 0600 behavior are preserved but are not new acceptance results."
-    - "Out of scope: model-generated full report bodies, arbitrary third-party logs, raw debug/stream, the complete API return object, historical files, recovery material, and future outputs."
+      ["Supported scope is existing report and final-state config summaries, CLI endpoint preference save/load, the listed get_scrubbed request-error paths, and warnings from these handlers.", "Configuration summary reuses the existing run_settings() allowlist; credential fields and known credential values are not saved.", "Known credentials come only from credentials actually configured or used by the application; all environment variables are not collected and no credential registry file is written.", "Empty strings do not match; no generic provider-key, JWT, arbitrary-encoding, or long-string heuristic is added.", "An endpoint with userinfo, query, fragment, a known credential in host/path, or an unparseable form is never saved or restored as a preference; the item is omitted and re-entry is required.", "Supported request errors replace known credentials with a fixed marker and do not reattach unprocessed URL-bearing objects, exception chains, or raw bodies.", "If handling fails, omit the field or use a fixed safe diagnostic; handling must not override the original analysis result or error.", "Existing get_scrubbed and .env 0600 behavior are preserved but are not new acceptance results.", "Out of scope: model-generated full report bodies, arbitrary third-party logs, raw debug/stream, the complete API return object, historical files, recovery material, and future outputs."]
     notes: >-
-      Revised in v1.43.0 to credential protection in configuration and diagnostics. FC mapping from the prior seven-FC version: prior FC01 (all-boundary known-value scan) maps to new FC01 for configuration summaries only; prior FC02 (pattern-rule categories) is removed; prior FC03 (audit/restore endpoint split) maps to new FC02 for endpoint preference handling, with secret_ref/credential-store migration removed; prior FC04 (fail-closed scanner and post-commit leak) maps to new FC04 for safe fallback, with post-commit/immutable-evidence handling removed; prior FC05 (over-redaction) is removed; prior FC06 (boundary coverage/stream) is removed; prior FC07 (existing controls plus new scope regression) maps to new FC03 for the listed get_scrubbed paths and FC04 for preserved protections. Removed capabilities are not re-expressed as hidden obligations. The current fit criteria count is four. At revision v1.43.0, the global FC count was 54. FR-02 is the only implementation dependency; the INV-01 binding/publication coupling is removed. Supported request-error paths are net.py get_scrubbed, the Alpha Vantage common.py get_scrubbed call and scrubbed notice helper, and the FRED fred.py get_scrubbed call including its passthrough 400 error_message path; unlisted provider/third-party paths are not covered. The baseline did not establish an actual key leak and no incident is claimed. The prior v1.25.0 approval and validation records remain historical; docs/req/requirement-mapping.csv, docs/req/requirement-contracts-v1.json, docs/req/run-manifest-schema.json, docs/req/validation-results.json, and the D2 artifacts still describe the earlier contract and were not updated by this revision. No implementation or runtime result is claimed.
+      Revised in v1.43.0 to credential protection in configuration and diagnostics. FC mapping from the prior seven-FC
+      version: prior FC01 (all-boundary known-value scan) maps to new FC01 for configuration summaries only; prior FC02
+      (pattern-rule categories) is removed; prior FC03 (audit/restore endpoint split) maps to new FC02 for endpoint
+      preference handling, with secret_ref/credential-store migration removed; prior FC04 (fail-closed scanner and post-commit
+      leak) maps to new FC04 for safe fallback, with post-commit/immutable-evidence handling removed; prior FC05 (over-redaction)
+      is removed; prior FC06 (boundary coverage/stream) is removed; prior FC07 (existing controls plus new scope regression)
+      maps to new FC03 for the listed get_scrubbed paths and FC04 for preserved protections. Removed capabilities are
+      not re-expressed as hidden obligations. The current fit criteria count is four. At revision v1.43.0, the global
+      FC count was 54. FR-02 is the only implementation dependency; the INV-01 binding/publication coupling is removed.
+      Supported request-error paths are net.py get_scrubbed, the Alpha Vantage common.py get_scrubbed call and scrubbed
+      notice helper, and the FRED fred.py get_scrubbed call including its passthrough 400 error_message path; unlisted
+      provider/third-party paths are not covered. The baseline did not establish an actual key leak and no incident
+      is claimed. The prior v1.25.0 approval and validation records remain historical; docs/req/requirement-mapping.csv,
+      docs/req/requirement-contracts-v1.json, docs/req/run-manifest-schema.json, docs/req/validation-results.json, and
+      the D2 artifacts still describe the earlier contract and were not updated by this revision. No implementation
+      or runtime result is claimed. Current v1.49.0 amendment: FR-02 dependency and manifest cases removed; SR-02 is
+      deferred. Historical revision statements above are not current dependencies. Scope pre-approval: https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044.
   - id: SR-02
     type: security
     title: Basic confinement of controlled result paths
     priority: Must
-    status: approved
+    status: "deferred"
     stakeholders:
     - security_reviewer
     - operator
@@ -3178,7 +3145,7 @@ conflict_resolutions:
   - id: C-01
     requirements: [FR-02, SR-01]
     description: "FR-02 needs a configuration record; SR-01 forbids credential values in supported outputs."
-    resolution: "FR-02 records a sanitized configuration allowlist; SR-01 omits known credential values in the listed summaries. No zero-match scan count is required."
+    resolution: "Future/deferred interaction only, not a current implementation task. FR-02 records a sanitized configuration allowlist; SR-01 omits known credential values in the listed summaries. No zero-match scan count is required."
   - id: C-03
     requirements: [FR-03, INV-01]
     description: "A user-facing availability summary can omit detail that another artifact retains."
@@ -3190,15 +3157,18 @@ conflict_resolutions:
   - id: C-05
     requirements: [FR-02, INV-01]
     description: "An auxiliary run record may not carry enough detail for the formal consistency invariant."
-    resolution: "The FR-02 manifest is auxiliary and is not part of INV-01's rating or conclusion comparison; no new manifest binding field is added."
+    resolution: "Future/deferred interaction only, not a current implementation task. The FR-02 manifest is auxiliary and is not part of INV-01's rating or conclusion comparison; no new manifest binding field is added."
   - id: C-06
     requirements: [FR-01, FR-02]
     description: "Reuse reduces repeated work, while the run record reports only basic analysis-scoped counts."
-    resolution: "FR-01 run-scoped reuse adds no counter or provenance obligation to FR-02; the manifest reports only its existing basic call counts. Existing vendor-cache behavior is unchanged."
+    resolution: "Future/deferred interaction only, not a current implementation task. FR-01 run-scoped reuse adds no counter or provenance obligation to FR-02; the manifest reports only its existing basic call counts. Existing vendor-cache behavior is unchanged."
   - id: C-07
     requirements: [FR-02, FR-01, SB-01]
     description: "Recording and checking add work to a latency-sensitive run."
-    resolution: "The running record is attempted at analysis start and updated at completion; any manifest failure only warns and never blocks model calls. The SB-01 check is deterministic and calls no model."
+    resolution: >-
+      Future/deferred interaction only, not a current implementation task. The running record is attempted at analysis
+      start and updated at completion; any manifest failure only warns and never blocks model calls. The SB-01 check
+      is deterministic and calls no model.
   - id: C-09
     requirements: [FR-04, SB-01]
     description: "A deterministic portfolio-risk limit can reduce actionable output, and a separate risk gate would fragment final authority."
@@ -3210,19 +3180,22 @@ conflict_resolutions:
   - id: C-12
     requirements: [FR-02, FR-06]
     description: "A recovery mechanism can introduce a second commit authority or a separate archive transaction."
-    resolution: "FR-06 is deferred and, if re-enabled, only completes a saved complete_report.md; it creates no commit authority, archive transaction, or manifest change."
+    resolution: "Future/deferred interaction only, not a current implementation task. FR-06 is deferred and, if re-enabled, only completes a saved complete_report.md; it creates no commit authority, archive transaction, or manifest change."
   - id: C-13
     requirements: [FR-05, FR-02]
     description: "History can mix old report files with a newer run."
-    resolution: "A report enters FR-05 history only through its FR-02 completed-manifest registration. The read returns the current registered merged Markdown text and does not guarantee immutability or prevent later overwrite."
+    resolution: >-
+      Future/deferred interaction only, not a current implementation task. A report enters FR-05 history only through
+      its FR-02 completed-manifest registration. The read returns the current registered merged Markdown text and does
+      not guarantee immutability or prevent later overwrite.
   - id: C-15
     requirements: [FR-05, SR-02]
     description: "History report references can escape the results root."
-    resolution: "FR-05 and SR-02 limit the history lookup to references that resolve inside the configured results root. This is a path boundary, not credential scanning."
+    resolution: "Future/deferred interaction only, not a current implementation task. FR-05 and SR-02 limit the history lookup to references that resolve inside the configured results root. This is a path boundary, not credential scanning."
   - id: C-16
     requirements: [FR-02, FR-06]
     description: "Recovery could be assumed to duplicate or mutate trading-memory policy."
-    resolution: "FR-06 is deferred and, if re-enabled, completes only complete_report.md; it does not recover or modify memory."
+    resolution: "Future/deferred interaction only, not a current implementation task. FR-06 is deferred and, if re-enabled, completes only complete_report.md; it does not recover or modify memory."
   - id: C-19
     requirements: [FR-07, FR-03]
     description: "A downstream brief can drop the FR-03 program availability summary while meeting a character limit."
@@ -3234,7 +3207,10 @@ conflict_resolutions:
   - id: C-21
     requirements: [FR-02, PR-01]
     description: "The auxiliary run record is functional; its write cost is a separate deferred measurement."
-    resolution: "FR-02 owns the auxiliary manifest. PR-01 is deferred and would measure complete create and update operations with 20 samples each; thresholds remain undetermined and no paired overhead benchmark is retained."
+    resolution: >-
+      Future/deferred interaction only, not a current implementation task. FR-02 owns the auxiliary manifest. PR-01
+      is deferred and would measure complete create and update operations with 20 samples each; thresholds remain undetermined
+      and no paired overhead benchmark is retained.
   - id: C-22
     requirements: [FR-07, CR-01]
     description: "The brief is functional delivery; net token/cost improvement is a separate cost observation."
@@ -3242,7 +3218,7 @@ conflict_resolutions:
   - id: C-25
     requirements: [SR-01, SR-02]
     description: "Credential leakage and path escape have different threats and tests."
-    resolution: "SR-01 covers limited credential protection in listed paths; SR-02 covers a limited result-path boundary. Neither is a general scanner or all-operation protection guarantee."
+    resolution: "Future/deferred interaction only, not a current implementation task. SR-01 covers limited credential protection in listed paths; SR-02 covers a limited result-path boundary. Neither is a general scanner or all-operation protection guarantee."
 moscow:
   must:
     - FR-01
@@ -3274,12 +3250,10 @@ moscow:
     - id: "multi-user-encryption"
       reason: "The D1 deployment is a single-user local tool; this is outside scope."
   rationale: >-
-    All 13 current requirements are retained. Nine are approved as a requirement-design baseline
-    (FR-01 through FR-05, SB-01, INV-01, SR-01, SR-02); FR-06, FR-07, PR-01, and CR-01 are deferred
-    and do not block current acceptance. Must or Should priority does not override deferred status.
-    Deleted requirements GR-01, QR-01, QR-02, the old financial FR-07, and INV-02 are not retained,
-    and the removed financial-metrics feature is not part of this document. The current FR-07 is the
-    deferred analyst-summary requirement, not the deleted financial requirement.
+    All 13 IDs / 55 FCs retained. Current active scope is six requirements / 27 FCs: FR-01, FR-03, FR-04, SB-01, INV-01,
+    SR-01. Seven deferred requirements / 28 FCs: FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01. Must/Should indicates
+    priority if activated, not current acceptance. Scope pre-approved in PR #12 comment 7089283044; existing historical
+    approvals remain historical.
 traceability:
   - req_id: FR-01
     code_refs:
@@ -3345,7 +3319,12 @@ traceability:
       - path: "baseline/runs/baseline-20261020-01/logs/stderr.log"
         locator: "file size"
         description: "Empty default stderr in the baseline."
-    notes: "FR-02 v1.27.0 covers only the native auxiliary per-analysis manifest for the CLI analysis entry and TradingAgentsGraph.propagate(). The baseline metrics and manifest are external wrapper evidence, not a native implementation. docs/req/run-manifest-schema.json was later deleted and remains historical material, not a current file or design constraint; current FR-02 semantics are defined by this YAML."
+    notes: >-
+      Deferred in v1.49.0; references below describe historical gaps/future work, not current acceptance. FR-02 v1.27.0
+      covers only the native auxiliary per-analysis manifest for the CLI analysis entry and TradingAgentsGraph.propagate().
+      The baseline metrics and manifest are external wrapper evidence, not a native implementation. docs/req/run-manifest-schema.json
+      was later deleted and remains historical material, not a current file or design constraint; current FR-02 semantics
+      are defined by this YAML.
   - req_id: FR-03
     code_refs:
       - path: "src/tradingagents/agents/state.py"
@@ -3420,7 +3399,12 @@ traceability:
       - path: "baseline/runs/baseline-20261020-01/memory/trading_memory.md"
         locator: "entry tag and DECISION block"
         description: "Baseline memory persistence; not used as a registration source by FR-05."
-    notes: "FR-05 v1.30.0 provides a minimal read-only history lookup over FR-02 completed manifests and saved complete_report.md files. It adds no committed-publication proof, section manifest, hash, immutability, index, pagination, scan budget, CLI menu, export, migration, or report regeneration. The baseline report tree and memory file are gap evidence only."
+    notes: >-
+      Deferred in v1.49.0; references below describe historical gaps/future work, not current acceptance. FR-05 v1.30.0
+      provides a minimal read-only history lookup over FR-02 completed manifests and saved complete_report.md files.
+      It adds no committed-publication proof, section manifest, hash, immutability, index, pagination, scan budget,
+      CLI menu, export, migration, or report regeneration. The baseline report tree and memory file are gap evidence
+      only.
   - req_id: FR-06
     code_refs:
       - path: "src/cli/run.py"
@@ -3588,13 +3572,17 @@ traceability:
       - path: baseline/runs/baseline-20261020-01/results/reports/NVDA_20261020_193209/
         locator: report tree
         description: Baseline path-based report tree; no path-escape incident was established and ticker-component checks already existed.
-    notes: "SR-02 v1.44.0 covers only FR-02's automatic manifest path and FR-05's history-report read path. It adds no all-operation path framework, check-then-use race guarantee, hard-link/mount/all-platform guarantee, recovery/quarantine/cleanup scope, historical proof, or SR-01 credential-scan dependency. No implementation or incident is claimed."
+    notes: >-
+      Deferred in v1.49.0; references below describe historical gaps/future work, not current acceptance. SR-02 v1.44.0
+      covers only FR-02's automatic manifest path and FR-05's history-report read path. It adds no all-operation path
+      framework, check-then-use race guarantee, hard-link/mount/all-platform guarantee, recovery/quarantine/cleanup
+      scope, historical proof, or SR-01 credential-scan dependency. No implementation or incident is claimed.
 validation:
   current:
     document: docs/req/requirements.yaml
     schema: docs/req/req-schema.json
-    structural_status: passed
-    consistency_status: passed
+    structural_status: "passed"
+    consistency_status: "passed"
     scope: Local structural validation of the current requirements document only. It does not validate application implementation, tests, live model or vendor behavior, performance, cost, CI, or application acceptance.
     working_directory: Project root, the directory containing docs/req/.
     dependencies: Python 3 with PyYAML and jsonschema Draft 2020-12 support. The validation command does not install these dependencies.
@@ -3627,10 +3615,13 @@ validation:
       print("需求文档结构校验通过")
       PY
     ci_status: integrated
-    ci_note: The local push/PR workflow `.github/workflows/ci.yml` runs this schema gate; actual GitHub execution is not verified. This metadata-only update does not change the requirement version, 13 requirements, 55 FCs, approvals, or source evidence.
+    ci_note: "Existing CI schema checker is unchanged and computes counts dynamically. Its registry regression expectation is synchronized separately; remote PR #12 results are not yet established."
     application_status: not_run
     application_note: No application tests, live model or vendor evaluation, performance measurement, cost measurement, or application acceptance were executed.
-    design_approval_note: The historical approval is requirement-design approval only; it is not implementation, test, CI, or application acceptance.
+    design_approval_note: >-
+      Six-active scope and specified FC/architecture/test changes pre-approved by jyy722 in PR #12 comment 7089283044
+      (2026-11-23T01:37:12Z), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. No final review/merge/product
+      acceptance is implied.
     limitations:
     - The repeatable command checks only document structure against the current schema.
     - The one-time checks below are not automatically executed by the validation command.
@@ -3802,7 +3793,10 @@ validation:
 open_questions:
   - id: OQ-05
     question: "What manifest-creation and manifest-update duration thresholds should PR-01 adopt after its deferred 20-sample measurement?"
-    impact: "PR-01 future acceptance only. Thresholds remain undetermined pending the deferred 20-sample measurement; no old numeric targets or FC-specific thresholds apply. The 20-sample size is fixed measurement scope rather than an open question. PR-01 does not block the nine active requirements."
+    impact: >-
+      PR-01 future acceptance only. Thresholds remain undetermined pending the deferred 20-sample measurement; no old
+      numeric targets or FC-specific thresholds apply. The 20-sample size is fixed measurement scope rather than an
+      open question. PR-01 does not block the six active requirements.
     blocking: false
   - id: OQ-16
     question: "What default Unicode-character limit should the deferred FR-07 analyst summaries use after measurement?"
@@ -3810,5 +3804,8 @@ open_questions:
     blocking: false
   - id: OQ-17
     question: "For the deferred CR-01 comparison, which unit prices will be supplied before cost calculation, and what cost target will be set after measurement?"
-    impact: "Split from the former OQ-16. Unit prices must be provided before any future cost calculation; the cost target is determined only after measurement. The three scenarios are fixed measurement scope rather than an open question. No price or target is approved now, and CR-01 does not block the nine active requirements."
+    impact: >-
+      Split from the former OQ-16. Unit prices must be provided before any future cost calculation; the cost target
+      is determined only after measurement. The three scenarios are fixed measurement scope rather than an open question.
+      No price or target is approved now, and CR-01 does not block the six active requirements.
     blocking: false

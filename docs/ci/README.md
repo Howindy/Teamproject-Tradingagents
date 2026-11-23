@@ -1,5 +1,7 @@
 # CI Gate Operation
 
+> 2026-11-23 current-scope clarification: D1 v1.49.0 retains 13 requirements / 55 FCs with six active / 27 FCs and seven deferred / 28 FCs. PR #12 pre-approval: comment 7089283044, frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. Existing workflow/classifier/schema are unchanged; only the registry count regression expectation is synchronized. Counts/results below remain historical to their recorded versions. No PR #12 final CI or merge is claimed.
+
 This directory contains the implementation notes and the single semantic
 configuration container for the CI described in [`CI.md`](../../CI.md). The
 documents and scripts implement gates; they do not approve application work,

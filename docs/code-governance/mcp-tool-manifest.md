@@ -1,7 +1,10 @@
 # MCP and Tool-Manifest for AI Coding Agents
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 - Document status: Design-time tool inventory and role-use policy; not an approval, active permission configuration, MCP connection, execution record, or security certification.
-- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) v1.48.0, independently counted as 13 requirements and 55 fit criteria: 9 active requirements with 40 FCs and 4 deferred requirements with 15 FCs.
+- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) v1.49.0, independently counted as 13 requirements and 55 fit criteria: 6 active requirements with 27 FCs and 7 deferred requirements with 28 FCs.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md) and [`ADR 001`](../architecture/adr/001-graph-internal-final-check.md).
 - Governance basis: [`permission-model.md`](../architecture/permission-model.md) and [`verification-constraints.md`](verification-constraints.md).
 - Project instruction basis: [`AGENTS.md`](../../AGENTS.md).
@@ -142,7 +145,7 @@ Open items:
 1. **OQ-07 remains pending.** The four role names are design labels, not approved configured identities or machine whitelists.
 2. The project permission file contains a machine-readable allowlist, but its actual loading, merged precedence, and effective enforcement remain unverified. The role intent to read D3/D4 inputs and `AGENTS.md` is still a design boundary, not proof of runtime access. This document supplies no new role or enforcement mechanism.
 3. The current MCP server inventory is empty/unverified. No MCP capability is granted.
-4. `docs/plans/round-01.md` exists and remains proposed; it is not implementation or specific-test approval.
+4. Round 1 has real approval and merged C-08 core evidence; its frozen plan retains historical Proposed/Pending cells (see AGENTS and RM-7-R1). Those cells are not its current approval status, and the Round 1 approval grants no permission or pre-approval for later tasks. The six-active revision has its own frozen specification and PR #12 pre-approval; later feature rounds still require their own exact task setup.
 5. Local Git writes, remote Git operations, network/live API use, and dependency installation remain separate human authorizations.
 6. The permission model and this tool manifest remain human-maintained design records; file presence and CI static checks do not establish runtime permission enforcement.
 

@@ -1,5 +1,8 @@
 # CS5351 Agent Instructions
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 ## Scope and project root
 
 This file is the project-root entry point for this application. Its containing directory is the application project root; all paths below are relative to that directory. It does not authorize access to sibling repositories or other coursework. Preserve the approved `src/` source and `test/` layouts.
@@ -22,7 +25,7 @@ Check actual file availability. Missing governance files or machine configuratio
 
 The current application is under `src/`, imported from TradingAgents v0.7.0. Application packages are `src/tradingagents/` and `src/cli/`; tests are under `test/offline/` and `test/live/`. Consult the root `pyproject.toml` for supported Python, dependencies, build configuration, and test options. Build on this baseline rather than introducing a replacement application.
 
-The current D1 baseline is v1.48.0: nine active requirements with 40 FCs (FR-01 through FR-05, SB-01, INV-01, SR-01, SR-02). FR-06, FR-07, PR-01, and CR-01 are deferred with 15 future FCs. Recheck the actual document for later authorized revisions. Historical descriptions, baseline runs, planned tests, and Proposed architecture are not implementation or acceptance evidence.
+The current D1 baseline is v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01). Historical approvals and existing tests do not establish unimplemented integration.
 
 ## Round plans and approval
 
@@ -40,7 +43,7 @@ Each round plan must state:
 
 Stop for human approval of the execution plan and specific tests before the corresponding application implementation begins. A general strategy or this file is not test approval. Security-critical changes also need the relevant ADR and human approval. An explicit approved scope does not require repeated permission for ordinary work within it. Reconfirm only affected changes to requirements, interfaces, expectations, permissions, or scope.
 
-OQ-01 and OQ-04 remain prerequisites for their affected entry work until explicitly decided. OQ-07 belongs to D3 permission setup. OQ-08/12/13/15/16 can be addressed by approved technical verification within existing scope; verification approval is not evidence that the assumption holds. OQ-02 fixes only `max_projected_weight` and `max_stop_distance`. Read current OQ tables rather than closing items automatically.
+OQ-01 remains a prerequisite for its affected scenario-input work. OQ-04 verifies the retained baseline save/display behavior; it is not a new product-decision gate unless a separately approved interaction change is proposed. OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) can be addressed by approved technical verification within existing scope; verification approval is not evidence that the assumption holds. OQ-02 fixes only `max_projected_weight` and `max_stop_distance`. Read current OQ tables rather than closing items automatically.
 
 ## File and tool boundaries
 
@@ -63,8 +66,6 @@ Use the blueprint component/interface catalog as the authority. Each architectur
 - FR-04 evaluates the caller scenario deterministically, handles applicability and invalid input under its contract, and writes no formal recommendation fields. Display rounding does not decide risk.
 - SB-01 alone decides/generates formal values. Entries, reducers, and writers may pass, merge, or project those values unchanged. Missing/non-string/empty/whitespace-only conclusions are ordinary blocked/REVIEW inputs; invalid formal output at a consumer is a contract failure, not a consumer-generated REVIEW.
 - Reports and new memory consume the same formal result. Report writers use passed state rather than a live registry. Existing memory no-op and settlement behavior remains bounded by D1/D2.
-- Manifest persistence is best-effort and cannot replace an analysis error or change its result. Preserve distinct state, memory, and report-save policies. Writer/history reader share the current minimal manifest contract.
-- History is read-only and does not regenerate, repair, re-register, or trigger analysis. Apply the existing confined-path and distinct-error contracts.
 - Keep RunContext/collectors/registries out of serializable graph state and checkpoints. The selected new flow executes fully and does not resume or delete old checkpoint evidence.
 - Apply only the specified credential/path protections. Do not add generic scanners, transactions, archives, recovery systems, global dispatchers, or new dependencies without a separate decision.
 
@@ -83,3 +84,13 @@ Report changed files, implemented FCs, checks actually run, failures/skips, evid
 Before merge, the applicable course gates must be real: test pre-approval, lint/type/dependency checks, requirements schema, regression, AI-use log, safety-path checks, and fixed semantic evaluation for prompt/model changes before production. CI and safety-critical human review/ADR must be enforced by branch protection. Workflow files under the project-root `.github/workflows/` do not prove that the remote repository executes them or that required checks and protection are enabled. Do not invent quality thresholds or substitute placeholder-success gates.
 
 Use per-PR review records ending in `APPROVE`, `CHANGES REQUIRED`, or `REJECT`. Passing tests alone is not approval, push is not merge, and merge is not evidence of unrun acceptance. Do not deploy or merge without the corresponding authorization.
+
+## Deferred and historical design archive — not current implementation instructions
+
+Prior mixed/current design text below is retained only for historical rationale or future reactivation review. Its mandatory wording is not current acceptance.
+
+
+
+- Manifest persistence is best-effort and cannot replace an analysis error or change its result. Preserve distinct state, memory, and report-save policies. Writer/history reader share the current minimal manifest contract.
+
+- History is read-only and does not regenerate, repair, re-register, or trigger analysis. Apply the existing confined-path and distinct-error contracts.

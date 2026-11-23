@@ -1,7 +1,10 @@
 # Memory and State Design
 
+> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+
+
 - Document status: Proposed companion architecture document; not an approval, implementation claim, or test result.
-- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.48.0, independently counted as 13 requirements and 55 fit criteria: 9 active requirements with 40 FCs and 4 deferred requirements with 15 FCs.
+- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.49.0, independently counted as 13 requirements and 55 fit criteria: 6 active requirements with 27 FCs and 7 deferred requirements with 28 FCs.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md) and [`ADR 001`](adr/001-graph-internal-final-check.md).
 - Cross-check basis: [`invariants.md`](invariants.md), [`trace-matrix.md`](trace-matrix.md), and [`evaluation-table.md`](evaluation-table.md).
 - Related runtime behavior: [`runtime-policy-catalog.md`](runtime-policy-catalog.md).
@@ -17,7 +20,7 @@
 3. JSON, Markdown, HTML, and memory-log artifacts actually written to disk;
 4. existing cross-run vendor caches and checkpoint storage.
 
-A value being JSON-compatible or marked serializable in the blueprint does not prove that the current application persists it. The table therefore separates the owning object, the intended carrier, and the actual writer. The current code still has the pre-D2 Portfolio Manager, report, state-log, memory, and checkpoint structure; no new manifest, availability registry, risk result, or final-check node exists in the inspected code.
+A value being JSON-compatible or marked serializable in the blueprint does not prove that the current application persists it. The table therefore separates the owning object, the intended carrier, and the actual writer. The current code still has the pre-D2 Portfolio Manager, report, state-log, memory, and checkpoint structure; C-08/C-09 independent cores exist, but their graph/entry wiring and the FR-03 registry remain unimplemented; manifest/history/new-stat work is deferred.
 
 FR-06, FR-07, PR-01, and CR-01 are deferred. They add no recovery material, summary field, cost record, retention task, or placeholder interface here.
 
@@ -25,8 +28,7 @@ FR-06, FR-07, PR-01, and CR-01 are deferred. They add no recovery material, summ
 
 | State | Owner | Carrier | Writer and timing | Reader and use | Session, interruption, and version behavior | Retention and deletion | Privacy boundary |
 |---|---|---|---|---|---|---|---|
-| Run identity, clocks, status, locks, futures, counters, active-context binding | C-03 `RunContext` / `RunGovernor` | Process memory; the context binding is context-local | C-01 or C-02 on entry; timers/status change during the run; terminal values at `finish()` | C-03, lifecycle coordination, manifest projection | Lost when the process ends. Never stored in graph state, checkpoint, or on the reusable graph object. A new analysis gets new state. | No independent deletion; the object is released by its execution scope. Only selected fields are projected to the manifest. | Identity, timing, and other metadata and their manifest projection do not contain raw payloads, model text, credentials, or complete config. Run-scoped FR-01 reuse state owned by RunContext may temporarily hold the original business result/failure for the existing reuse flow; this adds no persistent payload archive. |
-| Per-analysis stats handler and collector | C-03 creates C-04 for one analysis | Process memory: model-call record map, tool-call ID set, one lock | C-04 receives this execution's callbacks; snapshot on normal completion or a caught execution error | C-03/`finish()` and C-14 manifest projection | Lost on process end. Not stored on the reusable graph or model clients; independent analyses get separate instances. | No current persistence beyond the manifest fields. No cross-run counter store. | Call IDs, counts, and token totals only; no prompt text, response body, raw usage object, or credential is required. |
+| Active binding, locks, reuse/availability objects | C-03 | Process memory | Entry start/exit | Local adapters and snapshots | Lost at process end; fresh per analysis | No new persistent retention | No credential/config/payload archive |
 | FR-01 query-reuse outcomes and single-flight synchronization | C-05 `QueryReuseService` under C-03 | Process memory, one run | First caller completes and publishes the existing result/failure; waiters reuse it | P-09 and P-13 callers | Lost on process end. No cross-run reuse, module global, or persistent cache entry. | No retention after the run. Existing vendor caches remain separate. | Reuses the existing business result/failure; adds no payload archive or source log. |
 | FR-03 observations, acceptance sequence, query marks, and path associations | C-07 `AvailabilityRegistry` under C-03 | Process memory, one run | C-06 helper and C-20 classifier accept an observation; path association may be added when a supported query begins | C-07 summarizer, research/final/report consumers through snapshots | Lost on process end. Not written to manifest, memory, checkpoint, or a diagnostic file. No snapshot version history. | No independent deletion; object lifetime is the run. Materialized summary may survive only if written into returned/saved state or report. | Safe status, reason, method/object/parameters, known source or null, and path IDs. No raw payload, prompt, full config, or unhandled exception text. |
 | Private pre-fetch call-failure notes and `availability_tracking_error` | C-07 availability management under C-03 | Process memory, one run | A supported call rejected before fetch adds a note; unlocatable/unrecordable completed-query observation loss sets the tracking error | C-07 summarizer; tracking error makes later snapshots `None` | Lost on process end. Not in `AvailabilitySummary`, final state, report, memory, manifest, or checkpoint. A new run starts clean. | No ledger, diagnostic file, or repair record. | Fixed category and short safe reason only; no raw arguments, exception, payload, or configuration. |
@@ -38,21 +40,17 @@ FR-06, FR-07, PR-01, and CR-01 are deferred. They add no recovery material, summ
 | `model_proposal` | Portfolio Manager C-10; graph state | Nested `{rating, text}` or `null` in graph state; labeled report section when implemented | Portfolio Manager model completion | SB-01 as input; separately labeled proposal display/report | Advisory only. Lost on process end unless an actual output includes it. No checkpoint continuation. | No memory record and no manifest rating field. Existing report/state overwrite behavior applies if included. | Model-generated recommendation text. It may be shown separately but must not replace formal fields. |
 | `portfolio_risk_result` | C-08; graph state | JSON-compatible mapping with display-safe scenario/thresholds, decimal-string/null metrics, status, and risk-scoped reasons | Risk node after evaluating the caller scenario | SB-01 and CLI/report consumers | Run-scoped. The current `_log_state()` fixed projection does not include a complete risk/availability archive, and this design does not require expanding it; returned final_state and generated reports still deliver the required risk result. No checkpoint requirement. | No risk metadata is required in memory or the manifest. Only actual report/state outputs may retain it. | Display-safe values only; invalid/unsafe raw inputs are omitted. No model text, raw account data, or network fill. |
 | Formal result: `gate_status`, top-level `reasons`, `final_rating`, `final_trade_decision` | C-09 `FinalRecommendationChecker`; graph state | Graph state; intended final-state JSON, CLI, report, and state log | SB-01 node only | Entry return, CLI, report, state log, memory adapter | Run-scoped authority. Missing/invalid output is an execution contract failure, not a persisted fallback state. No manifest rating field or read-time version proof. | Retained only in outputs actually written. Existing same-path report/state overwrite behavior remains; no immutable archive. | Formal decision text is model-derived on a pass and program-generated on REVIEW, with actual safe reasons. No credential or raw payload is added. |
-| Run manifest | C-03 and C-14 `ManifestStore` | JSON at `<results_dir>/<run_id>/run_manifest.json` | Attempted at start, terminal attempt at `finish()` | Operator, diagnostics, FR-05 registration | In-memory events are lost on crash; the JSON may be missing, running, completed, or failed. No automatic terminalization or recovery. | Persistent file. Existing run directories are retained; this design adds no automatic cleanup, rotation, or garbage collection. | Identity, timing, allowlisted config summary, counts, token totals, confirmed refs, and safe error summary. No formal rating, prompt, raw tool body, credential, or complete config. |
 | Saved final-state JSON | Existing `record_decision()`/state-log path; D2 final-state save boundary | Existing `<results_dir>/<ticker>/TradingAgentsStrategy_logs/` JSON path | Existing state save after a valid formal result; D2 preserves path-specific failure behavior | Operator, later inspection, current memory step after state save | An existing file can remain after interruption. Same ticker/date uses the existing file path and can be overwritten by a later save. The D2 design adds no run_id-specific state file or migration. | Existing file behavior only. No automatic rotation, cleanup, backup, or immutability. | Existing fixed projection of reports, debate/plans, final fields, and allowlisted `run_settings`; this design does not require adding a complete risk/availability archive, while returned final_state and generated reports still deliver those results as required and INV-01 keeps its formal rating/body save requirement. No new full-config dump. |
-| Saved report tree, merged Markdown, and HTML | C-11 `ReportWriter`; CLI save or independent save | Run-in default path under `results_dir`, or caller-chosen path | Requested CLI save inside the run; independent `save_reports(final_state, ...)` after the run | User, CLI display, FR-05 only when registered by a completed manifest | A partial tree can remain after a failure or interruption. Existing same-path saves may overwrite earlier files. No original-byte, hash, or version guarantee. | No automatic cleanup or immutable archive. History references current file content; manual edit/delete changes availability. | Contains existing model-generated report text plus deterministic formal/risk/availability sections. No full config/credential scan is claimed. |
+| Saved report tree, merged Markdown, and HTML | C-11 `ReportWriter`; CLI save or independent save | Run-in default path under `results_dir`, or caller-chosen path | Requested CLI save inside the run; independent `save_reports(final_state, ...)` after the run | User, CLI display, user; future FR-05 deferred | A partial tree can remain after a failure or interruption. Existing same-path saves may overwrite earlier files. No original-byte, hash, or version guarantee. | No automatic cleanup or immutable archive. History references current file content; manual edit/delete changes availability. | Contains existing model-generated report text plus deterministic formal/risk/availability sections. No full config/credential scan is claimed. |
 | New memory decision entry and later settlement/reflection updates | C-12 `MemoryAdapter` / existing `TradingMemoryLog` and `Reflector` | Configured `memory_log_path` Markdown file | New decision appended after final-state save; existing settlement updates the same entry later | Later analyses' Memory Log step and Portfolio Manager; operator inspection | Persistent across sessions. New D2 entry must use the formal rating/body. Settlement may later update outcome/reflection but not regenerate the original rating/decision body. No version allocation. | New entries are blocked by the existing same-ticker/date idempotency guard. When `memory_log_max_entries` is set, the oldest resolved entries are pruned on a settlement write; pending entries are kept. Default is `None`, which disables rotation. No other automatic deletion. | Stores trade date, ticker, rating, decision prose, outcome percentages, and reflection; model text may be re-injected into later prompts. No credential store or encrypted memory. |
 | Existing vendor caches | Vendor adapter / configured `data_cache_dir` | Yahoo OHLCV per-symbol CSV; SEC EDGAR JSON under `sec_edgar` | Existing data fetch writes cache files | Later analyses and vendor calls | Cross-run and independent of FR-01. Verified current behavior: Yahoo cache is reusable only when written on the current day, with a 900-second same-day TTL for a current-day request; SEC JSON uses a 24-hour mtime TTL. No new persistent registry. | Cache files persist until replaced or removed externally; this design adds no automatic purge beyond existing freshness checks. | Contains vendor market/filing data, not model prompts or credentials. Cache contents remain subject to existing vendor handling. |
 | Existing checkpoint databases | C-16 `CheckpointAdapter` / existing checkpointer | SQLite under `<data_cache_dir>/checkpoints/<TICKER>.db`; thread ID from ticker/date/signature | Existing checkpoint code outside the D2 flow | Existing checkpoint tooling/tests only; not the new flow | May persist across sessions under old behavior. The new flow acquires no session, does not resume, reads no old checkpoint as evidence, and deletes none. Version/signature behavior belongs to existing code. | Existing storage and clear tools remain. The new flow adds no retention or deletion action. | May contain graph state from an older run. It is not current analysis evidence, not a formal output, and not exposed through the new availability/history interfaces. |
-| History list and report-read result | C-13 `HistoryReader` | Derived process result; no index | On an explicit list/get call after implementation | Caller | Recomputed from manifests/report path on each call after implementation. No cross-request snapshot, cached index, or version promise. | No persistent history state. Manual file changes affect the next call. | Read result contains report text or safe summaries/errors; no credentials or unrelated file content. |
 
 ## 3. Write, read, and update rules
 
 ### 3.1 Run-scoped control state
 
-- `RunContext`, the stats collector, FR-01 reuse state, availability observations, path associations, query marks, call-failure notes, and the tracking error remain in process memory for one analysis. They are not moved into graph state or checkpoints.
-- A reusable graph or model object may serve multiple analyses, but it must not retain the prior analysis's collector, reuse registry, availability registry, or context binding. Exiting the context restores the prior binding.
-- FR-01 results are keyed only within one run. Existing vendor caches are a separate cross-run layer and never count as FR-01 reuse.
+C-03 owns only ephemeral scope binding, reuse and availability objects. Restore the previous binding on every normal/error exit. Do not serialize locks, registries or runtime objects into graph state/checkpoints. Independent analyses never share these objects; explicit delegation shares its caller scope.
 
 ### 3.2 Available summaries and research delivery
 
@@ -80,46 +78,25 @@ The resulting text is inserted into the Portfolio Manager's existing prompt. Thi
 
 ### 3.5 Persistence and ordering
 
-- Manifest persistence is best-effort and atomic per visible file. A failure is a safe warning and does not change analysis, formal result, or run outcome.
-- Final-state JSON, a new memory append, and a requested CLI report retain their path-specific failure behavior. They are not uniformly best-effort.
-- Existing order is preserved: graph and formal result, existing final-state save, new memory append, requested report save. An earlier failure prevents later writes in the existing order.
-- There is no cross-file transaction, rollback, repair, or automatic re-registration. A successful final state is not rolled back because memory fails; a successful Markdown report is not deleted because HTML fails.
+Preserve existing final-state-save then conditional new-memory append ordering and optional reports. A failed save is not claimed successful; preserve its original handling and files already saved. There is no cross-file transaction or current manifest/registration step.
 
 ### 3.6 History and vendor caches
 
-- History is read-only after implementation. It discovers only completed, supported manifests with a legal report reference; it does not infer unregistered files, repair records, regenerate reports, or create an index.
-- Cache reads are existing vendor behavior. Cache hit/miss, fallback, and withholding semantics remain inside the data-fetch flow and are distinct from FR-01 and FR-03 observation state.
+History is deferred. Existing cross-run vendor caches remain baseline behavior and are distinct from the new per-analysis FR-01 reuse state.
 
 ## 4. Session, interruption, and version boundaries
 
 ### 4.1 Normal process lifetime
 
-| Point | What can exist | What is not guaranteed |
-|---|---|---|
-| Before entry validation succeeds | No analysis run, no manifest, no new memory record | Nothing beyond existing caller state |
-| After `RunContext` starts | In-memory run control state; possibly a running manifest | No formal result, no completed report, no new memory |
-| During graph execution | Graph state, run-scoped registries, possibly a running manifest | No final formal result; no checkpoint resume in the new flow |
-| After SB-01 and before saves | Complete formal result in memory/state; terminal summary preparation may exist | Files are not yet guaranteed; a process crash can lose all unsaved state |
-| After final-state save, before memory | Saved final-state JSON may exist | Memory may not exist; do not infer it from state success |
-| After memory, before terminal manifest | Saved outputs may exist; manifest may still be running | No terminal manifest guarantee |
-| Normal finish | Requested outputs that succeeded; terminal manifest attempted | No recovery proof, immutability, or terminal guarantee if the manifest write failed |
+Before analysis no scope exists. During analysis C-03 holds ephemeral reuse/availability; graph state holds serializable snapshots and business results. On normal delivery only outputs actually saved survive. Restore scope after entry-owned cleanup; no terminal manifest/new statistics are required.
 
 ### 4.2 Interruption and process end
 
-- All in-memory `RunContext`, stats, FR-01, availability, research-entry runtime state, and unsaved graph state are lost.
-- A manifest may be missing or remain `running`; that is not evidence that the analysis is still running or that it failed.
-- A report save interrupted between Markdown and HTML can leave a partial tree. The confirmed Markdown may be usable, but no HTML success is claimed.
-- Final-state and memory may be absent, or final-state may exist while memory does not. No automatic rollback is performed.
-- A pending memory entry may be settled by the existing later settlement path, but this is existing memory behavior, not analysis-run recovery. The design adds no background worker or recovery scheduler.
-- Existing checkpoint data may remain on disk, but the new flow does not read, resume from, or delete it. A later invocation is a new analysis and repeats model/data work.
+Ephemeral scope and unsaved graph state are lost. Preserve files already written without claiming terminal success or automatic recovery. A later invocation creates fresh state and fully reexecutes; it does not resume old checkpoints.
 
 ### 4.3 Version and compatibility
 
-- The existing memory parser accepts its current tag shape and optional resolution-date field. Malformed entries are skipped by existing parsing; there is no migration, version allocation, or upgrade pass in this design.
-- A proposed manifest has a format/version marker, but no manifest implementation exists. Unsupported or unparseable manifests are outside history; no migration is added.
-- Reports and final-state JSON have no new version protocol, hash, or read-time compatibility proof. Same-path saves and external edits may change current content.
-- Existing checkpoint signature compatibility belongs to the old checkpoint subsystem and is not used by the new flow.
-- No automatic compatibility between old and new files is promised. Existing formats may be read only where the implemented reader explicitly supports them.
+Keep existing source/test layouts, saved report/state/memory formats and old checkpoint evidence. No new manifest format, history migration, persistent analysis-identity protocol or retention service is current.
 
 ## 5. Retention, deletion, and privacy
 
@@ -133,7 +110,7 @@ The resulting text is inserted into the Portfolio Manager's existing prompt. Thi
 
 ### 5.2 Privacy boundaries
 
-- Manifest and configuration summaries use the existing `run_settings()` allowlist. Credential fields, endpoints, and local paths are not added to the summary.
+- Current report/final-state configuration summaries use the existing `run_settings()` allowlist. Credential fields, endpoints, and local paths are not added to the summary.
 - Availability records, failure marks, call-failure notes, and tracking error use fixed safe reasons and do not store raw payloads, prompts, complete configuration, or raw exception text.
 - The risk result is display-safe; unsafe or invalid raw scenario values are omitted. No model recommendation, caller portfolio context, or memory text fills a missing risk value.
 - Reports and returned/saved final state contain existing model-generated analysis and decision text. The design does not scan or redact the full report body.
@@ -145,14 +122,85 @@ The resulting text is inserted into the Portfolio Manager's existing prompt. Thi
 
 | ID | Verification intent | Evidence state |
 |---|---|---|
-| M-V01 | Two analyses do not share RunContext, stats, FR-01 reuse, availability observations, or context binding; a reused graph starts clean. | Planned; existing checkpoint/entry tests are baseline only. |
+| M-V01 | Independent analyses isolate RunContext, FR-01 reuse, availability observations and context binding; explicit delegation shares scope, and exit restores prior binding. No new statistics isolation/refactor acceptance is added. | Planned; existing checkpoint/entry tests are baseline only. |
 | M-V02 | Research uses one fixed stage summary; later observations do not change it. | Planned; wrapper/executor integration pending OQ-13/OQ-15. |
 | M-V03 | Check-time and terminal availability inputs have the intended consumers; report writers never access live registry or rerun SB-01. | Planned; report source integration pending OQ-15. |
 | M-V04 | New memory entries use the formal rating/body; disabled/no-new-record creates nothing; settlement does not rewrite the decision. | Planned; existing `test_memory_log.py` and `test_cli_memory_log.py` are baseline only. |
-| M-V05 | Interrupted runs leave only actually written artifacts; a running/missing manifest is not treated as a terminal result or resume input. | Planned; no forced-termination test exists. |
-| M-V06 | Manifest best-effort and path-specific state/report/memory failures preserve existing exceptions and do not roll back successful files. | Planned; no manifest implementation exists. |
+| M-V05 | Interruption leaves only actually written artifacts and does not claim completion/recovery. | Planned boundary inspection; no forced-termination claim |
+| M-V06 | Existing state/report/memory failures preserve original errors and do not roll back saved files. | Planned |
 | M-V07 | Memory retrieval retains existing same-ticker/cross-ticker limits and point-in-time filtering; no vector/RAG component exists. | Static code review of existing memory log; no new retrieval implementation. |
 
-Pending items that affect implementation: OQ-16 execution-config callback propagation; OQ-12 unverified FR-03 producer branches; OQ-13 shared news executor and research wrapper; OQ-15 ordering, fixtures, and report source. OQ-01 and OQ-04 remain pending before entry implementation; OQ-02 is decided only for the key names `max_projected_weight` and `max_stop_distance`; OQ-08 remains pending technical verification. These are evidence or interface gaps, not new state or new requirements.
+Current pending items that affect implementation: OQ-12 unverified FR-03 producer branches; OQ-13 shared news executor and research wrapper; OQ-15 ordering, fixtures, and report source. OQ-01 remains pending before affected input implementation; OQ-04 is verification of retained save/display behavior, not an extra product decision; OQ-02 is decided only for the key names `max_projected_weight` and `max_stop_distance`; OQ-08 remains pending technical verification. These are evidence or interface gaps, not new state or new requirements. D2 OQ-16 callback/statistics propagation belongs only to deferred FR-02 and does not block the current six requirements.
 
-No source conflict was found for the state boundaries above. Deferred FR-06/FR-07/PR-01/CR-01 and context budgeting/compression/reinjection remain outside this design.
+No source conflict was found for the state boundaries above. Deferred FR-02/FR-05/SR-02/FR-06/FR-07/PR-01/CR-01 and context budgeting/compression/reinjection remain outside this design.
+
+## Deferred and historical design archive — not current implementation instructions
+
+Prior mixed/current design text below is retained only for historical rationale or future reactivation review. Its mandatory wording is not current acceptance.
+
+
+
+### 3.1 Run-scoped control state
+
+- `RunContext`, the stats collector, FR-01 reuse state, availability observations, path associations, query marks, call-failure notes, and the tracking error remain in process memory for one analysis. They are not moved into graph state or checkpoints.
+- A reusable graph or model object may serve multiple analyses, but it must not retain the prior analysis's collector, reuse registry, availability registry, or context binding. Exiting the context restores the prior binding.
+- FR-01 results are keyed only within one run. Existing vendor caches are a separate cross-run layer and never count as FR-01 reuse.
+
+
+
+### 3.5 Persistence and ordering
+
+- Manifest persistence is best-effort and atomic per visible file. A failure is a safe warning and does not change analysis, formal result, or run outcome.
+- Final-state JSON, a new memory append, and a requested CLI report retain their path-specific failure behavior. They are not uniformly best-effort.
+- Existing order is preserved: graph and formal result, existing final-state save, new memory append, requested report save. An earlier failure prevents later writes in the existing order.
+- There is no cross-file transaction, rollback, repair, or automatic re-registration. A successful final state is not rolled back because memory fails; a successful Markdown report is not deleted because HTML fails.
+
+
+
+### 3.6 History and vendor caches
+
+- History is read-only after implementation. It discovers only completed, supported manifests with a legal report reference; it does not infer unregistered files, repair records, regenerate reports, or create an index.
+- Cache reads are existing vendor behavior. Cache hit/miss, fallback, and withholding semantics remain inside the data-fetch flow and are distinct from FR-01 and FR-03 observation state.
+
+
+
+### 4.1 Normal process lifetime
+
+| Point | What can exist | What is not guaranteed |
+|---|---|---|
+| Before entry validation succeeds | No analysis run, no manifest, no new memory record | Nothing beyond existing caller state |
+| After `RunContext` starts | In-memory run control state; possibly a running manifest | No formal result, no completed report, no new memory |
+| During graph execution | Graph state, run-scoped registries, possibly a running manifest | No final formal result; no checkpoint resume in the new flow |
+| After SB-01 and before saves | Complete formal result in memory/state; terminal summary preparation may exist | Files are not yet guaranteed; a process crash can lose all unsaved state |
+| After final-state save, before memory | Saved final-state JSON may exist | Memory may not exist; do not infer it from state success |
+| After memory, before terminal manifest | Saved outputs may exist; manifest may still be running | No terminal manifest guarantee |
+| Normal finish | Requested outputs that succeeded; terminal manifest attempted | No recovery proof, immutability, or terminal guarantee if the manifest write failed |
+
+
+
+### 4.2 Interruption and process end
+
+- All in-memory `RunContext`, stats, FR-01, availability, research-entry runtime state, and unsaved graph state are lost.
+- A manifest may be missing or remain `running`; that is not evidence that the analysis is still running or that it failed.
+- A report save interrupted between Markdown and HTML can leave a partial tree. The confirmed Markdown may be usable, but no HTML success is claimed.
+- Final-state and memory may be absent, or final-state may exist while memory does not. No automatic rollback is performed.
+- A pending memory entry may be settled by the existing later settlement path, but this is existing memory behavior, not analysis-run recovery. The design adds no background worker or recovery scheduler.
+- Existing checkpoint data may remain on disk, but the new flow does not read, resume from, or delete it. A later invocation is a new analysis and repeats model/data work.
+
+
+
+### 4.3 Version and compatibility
+
+- The existing memory parser accepts its current tag shape and optional resolution-date field. Malformed entries are skipped by existing parsing; there is no migration, version allocation, or upgrade pass in this design.
+- A proposed manifest has a format/version marker, but no manifest implementation exists. Unsupported or unparseable manifests are outside history; no migration is added.
+- Reports and final-state JSON have no new version protocol, hash, or read-time compatibility proof. Same-path saves and external edits may change current content.
+- Existing checkpoint signature compatibility belongs to the old checkpoint subsystem and is not used by the new flow.
+- No automatic compatibility between old and new files is promised. Existing formats may be read only where the implemented reader explicitly supports them.
+
+
+
+| Per-analysis stats handler and collector | C-03 creates C-04 for one analysis | Process memory: model-call record map, tool-call ID set, one lock | C-04 receives this execution's callbacks; snapshot on normal completion or a caught execution error | C-03/`finish()` and C-14 manifest projection | Lost on process end. Not stored on the reusable graph or model clients; independent analyses get separate instances. | No current persistence beyond the manifest fields. No cross-run counter store. | Call IDs, counts, and token totals only; no prompt text, response body, raw usage object, or credential is required. |
+
+| Run manifest | C-03 and C-14 `ManifestStore` | JSON at `<results_dir>/<run_id>/run_manifest.json` | Attempted at start, terminal attempt at `finish()` | Operator, diagnostics, FR-05 registration | In-memory events are lost on crash; the JSON may be missing, running, completed, or failed. No automatic terminalization or recovery. | Persistent file. Existing run directories are retained; this design adds no automatic cleanup, rotation, or garbage collection. | Identity, timing, allowlisted config summary, counts, token totals, confirmed refs, and safe error summary. No formal rating, prompt, raw tool body, credential, or complete config. |
+
+| History list and report-read result | C-13 `HistoryReader` | Derived process result; no index | On an explicit list/get call after implementation | Caller | Recomputed from manifests/report path on each call after implementation. No cross-request snapshot, cached index, or version promise. | No persistent history state. Manual file changes affect the next call. | Read result contains report text or safe summaries/errors; no credentials or unrelated file content. |

@@ -259,10 +259,10 @@ def test_schema_current_document_and_invalid_inputs(tmp_path: Path):
     assert result["counts"] == {
         "requirements": 13,
         "fit_criteria": 55,
-        "active_requirements": 9,
-        "active_fit_criteria": 40,
-        "deferred_requirements": 4,
-        "deferred_fit_criteria": 15,
+        "active_requirements": 6,
+        "active_fit_criteria": 27,
+        "deferred_requirements": 7,
+        "deferred_fit_criteria": 28,
     }
 
     invalid_yaml = tmp_path / "bad.yaml"
