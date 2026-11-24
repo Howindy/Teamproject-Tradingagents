@@ -3989,3 +3989,31 @@ entries:
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/20
     limitations: [Independent final review and candidate-bound trusted execution pending.]
+
+  - id: AI-FR03-SCORER-REVIEW-001
+    date: '2026-11-25'
+    round: 3
+    tool: Codex
+    activity: ci_implementation
+    task: Repair attribution and news-source scope checks in the trusted FR-03 scorer.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC05]
+    files_changed:
+      - scripts/data_availability_eval.py
+      - test/offline/test_data_availability_evaluation.py
+      - docs/plans/fr03-scorer-maintenance-review.txt
+      - docs/ai-use-log.yaml
+    ai_contribution: Implemented bounded quotation and news-scope checks, added offline polarity controls, and compared all 45 dimension outcomes against the frozen run.
+    human_intervention: The non-author reviewer approved the frozen test specification before implementation. The operator requested offline verification and CI repair.
+    approval:
+      subject: FR-03-FC05 / IR-12 offline scorer maintenance
+      status: approved
+      evidence: [https://github.com/Howindy/Teamproject-Tradingagents/pull/21#issuecomment-7140217466]
+    verification:
+      status: offline_passed
+      summary: 66 suite tests passed. On 15 historical replies, five grades changed and forty matched the original. The revised replay yielded 19 passed, 25 unresolved and one failed. Zero provider requests.
+      evidence: [https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45453248371]
+    transcript_refs: []
+    commit: 5904b9f4aabfe5c02238aee3247114ad6692c511
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/21
+    limitations: [Frozen replay covers the historical candidate only.]
