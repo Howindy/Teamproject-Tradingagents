@@ -3169,3 +3169,40 @@ entries:
     limitations:
       - "No raw session export is in the repository; none fabricated."
       - "Push/PR depend on GitHub access available to the session; see PR record."
+
+  - id: "AI-SSR-PLAN-002"
+    date: "2026-11-24"
+    round: null
+    human_operator: "espino2233"
+    tool: "Codex"
+    model: "gpt-6.1-sol"
+    activity: "ci_maintenance_planning"
+    task: "Clarify approved-plan immutability and verify CI after the personal branch metadata rewrite."
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/plans/semantic-suite-routing.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Confirmed PR 17 has passing PR checks for a71bb18 while an earlier push run
+      45360360118 failed in classify. Its detailed job log requires additional GitHub
+      access, so the exact error is not established. Corrected the pending plan's
+      inconsistent instruction to edit approval references after approval: the approved
+      specification stays byte-identical, and actual events belong in PR/log/review records.
+      A normal follow-up push will receive a new before/head pair for CI verification.
+    human_intervention: "User requested investigation and repair of the failed CI."
+    approval:
+      subject: "Semantic suite routing plan"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "pending"
+      summary: "Documentation checks and final candidate remote CI are verified separately."
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45360360118"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45363323666"
+    transcript_refs: []
+    limitations:
+      - "Historical failed push retained; no job-log root cause claimed."
+      - "No application, workflow, checker or evaluation-policy change in this correction."

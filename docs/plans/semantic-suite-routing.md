@@ -149,7 +149,7 @@ Implementation checkpoint (after approval):
 | `test/offline/test_ci_gates.py` | New tests §5; adapt existing evidence/workflow tests to suite contexts (no assertion weakened: every old negative keeps a suite-scoped equivalent) |
 | `docs/ci/README.md`, `CI.md` (§3 diagram, §4.4) | Operator instructions, field/phrase format, status names, migration note |
 | `docs/ai-use-log.yaml`, `docs/review-memo.md` | Actual AI-use and per-PR review record |
-| `docs/plans/semantic-suite-routing.md` | Approval/implementation references only |
+| `docs/plans/semantic-suite-routing.md` | Freeze at the approved commit and keep byte-identical after approval. Record approval, implementation and verification events in the PR, AI-use log and review memo. A material specification revision needs a new fixed version and approval. |
 
 Not changed: `src/**`, `scripts/financial_metrics_eval.py`, FR-10 dataset/rubric/config, `test/offline/test_financial_metrics_evaluation.py`, classifier detection rules, aggregate logic, `.opencode/**`, requirements and D2 documents.
 
@@ -208,7 +208,7 @@ Coordination: this PR touches `scripts/ci_checks.py`, `scripts/ci_semantic_eval.
 
 ## 8. Implementation and verification order
 
-1. Human approves this plan at its commit (§10). Record approval reference here and in the AI-use log afterwards.
+1. Human approves this plan at its commit (§10). Keep the approved plan byte-identical; record the actual approval reference and subsequent implementation events in the PR, AI-use log and review memo.
 2. Tests first: add T01–T17 and adapt existing evidence tests; confirm the new ones fail against current code (record counts).
 3. `scripts/ci_checks.py` registry + selection + per-suite evidence; then `scripts/ci_semantic_eval.py`.
 4. Registry file; workflows (`trusted-evaluation.yml`, then `ci.yml` evidence-check).
