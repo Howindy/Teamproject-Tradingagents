@@ -18,6 +18,8 @@ def _state():
         "investment_plan": "RM PLAN",
         "trader_investment_plan": "TRADE",
         "risk_debate_state": {"neutral_history": "NEUTRAL"},
+        "model_proposal": {"rating": "Hold", "text": "PM DECISION"},
+        "gate_status": "passed", "reasons": [], "final_rating": "Hold",
         "final_trade_decision": "PM DECISION",
     }
 
@@ -35,7 +37,9 @@ def test_write_report_tree_creates_files(tmp_path):
     assert (tmp_path / "1_analysts" / "news.md").read_text() == "NEWS"
     assert (tmp_path / "2_research" / "manager.md").read_text() == "RM PLAN"
     assert (tmp_path / "3_trading" / "trader.md").read_text() == "TRADE"
-    assert (tmp_path / "5_portfolio" / "decision.md").read_text() == "PM DECISION"
+    rating_line, body = (tmp_path / "5_portfolio" / "decision.md").read_text().split("\n\n", 1)
+    assert rating_line == "Formal rating: Hold"
+    assert body == "PM DECISION"
     complete = out.read_text()
     assert "Trading Analysis Report: AAPL" in complete
     assert "MKT" in complete and "PM DECISION" in complete
@@ -115,7 +119,14 @@ def test_run_settings_name_the_version_of_the_running_code():
     ("Add on weakness.", "REVIEW"),           # no readable rating is said, not left out
 ])
 def test_the_report_header_names_the_rating(tmp_path, decision, rating):
-    state = dict(_state(), final_trade_decision=decision)
+    state = _state()
+    if rating == "REVIEW":
+        state.update(model_proposal={"rating": None, "text": decision}, gate_status="blocked",
+                     reasons=["unreadable proposal rating"], final_rating="REVIEW",
+                     final_trade_decision="Manual review required: unreadable proposal rating.")
+    else:
+        state.update(model_proposal={"rating": rating, "text": decision},
+                     final_rating=rating, final_trade_decision=decision)
 
     header = write_report_tree(state, "NVDA", tmp_path, settings=SETTINGS).read_text().split("## ")[0]
 

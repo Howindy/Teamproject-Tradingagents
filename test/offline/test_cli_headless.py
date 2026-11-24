@@ -109,7 +109,7 @@ def test_save_and_show_answer_the_questions_after_the_run(monkeypatch, tmp_path)
     graph = object.__new__(TradingAgentsGraph)
     graph.config = {"results_dir": str(tmp_path)}
     graph.run_settings = lambda: {}
-    state = {"market_report": "M", "final_trade_decision": "**Rating**: Hold"}
+    state = STATE
 
     run._offer_reports(state, graph, "NVDA", save=True, show=False)
 
@@ -224,7 +224,11 @@ def _report_graph(tmp_path):
     return graph
 
 
-STATE = {"market_report": "M", "final_trade_decision": "**Rating**: Hold"}
+STATE = {
+    "market_report": "M", "model_proposal": {"rating": "Hold", "text": "**Rating**: Hold"},
+    "gate_status": "passed", "final_rating": "Hold", "reasons": [],
+    "final_trade_decision": "**Rating**: Hold",
+}
 
 
 @pytest.mark.unit

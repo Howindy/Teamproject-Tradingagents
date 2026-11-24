@@ -226,7 +226,9 @@ def test_completed_portfolio_run_preserves_old_checkpoint_without_auto_clear(tmp
             observed["scope_is_none"] = scope is None
             observed["registry"] = scope.registry if scope is not None else None
             observed["input"] = graph_input
-            return {"final_trade_decision": "Rating: Hold\n\nx", "final_rating": "Hold"}
+            return {"model_proposal": {"rating": "Hold", "text": "Rating: Hold\n\nx"},
+                    "gate_status": "passed", "reasons": [],
+                    "final_trade_decision": "Rating: Hold\n\nx", "final_rating": "Hold"}
 
     graph.graph = _Executor()
 
