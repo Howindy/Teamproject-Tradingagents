@@ -4597,3 +4597,35 @@ entries:
         3.12, all 460 targeted tests passed. Ruff, API checks and pip check passed.
     transcript_refs: []
     limitations: ["Controlled offline inputs only. The PR records the default suite result."]
+
+  - id: "AI-SEMANTIC-UNITS-REVIEW-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "semantic_unit_review_submission"
+    task: "Publish the two existing draft unit sets on an independent review branch and prepare a Draft PR."
+    requirement_ids: ["FR-10", "FR-03", "FR-04", "SB-01", "INV-01"]
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/drafts/fr10-semantic-units.json"
+      - "docs/drafts/fr10-semantic-units.md"
+      - "docs/drafts/round04-semantic-units.json"
+      - "docs/drafts/round04-semantic-units.md"
+      - "test/offline/test_fr10_semantic_units_draft.py"
+      - "test/offline/test_round04_semantic_units_draft.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Prepared the existing local examples for independent review, changing draft status and using
+      standard sibling test imports. Committed the draft in 053e7e4, then synchronized current main
+      a4af0db in 78477f3, retaining both appended AI-use histories. No production, reference data,
+      rubric, scorer, registry, threshold, approval control or CI workflow changes in the PR delta.
+      The examples were written and checked before this publication step; no historical pre-approval
+      or live-model acceptance is fabricated. Review and any future adoption remain pending.
+    human_intervention: "User explicitly requested publishing these units through the standard branch/review process."
+    verification:
+      status: "local_checks_passed_review_pending"
+      summary: "After synchronization, standard pytest entry: 28 passed in 2.76s. Import-only lint corrections followed; final Ruff, JSON/YAML and diff checks are recorded before push. No model/vendor requests."
+    transcript_refs: []
+    limitations:
+      - "Draft PR preparation/publication is not independent approval, CI success or main merge."
+      - "The tests use controlled examples and deterministic contracts, not real LLM completions."

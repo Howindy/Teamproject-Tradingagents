@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 import test_round04a_integration as support
 
 from tradingagents import final_recommendation, portfolio_risk

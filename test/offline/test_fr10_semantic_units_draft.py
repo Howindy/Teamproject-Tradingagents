@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from test_financial_metrics_evaluation import _good_report, fm_eval
 
 ROOT = Path(__file__).resolve().parents[2]
