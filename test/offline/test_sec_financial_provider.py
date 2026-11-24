@@ -1,6 +1,7 @@
 """FR-10-FC01/FC06: SEC and price boundaries with synthetic inputs (ADR 002)."""
 
 from datetime import date, datetime
+from decimal import Decimal
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
@@ -42,9 +43,10 @@ def test_sec_structured_helpers_reuse_existing_cache_without_tool_observation(mo
     monkeypatch.setattr(sec_edgar, "cik_for", lambda ticker: "0000320193")
     calls = []
     monkeypatch.setattr(sec_edgar, "_cached_json", lambda url, name: calls.append((url, name)) or {"fixture": True})
+    monkeypatch.setattr(sec_edgar, "_cached_exact_json", lambda url, name: calls.append((url, name)) or {"fixture": True})
     assert sec_edgar.company_facts("AAPL") == ("0000320193", {"fixture": True})
     assert sec_edgar.submissions("AAPL") == ("0000320193", {"fixture": True})
-    assert calls[0][1] == "CIK0000320193.json"
+    assert calls[0][1] == "CIK0000320193-raw-v1.json"
     assert calls[1][1] == "CIK0000320193-submissions.json"
     monkeypatch.setattr(sec_edgar, "cik_for", lambda ticker: None)
     with pytest.raises(NoMarketDataError):
@@ -168,3 +170,57 @@ def test_fiscal_pe_uses_raw_daily_close_or_preserves_adapter_reason(
     assert pe.input_fact_ids == (eps.fact_id,)
     if price is not None:
         assert price.source_ref in pe.sources
+
+
+def test_sec_fractional_fact_retains_raw_digits_on_cold_and_cached_reads(tmp_path, monkeypatch):
+    """FC07: exact SEC decimal text survives the transport/cache/adapter boundary."""
+    digits = "6.12345678901234567890123456789"
+    raw = ('{"facts":{"us-gaap":{"EarningsPerShareDiluted":{"units":{"USD/shares":['
+           '{"start":"2023-10-01","end":"2024-09-28","filed":"2024-11-01",'
+           '"accn":"annual","fy":2024,"fp":"FY","val":' + digits + '}]}}}}}')
+    calls = []
+    response = SimpleNamespace(text=raw, raise_for_status=lambda: None)
+    monkeypatch.setattr(sec_edgar.requests, "get", lambda *a, **k: calls.append(a[0]) or response)
+    monkeypatch.setattr(sec_edgar, "cik_for", lambda _: "0000320193")
+    monkeypatch.setattr(sec_edgar, "get_config", lambda: {"data_cache_dir": str(tmp_path)})
+    # An older generic cache may already have rounded away digits. It must not
+    # be mistaken for an exact raw SEC snapshot.
+    old_cache = tmp_path / "sec_edgar" / "CIK0000320193.json"
+    old_cache.parent.mkdir()
+    old_cache.write_text('{"rounded":6.123456789012345}', encoding="utf-8")
+    for _ in range(2):
+        cik, payload = sec_edgar.company_facts("AAPL")
+        facts = _facts_for_concept(payload["facts"]["us-gaap"], "2025-08-05",
+                                   {"annual": (2024, "FY", date(2024, 9, 28))}, cik)
+        assert len(facts) == 1
+        assert facts[0].value == Decimal(digits)
+    assert len(calls) == 1
+    assert old_cache.read_text(encoding="utf-8") == '{"rounded":6.123456789012345}'
+
+
+def test_exact_sec_cache_does_not_publish_malformed_json(tmp_path, monkeypatch):
+    """FC07/FC10: unreadable source stays an explicit vendor failure, never cached as success."""
+    from tradingagents.dataflows.errors import VendorUnavailableError
+
+    monkeypatch.setattr(sec_edgar, "cik_for", lambda _: "0000320193")
+    monkeypatch.setattr(sec_edgar, "get_config", lambda: {"data_cache_dir": str(tmp_path)})
+    monkeypatch.setattr(sec_edgar.requests, "get", lambda *a, **k: SimpleNamespace(
+        text="not json", raise_for_status=lambda: None))
+    with pytest.raises(VendorUnavailableError):
+        sec_edgar.company_facts("AAPL")
+    assert not list(tmp_path.rglob("*.json"))
+
+
+def test_january_fiscal_year_comparative_is_not_carrying_filing_year():
+    """FC01: January-end fiscal Q3 comparative must be one FY earlier, never calendar Q4."""
+    from tradingagents.financials.sec_provider import _filing_labels
+
+    current = {"start": "2024-08-01", "end": "2024-10-31", "filed": "2024-12-01",
+               "accn": "jan-fy", "val": 120, "fy": 2025, "fp": "Q3"}
+    comparison = {**current, "start": "2023-08-01", "end": "2023-10-31", "val": 100}
+    data = {"Revenues": {"units": {"USD": [current, comparison]}}}
+    facts = _facts_for_concept(data, "2025-01-01", _filing_labels(data), "fixture-jan")
+    by_end = {f.period_end: f for f in facts}
+    assert (by_end[date(2024, 10, 31)].fiscal_year, by_end[date(2024, 10, 31)].fiscal_quarter) == (2025, 3)
+    assert (by_end[date(2023, 10, 31)].fiscal_year, by_end[date(2023, 10, 31)].fiscal_quarter) == (2024, 3)
+    assert dict(by_end[date(2023, 10, 31)].disclosure)["fy"] == "2025"

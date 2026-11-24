@@ -206,7 +206,7 @@ def calculate_metrics(inputs: FinancialInputs, clock: EvaluationClock) -> Metric
                 if b.sign_rule == "positive_outflow" and b.value >= 0:
                     capex = b.value
                 elif b.sign_rule == "negative_outflow" and b.value <= 0:
-                    capex = -b.value
+                    capex = b.value.copy_negate()  # exact sign change, independent of Decimal context
                 else:
                     raise _Unavailable("unknown_capex_sign" if b.sign_rule == "unknown" else "capex_sign_mismatch", known)
                 # Source statements report USD millions; the exact displayed

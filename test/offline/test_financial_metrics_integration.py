@@ -5,6 +5,10 @@ is replaced. Financial facts are the independent synthetic AAPL/XOM projection.
 """
 
 import copy
+import sys
+from dataclasses import replace
+from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from langchain_core.messages import HumanMessage
@@ -19,6 +23,32 @@ from tradingagents.financials.models import FinancialInputs
 from tradingagents.financials.wiring import build_metrics_factory
 from tradingagents.graph import trading_graph
 from tradingagents.run_context import RunContext, current
+
+
+@pytest.mark.parametrize("case_index", range(4))
+def test_actual_trusted_probe_uses_current_calculator_and_prompt(case_index):
+    """FC01-FC10: original trusted projection/driver, real installed candidate, no API."""
+    from test.offline.test_financial_metrics import DATA
+    from test.offline.test_financial_metrics_evaluation import fm_eval
+
+    case = DATA["cases"][case_index]
+    captured = fm_eval._run_prompt_capture_subprocess(
+        checkout_root=Path(__file__).resolve().parents[2], mode="candidate",
+        case=case, reference_data=DATA["reference_data"], python_executable=sys.executable,
+    )
+    block = captured["metric_block"]
+    rows = [line for line in block.splitlines() if line.startswith("| ")][1:]
+    assert len(rows) == 10
+    for expected, line in zip(case["expected_rows"], rows, strict=True):
+        value = (f"{expected['expected_display']} {expected['unit']}" if expected["status"] == "computed"
+                 else f"n/a: {expected['reason']}")
+        assert line.startswith(f"| {expected['metric_id']} | {value} |"), line
+        period = expected["period"]
+        assert period["period_end"] in line and period["span"] in line
+        for fid in expected["input_fact_ids"]:
+            fact = DATA["reference_data"]["selected_facts"][fid]
+            assert fact["filing_file"] + "#" + fact["inline_element_id"] in block
+    assert captured["prompts"][0]["content"].count(block) == 1
 
 
 class RecordingModel(fr03.ScriptedModel):
@@ -231,3 +261,56 @@ def test_crypto_metrics_are_explicitly_unsupported_without_fetch():
               "asset_type": "crypto", "messages": []})
     assert reads == []
     assert "not_supported" in financial_prompts(model)[0]
+
+
+def test_second_analysis_uses_changed_financial_facts(tmp_path, monkeypatch, external):
+    """FC09: different vendor data on the same reusable graph must replace the old value."""
+    reads = []
+
+    class ChangingData:
+        def fetch(self, ticker, as_of):
+            reads.append(ticker)
+            inputs = projected("aapl")
+            return replace(inputs, price=replace(inputs.price, value=Decimal("60.8") * len(reads)))
+
+    factory = build_metrics_factory({}, data_factory=lambda _: ChangingData())
+    graph, model = graph_for(tmp_path, monkeypatch, factory)
+    graph.propagate("NVDA", fr03.TRADE_DATE)
+    first = list(financial_prompts(model))
+    graph.propagate("NVDA", fr03.TRADE_DATE)
+    second = financial_prompts(model)[len(first):]
+    assert len(reads) == 2 and first and second
+    assert all("| pe_fy | 10.0 x |" in p for p in first)
+    assert all("| pe_fy | 20.0 x |" in p and "| pe_fy | 10.0 x |" not in p for p in second)
+
+
+def test_initialization_failure_reused_and_next_analysis_recovers(tmp_path, monkeypatch, external):
+    """FC10: constructor failure is once per analysis, not once per analyst turn."""
+    attempts = []
+
+    def data_factory(clock):
+        attempts.append(clock)
+        if len(attempts) == 1:
+            raise RuntimeError("synthetic initialization failure")
+        return type("Data", (), {"fetch": lambda self, ticker, as_of: projected("aapl")})()
+
+    factory = build_metrics_factory({}, data_factory=data_factory)
+    graph, model = graph_for(tmp_path, monkeypatch, factory)
+    first, _ = graph.propagate("NVDA", fr03.TRADE_DATE)
+    first_prompts = list(financial_prompts(model))
+    assert first["fundamentals_report"]
+    assert len(attempts) == 1 and len(first_prompts) >= 2
+    assert all("n/a: data_entry_failure" in p for p in first_prompts)
+    second, _ = graph.propagate("NVDA", fr03.TRADE_DATE)
+    assert len(attempts) == 2 and second["fundamentals_report"]
+    assert all("| pe_fy | 33.4 x |" in p for p in financial_prompts(model)[len(first_prompts):])
+
+
+def test_bad_provider_payload_is_unavailable_not_analysis_failure(tmp_path, monkeypatch, external):
+    """FC10: a structurally invalid external payload must not abort the baseline graph."""
+    factory = build_metrics_factory({}, data_factory=lambda _: type(
+        "BadData", (), {"fetch": lambda *a: {"facts": "not FinancialInputs"}})())
+    graph, model = graph_for(tmp_path, monkeypatch, factory)
+    state, _ = graph.propagate("NVDA", fr03.TRADE_DATE)
+    assert state["fundamentals_report"]
+    assert all("invalid_financial_input" in p for p in financial_prompts(model))

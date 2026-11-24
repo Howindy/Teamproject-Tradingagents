@@ -221,3 +221,75 @@ def test_disabled_or_unrequested_metrics_do_not_fetch():
     with factory.analysis_scope():
         assert factory({"trade_date": "2025-08-05"}) is None
     assert calls == []
+
+
+def test_half_up_and_low_decimal_context_do_not_change_results():
+    """FC07: independent 225/100 and -225/10000 ties, including negative half-up."""
+    from decimal import localcontext
+
+    inputs = projected("aapl")
+    inputs = _mutate(inputs, "aapl.current_assets", value=Decimal("225"))
+    inputs = _mutate(inputs, "aapl.current_liabilities", value=Decimal("100"))
+    inputs = _mutate(inputs, "aapl.net.q3.2025", value=Decimal("-225"))
+    inputs = _mutate(inputs, "aapl.rev.q3.2025", value=Decimal("10000"))
+    inputs = _mutate(inputs, "aapl.capex.ytd", value=Decimal("-9473000000"), sign_rule="negative_outflow")
+    normal = calculate_metrics(inputs, CLOCK)
+    with localcontext() as context:
+        context.prec = 2
+        low_precision = calculate_metrics(inputs, CLOCK)
+    assert low_precision.to_dict() == normal.to_dict()
+    assert next(r.display for r in normal.rows if r.metric_id == "current_ratio") == "2.3"
+    assert next(r.display for r in normal.rows if r.metric_id == "net_margin") == "-2.3"
+    assert next(r.display for r in normal.rows if r.metric_id == "fcf_reported_span") == "72281"
+
+
+@pytest.mark.parametrize("day,offset_hours", [("2025-01-15", -5), ("2025-07-15", -4)])
+def test_new_york_midnight_clock_handles_dst(day, offset_hours):
+    """FC01: date-level cutoff follows New York winter/summer offsets."""
+    from datetime import timedelta
+
+    from tradingagents.financials.wiring import run_clock
+
+    clock = run_clock(day)
+    assert clock.cutoff.hour == 0 and clock.cutoff.date() == date.fromisoformat(day)
+    assert clock.cutoff.utcoffset() == timedelta(hours=offset_hours)
+
+
+@pytest.mark.parametrize("fault", ["missing_context", "different_period", "different_source", "missing_evidence"])
+def test_disclosure_projection_cannot_fill_missing_or_conflicting_calendar_evidence(fault):
+    """FC01: accepting cited disclosure metadata must not accept absent/contradictory evidence."""
+    inputs = projected("aapl")
+    selected = DATA["reference_data"]["selected_facts"]["aapl.rev.q3.2025"]
+    disclosed = {key: str(value) for key, value in selected.items() if not isinstance(value, list)}
+    if fault == "missing_context":
+        del disclosed["inline_context_ref"]
+    elif fault == "different_period":
+        disclosed["fiscal_quarter"] = "2"
+    elif fault == "different_source":
+        disclosed["filing_file"] = "different-filing.htm"
+    else:
+        disclosed = {}
+    altered = _mutate(inputs, "aapl.rev.q3.2025", calendar_evidence=(),
+                      disclosure=tuple(sorted(disclosed.items())))
+    assert not next(f for f in altered.facts if f.fact_id == "aapl.rev.q3.2025").calendar_evidence
+    assert _row(altered, "revenue_yoy_q").reason == "incomparable_period"
+
+
+@pytest.mark.parametrize("fact_id,changes,metric,reason", [
+    ("aapl.gross.q3.2025", {"currency": "EUR"}, "gross_margin", "currency_mismatch"),
+    ("aapl.gross.q3.2025", {"unit": "shares"}, "gross_margin", "unit_mismatch"),
+    ("aapl.current_liabilities", {"value": "0"}, "current_ratio", "zero_denominator"),
+    ("aapl.assets", {"value": "-1"}, "liabilities_to_assets", "invalid_input_domain"),
+    ("aapl.rev.q3.2024", {"span": "ytd"}, "revenue_yoy_q", "missing_comparison"),
+    ("aapl.capex.ytd", {"span": "annual"}, "fcf_reported_span", "missing_input"),
+])
+def test_additional_units_denominators_and_span_boundaries(fact_id, changes, metric, reason):
+    """FC02-FC05: no cross-unit ratios or substitute cumulative/annual periods."""
+    assert _row(_mutate(projected("aapl"), fact_id, **changes), metric).reason == reason
+
+
+def test_all_missing_keeps_ten_rows_without_invented_sources():
+    """FC08: missing facts are not zeroes or synthetic citations."""
+    bundle = calculate_metrics(FinancialInputs("fixture-missing"), CLOCK)
+    assert len(bundle.rows) == 10
+    assert all(r.status == "n/a" and r.reason and not r.sources for r in bundle.rows)

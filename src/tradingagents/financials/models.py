@@ -86,6 +86,22 @@ class FinancialFact:
 
     def __post_init__(self):
         object.__setattr__(self, "value", decimal_value(self.value))
+        # IF-26 allows source evidence in the original disclosure projection.
+        # Preserve its cited statement context rather than invent fiscal labels
+        # or require a second copy of evidence already supplied by the provider.
+        if not self.calendar_evidence:
+            disclosed = dict(self.disclosure)
+            required = ("filing_file", "inline_element_id", "inline_context_ref",
+                        "fiscal_annotation_method", "selection_rationale")
+            matches = all(disclosed.get(key) == str(getattr(self, key)) for key in (
+                "period_start", "period_end", "fiscal_year", "fiscal_quarter", "span"))
+            if (self.calendar_id and len(disclosed) == len(self.disclosure)
+                    and all(disclosed.get(key) for key in required) and matches
+                    and self.filing_ref == f"{disclosed['filing_file']}#{disclosed['inline_element_id']}"):
+                object.__setattr__(self, "calendar_evidence", (
+                    f"{self.filing_ref}; context={disclosed['inline_context_ref']}; "
+                    f"{disclosed['fiscal_annotation_method']}; {disclosed['selection_rationale']}",
+                ))
 
 
 @dataclass(frozen=True)

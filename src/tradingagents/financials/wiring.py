@@ -53,6 +53,13 @@ class MetricProviderFactory:
         finally:
             self._scope.reset(token)
 
+    def _new_provider(self, clock):
+        try:
+            data = self._data_factory(clock)
+        except Exception:
+            data = None  # construction failure is cached in this analysis too
+        return FinancialMetricProvider(data, clock)
+
     def __call__(self, state):
         ticker = state.get("company_of_interest")
         if not ticker:
@@ -65,12 +72,12 @@ class MetricProviderFactory:
             )
         scope = self._scope.get()
         if scope is None:
-            provider = FinancialMetricProvider(self._data_factory(clock), clock)
+            provider = self._new_provider(clock)
         else:
             providers, lock = scope
             with lock:
                 if clock.as_of not in providers:
-                    providers[clock.as_of] = FinancialMetricProvider(self._data_factory(clock), clock)
+                    providers[clock.as_of] = self._new_provider(clock)
                 provider = providers[clock.as_of]
         return provider.get(str(ticker), clock.as_of)
 

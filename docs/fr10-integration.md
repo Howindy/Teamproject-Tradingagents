@@ -68,3 +68,12 @@ This does not establish live model quality or complete Round 4 acceptance. No li
 request was made for this integration. The price freshness policy remains limited
 to a matching preceding regular weekday; holiday/data-gap cases may return n/a.
 CI configuration has not been disabled or modified.
+
+Follow-up offline verification (2026-11-25) also exercises the unchanged trusted
+driver's actual four-case input projection and prompt capture. Source statement
+context in disclosure metadata can supply calendar evidence only when the cited
+file/element and period fields match; absent/contradictory metadata remains n/a.
+SEC structured facts now use raw-text decimal-preserving caching separately from
+legacy statement-tool caches. Initialization failures are reused within a run;
+the next run can retry. Yahoo quote conversion is unchanged. None of these checks
+uses a real model completion or establishes semantic-quality acceptance.

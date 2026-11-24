@@ -4366,3 +4366,60 @@ entries:
       summary: "No application code changed; checked documentation diff and AI-use YAML syntax."
     transcript_refs: []
     limitations: ["No division of work, teammate approval or joint interface agreement is asserted."]
+
+  - id: "AI-FM-ACCEPTANCE-OFFLINE-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_offline_acceptance_followup"
+    task: "Resolve concrete offline compatibility and verification gaps discussed with Round-04B; no live evaluation or merge."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC01", "FR-10-FC02", "FR-10-FC03", "FR-10-FC04", "FR-10-FC05", "FR-10-FC06", "FR-10-FC07", "FR-10-FC08", "FR-10-FC09", "FR-10-FC10"]
+    files_changed:
+      - "src/tradingagents/financials/models.py"
+      - "src/tradingagents/financials/metrics.py"
+      - "src/tradingagents/financials/service.py"
+      - "src/tradingagents/financials/wiring.py"
+      - "src/tradingagents/dataflows/vendors/sec_edgar.py"
+      - "test/offline/test_financial_metrics.py"
+      - "test/offline/test_sec_financial_provider.py"
+      - "test/offline/test_financial_metrics_integration.py"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "docs/fr10-handoff-yifan.md"
+      - "docs/fr10-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Added tests before the corresponding fixes: original trusted-driver projection initially
+      produced incomparable_period, SEC legacy cache lost exact-source assurance, and constructor
+      failures retried on later turns. FinancialFact now preserves existing cited statement-context
+      evidence from disclosure only when source and period fields agree; absent/conflicting evidence
+      remains unavailable. The unchanged trusted driver exercises four actual candidate cases in
+      offline subprocesses, comparing all ten rows, periods, reasons and citations against frozen
+      inputs. Added raw-text Decimal parsing/cache for FR-10 SEC companyfacts, separate from legacy
+      tool caches, through the shared SEC request/error boundary. Cached initialization failures
+      and malformed-provider results; next-analysis recovery is tested. P07 preparation assertions
+      now read fixed historical tree 5718bac, with negative snapshots and the current brief guard.
+      Strengthened low-precision testing exposed Decimal unary negation rounding negative CapEx;
+      copy_negate fixes the exact sign conversion. Updated the discussion documents with actual status.
+    human_intervention: >-
+      User requested handling the previously described offline completion items. Kept the current
+      Yahoo quote conversion; no additional price-proof gate was introduced. Did not assign work
+      to Yifan, alter his branch, change CI configuration, activate semantic configuration, call
+      models/vendors, or merge main. Existing test-spec evidence remains historical and unchanged.
+    verification:
+      status: "offline_followup_passed_live_pending"
+      summary: >-
+        Initial augmented financial suites: 8 failed, 43 passed, exposing the targeted gaps.
+        After fixes, financial core/provider/integration plus preparation-evaluation tests:
+        73 passed in 52.47s. This includes fake-candidate/transport infrastructure tests, not
+        live evaluation. Later strengthened negative-CapEx/low-context test failed before its
+        one-line fix. Final fourteen-file application regression: 511 passed in 19.97s, including
+        all four real-driver offline probe cases and the strengthened rounding test. These runs
+        overlap and are not an additive total. API check returned errors=[], pip check reported
+        no broken requirements. Final Ruff check . and diff whitespace checks passed; AI-use YAML parsed.
+    transcript_refs: []
+    limitations:
+      - "No paid/model/data-vendor request, approved semantic activation or candidate-bound semantic-quality pass."
+      - "Current main remains 5718bac; Round-04A is on a separate branch, with no combined acceptance performed."
+      - "Yahoo quote conversion and weekday freshness limitations are unchanged."
+      - "Trusted semantic baseline wiring, claim-negation scoring and remote PR gate status remain separate unresolved items."

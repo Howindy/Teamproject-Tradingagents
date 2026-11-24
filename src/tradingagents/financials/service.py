@@ -195,7 +195,7 @@ class FinancialMetricResult:
 class FinancialMetricProvider:
     """Build once per distinct ticker/as-of/clock and reuse across analyst rounds."""
 
-    def __init__(self, data: FinancialDataProvider, clock: EvaluationClock, *, enabled: bool = True):
+    def __init__(self, data: FinancialDataProvider | None, clock: EvaluationClock, *, enabled: bool = True):
         self._data, self._clock, self._enabled = data, clock, enabled
         self._cache = {}
         self._lock = Lock()
@@ -213,17 +213,31 @@ class FinancialMetricProvider:
         with self._lock:
             if ticker.upper() not in self._cache:
                 try:
-                    inputs = self._data.fetch(ticker, as_of)
+                    inputs = (self._data.fetch(ticker, as_of) if self._data is not None
+                              else FinancialInputs(ticker.upper(), issues=("data_entry_failure",)))
                 except Exception:
                     inputs = FinancialInputs(subject_id=ticker.upper(), issues=("data_entry_failure",))
-                if inputs.issues and inputs.issues[0].startswith("not_supported"):
+                if not isinstance(inputs, FinancialInputs):
+                    bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "invalid_financial_input")
+                    self._cache[ticker.upper()] = FinancialMetricResult(
+                        bundle, render_metrics(bundle), "unavailable", "invalid_financial_input")
+                elif "data_entry_failure" in inputs.issues:
+                    bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "data_entry_failure")
+                    self._cache[ticker.upper()] = FinancialMetricResult(
+                        bundle, render_metrics(bundle), "unavailable", "data_entry_failure")
+                elif inputs.issues and inputs.issues[0].startswith("not_supported"):
                     bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "not_supported")
                     self._cache[ticker.upper()] = FinancialMetricResult(
                         bundle, "", "not_supported", "not_supported"
                     )
                 else:
-                    bundle = calculate_metrics(inputs, self._clock)
+                    try:
+                        bundle = calculate_metrics(inputs, self._clock)
+                    except (TypeError, ValueError, ArithmeticError, AttributeError):
+                        bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "invalid_financial_input")
                     self._cache[ticker.upper()] = FinancialMetricResult(
-                        bundle, render_metrics(bundle), "calculable"
+                        bundle, render_metrics(bundle),
+                        "unavailable" if "invalid_financial_input" in bundle.issues else "calculable",
+                        "invalid_financial_input" if "invalid_financial_input" in bundle.issues else None,
                     )
             return self._cache[ticker.upper()]

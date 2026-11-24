@@ -646,28 +646,45 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
     assert exc_calls == 1
 
 
+PREPARATION_BASELINE = "5718bacff6cafb9412a805878fe82e97f279a8bc"
+
+
+def _assert_preparation_snapshot(paths, default_cfg, semantic_cfg):
+    """PR 1's historical boundary; it is not a ban on the later FR-10 feature."""
+    assert not any(p.startswith(("src/tradingagents/financials/", "src/tradingagents/run/")) for p in paths)
+    assert "fr08_enabled" not in default_cfg
+    assert "fr07_sec_enabled" not in default_cfg
+    assert ci_semantic_eval.validate_config(semantic_cfg)["approved"] is False
+
+
 def test_p07_preparation_scope_has_no_src_migration_or_brief_activation():
-    """P07 / FR-10: PR 1 leaves src/ free of financials migration and keeps deferred briefs absent."""
-    assert not (ROOT / "src" / "tradingagents" / "financials").exists()
+    """P07 / FR-10: preparation-only claims bind to a fixed main tree, not moving HEAD."""
+    def show(*args):
+        # Missing historical objects are a prerequisite failure, not a skip or fetch.
+        return subprocess.check_output(["git", "-C", str(ROOT), *args], text=True)
+
+    paths = show("ls-tree", "-r", "--name-only", PREPARATION_BASELINE).splitlines()
+    default_cfg = show("show", f"{PREPARATION_BASELINE}:src/tradingagents/default_config.py")
+    semantic_cfg = yaml.safe_load(show("show", f"{PREPARATION_BASELINE}:docs/ci/semantic_eval.yaml"))
+    _assert_preparation_snapshot(paths, default_cfg, semantic_cfg)
+    # The current candidate still must not activate the separate deferred brief feature.
     assert not (ROOT / "src" / "tradingagents" / "run").exists()
     default_cfg = (ROOT / "src" / "tradingagents" / "default_config.py").read_text(encoding="utf-8")
     assert "fr08_enabled" not in default_cfg
     assert "fr07_sec_enabled" not in default_cfg
 
-    # Verify semantic_eval.yaml remains unapproved by default on prep branch.
-    raw_cfg = ci_checks.load_yaml(SEMANTIC_CFG_PATH)
-    assert ci_semantic_eval.validate_config(raw_cfg)["approved"] is False
 
-    # Verify src/ tree is clean relative to origin/main when origin/main is available in git history.
-    check_ref = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "--verify", "origin/main"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if check_ref.returncode == 0:
-        diff_src = subprocess.check_output(
-            ["git", "-C", str(ROOT), "diff", "--name-only", "origin/main", "--", "src/"],
-            text=True,
-        ).strip()
-        assert diff_src == ""
+@pytest.mark.parametrize("fault", ["financials", "brief", "activation", "approved"])
+def test_p07_rejects_violating_preparation_snapshots(fault):
+    """The historical scope check continues to reject product/config activation in preparation."""
+    paths, config, semantic = [], "", ci_checks.load_yaml(SEMANTIC_CFG_PATH)
+    if fault == "financials":
+        paths = ["src/tradingagents/financials/metrics.py"]
+    elif fault == "brief":
+        paths = ["src/tradingagents/run/summary.py"]
+    elif fault == "activation":
+        config = "fr07_sec_enabled = True"
+    else:
+        semantic = _approved_config()
+    with pytest.raises(AssertionError):
+        _assert_preparation_snapshot(paths, config, semantic)

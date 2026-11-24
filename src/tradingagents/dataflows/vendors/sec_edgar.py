@@ -22,6 +22,7 @@ import logging
 import os
 import time
 from datetime import date, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import requests
@@ -105,17 +106,23 @@ def _user_agent() -> str:
 
 
 
-def _fetch_json(url: str) -> dict:
-    """Read a public EDGAR document, respecting SEC's identification rule."""
+def _json_response(url: str):
+    """Shared SEC request/error boundary for ordinary and exact structured reads."""
     try:
         response = requests.get(url, headers={"User-Agent": _user_agent()}, timeout=30)
         response.raise_for_status()
-        return response.json()
+        return response
     except requests.RequestException as exc:
         status = getattr(getattr(exc, "response", None), "status_code", None)
         # Every failure here is "this vendor cannot serve it now", so the router
         # moves on instead of seeing a transport exception it has no rule for.
         raise VendorUnavailableError(f"SEC EDGAR request failed ({status or type(exc).__name__})") from exc
+
+
+def _fetch_json(url: str) -> dict:
+    """Read a public EDGAR document, respecting SEC's identification rule."""
+    try:
+        return _json_response(url).json()
     except ValueError as exc:
         raise VendorUnavailableError("SEC EDGAR returned an unreadable response") from exc
 
@@ -130,6 +137,28 @@ def _cached_json(url: str, name: str) -> dict:
     data = _fetch_json(url)
     path.parent.mkdir(parents=True, exist_ok=True)
     replace_file(path, lambda temp: Path(temp).write_text(json.dumps(data), encoding="utf-8"))
+    return data
+
+
+def _cached_exact_json(url: str, name: str) -> dict:
+    """FR-10/FC07: parse and cache original SEC decimal text without a float round trip.
+
+    A separate raw cache cannot silently reuse old float-decoded/re-encoded data.
+    Existing statement-tool caches and their return types remain unchanged.
+    """
+    path = Path(get_config()["data_cache_dir"]) / "sec_edgar" / name
+    if path.exists() and time.time() - path.stat().st_mtime < _CACHE_TTL_SECONDS:
+        try:
+            return json.loads(path.read_text(encoding="utf-8"), parse_float=Decimal)
+        except ValueError:
+            pass
+    raw = _json_response(url).text
+    try:
+        data = json.loads(raw, parse_float=Decimal)
+    except ValueError as exc:
+        raise VendorUnavailableError("SEC EDGAR returned an unreadable response") from exc
+    path.parent.mkdir(parents=True, exist_ok=True)
+    replace_file(path, lambda temp: Path(temp).write_text(raw, encoding="utf-8"))
     return data
 
 
@@ -148,7 +177,7 @@ def company_facts(ticker: str) -> tuple[str, dict]:
     cik = cik_for(ticker)
     if cik is None:
         raise NoMarketDataError(ticker, ticker, "not a US SEC filer")
-    return cik, _cached_json(_FACTS_URL.format(cik=cik), f"CIK{cik}.json")
+    return cik, _cached_exact_json(_FACTS_URL.format(cik=cik), f"CIK{cik}-raw-v1.json")
 
 
 def submissions(ticker: str) -> tuple[str, dict]:
