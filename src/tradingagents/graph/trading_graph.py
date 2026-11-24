@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Any
 import tradingagents
 from tradingagents.agents.context import build_instrument_context, resolve_instrument_identity
 from tradingagents.agents.rating import run_rating
+from tradingagents.dataflows.availability import AvailabilitySummarizer
 from tradingagents.dataflows.config import run_config, run_config_context, set_config
 from tradingagents.dataflows.date_window import get_current_date, is_historical
 from tradingagents.dataflows.symbols import safe_ticker_component
@@ -18,6 +20,7 @@ from tradingagents.llm_clients import create_tier_client, tier_provider
 from tradingagents.memory import TradingMemoryLog, settlement
 from tradingagents.memory.reflection import Reflector
 from tradingagents.reporting import write_report_tree
+from tradingagents.run_context import RunContext, current as current_run
 
 from .checkpointer import checkpoint_step, clear_checkpoint, get_checkpointer, thread_id
 from .conditional_logic import ConditionalLogic
@@ -169,10 +172,11 @@ class TradingAgentsGraph:
 
         ``asset_type`` selects between the stock pipeline (default) and the
         crypto pipeline (``"crypto"``) shipped in #567 — the CLI auto-detects
-        from the ticker; programmatic callers pass it explicitly. When
-        ``checkpoint_enabled`` is set in config, the graph is recompiled with
-        a per-ticker SqliteSaver so a crashed run can resume from the last
-        successful node on a subsequent invocation with the same ticker+date.
+        from the ticker; programmatic callers pass it explicitly. The default
+        entry always executes FULLY from a fresh initial state: it never acquires,
+        reads, resumes or clears an old checkpoint, even when ``checkpoint_enabled``
+        is set (the resumable paths remain available only through the explicit
+        checkpoint-management API, not this default flow).
 
         Returns ``(final_state, signal)`` where ``signal`` is one of the 5-tier
         ratings (Buy / Overweight / Hold / Underweight / Sell) or ``"REVIEW"``
@@ -182,23 +186,51 @@ class TradingAgentsGraph:
         """
         trade_date = _validate_trade_date(trade_date)
 
-        with run_config(self.config), \
-                self.checkpoint_scope(company_name, trade_date, asset_type, portfolio) as thread_id_value:
+        # Full fresh execution: neither entry acquires/reads/resumes/clears an old
+        # checkpoint, even when ``checkpoint_enabled`` is set. The independent
+        # checkpoint management API (begin/end/checkpoint_scope/clear) is retained
+        # for callers that use it explicitly; the new default flow does not.
+        identity = self._analysis_identity(company_name, trade_date, asset_type)
+        with run_config(self.config), RunContext(analysis_context=identity):
+            # ``_run_graph`` prepares the terminal availability summary AFTER graph END
+            # and BEFORE record_decision, so the recorded decision and every downstream
+            # consumer see the SAME run's terminal field. The entry does not re-add it.
             return self._run_graph(
                 company_name, trade_date, asset_type=asset_type,
-                checkpoint_thread_id=thread_id_value, portfolio=portfolio,
+                checkpoint_thread_id=None, portfolio=portfolio,
             )
+
+    def _analysis_identity(self, company_name, trade_date, asset_type: str) -> dict:
+        """The minimal internal run identity (existing ticker/date/asset) passed to a
+        new RunContext so necessity-target eligibility can be judged. No new input,
+        product schema or configuration item."""
+        return {"ticker": company_name, "trade_date": str(trade_date),
+                "asset_type": asset_type}
+
+    def _prepare_terminal_summary(self, registry, asset_type: str, identity: dict):
+        """Build the terminal ``data_availability_summary`` from this run's registry.
+
+        Returns the five-field JSON mapping, or ``None`` when it cannot be formed
+        (sticky tracking error or a construction failure). A failure logs a safe
+        warning and never falls back to research/model text or a previous run.
+        """
+        try:
+            return AvailabilitySummarizer(registry).snapshot(
+                asset_type, self.selected_analysts, identity)
+        except Exception as exc:  # noqa: BLE001 - terminal summary must not break the run
+            logger.warning("Terminal availability summary failed: %s", exc)
+            return None
 
     def begin_checkpoint(self, company_name, trade_date, asset_type: str = "stock", portfolio=None) -> str | None:
         """Recompile the graph with a per-ticker checkpointer and return the
         ``thread_id`` to inject into the stream/invoke ``config`` (or ``None``
         when checkpointing is disabled).
 
-        Pair every call with :meth:`end_checkpoint` in a ``finally``. Both
-        ``propagate`` (via :meth:`checkpoint_scope`) and the CLI stream path use
-        this so ``--checkpoint`` actually resumes (#1249); previously the setup
-        lived only inside ``propagate`` and the CLI streamed the checkpointer-less
-        graph, making the flag a no-op.
+        Pair every call with :meth:`end_checkpoint` in a ``finally``. This is the
+        retained explicit checkpoint-management API for callers that opt into a
+        resumable run. The new default ``propagate`` and the CLI stream path do NOT
+        call it: the default entry always executes fully and never acquires, reads,
+        resumes or clears an old checkpoint, even when ``checkpoint_enabled`` is set.
         """
         self._resuming = False
         if not self.config.get("checkpoint_enabled"):
@@ -380,8 +412,11 @@ class TradingAgentsGraph:
         if checkpoint_thread_id is not None:
             args.setdefault("config", {}).setdefault("configurable", {})["thread_id"] = checkpoint_thread_id
 
-        # None resumes an existing checkpoint; init_agent_state starts fresh (#1249).
-        graph_input = self.checkpoint_input(init_agent_state)
+        # The default entry always starts FRESH from this run's initial state; it does
+        # NOT consult checkpoint_input/_resuming (old checkpoint state never makes the
+        # default path pass None). checkpoint_thread_id is only ever non-None for an
+        # explicit component caller, and is never set by the default flow.
+        graph_input = init_agent_state
         if self.debug:
             # A state repeats the messages before it, so each prints once (#1027).
             final_state, printed = {}, set()
@@ -396,11 +431,21 @@ class TradingAgentsGraph:
         else:
             final_state = self.graph.invoke(graph_input, **args)
 
+        # Ordering: graph END -> THIS run's terminal availability snapshot -> the
+        # state (already carrying the terminal field) enters record_decision and every
+        # later delivery/save step. The snapshot is generated exactly ONCE per normal
+        # entry execution here (the research snapshot is a separate, independent one).
+        ctx = current_run()
+        registry = ctx.registry if ctx is not None else None
+        identity = self._analysis_identity(company_name, trade_date, asset_type)
+        final_state["data_availability_summary"] = self._prepare_terminal_summary(
+            registry, asset_type, identity)
+
         self.record_decision(company_name, trade_date, final_state)
 
-        # Clear checkpoint on successful completion to avoid stale state.
-        self.clear_checkpoint_on_success(company_name, trade_date, asset_type, portfolio)
-
+        # The new default flow never clears (or otherwise touches) an old
+        # checkpoint; old evidence is left byte-identical. The explicit
+        # ``clear_checkpoint_on_success`` API remains available to direct callers.
         return final_state, run_rating(final_state)
 
     def stream_run(self, graph_input, **args):
@@ -416,8 +461,11 @@ class TradingAgentsGraph:
         """
         args = {**args, "stream_mode": ["values", "tasks"]}
         # The graph's own config serves every tool call, as in propagate(), even
-        # when the process-wide config has changed since. Each step runs in the
-        # run's context, so the caller keeps its own between steps.
+        # when the process-wide config has changed since. Each step runs in the run's
+        # context, so the caller keeps its own between steps. ``copy_context()`` is
+        # taken when this generator body FIRST executes (at the first ``next``), which
+        # is inside the entry's run scope, so the copied context carries that binding
+        # for the stream's whole lifetime (iteration AND close).
         context = run_config_context(self.config)
         stream = context.run(self.graph.stream, graph_input, subgraphs=True, **args)
         try:
@@ -432,7 +480,18 @@ class TradingAgentsGraph:
                 elif mode == "values":
                     yield chunk.get("messages", []), chunk
         finally:
-            context.run(stream.close)
+            # Close the owned stream once, in the run's execution context. If a
+            # primary exception is already propagating, a close error must NOT
+            # replace it: log and continue. A clean-close error (no primary) is
+            # surfaced, not silently swallowed. ``close`` is called exactly once.
+            closing_after_error = sys.exc_info()[0] is not None
+            try:
+                context.run(stream.close)
+            except Exception as exc:  # noqa: BLE001 - close boundary
+                if closing_after_error:
+                    logger.warning("stream close failed after a primary error: %s", exc)
+                else:
+                    raise
 
     def _log_state(self, trade_date, final_state):
         """Write a run's final state to JSON under the run's own ticker."""

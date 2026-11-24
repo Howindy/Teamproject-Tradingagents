@@ -89,6 +89,24 @@ def _report_parts(final_state: dict) -> list[tuple[str, str, list[tuple[str, str
     return parts
 
 
+def _availability_part(final_state: dict):
+    """The terminal data-availability report section, from the passed state only.
+
+    Renders the deterministic report-stage block:
+    * a terminal mapping -> that mapping's block;
+    * terminal ``None`` -> the fixed report-stage unavailable text;
+    * terminal field ABSENT -> the same fixed unavailable text (the section is
+      always shown, never silently omitted).
+    Never reads a live registry/scope/research summary or model text, and never
+    recomputes completeness. The same part feeds Markdown and the HTML renderer.
+    """
+    from tradingagents.dataflows.availability import report_block
+
+    text = report_block(final_state.get("data_availability_summary"))
+    return ("VI. Program Data Availability", "_availability",
+            [("Availability Summary", "availability.md", text)])
+
+
 def write_report_tree(final_state: dict, ticker: str, save_path, settings: dict | None = None,
                       html: bool = True) -> Path:
     """Save a completed run's reports to ``save_path``; return the complete-report path.
@@ -100,6 +118,12 @@ def write_report_tree(final_state: dict, ticker: str, save_path, settings: dict 
     save_path = Path(save_path)
     save_path.mkdir(parents=True, exist_ok=True)
     parts = _report_parts(final_state)
+    # Terminal program data-availability section from the PASSED state only. A null
+    # summary renders the fixed report-stage unavailable text. Markdown and HTML use
+    # this same part (no separate computation; completeness is not recomputed here).
+    availability_part = _availability_part(final_state)
+    if availability_part is not None:
+        parts.append(availability_part)
     sections = []
     for heading, folder, written in parts:
         (save_path / folder).mkdir(exist_ok=True)

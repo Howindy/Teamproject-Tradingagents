@@ -68,6 +68,18 @@ class AgentState(MessagesState):
     ]
     final_trade_decision: Annotated[str, "Final decision from the Portfolio Manager"]
     final_rating: Annotated[str, "The Portfolio Manager's 5-tier rating, or REVIEW when it has none"]
+    research_availability_summary: Annotated[
+        dict | None,
+        "Optional JSON-compatible research-stage data-availability summary prepared "
+        "once at the first Bull call and fixed for the debate; null when none can be "
+        "formed. Plain data only — no run infrastructure object.",
+    ]
+    data_availability_summary: Annotated[
+        dict | None,
+        "Optional JSON-compatible terminal data-availability summary prepared by the "
+        "entry after graph END; null when none can be formed. Plain data only — no "
+        "run infrastructure object.",
+    ]
     past_context: Annotated[str, "Memory log context for the Portfolio Manager (same-ticker decisions + cross-ticker lessons), written by the Memory Log step"]
     memory_note: Annotated[str, "What the Memory Log step could not settle or read this run, for the report; empty when all went well"]
     portfolio_context: Annotated[str, "Caller-supplied holdings and cash, rendered at run start; empty when not provided"]
