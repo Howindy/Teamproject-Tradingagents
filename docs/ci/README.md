@@ -573,3 +573,9 @@ The first auth implementation delivers workflow wiring, token forwarding,
 repeat-field handling and executable tests together after the real approval.
 Git commit times alone do not establish actual edit chronology; the drafting
 checkpoint and human review remain part of the evidence.
+
+The FR-03 data-availability standard and one run on the reviewed final candidate
+were [approved on PR #20](https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184).
+The protected evaluation uses at most 20 completion requests across the 15
+case/role combinations. Record the non-author suite-selection comment on PR #13
+and use the final candidate SHA when dispatching from main.

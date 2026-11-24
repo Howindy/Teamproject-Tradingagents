@@ -467,12 +467,13 @@ def test_t16_registry_and_frozen_materials():
         "runner": "data_availability_eval:evaluate",
     }
     assert registry["suites"]["financial-metrics"]["runner"] == "financial_metrics_eval:evaluate"
-    assert (
-        yaml.safe_load((ROOT / "docs/ci/semantic-suites/data-availability.yaml").read_text())[
-            "status"
-        ]
-        == "unapproved"
-    )
+    config = yaml.safe_load((ROOT / "docs/ci/semantic-suites/data-availability.yaml").read_text())
+    assert config["status"] == "approved"
+    assert config["approval"] == {
+        "approved_by": "espino2233",
+        "approved_at": "2026-11-24T17:16:24Z",
+        "evidence": ["https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184"],
+    }
 
 
 def test_t11_manager_rationale_must_weigh_the_debate(cases):

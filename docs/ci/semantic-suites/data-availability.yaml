@@ -1,6 +1,5 @@
-# Draft material only. No suite approval or model execution is authorized.
 schema_version: '1.0'
-status: unapproved
+status: approved
 dataset:
   version: fr03-data-availability-v1
   path: docs/ci/data-availability-cases.json
@@ -66,6 +65,7 @@ execution:
   repetitions: 1
   llm_judge: false
 approval:
-  approved_by: null
-  approved_at: null
-  evidence: []
+  approved_by: espino2233
+  approved_at: '2026-11-24T17:16:24Z'
+  evidence:
+  - https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184
