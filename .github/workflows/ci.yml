@@ -229,6 +229,9 @@ jobs:
   contract-tests:
     name: contract-tests
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -246,11 +249,15 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.txt"
       - name: Select, collect, and run current-round contract tests
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          test -n "$GH_TOKEN"
           python scripts/ci_checks.py contract-tests \
             --pr-body-file "$RUNNER_TEMP/pr-body.txt" \
             --base "${{ github.event.pull_request.base.sha }}" \
-            --head "${{ github.event.pull_request.head.sha }}"
+            --head "${{ github.event.pull_request.head.sha }}" \
+            --token "$GH_TOKEN"
 
   ai-use-log:
     name: ai-use-log

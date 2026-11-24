@@ -3392,3 +3392,212 @@ def test_maintenance_frozen_config_attests_unapproved_state():
     config = yaml.safe_load(content)
     assert config['status'] == 'unapproved'
     assert config['approval'] == {'approved_by': None, 'approved_at': None, 'evidence': []}
+
+
+# Auth amendment CA-T01–CA-T12; original maintenance chronology stays intact.
+def _auth_history(tmp_path, monkeypatch):
+    history = _maintenance_history(tmp_path, monkeypatch)
+    history.auth_path = 'docs/plans/auth.md'
+    plan = history.repo / history.auth_path
+    plan.write_text('## 3. Allowed files\n- .github/workflows/ci.yml\n\n'
+                    'Inherited: scripts/ci_checks.py\n'
+                    '## 4. Exclusions\nscripts/unapproved.py\n', encoding='utf-8')
+    history.auth_sha = _maintenance_commit(history.repo, 'auth specification', '2026-01-01T16:00:00Z')
+    history.auth_url = 'https://github.com/o/r/pull/1#issuecomment-3'
+    history.auth_value = f'{history.auth_path} @ {history.auth_sha} (approval: {history.auth_url})'
+    history.fields['Supplemental test specification'] += '\n' + history.auth_value
+    history.events[history.auth_url] = _approval_event(
+        url=history.auth_url, body=f'APPROVED test-spec: {history.auth_path} @ {history.auth_sha}',
+        created_at='2026-01-01T17:00:00Z')
+    workflow = history.repo / '.github' / 'workflows' / 'ci.yml'
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text('jobs: {}\n', encoding='utf-8')
+    with (history.repo / 'scripts' / 'ci_checks.py').open('a') as f:
+        f.write('# authentication implementation\n')
+    history.head = _maintenance_commit(history.repo, 'auth implementation', '2026-01-01T18:00:00Z')
+    return history
+
+
+def _auth_body(history):
+    lines = []
+    for key, value in history.fields.items():
+        values = value.splitlines() if key == 'Supplemental test specification' else [value]
+        lines.extend(f'{key}: {item}' for item in values)
+    return '\n'.join(lines)
+
+
+def _auth_approval(history):
+    return ci_checks.approval_check(history.repo, history.base, history.head,
+                                    _auth_body(history), 'o/r', 1, 'synthetic-auth-token')
+
+
+def _auth_contract(history, tmp_path, monkeypatch, token='synthetic-auth-token', *, can_execute=True):
+    body = tmp_path / 'auth-pr-body.txt'
+    body.write_text(_auth_body(history), encoding='utf-8')
+    monkeypatch.setattr(ci_checks, 'PROJECT_ROOT', history.repo)
+    fetch = ci_checks.fetch_approval_event
+    queries, executions = [], []
+    def record_fetch(repo, pr, url, supplied):
+        queries.append((url, supplied))
+        return fetch(repo, pr, url, supplied)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', record_fetch)
+    original_run = ci_checks.run_command
+    def execute(command, *args, **kwargs):
+        if '-m' in command and 'pytest' in command:
+            assert can_execute, 'invalid evidence reached collection/execution'
+            executions.append(command)
+            for arg in command:
+                if arg.startswith('--junitxml='):
+                    Path(arg.split('=', 1)[1]).write_text(
+                        '<testsuite><testcase name="ok" /></testsuite>', encoding='utf-8')
+            return ci_checks.CommandResult(command, 0, 'passed', '')
+        return original_run(command, *args, **kwargs)
+    monkeypatch.setattr(ci_checks, 'run_command', execute)
+    arguments = ['contract-tests', '--pr-body-file', str(body), '--base', history.base, '--head', history.head]
+    if token is not None:
+        arguments.extend(['--token', token])
+    args = ci_checks.build_parser().parse_args(arguments)
+    return ci_checks._command_contract_tests(args), queries, executions
+
+
+def test_auth_workflow_uses_job_scoped_read_only_token():
+    """CA-T01: inspect actual workflow wiring, including the empty-token guard."""
+    workflow = yaml.safe_load((ROOT / '.github/workflows/ci.yml').read_text())
+    job = workflow['jobs']['contract-tests']
+    assert job['if'] == "github.event_name == 'pull_request'"
+    assert job['permissions'] == {'contents': 'read', 'pull-requests': 'read'}
+    step = next(item for item in job['steps'] if 'scripts/ci_checks.py contract-tests' in item.get('run', ''))
+    assert step['env'] == {'GH_TOKEN': '${{ github.token }}'}
+    assert 'test -n "$GH_TOKEN"' in step['run']
+    assert step['run'].index('test -n "$GH_TOKEN"') < step['run'].index('python scripts/ci_checks.py')
+    assert '--token "$GH_TOKEN"' in step['run']
+    assert 'GH_TOKEN' not in workflow.get('env', {})
+    assert 'GH_TOKEN' not in json.dumps(workflow['jobs']['security-paths'])
+
+
+@pytest.mark.parametrize('token', ['synthetic-auth-token', '', None])
+def test_auth_contract_forwards_token_and_preserves_direct_call_defaults(tmp_path, monkeypatch, token):
+    """CA-T02/03/05/11: CLI token reaches both approval events, never last-one-wins."""
+    history = _auth_history(tmp_path, monkeypatch)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, token)
+    assert code == 0
+    assert queries == [(history.supplemental_url, token or ''), (history.auth_url, token or '')]
+    assert len(executions) == 2
+    assert all('test/offline/test_ci_gates.py' in cmd and 'test/offline/test_runner.py' in cmd for cmd in executions)
+
+
+@pytest.mark.parametrize('status', [401, 403])
+def test_auth_api_failure_blocks_without_anonymous_retry_or_disclosure(tmp_path, monkeypatch, capsys, status):
+    """CA-T04: real API error conversion, no fallback and no collection."""
+    history = _auth_history(tmp_path, monkeypatch)
+    fetch = ci_checks.fetch_approval_event
+    headers = []
+    def denied(request, **kwargs):
+        headers.append(request.get_header('Authorization'))
+        raise urllib.error.HTTPError(request.full_url, status, 'denied', {}, None)
+    monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', denied)
+    def fetch_with_error(repo, pr, url, token):
+        if url == history.auth_url:
+            ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', token)
+        return fetch(repo, pr, url, token)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', fetch_with_error)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+    assert headers == ['Bearer synthetic-auth-token']
+    assert len(queries) == 2 and all(token == 'synthetic-auth-token' for _, token in queries)
+    output = capsys.readouterr()
+    assert f'HTTP Error {status}' in output.err
+    assert 'synthetic-auth-token' not in output.out + output.err
+
+
+@pytest.mark.parametrize('index', [0, 1])
+@pytest.mark.parametrize('fault', ['author', 'bot', 'marker', 'missing', 'late', 'wrong-pr', 'changed-spec', 'ancestry'])
+def test_auth_each_supplement_is_validated_independently(tmp_path, monkeypatch, index, fault):
+    """CA-T06/09/10: a later valid event cannot overwrite an invalid earlier one."""
+    history = _auth_history(tmp_path, monkeypatch)
+    url = (history.supplemental_url, history.auth_url)[index]
+    event = history.events[url]
+    target_sha = (history.ssha, history.auth_sha)[index]
+    if fault == 'author':
+        event['reviewer'] = 'author'
+    elif fault == 'bot':
+        event['reviewer_type'] = 'Bot'
+    elif fault == 'marker':
+        event['body'] = 'APPROVED test-spec: docs/plans/wrong.md @ ' + target_sha
+    elif fault == 'missing':
+        del history.events[url]
+    elif fault == 'late':
+        event['created_at'] = '2026-01-01T19:00:00Z'
+    elif fault == 'wrong-pr':
+        history.fields['Supplemental test specification'] = history.fields['Supplemental test specification'].replace(url, url.replace('/pull/1#', '/pull/2#'))
+    elif fault == 'changed-spec':
+        path = ('docs/plans/maintenance.md', history.auth_path)[index]
+        with (history.repo / path).open('a') as f:
+            f.write('\nchanged after approval\n')
+        history.head = _maintenance_commit(history.repo, 'changed frozen spec', '2026-01-01T19:00:00Z')
+    else:
+        ancestor = ci_checks._is_ancestor
+        monkeypatch.setattr(ci_checks, '_is_ancestor', lambda root, old, new: False if old == target_sha else ancestor(root, old, new))
+    result = _auth_approval(history)
+    assert result['errors']
+    assert len(result['supplemental_spec_texts']) == 1
+    invalid_path = ('scripts/ci_checks.py', '.github/workflows/ci.yml')[index]
+    assert invalid_path not in result['supplemental_spec_texts'][0].splitlines()
+    code, _, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+
+
+def test_auth_primary_and_both_supplements_keep_their_own_chronology(tmp_path, monkeypatch):
+    """CA-T05/08/09: primary=12:00, old maintenance=15:00, new workflow=18:00."""
+    history = _auth_history(tmp_path, monkeypatch)
+    assert _auth_approval(history)['errors'] == []
+    assert history.fields['Implementation start'] == history.start
+    texts = _auth_approval(history)['supplemental_spec_texts']
+    assert texts == ['scripts/ci_checks.py\ntest/offline/test_ci_gates.py', '.github/workflows/ci.yml']
+    plan = ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/ci_checks.py', 'test/offline/test_ci_gates.py', '.github/workflows/ci.yml'],
+        supplemental_spec_texts=texts)
+    assert plan['errors'] == []
+    assert ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/unapproved.py'], supplemental_spec_texts=texts)['errors']
+
+
+def test_auth_parser_preserves_distinct_supplements_and_rejects_ambiguity():
+    """CA-T07: only supplemental fields repeat; repeated paths/entries are rejected."""
+    field = 'Supplemental test specification'
+    old = 'docs/plans/old.md @ ' + 'a' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-1)'
+    new = 'docs/plans/new.md @ ' + 'b' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-2)'
+    assert ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {new}')[field] == old + '\n' + new
+    for value in (old, old.replace('a' * 40, 'c' * 40), old.replace('docs/plans/', './docs/plans/')):
+        with pytest.raises(ci_checks.CiError, match='duplicate|ambiguous'):
+            ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {value}')
+    with pytest.raises(ci_checks.CiError, match='duplicate'):
+        ci_checks.parse_pr_body(f'Plan: old\n{field}: {old}\nPlan: new')
+
+
+@pytest.mark.parametrize('invalid', [None, 'primary', 'old', 'new'])
+def test_auth_multiple_approval_checks_need_only_stdlib(tmp_path, monkeypatch, invalid):
+    """CA-T12: no YAML/pytest installation is required by the approval entry."""
+    history = _auth_history(tmp_path, monkeypatch)
+    if invalid is not None:
+        url = {'primary': history.primary_url, 'old': history.supplemental_url, 'new': history.auth_url}[invalid]
+        history.events[url]['body'] = 'not an approval'
+    fixture = tmp_path / 'multiple-approvals.json'
+    fixture.write_text(json.dumps({'repo': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': _auth_body(history), 'events': history.events, 'invalid': invalid is not None}), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec('yaml') is None
+spec = importlib.util.spec_from_file_location('ci_checks', sys.argv[1])
+module = importlib.util.module_from_spec(spec);sys.modules[spec.name] = module;spec.loader.exec_module(module)
+data = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (data['events'][url], 'author')
+result = module.approval_check(Path(data['repo']), data['base'], data['head'], data['body'], 'o/r', 1, 'synthetic-token')
+assert bool(result['errors']) == data['invalid'], result
+print('isolated multi-supplement checked')
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'isolated multi-supplement checked' in result.stdout

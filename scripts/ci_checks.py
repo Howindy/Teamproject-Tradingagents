@@ -14,6 +14,7 @@ import datetime as dt
 import importlib
 import inspect
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -1133,6 +1134,24 @@ def ai_log_check(
     }
 
 
+def supplemental_specifications(fields: Mapping[str, str]) -> list[str]:
+    """Preserve distinct supplemental lines; never replace historical evidence."""
+    values = [value.strip() for value in fields.get(SUPPLEMENTAL_SPEC_FIELD, "").splitlines() if value.strip()]
+    seen_values: set[str] = set()
+    seen_paths: set[str] = set()
+    for value in values:
+        if value in seen_values:
+            raise CiError("duplicate supplemental specification entry")
+        seen_values.add(value)
+        match = re.match(r"(\S+)\s+@", value)
+        if match:
+            path = posixpath.normpath(normalize_path(match[1]))
+            if path in seen_paths:
+                raise CiError(f"ambiguous duplicate supplemental specification path: {path}")
+            seen_paths.add(path)
+    return values
+
+
 def parse_pr_body(text: str) -> dict[str, str]:
     fields: dict[str, str] = {}
     for line in text.splitlines():
@@ -1141,9 +1160,13 @@ def parse_pr_body(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         key = key.strip()
         if key in PR_BODY_FIELDS or key in OPTIONAL_PR_BODY_FIELDS:
-            if key in fields:
-                raise CiError(f"duplicate PR body field: {key}")
-            fields[key] = value.strip()
+            if key == SUPPLEMENTAL_SPEC_FIELD:
+                fields[key] = fields[key] + "\n" + value.strip() if key in fields else value.strip()
+                supplemental_specifications(fields)
+            else:
+                if key in fields:
+                    raise CiError(f"duplicate PR body field: {key}")
+                fields[key] = value.strip()
     return fields
 
 
@@ -1685,6 +1708,25 @@ def validate_supplemental_specification(
         return failed([f"supplemental approval not verifiable: {exc}"])
 
 
+def validate_supplemental_specifications(
+    root: Path, base: str, head: str, fields: Mapping[str, str], repo: str,
+    pr_number: int, token: str, changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """Each approved version retains its own event, coverage and chronology."""
+    errors: list[str] = []
+    texts: list[str] = []
+    scope_ids: set[str] = set()
+    for value in supplemental_specifications(fields):
+        result = validate_supplemental_specification(
+            root, base, head, value, repo, pr_number, token, changed_paths,
+        )
+        errors.extend(result["errors"])
+        if not result["errors"]:
+            texts.append(result["spec_text"])
+            scope_ids.update(result["scope_ids"])
+    return {"errors": errors, "spec_texts": texts, "scope_ids": scope_ids}
+
+
 def approval_check(
     root: Path,
     base: str,
@@ -1711,14 +1753,12 @@ def approval_check(
     specification_paths = SPEC_PATH_PATTERN.findall(specification)
     _, specification_commit, _ = parse_approved_specification(specification)
     ancestor = bool(specification_commit) and _is_ancestor(root, specification_commit, start_commit)
-    supplemental = {"errors": [], "spec_text": "", "scope_ids": set()}
-    if fields.get(SUPPLEMENTAL_SPEC_FIELD):
-        supplemental = validate_supplemental_specification(
-            root, base, head, fields[SUPPLEMENTAL_SPEC_FIELD], repo, pr_number, token, changed,
-        )
+    supplemental = validate_supplemental_specifications(
+        root, base, head, fields, repo, pr_number, token, changed,
+    )
     # A valid supplement adds IDs; never manufacture a missing primary scope field.
     effective_fields = dict(fields)
-    if fields.get("Approved scope") and not supplemental["errors"]:
+    if fields.get("Approved scope"):
         effective_fields["Approved scope"] += " " + " ".join(sorted(supplemental["scope_ids"]))
     result = verify_approval(
         effective_fields, approval_event=approval_event, pr_author=author,
@@ -1731,7 +1771,7 @@ def approval_check(
         changed_ids=collect_changed_scope_ids(root, base, head, changed),
     )
     result["errors"].extend(supplemental["errors"])
-    result["supplemental_spec_texts"] = [supplemental["spec_text"]] if supplemental["spec_text"] else []
+    result["supplemental_spec_texts"] = supplemental["spec_texts"]
     return result
 
 
@@ -2742,20 +2782,20 @@ def _command_contract_tests(args: argparse.Namespace) -> int:
     else:
         paths = changed_paths_from_git(args.base, args.head, PROJECT_ROOT)
     supplements: list[str] = []
-    if fields.get(SUPPLEMENTAL_SPEC_FIELD):
-        # This job has no token configured: public GitHub read only. Both events
-        # must belong to the same PR. Failure cannot contribute scope or tests.
+    if supplemental_specifications(fields):
+        # CI supplies its read-only job token explicitly; direct callers retain
+        # the public-read default. Authentication failure never falls back.
         try:
             repo, pr_number = _approval_location(fields.get("Approval evidence", ""))
         except CiError as exc:
             return _print_result({"errors": [str(exc)]})
-        supplemental = validate_supplemental_specification(
-            PROJECT_ROOT, args.base, args.head, fields[SUPPLEMENTAL_SPEC_FIELD],
-            repo, pr_number, "", paths,
+        supplemental = validate_supplemental_specifications(
+            PROJECT_ROOT, args.base, args.head, fields,
+            repo, pr_number, getattr(args, "token", ""), paths,
         )
         if supplemental["errors"]:
             return _print_result(supplemental)
-        supplements.append(supplemental["spec_text"])
+        supplements.extend(supplemental["spec_texts"])
     plan = contract_test_plan(PROJECT_ROOT, fields, paths, supplemental_spec_texts=supplements)
     if plan["errors"]:
         return _print_result(plan)
@@ -2947,6 +2987,7 @@ def build_parser() -> argparse.ArgumentParser:
     contract_tests.add_argument("--base", default="")
     contract_tests.add_argument("--head", default="HEAD")
     contract_tests.add_argument("--paths", default="")
+    contract_tests.add_argument("--token", default="", help="GitHub API token for supplemental approval reads")
     contract_tests.set_defaults(func=_command_contract_tests)
 
     aggregate = subparsers.add_parser("aggregate")

@@ -540,3 +540,50 @@ No iCloud source was used for the repair. No project commit/push, PR write, mode
 call, activation or merge is included. Original approvals and chronology remain.
 Independent final verdict: pending. Until final-candidate CI and independent review
 complete, AI delivery recommendation: **CHANGES REQUIRED**.
+
+
+## RM-18-R4 — Authenticated contract approvals (AI-authored; final review pending)
+
+- Clean implementation checkpoint: `0539300c05b1b12c3ccff4a517dc132513a6facb`.
+- Frozen auth specification: `docs/plans/semantic-contract-auth-amendment.md` at
+  that commit, approved by non-author `espino2233` in
+  [comment 7137342374](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374)
+  at `2026-11-24T16:14:27Z`, before executable implementation.
+- Original primary suite and maintenance specifications/approvals remain intact.
+  No first-change SHA or historical result is reset.
+- New allowance is only `.github/workflows/ci.yml`, only the contract-tests job:
+  contents/read and pull-requests/read, step-local github.token, nonempty-token
+  guard and --token argument. No global token or other job change is selected.
+- Associated changes use the inherited script/test/record file allowances.
+  The contract CLI forwards an explicitly supplied token to every supplemental
+  query; legacy no-token callers remain supported. 401/403 failures block before
+  collection, with no anonymous retry or token output.
+- Only distinct supplemental fields may repeat; primary/ADR fields stay unique.
+  All supplements retain their own event, immutable version, allow-list and
+  related-change chronology. Invalid documents contribute no coverage and block
+  execution; inherited prose cannot add paths. Original approvals are preserved.
+
+### Actual local verification
+
+Evidence: `/private/tmp/cs5351-pr18-auth-fix-5smxirmi`. Tests first: **28 failed** against the unchanged checker.
+After implementation: new auth tests **28 passed**; all public gate tests
+**189 passed** (`gates-final.xml`). These are existing Python 3.14 standalone
+CI-unit runs with --confcutdir=test/offline and third-party plugin autoload
+disabled; no application stubs, assertion exemptions or installations were used.
+
+Python 3.12.14 -I -S replayed actual saved PR fields and all three real approval
+comments against a verification-only Git candidate containing workflow/script/test
+changes together. Approval and contract-plan errors were empty; both supplements
+were retained and the gate/FR-03/FR-10 tests were selected (`replay-result.json`).
+The candidate is not a project delivery commit or a final remote-CI result.
+
+Full default application regression and Ruff/mypy cannot run in the recovered
+environment because required tools are missing. They are recorded as unavailable,
+not passes. No dependency, application source, frozen material/specification,
+other workflow, security-path token policy or evaluation activation change is made.
+
+Implementation is ready for one combined auth delivery commit after review.
+The PR must retain its old supplemental field and add the new real auth field
+when the compatible parser is delivered. Final-candidate remote CI, independent
+human implementation review and merge remain outstanding. AI recommendation
+until that delivery evidence is complete: **CHANGES REQUIRED**.

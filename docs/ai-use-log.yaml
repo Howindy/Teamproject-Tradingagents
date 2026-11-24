@@ -3525,3 +3525,64 @@ entries:
     - No model/vendor request, dependency installation, project commit/push, PR write, merge or configuration
       activation performed.
     - Evidence remains in local temporary storage; raw chat export is not in the repository.
+
+  - id: AI-FR03-CONTRACT-AUTH-001
+    date: '2026-11-25'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_authenticated_approval_maintenance
+    task: 'PR #18 read-only authenticated contract queries and independently preserved supplemental approvals'
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids: []
+    files_changed:
+    - .github/workflows/ci.yml
+    - scripts/ci_checks.py
+    - test/offline/test_ci_gates.py
+    - docs/ci/README.md
+    - docs/ai-use-log.yaml
+    - docs/review-memo.md
+    ai_contribution: Implemented only the contract job read permissions and step-local Actions token/guard/argument,
+      optional contract CLI token forwarding, multiple distinct supplemental records and independent validation/coverage.
+      Added 28 cases implementing CA-T01–CA-T12 without disabling prior tests. Preserved primary fields,
+      both frozen specs and earlier first-change chronology.
+    human_intervention: User explicitly added the workflow authentication scope, requested pre-approval
+      preparation, and supplied non-author comment 7137342374 binding the frozen 0539300 specification before
+      implementation. No independent final implementation verdict is inferred.
+    approval:
+      subject: semantic-contract-auth-amendment.md @ 0539300c05b1b12c3ccff4a517dc132513a6facb; auth implementation/test
+        pre-approval
+      status: approved
+      approved_at: '2026-11-24T16:14:27Z'
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374
+    verification:
+      status: gate_tests_checked_full_environment_unavailable_remote_pending
+      summary: 'New auth cases: 28 passed; all standalone gate tests: 189 passed. Before implementation,
+        all 28 new cases failed. Python 3.12 -I -S replay with actual saved primary/old/new approval events
+        against an isolated Git candidate returned no approval or contract-plan errors. Existing recovered
+        environment lacks pytest in its application interpreter and Ruff/mypy, so full application regression
+        and those static tools are unavailable, not passes. No packages installed.'
+      evidence:
+      - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/tests-before.out
+      - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/auth-targeted.xml
+      - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/gates-final.xml
+      - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/replay-result.json
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
+    limitations:
+    - Standalone pytest uses existing Python 3.14/pytest and --confcutdir=test/offline with external plugin
+      autoload disabled; it is not full application regression.
+    - Actual comment replay uses recorded public event data and a synthetic token in a verification-only
+      Git candidate; it is not a live authenticated Actions job or final remote CI.
+    - Tokens used in tests are literal synthetic fixtures; no real token/header was read or logged.
+    - Full default regression, Ruff and mypy remain unavailable in the recovered environment; no dependency
+      installation was authorized.
+    - The working-tree implementation is not yet a project commit/push or PR-body update; executable changes
+      must be delivered together in the first auth commit.
+    - No model/vendor request, configuration activation, other-workflow change, branch protection change,
+      PAT creation or merge was performed.
+    - Local temporary evidence does not replace a raw chat export or published CI artifacts.
