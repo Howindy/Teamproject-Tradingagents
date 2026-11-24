@@ -51,6 +51,7 @@ class _FakeGraph:
         self.propagator = self
         self.resuming = resuming      # None: checkpointing off
         self._resuming = False
+        self.selected_analysts = ("market",)   # needed by the terminal summary
 
     def create_run_state(self, ticker, trade_date, asset_type="stock", portfolio=None):
         self.calls.append(("create_run_state", ticker, trade_date))
@@ -141,25 +142,30 @@ def _run_cli(monkeypatch, tmp_path, fake):
 
 @pytest.mark.unit
 def test_cli_run_uses_the_memory_log_like_propagate(tmp_path, monkeypatch):
+    """Round 3 (FR-03): the default CLI entry runs fully and never resumes, so it
+    no longer clears a checkpoint on success. State creation and decision
+    recording keep their order; only the automatic checkpoint clear is removed
+    (``docs/plans/round-03.md`` §7)."""
     fake = _FakeGraph()
     _run_cli(monkeypatch, tmp_path, fake)
 
     assert fake.calls == [
         ("create_run_state", "NVDA", "2026-01-10"),
-        # The decision is recorded from the merged stream, before the checkpoint
-        # is cleared, matching propagate().
+        # The decision is recorded from the merged stream, matching propagate().
         ("record_decision", "NVDA", "2026-01-10", "Rating: Buy\n\nBuy NVDA."),
-        ("clear_checkpoint",),
     ]
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("resuming, said", [(True, "resuming"), (False, "starting fresh")])
-def test_the_cli_run_says_whether_it_resumed(tmp_path, monkeypatch, resuming, said):
-    """The README promises the run view tells a resumed run from a fresh one."""
+@pytest.mark.parametrize("resuming", [True, False], ids=["prior-checkpoint", "no-checkpoint"])
+def test_the_cli_run_does_not_announce_a_resume(tmp_path, monkeypatch, resuming):
+    """Round 3 (FR-03): the new default flow executes fully and does not resume,
+    so it emits no automatic resume notice whether or not a prior checkpoint is
+    configured. Both original scenarios are kept; only the expectation changes
+    (no "resuming" message)."""
     buffer = _run_cli(monkeypatch, tmp_path, _FakeGraph(resuming=resuming))
 
-    assert any(said in text.lower() for _, kind, text in buffer.messages if kind == "System")
+    assert not any("resum" in text.lower() for _, kind, text in buffer.messages if kind == "System")
 
 
 @pytest.mark.unit

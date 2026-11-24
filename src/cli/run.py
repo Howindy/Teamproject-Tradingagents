@@ -25,12 +25,14 @@ from cli.display import (
 from cli.selections import depth_from_env, get_user_selections, unattended_gaps
 from cli.stats_handler import StatsCallbackHandler
 from tradingagents.agents.rating import is_review, run_rating
+from tradingagents.dataflows.availability import AvailabilitySummarizer
 from tradingagents.dataflows.symbols import safe_ticker_component
 from tradingagents.default_config import DEFAULT_CONFIG
 from tradingagents.graph.analyst_execution import (
     build_analyst_execution_plan,
 )
 from tradingagents.graph.trading_graph import TradingAgentsGraph
+from tradingagents.run_context import RunContext
 
 
 def _run_directory(config: dict, ticker: str, trade_date: str) -> Path:
@@ -40,6 +42,22 @@ def _run_directory(config: dict, ticker: str, trade_date: str) -> Path:
     ".." here would place the run outside the results directory.
     """
     return Path(config["results_dir"]) / safe_ticker_component(ticker) / trade_date
+
+
+def _prepare_terminal_summary(registry, enabled_analysts, identity):
+    """Build the terminal ``data_availability_summary`` from this run's registry.
+
+    Returns the five-field JSON mapping, or ``None`` when it cannot be formed. A
+    failure logs a safe warning and never falls back to research/model text or a
+    previous run.
+    """
+    try:
+        return AvailabilitySummarizer(registry).snapshot(
+            identity.get("asset_type", "stock"), enabled_analysts, identity)
+    except Exception as exc:  # noqa: BLE001 - terminal summary must not break the run
+        import logging
+        logging.getLogger(__name__).warning("Terminal availability summary failed: %s", exc)
+        return None
 
 
 def _announce_checkpoint_state(graph, ticker: str, trade_date: str) -> None:
@@ -223,22 +241,21 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
         # (LLM tracking is handled separately via LLM constructor)
         args = graph.propagator.get_graph_args(callbacks=[stats_handler])
 
-        # Recompile with a checkpointer and inject the thread_id so --checkpoint
-        # actually saves and resumes on the CLI path (#1249); a no-op when
-        # checkpointing is disabled. Torn down in the finally below.
-        checkpoint_tid = graph.begin_checkpoint(
-            selections["ticker"], selections["analysis_date"], selections["asset_type"], portfolio
-        )
-        if checkpoint_tid is not None:
-            args.setdefault("config", {}).setdefault("configurable", {})["thread_id"] = checkpoint_tid
-            _announce_checkpoint_state(graph, selections["ticker"], selections["analysis_date"])
-
-        # Stream the analysis. On resume, feed None so LangGraph continues the
-        # interrupted run instead of re-appending the initial state (#1249); the
-        # try/finally tears the checkpointer down even if the stream raises.
+        # Full fresh execution: the CLI does NOT acquire/read/resume/clear an old
+        # checkpoint even with --checkpoint set. The explicit checkpoint component
+        # API is retained for direct callers; this default flow does not use it.
+        identity = {"ticker": selections["ticker"],
+                    "trade_date": str(selections["analysis_date"]),
+                    "asset_type": selections["asset_type"]}
+        # The run's availability scope is bound here (after config/basic validation,
+        # before the first supported data call) and covers the whole streamed
+        # iteration AND close. Each entry invocation creates a fresh scope/registry.
+        ctx = RunContext(analysis_context=identity)
+        ctx.__enter__()
         trace = []
+        stream = graph.stream_run(init_agent_state, **args)
         try:
-            for messages, chunk in graph.stream_run(graph.checkpoint_input(init_agent_state), **args):
+            for messages, chunk in stream:
                 for message in messages:
                     msg_id = getattr(message, "id", None)
                     if msg_id is not None:
@@ -347,16 +364,33 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
             for chunk in trace:
                 final_state.update(chunk)
 
-            # Clean run: log the decision, then drop this run's checkpoint so a
-            # later run starts fresh. A mid-stream failure skips both, keeping
-            # the checkpoint for resume.
+            # Ordering: graph END -> THIS run's terminal availability snapshot ->
+            # record_decision and downstream delivery/save/display, all on the same
+            # state that already carries the terminal field. The snapshot is generated
+            # exactly ONCE per normal CLI run. (The new flow leaves any old checkpoint
+            # untouched; it does not clear it on success.)
+            final_state["data_availability_summary"] = _prepare_terminal_summary(
+                ctx.registry, selected_analyst_keys, identity)
             graph.record_decision(selections["ticker"], selections["analysis_date"], final_state)
-            graph.clear_checkpoint_on_success(
-                selections["ticker"], selections["analysis_date"], selections["asset_type"], portfolio
-            )
         finally:
-            # Always restore the plain uncheckpointed graph, even on failure.
-            graph.end_checkpoint()
+            # Close the owned stream ONCE, in the run's execution context, BEFORE
+            # restoring the caller binding. A close error must not replace a primary
+            # error already propagating; a clean-close error is surfaced. Then the
+            # entry restores the previous binding (normal / mid-stream error / early).
+            import sys as _sys
+
+            primary = _sys.exc_info()[0] is not None
+            try:
+                stream.close()
+            except Exception as exc:  # noqa: BLE001 - close boundary
+                if primary:
+                    import logging as _logging
+                    _logging.getLogger(__name__).warning(
+                        "stream close failed after a primary error: %s", exc)
+                else:
+                    ctx.finish()
+                    raise
+            ctx.finish()
 
         for agent in message_buffer.agent_status:
             message_buffer.update_agent_status(agent, "completed")

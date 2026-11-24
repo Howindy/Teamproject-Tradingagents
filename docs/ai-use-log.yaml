@@ -2946,6 +2946,272 @@ entries:
         Staged schema and AI-use association pass. Full staged diff --check exits 2 with 1328 whitespace notices confined to the original session-20 export; the other 19 staged files pass.
         Raw transcript was preserved without formatting edits. Earlier diff-check passes predate staging this export; no full staged whitespace pass is claimed.
       boundary: No source/workflow/gate-script/schema/permission/frozen-plan changes staged. Commit SHA is not invented in this pre-commit record; no remote CI or merge claim.
+  - id: AI-060
+    date: '2026-11-23'
+    round: Round 3 planning; necessity-target contract maintenance only
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: requirements_architecture_verification_alignment
+    task: Specify the user-approved first-eligible-request necessity-target rule without implementing FR-03.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC02]
+    files_changed:
+    - docs/req/requirements.yaml
+    - architecture-blueprint.md
+    - docs/architecture/adr/001-graph-internal-final-check.md
+    - docs/architecture/invariants.md
+    - docs/architecture/memory-design.md
+    - docs/architecture/trace-matrix.md
+    - docs/code-governance/verification-constraints.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Added the narrowly scoped necessity-target contract: first eligible effective request binds before fetch
+      under the registry lock, bindings do not consume completion sequence or depend on success, other targets
+      cannot substitute, and matching updates retain last-accepted semantics. Distinguished fixed snapshot
+      date and Reddit prefetch targets, statement date/frequency, and global-news effective overrides.
+      Synchronized only affected D1/D2/D4 statements and verification intent. No application or test implementation.
+    human_intervention: >-
+      The user adopted the minimal target-selection proposal and then explicitly requested the unambiguous
+      contract and affected D1/D2/D4 edits only. This is design-maintenance authorization, not Round 3 test pre-approval.
+    approval:
+      status: user_authorized_documentation_maintenance
+      evidence:
+      - User messages in this Codex conversation adopting the proposal and authorizing only affected contract edits; no exported message timestamps or immutable Round 3 specification supplied.
+    verification:
+      status: focused_document_checks_passed
+      summary: >-
+        Draft202012 schema validation returned no errors. Counts remain 13 requirements / 55 FCs,
+        six active / 27 FCs, seven deferred / 28 FCs. Compared with HEAD: only FR-03 statement and
+        FR-03-FC02 content changed among requirement objects; scope, other requirements, IDs,
+        zero_tolerance values and other FCs preserved. git diff --check passed before this record was appended.
+      evidence:
+      - /private/tmp/cs5351-fr03-target-contract/checks.json
+      - architecture-blueprint.md, section 8.3, Necessary-target binding contract
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - No genuine export of this Codex conversation is available; transcript_refs is intentionally empty.
+    - No Round 3 application tests, model evaluation, remote CI, commit, push or final human review performed.
+    - This entry covers this documentation amendment only; earlier exploratory data-source probes are not claimed as FR-03 acceptance.
+  - id: AI-061
+    date: '2026-11-23'
+    round: Round 3 partial planning and isolated attachment exploration
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: partial_plan_and_feasibility_evidence
+    task: Record confirmed necessity-target decisions and the actual isolated attachment-feasibility results; defer the concrete execution/test specification.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC02, FR-03-FC05]
+    files_changed:
+    - docs/plans/round-03.md
+    - architecture-blueprint.md
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Performed the preceding user-authorized exploration in a fresh source/environment copy under test for round3,
+      using runtime-only harness prototypes, controlled data and fake models. Recorded the final 21 attachment
+      probes and 36 related regressions, the retained first-attempt harness failure and unchanged source snapshots.
+      Created only a partial Round 3 planning record and synchronized the directly affected D2 evidence/OQ status
+      and pre-PR review summary. No original or copied production source was modified by that exploration.
+    human_intervention: >-
+      The user required a before/after original-project snapshot and execution only in the isolated copy, then
+      requested that the new plan contain only the agreed target rule and confirmed feasibility. Detailed plans
+      and concrete tests were explicitly deferred. No formal Round 3 approval or original-project implementation granted.
+    approval:
+      status: user_authorized_exploration_and_partial_documentation
+      evidence:
+      - User instructions in this Codex conversation authorizing the isolated attachment checks and this partial planning/evidence update; no immutable test specification or non-author approval event supplied.
+    verification:
+      status: isolated_feasibility_only
+      summary: >-
+        Final exploratory runs: 21 attachment probes and 36 related regression cases passed, no final failures/skips.
+        Original project's 10064 snapshot entries and 202 copied source/test/script/fixture files remained unchanged.
+        No original/stale-source access attempts observed. Controlled summary fixtures and experimental adapters do
+        not establish a working FR-03 producer or complete FC acceptance. No real-model evaluation performed.
+      evidence:
+      - /Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/evidence/summary.json
+      - /Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/evidence/source-integrity.json
+      - docs/plans/round-03.md
+      - 'docs/review-memo.md: Pre-PR Round 3 planning and isolated feasibility'
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - This Codex conversation has no genuine exported repository transcript; transcript_refs remains empty.
+    - Local external artifacts are exploratory evidence, not committed or portable CI acceptance evidence.
+    - Concrete Round 3 implementation/test scope, semantic evaluation and actual role readiness remain to be prepared.
+    - No implementation start, final human verdict, commit, push, remote CI or merge is claimed.
+  - id: AI-062
+    date: '2026-11-23'
+    round: Round 3 proposed execution and test specification
+    tool: Codex desktop
+    model: Exact model identifier not independently recorded
+    activity: implementation_plan_and_test_specification
+    task: Complete the FR-03 execution and independent test proposal; leave immutable freeze and non-author pre-approval to final PR operations.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC01, FR-03-FC02, FR-03-FC03, FR-03-FC04, FR-03-FC05]
+    files_changed:
+    - docs/plans/round-03.md
+    - docs/review-memo.md
+    - docs/ai-use-log.yaml
+    ai_contribution: >-
+      Expanded the existing partial plan with exact ownership/file boundaries, target/registry/failure and
+      research/terminal contracts, twelve concrete controlled scenario groups with independent expectations,
+      isolated commands, phase boundaries and truthful prerequisite status. Identified two existing entry-test
+      files needing bounded no-resume expectation changes while retaining explicit checkpoint API tests.
+      Did not implement application/tests or restore withdrawn semantic configuration.
+    human_intervention: >-
+      The user requested completing the outstanding Round 3 plan, explicitly leaving version freeze and
+      non-author prior approval to the final PR operations. The earlier request to pause/revert semantic-gate
+      configuration remains in force; this plan does not treat it as a course exemption.
+    approval:
+      status: user_authorized_planning_only
+      evidence:
+      - Current user instruction in this Codex conversation; no frozen specification, non-author approval or implementation authorization is claimed.
+    verification:
+      status: focused_document_checks_passed
+      summary: >-
+        D1 schema validation returned no errors; 13 requirements remain. The existing copied CI test selector
+        selects exactly the four intended test paths. All plan relative links resolve; twelve unique scenario
+        groups exist; AI log IDs are unique. Source/test/scripts/workflow/permission/dependency/semantic config
+        paths remain identical to HEAD. New FR-03 test files are still unimplemented. git diff --check passed.
+        First document-check attempt used an incorrect case-label regex; corrected only that checker and retained
+        its failed output. These are documentation checks, not Round 3 test execution or acceptance.
+      evidence:
+      - docs/plans/round-03.md
+      - /private/tmp/cs5351-round3-plan-completion/checks.json
+      - /private/tmp/cs5351-round3-plan-completion/checks-attempt1.json
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+    - No genuine raw export of this Codex conversation is available; transcript_refs is intentionally empty.
+    - No application/test implementation, acceptance run, real-model evaluation, Git write, remote CI or human approval was performed.
+    - Semantic delivery arrangements remain paused/unapproved; effective implementation role readiness must be checked before build.
+  - id: AI-063
+    date: '2026-11-24'
+    round: Round 3
+    human_operator: Yifan Wang
+    tool: OpenCode
+    model: CS5351/DeepSeek-V4-Flash
+    activity: round03_fr03_impl_a3_adaptation_and_ci_gate_maintenance
+    task: 'Implement frozen FR-03 (P3) and the A3 portfolio test adaptation, then repair PR #13 CI gate issues (test-approval
+      ID scope, contract-tests P3+A3 selection, ai-use-log, and the paused semantic gate).'
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids:
+    - FR-03-FC01
+    - FR-03-FC02
+    - FR-03-FC03
+    - FR-03-FC04
+    - FR-03-FC05
+    files_changed:
+    - src/tradingagents/dataflows/availability.py
+    - src/tradingagents/run_context.py
+    - src/tradingagents/agents/tools.py
+    - src/tradingagents/agents/analysts/sentiment_analyst.py
+    - src/tradingagents/agents/state.py
+    - src/tradingagents/agents/researchers/bull_researcher.py
+    - src/tradingagents/agents/researchers/bear_researcher.py
+    - src/tradingagents/agents/managers/research_manager.py
+    - src/tradingagents/graph/setup.py
+    - src/tradingagents/graph/trading_graph.py
+    - src/cli/run.py
+    - src/cli/display.py
+    - src/tradingagents/reporting.py
+    - test/offline/test_fr03_availability.py
+    - test/offline/test_fr03_integration.py
+    - test/offline/test_graph_end_to_end.py
+    - test/offline/test_cli_memory_log.py
+    - test/offline/test_portfolio_context.py
+    - mypy-baseline.txt
+    - scripts/ci_checks.py
+    - test/offline/test_ci_gates.py
+    - docs/ci/README.md
+    - docs/ai-use-log.yaml
+    ai_contribution: 'IMPLEMENTATION (AI-authored): FR-03 availability/run-context modules, P-01..P-15 attachments,
+      research first-Bull injection, entry scope/terminal/full-fresh-execution, report/display, the two new FR-03
+      tests, two adapted tests, the A3 portfolio test adaptation, the mypy-baseline line-number maintenance, AND the
+      CI gate repairs (namespace-aware + tight per-ID negation + documentation/harness-aware scope-ID extraction;
+      supplemental A3 spec binding + union test selection; the gate tests). GUIDANCE (human): frozen P3/A3, supplied
+      PR/approval facts, authorized baseline/sync/CI maintenance. REVIEW: not claimed (approval.status not_established).
+      Historical implementation facts that could not be independently verified (exact model per historical session,
+      raw transcripts) are marked pending, not guessed. AI-060..AI-062 planning entries are NOT rewritten into implementation
+      records.'
+    human_intervention: User supplied P3(d83abc9)/A3(9e2c779) and approvals (comment-7094860952; comment-7106366447
+      jyy722, 2026-11-23T15:56:51Z); authorized baseline maintenance, delivery sync, this CI maintenance and the read-only
+      analyses. All GitHub/approval facts are user-supplied evidence.
+    approval:
+      subject: Round 3 FR-03 + A3 + CI gate maintenance
+      status: not_established
+      approved_at: null
+      evidence:
+      - 'P3 approval (user-supplied): comment-7094860952 -> docs/plans/round-03.md @ d83abc9...'
+      - 'A3 approval (user-supplied): comment-7106366447 (jyy722) -> docs/plans/round-03-portfolio-test-amendment.md
+        @ 9e2c779...'
+      - 'CI maintenance authorization hash: PENDING (human must record per docs/ci/README authorization pattern).'
+      - 'Final implementation approval / merge: not established.'
+    verification:
+      status: completed_with_findings
+      summary: 'Offline (isolated copy and synced original tree, app resolving to original src): FR-03 155 passed;
+        A3 portfolio 20 passed; checkpoint lifecycle/resume 13 passed; default full pytest exit 1 with 1784 passed,
+        3 failed (macOS errno.EDEADLOCK in test_cache_writes; files.py/test_cache_writes.py byte-identical to P3;
+        not FR-03), 1 skipped (optional langchain_aws), 1 deselected (-m not integration). Gate repairs (this round):
+        the scope-ID extractor keeps only genuine requirement/FC/invariant namespaces, ignores C-/IF-/P-/R03-/PA-/FC01-05,
+        uses tight per-ID before/after negation (a real add is not suppressed by an unrelated negative word), and
+        treats documentation/docstring/harness-test lines as non-scope. Verified against a SYNTHETIC full-candidate
+        clone (local commit over real history; all deliverable tracked changes included): test-approval errors [],
+        contract-tests errors [] (7 test paths; portfolio+checkpoint selected), ai-log errors []. test/offline/test_ci_gates.py
+        90 passed. ruff/mypy(baseline)/schema/permissions/api clean. Approval events MOCKED in the clone checks (real
+        GitHub events not fetched offline). CORRECTION (run 3): earlier wording wrongly said the gate test would not run
+        in CI. In fact test/offline/test_ci_gates.py DOES run in CI via the regression job (pytest -q over testpaths=test,
+        not integration-marked) and via the security-paths job (which runs it explicitly; security_applicable is true
+        here). What contract-tests does NOT do for a mixed app+governance PR is add the gate test to ITS selected
+        test set (only a pure-governance change triggers that branch) -- but that does not stop the test running
+         elsewhere in CI. Run 3 also fixed two code defects: _documentation_line_numbers now recognises ONLY true
+         module/class/function docstrings (not assert/dict/call/f-string strings), and supplemental approval phrases
+         must match the spec path and FULL SHA exactly (was a prefix match). 93 gate tests pass. Semantic
+         evidence-check remains PAUSED/unapproved; no semantic status written. CORRECTION (run 4, small close-out):
+         (a) _documentation_line_numbers previously excluded a whole line even when a docstring shared it with
+         executable code ("\"\"\"docs\"\"\"; assert ..."), so a genuine FR-04 there was missed; such a line is now
+         conservatively treated as code unless the entire line is a standalone docstring. (b) parse_pr_body silently
+         adopted the LAST duplicate machine field, which would let a pasted governance-note block override the real
+         P3 values; duplicate Plan/Approved test specification/Approval evidence/Implementation start/Approved scope/ADR
+         now raise a CiError naming each duplicated field, while Supplemental test specification may still repeat.
+         New regression tests drive real git diff -> doc classification -> scope extraction (module/def/class/async,
+         pure-docstring boundary) and duplicate-field positive/negative cases; test/offline/test_ci_gates.py 102
+         passed. Semantic evidence-check remains PAUSED/unapproved; no semantic status written.'
+      evidence:
+      - /private/tmp/cs5351-round03/ci-fix-04/
+      - /private/tmp/cs5351-round03/ci-fix-03/
+      - /private/tmp/cs5351-round03/ci-fix-02/
+      - /private/tmp/cs5351-round03/ci-fix-01/
+      - /private/tmp/cs5351-round03/verification-02/
+      - /private/tmp/cs5351-round03/sync-apply-01/
+    transcript_refs: []
+    commit: 7bf46d1db947b04e98b454d6c06d177e4c45908f
+    pull_request: https://github.com/Howindy/Teamproject-tradingagents/pull/13
+    limitations:
+    - Per-historical-session model/operator for earlier phases and raw transcripts are not independently verifiable;
+      marked pending, not guessed.
+    - Semantic evaluation PAUSED; research prompt changes not evaluated; not-applicable NOT asserted. evidence-check
+      is expected to fail until an approved config + trusted run on the final candidate SHA exist.
+    - 3 macOS EDEADLOCK failures are not FR-03 passes and not a Windows verification.
+    - mypy-baseline maintenance reconciles line numbers only; not a type-clean claim.
+    - The full-candidate verification used synthetic local commits in a temp clone with MOCKED approval events; it
+      does not prove real pre-approval history or remote CI.
+    - 'Governance distinction (not a fabricated pre-approval): the human TASK authorization for this local CI
+      maintenance (repairing PR #13 CI) is real and covers the edits, but it is NOT a per-test PRE-approval for the
+      governance change and P3/A3 do not automatically cover later governance edits. A historic pre-approval of these
+      specific gate-script/doc edits before implementation, an independent review of this repair, and final PR
+      approval/merge are NOT established and are not asserted. Passing machine checks does not satisfy those human
+      governance steps.'
+    - 'test/offline/test_ci_gates.py DOES run in CI via the regression job and the security-paths job (see run-3/4
+      correction above); contract-tests does not add it to its own selection for a mixed app+governance PR, which is a
+      selection detail, not a reason the gate test goes unrun.'
+    - Local evidence paths are not publicly accessible; they are not CI artifacts.
+
 
   - id: "AI-FM-PREP-001"
     date: "2026-11-23"
@@ -3633,6 +3899,63 @@ entries:
       was relaxed.
     - No project commit/push, PR write, live model/vendor request, activation or merge performed.
     - Temporary local evidence does not replace raw session export or final-candidate CI.
+
+  - id: AI-R03-TRUSTED-SUITE-SYNC-001
+    date: '2026-11-25'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_merge_compatibility
+    task: 'Synchronize PR #13 with merged PR #18 and prepare genuine semantic-gate closeout'
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids:
+    - FR-03-FC05
+    files_changed:
+    - scripts/ci_checks.py
+    - test/offline/test_ci_gates.py
+    - docs/ai-use-log.yaml
+    - docs/review-memo.md
+    ai_contribution: Resolved main/feature CI conflicts using main suite routing and
+      authenticated multi-supplement validation, preserving existing feature scope-ID/docstring
+      logic. Adapted existing synthetic test fixtures to main API, exact evidence URL
+      and executable scope-bearing input. No production prompt, dataset, rubric or threshold
+      changed.
+    human_intervention: 'User requested final Round 3 changes after PR #18 merge and
+      authorized configuration preparation. No non-author semantic suite selection approval
+      has been provided.'
+    approval:
+      subject: User-authorized synchronization and configuration preparation; independent
+        human approvals remain outstanding
+      status: pending
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/13#issuecomment-7094860952
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/13#issuecomment-7106366447
+    verification:
+      status: partial_offline_verified
+      summary: 'Isolated merged gate suite: 215 passed. Python 3.12 targeted application/evaluator
+        suite: 249 passed, one FR-10 schema test failed because jsonschema is absent
+        from that interpreter. Replay of actual saved P3/A3 events finds A3 old allowed-file
+        format rejected; contract selection therefore misses portfolio test. No live
+        semantic pass claimed.'
+      evidence:
+      - /private/tmp/cs5351-round3-final-ntzigbfm/gates-v2.xml
+      - /private/tmp/cs5351-round3-final-ntzigbfm/targeted.xml
+      - /private/tmp/cs5351-round3-final-ntzigbfm/approval-replay.json
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/13
+    limitations:
+    - Existing local environment lacks Ruff/mypy; final-candidate remote checks remain
+      required. No dependency installed.
+    - A3 compatibility and configuration activation require separately reviewed maintenance;
+      frozen specifications and approvals were not rewritten.
+    - Configuration remains unapproved; no real model/vendor request, semantic selection
+      approval, trusted evidence, feature merge or deployment is claimed.
+    - Earlier CI-maintenance chronology is preserved; later authorization is not represented
+      as pre-approval.
 
   - id: AI-FR03-ACTIVATION-001
     date: '2026-11-25'

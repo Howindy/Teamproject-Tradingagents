@@ -351,6 +351,25 @@ Local schema/FC-set/deferred-row/boundary/diff checks passed. Actual path classi
 
 The user requested tracking the actual session-20 export and making the local implementation commit. Staged scope is the 19 approved revision paths plus the user-selected transcripts/session-20.md; tmp remains excluded. The staged transcript matches the supplied working-tree bytes exactly. Full staged git diff --check returns exit 2 with 1328 whitespace notices, all confined to the original transcript (trailing spaces and final blank line). The other 19 staged files pass the same whitespace check. Raw evidence was not reformatted to manufacture a green check; this transcript-specific finding supersedes earlier diff-check passes before the raw export was staged. Staged schema and AI-use association checks pass. No source, workflow, gate script, schema, permission or frozen specification is staged. Local commit is authorized; push/remote CI/final review/merge are separate and not performed by this preparation.
 
+## Pre-PR Round 3 planning and isolated feasibility — 2026-11-23
+
+- PR: none. This is an AI-authored pre-PR evidence summary, not a human review verdict or test pre-approval.
+- The user authorized the partial [Round 3 draft](plans/round-03.md) to record only the confirmed first-eligible-request target rule and attachment feasibility. Exact implementation scope, concrete tests and execution arrangements remain for later preparation.
+- The authorized isolated exploration used a fresh copy and copied environment under `/Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/`. Final results: 21 attachment probes and 36 related regressions passed, no final failures/skips. The first attachment run's single harness error was retained and corrected without changing production source.
+- Real graph/tool/CLI/report paths were exercised with controlled data, fake models and runtime wrappers. Explicit news path identity, same-call first-Bull input, fixed stage versus terminal delivery, passed-state Markdown/HTML, context isolation and experimental no-resume adapters were feasible. The negative control confirmed that a state update alone misses the first Bull input.
+- Original snapshot: 10,064 entries unchanged; 202 copied source/test/script/fixture files unchanged; no original/stale-source import attempts observed. Evidence is local and outside Git: `evidence/summary.json`, `source-integrity.json`, `probe-observations.json`, final JUnit/output/isolation records and retained first-attempt records beneath that exploration directory. These are not portable CI evidence.
+- Limitations: summaries were supplied fixtures, not a working FR-03 producer; target-binding/registry/classifier/failure behavior and full FC acceptance remain unimplemented/unverified. OQ-13/OQ-15 are not closed wholesale. No real-model semantic evaluation, Round 3 implementation approval, remote CI, commit, push or merge is established by this record.
+
+## Pre-PR Round 3 complete proposed specification — 2026-11-23
+
+Supersedes the partial-planning status above, not its historical feasibility results. The user authorized completing the execution/test specification while leaving immutable freeze and non-author pre-approval for the final PR operations. PR, P3, T3 and human verdict remain unset.
+
+The [Round 3 plan](plans/round-03.md) now selects FR-03-FC01–FC05, names 13 production files, two new offline test files and two existing-test adaptations, and supplies independent controlled expectations R03-01–R03-12, ownership/failure contracts, implementation order, isolated execution commands and evidence boundaries. Existing automatic-resume expectations in the programmatic/CLI entry tests are intentionally replaced with full fresh execution and old-checkpoint preservation, while explicit checkpoint component APIs/tests retain their contract. No FR-01 reuse or Round 4 core integration is selected.
+
+No application/test code, CI, semantic configuration, permission control or dependency was changed by this planning task. No tests were implemented/executed as Round 3 acceptance. Semantic configuration stays paused; actual prompt injection still requires the course's real fixed semantic evaluation before production/full acceptance. Role/tool readiness is checked before build; remaining producer/attachment questions have concrete offline tests rather than extra product requirements. This proposal neither resolves the separate context-budget course limitation nor claims full course compliance.
+
+Planning checks and their exact results are recorded in AI-062 and the bounded local document-check artifact. This is AI-authored planning review, not non-author approval or an APPROVE verdict.
+
 ## RM-14-R1 — FR-10 Integration Preparation (AI-authored review summary; final human verdict pending)
 
 - PR: [#14](https://github.com/Howindy/Teamproject-Tradingagents/pull/14)
@@ -613,6 +632,35 @@ until that delivery evidence is complete: **CHANGES REQUIRED**.
 - Existing independent maintenance/auth approvals cover this type-only repair.
   Independent final review and final-candidate CI remain pending. AI delivery
   recommendation until those are complete: **CHANGES REQUIRED**.
+
+
+## RM-13-R03-SYNC — Trusted suite synchronization (AI-authored)
+
+PR #18 merged at `f24cde487f8119bb238e171614066da4b60e6915`.
+The feature starts at `30421f025fc075d40751bcc7a955fc8e91f939c8`.
+Conflict resolution retains main's suite/evidence/token/supplemental checks and
+the feature's existing scope-ID/documentation extraction. Existing tests are
+adapted to the main API and independently authored executable scope fixtures;
+assertions and rejection cases are retained. No application/prompt edit is made.
+
+Verification in `/private/tmp/cs5351-round3-final-ntzigbfm`:
+- Gate regression: **215 passed**, including local-loopback HTTP probes.
+- Python 3.12 application/evaluator checks: **249 passed, 1 failed**; the failure
+  is missing `jsonschema` in that interpreter, not a schema acceptance result.
+- Actual saved GitHub P3/A3 event replay on a synthetic merge: primary approval
+  succeeds; A3 is rejected because its frozen section 3 uses the older explicit
+  file format. Contract selection consequently misses the portfolio test path.
+- Source/fixtures remain fixed and no dependency is installed. Ruff/mypy and
+  final-candidate remote CI remain outstanding.
+
+Next maintenance must preserve A3 `9e2c7793dc7d70fd2aeeecd480f78a5a81635614`
+and its real approval, add narrowly bound legacy compatibility, and activate
+the reviewed suite on trusted main with real approval metadata. A new human
+pre-approval covers only future maintenance, not historical editing.
+Non-author I6 selection, protected-environment approval and final-SHA trusted
+semantic execution are still required. Mock transport checks are not quality
+evidence. Current recommendation: **CHANGES REQUIRED**.
+
 
 ## PR #20 implementation review
 

@@ -3220,7 +3220,7 @@ def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
     amendment = repo / supplement
     amendment.write_text('FR-10\n## 3. Allowed files\n- scripts/ci_checks.py\n- test/offline/test_ci_gates.py\n## 4. Exclusions\ndocs/ci/data-availability-cases.json\nscripts/unapproved.py\n', encoding='utf-8')
     ssha = _maintenance_commit(repo, 'maintenance specification', '2026-01-01T13:00:00Z')
-    (repo / 'scripts' / 'ci_checks.py').write_text('# FR-10\n', encoding='utf-8')
+    (repo / 'scripts' / 'ci_checks.py').write_text('SCOPE = \"FR-10\"\n', encoding='utf-8')
     (repo / 'test' / 'offline' / 'test_ci_gates.py').write_text('def test_gate():\n    assert True\n', encoding='utf-8')
     head = _maintenance_commit(repo, 'maintenance implementation', '2026-01-01T15:00:00Z')
     primary_url = 'https://github.com/o/r/pull/1#issuecomment-1'
@@ -3677,6 +3677,467 @@ print('isolated multi-supplement checked')
                                     str(SCRIPTS / 'ci_checks.py'), str(fixture)])
     assert result.returncode == 0, result.stderr
     assert 'isolated multi-supplement checked' in result.stdout
+
+
+# Retained Round 3 scope and approval regressions; supplemental fixtures use
+# the merged framework API and explicit allowed-file list.
+def test_scope_id_namespaces_distinguish_requirement_from_design_labels():
+    for token in ("FR-03", "FR-03-FC01", "IR-05", "IR-13", "SB-01-FC01", "INV-01", "SR-01"):
+        assert ci_checks.is_scope_id(token), token
+    for token in ("C-03", "C-20", "IF-24", "P-01", "P-15", "R03-01", "PA-01", "BO-01", "FC01-05"):
+        assert not ci_checks.is_scope_id(token), token
+
+
+_SRC = "src/tradingagents/dataflows/availability.py"
+
+
+def test_scope_changed_ids_excludes_design_labels_and_negated_fr01():
+    raw = {"FR-03", "FR-03-FC01", "IR-09", "FR-01", "C-03", "IF-24", "P-01", "R03-01", "PA-01", "FC01-05"}
+    lines = [
+        (_SRC, 'availability = "FR-03 (C-07)" and path "P-01"', True),
+        (_SRC, "# R03-01 scenario header (FC01-05; IR-09)", True),
+        (_SRC, "FR-01 is not implemented here; no FR-01 reuse", True),
+    ]
+    scoped = ci_checks.scope_changed_ids(raw, lines)
+    assert scoped == {"FR-03", "FR-03-FC01", "IR-09"}
+
+
+def test_scope_changed_ids_keeps_genuinely_unapproved_requirement():
+    # A real requirement ID referenced without negation and NOT in approved scope
+    # must still surface (fail-closed); it must not be dropped by namespace.
+    assert ci_checks.scope_changed_ids({"FR-04", "IR-99"}, []) == {"FR-04", "IR-99"}
+
+
+def test_scope_changed_ids_keeps_id_when_any_non_negated_reference():
+    raw = {"FR-01"}
+    lines = [(_SRC, "FR-01 is not implemented here", True), (_SRC, "see FR-01 for the reuse requirement", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-01"}
+
+
+def test_scope_changed_ids_same_line_implements_a_excludes_b_only_drops_b():
+    # "implements FR-03; excludes FR-01" must keep FR-03 and drop only FR-01.
+    raw = {"FR-03", "FR-01"}
+    lines = [(_SRC, "implements FR-03; excludes FR-01 here", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-03"}
+
+
+def test_scope_changed_ids_unrelated_negation_does_not_suppress_real_add():
+    # A vague negative word far from a real ID must NOT hide the genuine addition.
+    raw = {"FR-03", "FR-04"}
+    lines = [(_SRC, "no shortcuts; this adds FR-03 and FR-04 handling", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-03", "FR-04"}
+
+
+def test_scope_changed_ids_gate_harness_lines_do_not_add_business_scope():
+    # Example IDs in the gate's own test file are inputs/expectations, not scope.
+    lines = [
+        ("test/offline/test_ci_gates.py", 'changed_ids={"FR-04", "IR-99", "SB-01-FC01"}', False),
+        ("test/offline/test_ci_gates.py", 'Approved scope: "FR-04-FC01, IR-14"', False),
+    ]
+    raw = {"FR-04", "FR-04-FC01", "IR-14", "IR-99", "SB-01-FC01"}
+    assert ci_checks.scope_changed_ids(raw, lines) == set()
+    # An ID seen on a real (non-harness) line as well is still genuine scope.
+    raw2 = {"FR-04", "IR-99"}
+    lines2 = lines + [(_SRC, "real use of FR-04", True)]
+    assert ci_checks.scope_changed_ids(raw2, lines2) == {"FR-04"}
+
+
+def test_scope_changed_ids_real_unapproved_in_ordinary_test_still_fails():
+    # An unapproved requirement ID added in an ORDINARY application test still surfaces.
+    raw = {"FR-04"}
+    lines = [("test/offline/test_fr03_availability.py", "assert 'FR-04' in summary", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-04"}
+
+
+def test_verify_approval_ignores_design_label_ids_but_fails_real_unapproved():
+    # Design labels present in changed_ids must not be reported as uncovered.
+    ok = _verify(changed_ids={"FR-04-FC01", "IR-14", "C-03", "P-01", "R03-01", "FC01-05"})
+    assert ok["errors"] == []
+    # A genuine requirement/FC not in Approved scope still fails.
+    bad = _verify(changed_ids={"FR-04-FC01", "IR-14", "FR-04-FC02"})
+    assert any("FR-04-FC02" in e for e in bad["errors"])
+
+
+def test_contract_plan_supplemental_covers_extra_path_and_unions_tests(tmp_path: Path):
+    repo, _ = _repo(tmp_path)
+    main_spec = repo / "docs" / "specs" / "main.md"
+    sup_spec = repo / "docs" / "specs" / "supp.md"
+    main_spec.parent.mkdir(parents=True)
+    main_spec.write_text("Code `src/old.py`; use `test/offline/test_m.py`.\n", encoding="utf-8")
+    sup_spec.write_text("Also `src/extra.py`; use `test/offline/test_s.py`.\n", encoding="utf-8")
+    for name in ("test_m.py", "test_s.py"):
+        f = repo / "test" / "offline" / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    (repo / "src" / "extra.py").write_text("x = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "specs")
+    commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": f"docs/specs/main.md @ {commit}",
+        "Approved scope": "FR-03",
+        "Supplemental test specification": f"docs/specs/supp.md @ {commit} (approval: https://github.com/o/r/pull/13#issuecomment-1)",
+    }
+    # Without the supplemental text, src/extra.py is uncovered.
+    only_main = ci_checks.contract_test_plan(repo, fields, ["src/old.py", "src/extra.py"])
+    assert any("src/extra.py" in e for e in only_main["errors"])
+    # With the supplemental spec text, coverage + test union succeed.
+    supp_text = sup_spec.read_text(encoding="utf-8")
+    plan = ci_checks.contract_test_plan(
+        repo, fields, ["src/old.py", "src/extra.py"], supplemental_spec_texts=[supp_text]
+    )
+    assert plan["errors"] == []
+    assert plan["test_paths"] == ["test/offline/test_m.py", "test/offline/test_s.py"]
+
+
+def test_contract_plan_supplemental_cannot_cover_unmentioned_path(tmp_path: Path):
+    repo, _ = _repo(tmp_path)
+    main_spec = repo / "docs" / "specs" / "main.md"
+    main_spec.parent.mkdir(parents=True)
+    main_spec.write_text("Code `src/old.py`; use `test/offline/test_m.py`.\n", encoding="utf-8")
+    t = repo / "test" / "offline" / "test_m.py"
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    (repo / "src" / "nowhere.py").write_text("y = 2\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "specs")
+    commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": f"docs/specs/main.md @ {commit}",
+        "Approved scope": "FR-03",
+    }
+    plan = ci_checks.contract_test_plan(
+        repo, fields, ["src/nowhere.py"], supplemental_spec_texts=["Nothing relevant here.\n"]
+    )
+    assert any("src/nowhere.py" in e for e in plan["errors"])
+
+
+def _supp_fields(value: str) -> dict[str, str]:
+    return {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": "docs/plans/round-03.md @ d83abc9",
+        "Approval evidence": "https://github.com/o/r/pull/13#issuecomment-9",
+        "Implementation start": "53bfaf5",
+        "Approved scope": "FR-03",
+        "Supplemental test specification": value,
+    }
+
+
+def _supp_validate(tmp_path: Path, monkeypatch, value: str, event: dict[str, Any], *,
+                   use_event_body: bool = False, body_override: str | None = None):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    repo, base = _repo(tmp_path)
+    # Create a supplemental spec at a commit BEFORE a later implementation change.
+    sup = repo / "docs" / "specs" / "a3.md"
+    sup.parent.mkdir(parents=True)
+    sup.write_text("## 3. Allowed files\n\n- `test/offline/test_portfolio_context.py`\n", encoding="utf-8")
+    t = repo / "test" / "offline" / "test_portfolio_context.py"
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "spec")
+    spec_commit = _git(repo, "rev-parse", "HEAD").strip()
+    # A later change to the covered test file (the "first related change").
+    t.write_text("def test_ok():\n    assert True  # edit\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    if body_override is not None:
+        event = {**event, "body": body_override.replace("<COMMIT>", spec_commit)}
+    elif not use_event_body:
+        event = {**event, "body": f"APPROVED test-spec: docs/specs/a3.md @ {spec_commit}"}
+    monkeypatch.setattr(ci_checks, "fetch_approval_event", lambda *a, **k: (event, "author"))
+    resolved_value = value.replace("<COMMIT>", spec_commit)
+    event = {**event, "url": "https://github.com/o/r/pull/13#issuecomment-9"}
+    return ci_checks.validate_supplemental_specification(
+        repo, base, head, resolved_value, "o/r", 13, "tok",
+        ["test/offline/test_portfolio_context.py"],
+    )
+
+
+def test_supplemental_validation_accepts_valid_non_author(tmp_path: Path, monkeypatch):
+    event = _approval_event(created_at="2026-11-23T15:56:51Z")
+    result = _supp_validate(
+        tmp_path,
+        monkeypatch,
+        "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)",
+        event,
+    )
+    assert result["errors"] == []
+    assert "test/offline/test_portfolio_context.py" in result["spec_text"]
+
+
+def test_supplemental_validation_rejects_author_bot_late_and_bad_phrase(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    author = _approval_event(reviewer="author", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "a", monkeypatch, value, author)["errors"]
+    bot = _approval_event(reviewer="dependabot[bot]", reviewer_type="Bot", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "b", monkeypatch, value, bot)["errors"]
+    late = _approval_event(created_at="2099-01-01T00:00:00Z")
+    assert _supp_validate(tmp_path / "c", monkeypatch, value, late)["errors"]
+    wrong_phrase = _approval_event(body="APPROVED test-spec: docs/specs/other.md @ deadbee", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "d", monkeypatch, value, wrong_phrase, use_event_body=True)["errors"]
+
+
+def test_verify_approval_primary_fails_even_with_supplemental():
+    # Supplemental validity does not relax the primary checks (bot/author/late still fail).
+    bad = _verify(event=_approval_event(reviewer="author"))
+    assert any("PR author" in e for e in bad["errors"])
+
+
+def test_supplemental_validation_phrase_must_match_exactly(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    good = _approval_event(created_at="2026-11-23T15:56:51Z")
+    # Exact path + full SHA -> accepts.
+    ok = _supp_validate(tmp_path / "ok", monkeypatch, value, good,
+                        body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
+    assert ok["errors"] == []
+    # Correct path but SHA + extra char -> fail (prefix-only bug MUST NOT pass).
+    appended = _supp_validate(tmp_path / "ap", monkeypatch, value, good,
+                              body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>0")
+    assert appended["errors"]
+    # Correct phrase + trailing text -> fail.
+    trailing = _supp_validate(tmp_path / "tr", monkeypatch, value, good,
+                              body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT> WRONG-SPEC")
+    assert trailing["errors"]
+    # Wrong path -> fail.
+    wrong_path = _supp_validate(tmp_path / "wp", monkeypatch, value, good,
+                                body_override="APPROVED test-spec: docs/specs/other.md @ <COMMIT>")
+    assert wrong_path["errors"]
+    # Multiple approval markers -> fail.
+    multi = _supp_validate(tmp_path / "mu", monkeypatch, value, good,
+                           body_override=("APPROVED test-spec: docs/specs/a3.md @ <COMMIT>\n"
+                                          "APPROVED test-spec: docs/specs/a3.md @ <COMMIT>"))
+    assert multi["errors"]
+
+
+def test_supplemental_validation_sha_last_digit_differs_fails(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    good = _approval_event(created_at="2026-11-23T15:56:51Z")
+    # Resolve the real commit via a valid probe, then mutate its last hex digit.
+    base_value = value
+    probe = _supp_validate(tmp_path / "probe", monkeypatch, base_value, good,
+                           body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
+    assert probe["errors"] == []
+    real = _git(tmp_path / "probe" / "repo", "rev-parse", "HEAD~1").strip()
+    last = real[-1]
+    alt = "0" if last != "0" else "1"
+    bad_sha = real[:-1] + alt
+    diff = _supp_validate(tmp_path / "diff", monkeypatch, base_value, good,
+                          body_override=f"APPROVED test-spec: docs/specs/a3.md @ {bad_sha}")
+    assert diff["errors"]
+
+
+def test_scope_extraction_full_flow_doc_vs_code(tmp_path: Path, monkeypatch):
+    """Real git diff -> doc classification -> scope extraction (no manual scope_bearing)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text(
+        'def f(summary):\n'
+        '    """Module behaviour docstring."""\n'
+        '    assert "FR-04" in summary\n'
+        '    enabled = {"FR-04"}\n'
+        '    prompt = f"Implement FR-04 for {summary}"\n'
+        '    return enabled, prompt\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    scoped = ci_checks.scope_changed_ids(ids, triples)
+    # Executable strings (assert/dict/f-string) must keep FR-04; docstring-only IDs are not
+    # added. FR-04 is therefore reported as unapproved business scope.
+    assert "FR-04" in scoped
+    # Doc string-only identifiers (e.g. a doc-only id) are not turned into scope: add one.
+    src2 = repo / "src" / "doconly.py"
+    src2.write_text(
+        'def g():\n'
+        '    """Docstring mentions FR-06 only."""\n'
+        '    return 1\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "doc")
+    head2 = _git(repo, "rev-parse", "HEAD").strip()
+    ids2 = ci_checks.collect_changed_scope_ids(repo, base, head2, ["src/doconly.py"])
+    triples2 = ci_checks.collect_changed_scope_lines(repo, base, head2, ["src/doconly.py"])
+    assert "FR-06" not in ci_checks.scope_changed_ids(ids2, triples2)
+
+
+def test_documentation_line_same_line_as_code_is_scanned():
+    """A docstring sharing a physical line with executable code must NOT be excluded."""
+    # Module docstring then a real assignment on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        '"""module docs"""; enabled = {"FR-04"}\n'
+    ) == set()
+    # Function body docstring then a real assert on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'def f():\n    """docs"""; assert "FR-04" in summary\n'
+    ) == set()
+    # Class body docstring plus assignment on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'class C:\n    """cdocs"""; X = "FR-04"\n'
+    ) == set()
+    # Async function body docstring plus code on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'async def g():\n    """adocs"""; y = "FR-04"\n'
+    ) == set()
+    # A multi-line docstring whose closing line also carries code is executable.
+    assert ci_checks._documentation_line_numbers(
+        'def h():\n    """line1\n    line2""" ; return "FR-04"\n'
+    ) == set()
+
+
+def test_documentation_line_pure_docstrings_and_comments_still_excluded():
+    """Boundary: a standalone docstring / comment line remains documentation."""
+    assert ci_checks._documentation_line_numbers('"""module FR-06 docs"""\n') == {1}
+    assert ci_checks._documentation_line_numbers(
+        'def f():\n    """body FR-06 docs"""\n    return 1\n'
+    ) == {2}
+    assert ci_checks._documentation_line_numbers(
+        'def h():\n    """line1\n    line2\n    """\n    return "FR-04"\n'
+    ) == {2, 3, 4}
+    assert ci_checks._documentation_line_numbers('# FR-06 comment only\n') == {1}
+    # Ordinary executable strings are never documentation.
+    for src in ('x = "FR-04"\n', 'assert "FR-04" in s\n', 'd = {"FR-04": 1}\n'):
+        assert ci_checks._documentation_line_numbers(src) == set()
+
+
+def test_scope_extraction_docstring_same_line_full_flow(tmp_path: Path):
+    """Real git diff -> doc classification -> scope extraction for semicolon docstrings."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text(
+        '"""module docs"""; enabled_requirements = {"FR-04"}\n'
+        '\n'
+        'def f():\n'
+        '    """docs"""; assert "FR-04" in summary\n'
+        '\n'
+        'class C:\n'
+        '    """cdocs"""; X = "FR-04"\n'
+        '\n'
+        'async def g():\n'
+        '    """adocs"""; await x\n'
+        '    Y = "FR-04"\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    # The docstring+code lines are scanned, so the genuine unapproved FR-04 surfaces.
+    assert "FR-04" in ci_checks.scope_changed_ids(ids, triples)
+
+
+def test_documentation_only_id_still_excluded_full_flow(tmp_path: Path):
+    """Regression: pure docstring IDs are still not business scope in a real diff."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text('def f():\n    """Only FR-06 in prose."""\n    return 1\n', encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    assert "FR-06" not in ci_checks.scope_changed_ids(ids, triples)
+
+
+def test_parse_pr_body_single_fields_ok():
+    fields = ci_checks.parse_pr_body(
+        "Plan: docs/plans/round-03.md\n"
+        "Approved test specification: docs/plans/round-03.md @ abc1234\n"
+        "Approval evidence: https://github.com/o/r/pull/13#issuecomment-1\n"
+        "Implementation start: def5678\n"
+        "Approved scope: FR-03\n"
+        "ADR: docs/architecture/adr/001-graph-internal-final-check.md\n"
+        "Supplemental test specification: docs/plans/a3.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-2)\n"
+    )
+    assert fields["Plan"] == "docs/plans/round-03.md"
+    assert fields["Approved scope"] == "FR-03"
+    assert fields["Supplemental test specification"].startswith("docs/plans/a3.md")
+    assert ci_checks.find_duplicate_pr_body_fields(
+        "Plan: a\nApproved scope: FR-03\n"
+    ) == []
+
+
+def test_parse_pr_body_duplicate_machine_field_raises():
+    body = (
+        "Plan: docs/plans/round-03.md\n"
+        "Plan: docs/ci/README.md\n"
+        "Approved scope: FR-03\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == ["Plan"]
+    with pytest.raises(ci_checks.CiError) as excinfo:
+        ci_checks.parse_pr_body(body)
+    assert "duplicate" in str(excinfo.value)
+    assert "Plan" in str(excinfo.value)
+
+
+def test_parse_pr_body_duplicate_multiple_fields_reported():
+    body = (
+        "Plan: a\nPlan: b\n"
+        "Implementation start: 1111111\nImplementation start: 2222222\n"
+        "Approved scope: FR-03\nApproved scope: FR-04\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == [
+        "Approved scope",
+        "Implementation start",
+        "Plan",
+    ]
+
+
+def test_parse_pr_body_allows_multiple_supplemental(tmp_path: Path):
+    # Multiple supplements are legitimate and never a duplicate-field error.
+    body = (
+        "Supplemental test specification: docs/plans/a3.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-1)\n"
+        "Supplemental test specification: docs/plans/a4.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-2)\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == []
+    fields = ci_checks.parse_pr_body(body)
+    assert fields["Supplemental test specification"].endswith("#issuecomment-2)")
+
+
+def test_security_paths_cli_reports_duplicate_field(tmp_path: Path):
+    body = tmp_path / "body.txt"
+    body.write_text("Plan: a\nPlan: b\n", encoding="utf-8")
+    rc = ci_checks.main(
+        ["security-paths", "--pr-body-file", str(body), "--paths", "src/x.py"]
+    )
+    assert rc == 1
+
+
 
 def test_legacy_a3_heading_alone_cannot_grant_scope():
     text = "## 3. Exact additional file and edit scope\n**`test/offline/test_portfolio_context.py`**\n"
