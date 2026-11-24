@@ -5167,3 +5167,51 @@ entries:
       files at the stated paths in the final package or a separately authorized upload.
     - Other contributors' empty or missing transcript references remain unchanged.
     - No historical approval status, test result or semantic-quality acceptance was upgraded.
+
+  - id: AI-D4-REVIEW-DEBT-MAINTENANCE-001
+    date: '2026-11-25'
+    tool: Codex
+    model: Model identifier not independently recorded for this documentation task
+    activity: review_memo_and_confirmed_debt_maintenance
+    task: Complete evidence-based recent PR review summaries and register confirmed retained debt; publish the documentation
+      update.
+    files_changed:
+    - docs/review-memo.md
+    - docs/debt-register.md
+    - docs/ai-use-log.yaml
+    ai_contribution: Added five retrospective records for PRs 19, 24, 25, 26 and 27. Transcribed the actual Howindy
+      APPROVED event for PR 26 at its reviewed revision; left the other final human verdicts unestablished. Registered
+      three open debt items for inactive remote CI enforcement, FR-10 formal evaluation and the documented context-budget
+      course-alignment gap. Preserved earlier histories and did not change application code, tests, prompts, approved
+      thresholds, workflow configuration or permissions.
+    human_intervention: User explicitly requested completing the review memo and debt register and pushing them to
+      the repository. This related AI-use record accompanies the two requested documents on the existing documentation-review
+      branch; main is not directly changed.
+    verification:
+      status: documentation_checks_only
+      summary: Check Git diff whitespace, YAML structure and unique IDs with the existing AI-use validator; verify
+        the five reviewed commits resolve locally and newly added local Markdown links resolve. No application regression,
+        vendor request or paid model replay is performed. GitHub detail retrieval encountered TLS interruption and
+        then public API rate limiting; the records distinguish earlier successful read-only snapshots from unavailable
+        follow-up detail.
+    evidence_refs:
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/19
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/25
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/26
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/27
+    - Inspected main a78aee443e4c3be127535dd86e3e50745b5da5de; actual workflow state and main protection queried read-only
+      on 2026-11-25.
+    approval:
+      subject: Final human review of this documentation-maintenance change
+      status: pending
+      approved_at: null
+      evidence: []
+    transcript_refs: []
+    limitations:
+    - Current maintenance postdates the prepared personal transcript cutoff; its raw conversation reference remains
+      pending export.
+    - AI-authored retrospective assessments are not substitutes for pre-implementation test approval or an independent
+      final human review.
+    - Open debt records neither approve the compromises nor establish completed remediation.
+    - No fresh full-suite success, remote CI pass or formal semantic acceptance is claimed.

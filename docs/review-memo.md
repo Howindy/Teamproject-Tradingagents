@@ -1,7 +1,7 @@
 # D4 Review Memo
 
-- Document status: Reusable review-record template with two historical closeout records and one AI-authored implementation-review draft whose final human `APPROVED` event is separately transcribed from user-provided GitHub evidence. The AI-authored analysis remains distinct from the human verdict; this update is not a new review or approval.
-- Registered records: RM-7-R1 and RM-9-R1 are historical human closeout records; both GitHub review bodies are empty and written rationale was not provided. RM-10-R1's analysis was authored by the AI; its later human formal review and written rationale are transcribed separately below. The AI did not select or invent the human verdict.
+- Document status: Review template, preserved historical records, and dated retrospective assessments of recent merged PRs. AI-authored findings, historical test reports, merge events and actual human reviews are distinguished. This maintenance does not create approvals or rerun application acceptance.
+- Registered records: Historical entries below remain unchanged. The 2026-11-25 reconciliation adds RM-19-R1, RM-24-R1, RM-25-R1, RM-26-R1 and RM-27-R1. RM-26-R1 transcribes a verified GitHub APPROVED event; the other four do not establish a final human verdict.
 - Purpose: Keep one human-reviewed memo per PR, covering specification and architecture alignment, code and test quality, operational metadata, security, and efficiency.
 - Related records: [Bug diary](bug-diary.md) and [Debt register](debt-register.md).
 
@@ -24,7 +24,7 @@ Use the current approved inputs that apply to the actual PR. Do not treat a Prop
 - Round plan: [`docs/plans/round-01.md`](plans/round-01.md) is the frozen approved Round 1 specification at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical pre-approval text, not the current approval record.
 - Round 2 plan: [`docs/plans/round-02.md`](plans/round-02.md) is frozen at `8ad99c25ea1acd77b6e019fbe3c357899e8fc535`; its internal Pending cells remain the pre-implementation specification and are not rewritten by the later approval, execution, review, or merge evidence.
 - Verification rules: [`docs/code-governance/verification-constraints.md`](code-governance/verification-constraints.md).
-- Requirements: [`docs/req/requirements.yaml`](req/requirements.yaml) v1.48.0.
+- Current requirements: [`docs/req/requirements.yaml`](req/requirements.yaml) v1.51.0; historical records retain the version applicable at their review time.
 - D2 invariants: [`docs/architecture/invariants.md`](architecture/invariants.md).
 - Trace matrix: [`docs/architecture/trace-matrix.md`](architecture/trace-matrix.md).
 - Runtime policies: [`docs/architecture/runtime-policy-catalog.md`](architecture/runtime-policy-catalog.md).
@@ -698,3 +698,103 @@ all 15 replies for each run. Run 45459356876 passed v2 with 19 passed grades and
 one critical S02 Manager denial of available company news. These are replay
 decisions; activation requires merge after independent review. PR #13 needs
 new candidate-bound evidence. No provider requests were made.
+
+## 2026-11-25 retrospective review-record reconciliation
+
+This section consolidates existing evidence for recent merged PRs. It is a documentation assessment, not a new full source audit, an application test run, or pre-implementation approval. Repository baseline inspected: `a78aee443e4c3be127535dd86e3e50745b5da5de` (D1 v1.51.0). Fixed Git objects and existing AI-use entries support the scope and verification summaries below.
+
+Read-only GitHub API snapshots on 2026-11-25 confirmed the merge states and showed an actual APPROVED review for PR #26. The same review queries returned no formal Review events for #19, #24, #25 and #27; this does not deny the separate test-approval comments or informal discussions. Subsequent detail collection hit the public API rate limit. No additional approval, reviewer rationale or unobserved CI result is inferred.
+
+The API snapshot showed both `CI` and `Trusted evaluation` as `disabled_manually`, and `main.protected=false`. Repository workflow files describe intended controls, not proof of enforcement. See `DEBT-GUARDRAIL-001` and `DEBT-EVALUATION-001` in the [debt register](debt-register.md). Historical test counts below are not additive and do not establish a fresh all-green result at the inspected main revision.
+
+### RM-19-R1 — FR-10 feature integration
+
+- PR: [#19](https://github.com/Howindy/Teamproject-Tradingagents/pull/19).
+- Candidate: [`cfa79eb8cbad82694745b13b39c1d392d46c5aca`](https://github.com/Howindy/Teamproject-Tradingagents/commit/cfa79eb8cbad82694745b13b39c1d392d46c5aca), containing the Round-04A merge. The PR was recorded merged at `2026-11-24T20:55:33Z`.
+- Scope: FR-10-FC01–FC10; deterministic selection/calculation, SEC/Yahoo input adapters, analysis-local reuse and optional fundamentals-prompt injection. Basis: [feature plan](plans/financial-metrics-feature-integration.md), [ADR 002](architecture/adr/002-deterministic-financial-metrics.md) and [integration handoff](fr10-handoff-yifan.md).
+- Pre-implementation evidence: [test-specification comment](https://github.com/Howindy/Teamproject-Tradingagents/pull/19#issuecomment-7133994045), binding plan revision `2e6285ee64e2b3f6430e6a29ab7465cd2ad9f688`. This comment is distinct from a final implementation review and from semantic execution approval.
+
+**Specification, architecture and code/test assessment.** The recorded integration keeps the calculator/provider boundary replaceable, preserves analysis isolation and leaves formal recommendation authority to SB-01. FR-03 owns data availability; FR-10 contributes period-specific financial evidence. The original analyst tools and complete report outputs remain available. Recorded controlled tests cover metric/reference results, period/cutoff handling, unavailable inputs, price-failure isolation, entry wiring and repeated-analysis behavior. These are scoped findings supported by the handoff and recorded tests, not a universal correctness claim.
+
+**Recorded verification.** `AI-FM-MERGE-04A-001` reports 66 initial targeted passes, then six matrix tests exercising 18 CLI/programmatic combinations with saved-state and memory assertions. The full Windows suite was not green: after environment rechecks, eight remaining failures were reproduced on untouched main `a835d43`. Eight cache/lock cases passed on Windows; no macOS result is inferred. Ruff, API and dependency checks were reported passed. Exact historical commands, environments and local XML locations remain in [AI-use log](ai-use-log.yaml), that entry and the handoff; the temporary files are not claimed to be packaged here.
+
+**Security and efficiency.** Providers and caches stay outside serialized graph state; the existing formal-decision boundary is retained. Analysis-local reuse is tested, but no provider billing, latency or general live-model benefit is established. No new paid calls or security scan was performed during this record maintenance.
+
+**Disposition and outstanding evidence.** The implementation is merged, but FR-10's [formal semantic configuration](ci/semantic_eval.yaml) remains `unapproved`. Known-answer offline tests do not replace a candidate-bound model replay. Subsequent source-contract fixes are assessed in RM-25-R1.
+
+- Final human verdict: **Not recorded** in the formal Review API snapshot.
+- Human reviewer/time/rationale: Not recorded for a final implementation review; do not substitute the test-specification comment.
+- Follow-up: Obtain and record an actual final review if required; close `DEBT-EVALUATION-001` with independently approved and executed evidence. No retrospective APPROVE is assigned here.
+
+### RM-24-R1 — Round-04A formal-result integration
+
+- PR: [#24](https://github.com/Howindy/Teamproject-Tradingagents/pull/24).
+- Candidate: [`aed85acaf9ca586ecb7b2224561696f262b82cc6`](https://github.com/Howindy/Teamproject-Tradingagents/commit/aed85acaf9ca586ecb7b2224561696f262b82cc6); recorded merged at `2026-11-24T20:29:54Z`.
+- Scope: production integration of FR-03 availability, FR-04 risk results, SB-01 formal output and INV-01 result consistency; [Round-04A plan](plans/round-04a.md), [ADR 001](architecture/adr/001-graph-internal-final-check.md), formal-result and integration tests.
+- Pre-implementation evidence: [frozen test/implementation approval](https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7142585900) for `838447f1a24edcf1633daa6061299140a1ba1582`; [supplemental legacy-test approval](https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7143051917) is recorded separately in `AI-R04A-LEGACY-TESTS-001`. Test adjustments are not reclassified as earlier product acceptance.
+
+**Specification, architecture and code/test assessment.** The recorded design makes SB-01 the sole writer of formal decision fields. Entries, report output and memory consume the same result, while FR-04 remains the deterministic risk evaluator. Contract and integration cases exercise valid, blocked, error and malformed formal results. The later test-maintenance scope was separately recorded rather than silently rewriting old expectations. New FR-10 work was not the implementation responsibility of this PR.
+
+**Recorded verification.** `AI-R04A-IMPLEMENTATION-001` reports 47 new tests plus 181 core tests passed; its initial default suite reported 1,986 passes and 62 failures. Separately approved maintenance later reported all 58 affected cases and all 330 tests in the affected modules passed; its default suite reported 2,044 passes and four failures. These are successive historical states, not conflicting claims about one execution. The P07 follow-up is `AI-R04A-P07-TEST-MAINT-001` and commit `aed85ac`; its entry holds the recorded result. The exact macOS commands and external temporary evidence references remain in the AI-use log. Nothing was rerun for this memo.
+
+**Security and efficiency.** Model proposals remain advisory and do not replace exact risk or formal validation. No additional model-quality, performance or platform guarantee is inferred. Existing macOS lock-test failures remain a distinct issue in [BUG-02](bug-diary.md).
+
+- Final human verdict: **Not recorded** in the formal Review API snapshot.
+- Human reviewer/time/rationale: Not recorded for a final Review event; the pre-approval comments above remain valid evidence of their stated scope only.
+- Follow-up: Record an actual final implementation review and a version-bound validation summary; do not combine overlapping test totals or replace failures with a pass.
+
+### RM-25-R1 — FR-10 source-contract repairs
+
+- PR: [#25](https://github.com/Howindy/Teamproject-Tradingagents/pull/25).
+- Candidate: [`dd47a4e555a301bfec2346fec1a41071c31478ff`](https://github.com/Howindy/Teamproject-Tradingagents/commit/dd47a4e555a301bfec2346fec1a41071c31478ff), based on `cfa79eb`; recorded merged at `2026-11-24T21:02:55Z`.
+- Scope: Yahoo quote precision, reported net-income/metric semantics and SEC outage handling. Bounded changed paths are the commit's four product files, two targeted test files, integration notes and AI-use log; no workflow or formal-gate ownership change.
+- Prior scope: FR-10-FC01–FC10 and ADR 002. This snapshot does not establish a new repair-specific pre-approval event; do not manufacture one.
+
+**Specification, architecture and code/test assessment.** Source normalization stays in the data/provider boundary and deterministic arithmetic in the calculator. The fixes retain explicit unavailable/error handling rather than making a failed fetch look like a successful numeric result. Four new reproducing cases are recorded as failing before the fix and passing afterward. This extends defect coverage without changing the registered semantic threshold or granting the model calculation authority.
+
+**Recorded verification.** `AI-FR10-SOURCE-CONTRACTS-001` reports 460 targeted tests passed on macOS/Python 3.12, with Ruff, API and `pip check` passed. It does not record a fresh, universally green main suite or a real-model semantic replay. This maintenance checks the fixed commit and existing record; it does not rerun the historical environment.
+
+**Security and efficiency.** No new dependencies, runtime model calls or CI policy are part of the repair commit. No billing or latency measurement is recorded. Remaining release-evaluation debt is unchanged.
+
+- Final human verdict: **Not recorded** in the formal Review API snapshot.
+- Human reviewer/time/rationale: Not recorded.
+- Follow-up: Record an actual final repair review and include the targeted evidence in the final-version validation summary. See `DEBT-EVALUATION-001` for the separate model-quality gap.
+
+### RM-26-R1 — Supplementary semantic regression examples
+
+- PR: [#26](https://github.com/Howindy/Teamproject-Tradingagents/pull/26).
+- Reviewed candidate: [`9a69ab75b7b7985837424a8cd11a6f73bb6b46bf`](https://github.com/Howindy/Teamproject-Tradingagents/commit/9a69ab75b7b7985837424a8cd11a6f73bb6b46bf).
+- Merge commit: `5161b79b9ee3942d949e9d135e41fbf98f910486`; recorded merged at `2026-11-24T21:45:26Z`.
+- Scope: two draft scenario/answer sets, two offline test modules and AI-use log; seven changed paths relative to main. FR-10, FR-03, FR-04, SB-01 and INV-01 are traceability targets, not new product implementations.
+
+**Specification, architecture and code/test assessment.** FR-10 examples use the existing scorer with synthetic correct reports and controlled wrong/missing claims. Round-04A examples use the deterministic risk, formal-check and persistence boundaries. Positive and negative cases exercise the stated behavior. No product prompt, graph, scorer, threshold, reference dataset, suite registration or workflow is changed. These are expressly post-implementation regression examples; no earlier test pre-approval or real-model semantic result is implied.
+
+**Recorded verification.** The Windows/Python 3.12 test environment ran both modules after syncing PR #25: 28 passed in 2.76 seconds. The recorded command was `pytest.exe test/offline/test_fr10_semantic_units_draft.py test/offline/test_round04_semantic_units_draft.py -q --tb=short -p no:cacheprovider --basetemp <external-temporary-directory>/units-pr`, with bytecode writing and plugin autoload disabled. Final Ruff, JSON/YAML and whitespace checks passed after import-format corrections. Source: `AI-SEMANTIC-UNITS-REVIEW-001`. No network vendor or model calls were made. No GitHub check runs were present in the PR snapshot; this is not a remote CI pass.
+
+**Security and efficiency.** The change is test/documentation-only; it introduces no production trust boundary or runtime call overhead. Known-answer examples have limited generalization value, already disclosed by the draft metadata and `DEBT-EVALUATION-001`.
+
+**Final human review — transcribed actual event**
+
+- Final verdict: **APPROVE**, transcribed from GitHub state `APPROVED`.
+- Reviewer: **Howindy**.
+- Submitted at: **2026-11-24T21:44:11Z**.
+- Approved revision: `9a69ab75b7b7985837424a8cd11a6f73bb6b46bf`.
+- Evidence: [PR #26 review timeline](https://github.com/Howindy/Teamproject-Tradingagents/pull/26).
+- Written rationale: Not captured in this maintenance snapshot; none is invented. The specification/architecture assessment above is AI-authored and is not attributed to the human reviewer.
+
+### RM-27-R1 — Current specification and guidance alignment
+
+- PR: [#27](https://github.com/Howindy/Teamproject-Tradingagents/pull/27).
+- Candidate: [`7d1ca6129c8edf1c3605808033b81e007ecfeaef`](https://github.com/Howindy/Teamproject-Tradingagents/commit/7d1ca6129c8edf1c3605808033b81e007ecfeaef).
+- Merge: `a78aee443e4c3be127535dd86e3e50745b5da5de`, recorded at `2026-11-24T22:24:22Z`.
+- Scope: 20 documentation/governance paths; requirements v1.51.0, current five-requirement scope, architecture/verification alignment, ADR 003, Round-04B plan and existing AI-use evidence. No application/test implementation was part of this PR delta.
+
+**Specification and architecture assessment.** Current scope identifies FR-03, FR-04, FR-10, SB-01 and INV-01 as delivered, and retains the nine deferred requirements. ADR 003 describes role-local context assembly and openly records the absence of global input caps, compaction thresholds and post-compaction reinjection. That disclosure does not by itself satisfy the corresponding course design expectation; see `DEBT-GUARDRAIL-002`. Historical plans and results remain historical rather than becoming current execution evidence.
+
+**Recorded verification and document quality.** The PR description reported whitespace checks and a clean trial merge, with no application tests run for the documentation changes. A later read-only audit of its fixed main contents ran the existing requirements-schema command successfully: 14 requirements / 65 FCs, comprising five current / 28 FCs and nine deferred / 37 FCs. Both registered datasets and rubrics match their configured SHA-256 values when calculated from Git blobs. Windows working-copy CRLF differences are not dataset corruption. This later audit is not backdated as a pre-merge check.
+
+**Security and efficiency.** No runtime call counts, trading authority or performance behavior changed. README's CI section describes the intended design; the observed disabled workflows and unprotected main remain an operational limitation. File presence is not enforcement evidence. The PR does not establish updated final test acceptance or effective coding-agent permission loading.
+
+- Final human verdict: **Not recorded** in the formal Review API snapshot.
+- Human reviewer/time/rationale: Not recorded.
+- Follow-up: Confirm the scope/document changes through an actual human review, retain the explicit course-alignment gaps, and distinguish configured controls from live GitHub settings. This maintenance assigns no retrospective APPROVE.
