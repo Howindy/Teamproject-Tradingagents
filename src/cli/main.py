@@ -1,5 +1,7 @@
+import json
 import sys
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -31,6 +33,10 @@ app = typer.Typer(
     help="TradingAgents CLI: Multi-Agents LLM Financial Trading Framework",
     add_completion=True,  # Enable shell completion
 )
+
+
+def _invalid_json_number(token):
+    raise ValueError(f"Invalid JSON number: {token}")
 
 
 @app.callback(invoke_without_command=True)
@@ -68,6 +74,10 @@ def analyze(
         None, "--html/--no-html",
         help="Save the report as one HTML page too, complete_report.html, without asking (default: yes)",
     ),
+    purchase_scenario: Annotated[
+        Path | None,
+        typer.Option("--purchase-scenario", help="JSON file with a proposed purchase and optional risk limits."),
+    ] = None,
 ):
     """Run an analysis. This is what a bare `tradingagents` does.
 
@@ -90,6 +100,14 @@ def analyze(
 
     try:
         flags = {"ticker": ticker, "date": date, "analysts": analysts, "save": save, "show": show, "html": html}
+        if purchase_scenario is not None:
+            try:
+                flags["purchase_scenario"] = json.loads(
+                    purchase_scenario.read_text(encoding="utf-8"),
+                    parse_float=str, parse_constant=_invalid_json_number,
+                )
+            except (OSError, ValueError) as exc:
+                raise typer.BadParameter(str(exc), param_hint="--purchase-scenario") from exc
         run_analysis(checkpoint=checkpoint, portfolio=portfolio_context, flags=flags)
     except _NO_CONSOLE_ERRORS:
         # A terminal with no console buffer cannot host the interactive prompts.

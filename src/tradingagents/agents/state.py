@@ -66,8 +66,14 @@ class AgentState(MessagesState):
     risk_debate_state: Annotated[
         RiskDebateState, "Current state of the debate on evaluating risk"
     ]
-    final_trade_decision: Annotated[str, "Final decision from the Portfolio Manager"]
-    final_rating: Annotated[str, "The Portfolio Manager's 5-tier rating, or REVIEW when it has none"]
+    purchase_scenario: object
+    thresholds: dict
+    model_proposal: dict | None
+    portfolio_risk_result: dict
+    gate_status: str
+    reasons: list[str]
+    final_trade_decision: Annotated[str, "Formal conclusion from the final recommendation check"]
+    final_rating: Annotated[str, "Checked five-tier rating or REVIEW"]
     research_availability_summary: Annotated[
         dict | None,
         "Optional JSON-compatible research-stage data-availability summary prepared "

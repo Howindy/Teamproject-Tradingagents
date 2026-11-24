@@ -23,6 +23,31 @@ _LEGAL_NECESSITY_STATUSES = frozenset(
 _REVIEW = "REVIEW"
 
 
+def validate_formal_result(state):
+    """Validate IF-19 before a consumer returns, displays or persists the decision."""
+    required = {"model_proposal", "gate_status", "final_rating", "final_trade_decision", "reasons"}
+    if not isinstance(state, Mapping) or not required.issubset(state):
+        raise ValueError("Incomplete formal recommendation")
+    proposal = state["model_proposal"]
+    if proposal is not None and (
+        not isinstance(proposal, Mapping) or not {"rating", "text"}.issubset(proposal)
+        or any(proposal[k] is not None and not isinstance(proposal[k], str) for k in ("rating", "text"))
+    ):
+        raise ValueError("Invalid formal recommendation proposal")
+    gate, rating = state["gate_status"], state["final_rating"]
+    if gate not in ("passed", "blocked", "error") or not isinstance(rating, str):
+        raise ValueError("Invalid formal gate or rating")
+    if (gate == "passed" and rating not in _LEGAL_RATINGS) or (gate != "passed" and rating != _REVIEW):
+        raise ValueError("Formal rating conflicts with gate status")
+    if not isinstance(state["final_trade_decision"], str) or not state["final_trade_decision"].strip():
+        raise ValueError("Empty formal decision")
+    reasons = state["reasons"]
+    if not isinstance(reasons, list) or not all(isinstance(reason, str) for reason in reasons):
+        raise ValueError("Invalid formal reasons")
+    if gate != "passed" and not any(reason.strip() for reason in reasons):
+        raise ValueError("Missing formal review reason")
+
+
 def _dedupe(reasons):
     """Return a new list with duplicate reason strings removed, order preserved."""
     seen = set()
