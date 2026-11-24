@@ -646,28 +646,83 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
     assert exc_calls == 1
 
 
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=repo, text=True).strip()
+
+
+def _assert_preparation_source_delta(repo: Path, base: str, head: str) -> None:
+    for rev in (base, head):
+        _git(repo, "rev-parse", "--verify", f"{rev}^{{commit}}")
+    changed = _git(repo, "diff", "--name-only", base, head, "--", "src/")
+    assert not changed, f"Preparation source changes between {base} and {head}: {changed}"
+
+
+def _assert_live_deferred_guards(repo: Path) -> None:
+    package = repo / "src/tradingagents"
+    assert not (package / "run").exists(), "Deferred src/tradingagents/run path present"
+    config = (package / "default_config.py").read_text(encoding="utf-8")
+    for token in ("fr08_enabled", "fr07_sec_enabled"):
+        assert token not in config, f"Forbidden activation token: {token}"
+
+
 def test_p07_preparation_scope_has_no_src_migration_or_brief_activation():
-    """P07 / FR-10: PR 1 leaves src/ free of financials migration and keeps deferred briefs absent."""
-    assert not (ROOT / "src" / "tradingagents" / "financials").exists()
-    assert not (ROOT / "src" / "tradingagents" / "run").exists()
-    default_cfg = (ROOT / "src" / "tradingagents" / "default_config.py").read_text(encoding="utf-8")
-    assert "fr08_enabled" not in default_cfg
-    assert "fr07_sec_enabled" not in default_cfg
+    """PR #14 preparation evidence is historical; deferred-feature guards apply today."""
+    base = "5c6e2caed5e4baceb136b5544ba5e283c0822cdb"
+    head = "88d47e712f7eac6e6babc8d2e1b0dc87d17c4b17"
+    _assert_preparation_source_delta(ROOT, base, head)
+    assert not _git(ROOT, "ls-tree", "--name-only", head, "--", "src/tradingagents/financials")
 
-    # Verify semantic_eval.yaml remains unapproved by default on prep branch.
-    raw_cfg = ci_checks.load_yaml(SEMANTIC_CFG_PATH)
-    assert ci_semantic_eval.validate_config(raw_cfg)["approved"] is False
+    blob = f"{head}:docs/ci/semantic_eval.yaml"
+    raw = _git(ROOT, "show", blob)
+    try:
+        config = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        pytest.fail(f"Cannot parse {blob}: {exc}")
+    verdict = ci_semantic_eval.validate_config(config)
+    assert not verdict["errors"], (blob, verdict["errors"])
+    assert config.get("status") == "unapproved", blob
+    assert verdict["approved"] is False, blob
+    _assert_live_deferred_guards(ROOT)
 
-    # Verify src/ tree is clean relative to origin/main when origin/main is available in git history.
-    check_ref = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "--verify", "origin/main"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if check_ref.returncode == 0:
-        diff_src = subprocess.check_output(
-            ["git", "-C", str(ROOT), "diff", "--name-only", "origin/main", "--", "src/"],
-            text=True,
-        ).strip()
-        assert diff_src == ""
+
+@pytest.fixture
+def p07_history(tmp_path):
+    base = _init_git_repo(tmp_path, {"src/tradingagents/default_config.py": "DEFAULT_CONFIG = {}"})
+    (tmp_path / "prep.md").write_text("Preparation", encoding="utf-8")
+    _git(tmp_path, "add", "prep.md")
+    _git(tmp_path, "commit", "-qm", "Document preparation")
+    head = _git(tmp_path, "rev-parse", "HEAD")
+    later_path = tmp_path / "src/tradingagents/financials/example.py"
+    later_path.parent.mkdir()
+    later_path.write_text("# Later feature", encoding="utf-8")
+    _git(tmp_path, "add", "src")
+    _git(tmp_path, "commit", "-qm", "Add later feature")
+    return tmp_path, base, head
+
+
+def test_p07_source_change_is_rejected_only_inside_preparation(p07_history):
+    repo, base, head = p07_history
+    _assert_preparation_source_delta(repo, base, head)
+    _assert_live_deferred_guards(repo)
+    later = _git(repo, "rev-parse", "HEAD")
+    with pytest.raises(AssertionError, match=r"Preparation source changes.*src/tradingagents/financials/example\.py"):
+        _assert_preparation_source_delta(repo, base, later)
+
+
+@pytest.mark.parametrize("guard", ["src/tradingagents/run", "fr08_enabled", "fr07_sec_enabled"])
+def test_p07_deferred_guards_read_current_checkout(p07_history, guard):
+    repo, base, head = p07_history
+    if guard == "src/tradingagents/run":
+        (repo / guard).mkdir()
+    else:
+        (repo / "src/tradingagents/default_config.py").write_text(f"{guard} = False", encoding="utf-8")
+    _assert_preparation_source_delta(repo, base, head)
+    with pytest.raises(AssertionError, match=guard):
+        _assert_live_deferred_guards(repo)
+
+
+def test_p07_unresolved_preparation_head_is_an_evidence_error(p07_history):
+    repo, base, _ = p07_history
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        _assert_preparation_source_delta(repo, base, "missing-preparation-head")
+    assert error.value.cmd[1:] == ["rev-parse", "--verify", "missing-preparation-head^{commit}"]
