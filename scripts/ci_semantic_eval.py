@@ -3,20 +3,33 @@
 The entry fails closed unless a human-approved dataset, rubric, threshold, and
 model configuration exist.  A reviewed not-applicable determination is an
 explicit alternative, but it must carry a human reviewer and reason.
+
+Semantic mode evaluates exactly one suite registered in the trusted
+``docs/ci/semantic-suites.yaml``; its configuration and runner come only from
+that registry (docs/plans/semantic-suite-routing.md §3.4-§3.5).
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
-import importlib
+import hashlib
 import json
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from ci_checks import CiError, load_yaml
+from ci_checks import (
+    CiError,
+    load_suite_registry,
+    load_yaml,
+    sha256_lf,
+    suite_status_context,
+    validate_suite_id,
+)
+
+RESULT_STATUSES = {"passed", "failed", "needs_review"}
 
 
 def emit(result: Mapping[str, Any]) -> int:
@@ -91,6 +104,8 @@ def build_record(
     request_count: int | None = None,
     candidate_summary: Mapping[str, Any] | None = None,
     baseline_summary: Mapping[str, Any] | None = None,
+    suite: Mapping[str, str] | None = None,
+    needs_review: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     record: dict[str, Any] = {
         "candidate_sha": candidate,
@@ -118,54 +133,288 @@ def build_record(
         record["candidate_summary"] = dict(candidate_summary)
     if baseline_summary is not None:
         record["baseline_summary"] = dict(baseline_summary)
+    if suite is not None:
+        record.update(
+            {
+                "suite_id": suite["suite_id"],
+                "config_path": suite["config_path"],
+                "config_sha256": suite["config_sha256"],
+                "runner": suite["runner"],
+            }
+        )
+    if needs_review is not None:
+        record["needs_review"] = list(needs_review)
     return record
 
 
-def run_approved_evaluation(
-    config: Mapping[str, Any],
-    candidate: str,
-    runner: str,
-    *,
-    details_output: str = "",
-) -> dict[str, Any]:
-    if not runner:
-        raise CiError("approved semantic configuration has no evaluation runner")
-    module_name, separator, function_name = runner.partition(":")
-    if not separator:
-        raise CiError("runner must use module:function syntax")
-    module = importlib.import_module(module_name)
-    function = getattr(module, function_name)
-    if details_output:
-        import inspect
+def load_runner(root: Path | str, runner: str) -> Any:
+    """Import a registered runner from the trusted ``scripts/`` directory only."""
+    import importlib.util
 
-        target_parent = Path(details_output).parent
-        target_parent.mkdir(parents=True, exist_ok=True)
-        sig = inspect.signature(function)
-        if "output_dir" in sig.parameters:
-            result = function(config, candidate, output_dir=target_parent)
-        else:
-            result = function(config, candidate)
-    else:
-        result = function(config, candidate)
+    module_name, separator, function_name = runner.partition(":")
+    if not separator or not module_name or not function_name or "." in module_name:
+        raise CiError("runner must use module:function syntax with a scripts/ module")
+    path = (Path(root) / "scripts" / f"{module_name}.py").resolve()
+    if not path.is_file():
+        raise CiError(f"runner module {path} does not exist")
+    module = sys.modules.get(module_name)
+    module_file = getattr(module, "__file__", None)
+    if module is None or not module_file or Path(module_file).resolve() != path:
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            raise CiError(f"cannot load runner module {path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+    function = getattr(module, function_name, None)
+    if not callable(function):
+        raise CiError(f"runner {runner} is not callable")
+    return function
+
+
+def check_runner_signature(function: Any) -> list[str]:
+    """Suite contract I3: evaluate(config, candidate_sha, *, output_dir, model_transport=None)."""
+    import inspect
+
+    try:
+        parameters = inspect.signature(function).parameters
+    except (TypeError, ValueError) as exc:
+        return [f"runner signature cannot be inspected: {exc}"]
+    errors: list[str] = []
+    positional = [
+        p
+        for p in parameters.values()
+        if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    if len(positional) < 2:
+        errors.append("runner must accept (config, candidate_sha) positionally")
+    for name in ("output_dir", "model_transport"):
+        parameter = parameters.get(name)
+        if parameter is None or parameter.kind == inspect.Parameter.POSITIONAL_ONLY:
+            errors.append(f"runner must accept keyword argument {name}")
+    transport = parameters.get("model_transport")
+    if transport is not None and transport.default is not None:
+        errors.append("runner model_transport must default to None")
+    return errors
+
+
+def normalize_runner_result(
+    result: Any, *, output_dir: Path | None = None
+) -> tuple[str, list[str], list[str]]:
+    """Return (status, needs_review items, errors) per suite contract I3; fail closed."""
     if not isinstance(result, Mapping):
-        raise CiError("semantic evaluation runner did not return a mapping")
-    return dict(result)
+        return "failed", [], ["semantic evaluation runner did not return a mapping"]
+    raw_errors = result.get("errors")
+    if isinstance(raw_errors, list) and all(isinstance(e, str) for e in raw_errors):
+        runner_errors = list(raw_errors)
+        errors: list[str] = []
+    else:
+        runner_errors = []
+        errors = ["runner errors must be a list of strings"]
+    status = result.get("status")
+    if not isinstance(status, str) or status not in RESULT_STATUSES:
+        errors.append(f"runner returned invalid status: {status!r}")
+        status = "failed"
+    summary = result.get("candidate_summary")
+    legacy_items = summary.get("needs_review") if isinstance(summary, Mapping) else None
+    items = result.get("needs_review", legacy_items)
+    if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
+        errors.append("runner needs_review must be a list of strings")
+        items = []
+    else:
+        items = list(items)
+    if legacy_items is not None:
+        if not isinstance(legacy_items, list) or not all(isinstance(i, str) for i in legacy_items):
+            errors.append("runner candidate_summary.needs_review must be a list of strings")
+        else:
+            items = list(dict.fromkeys([*items, *legacy_items]))
+    count = result.get("request_count")
+    if type(count) is not int or count < 0:
+        errors.append("runner request_count must be a non-negative integer")
+    for field in ("dataset_sha256", "rubric_sha256", "details_path", "details_sha256"):
+        if not isinstance(result.get(field), str) or not result[field].strip():
+            errors.append(f"runner {field} must be a nonempty string")
+    if output_dir is not None and isinstance(result.get("details_path"), str):
+        try:
+            details = Path(result["details_path"]).resolve()
+            if not details.is_relative_to(output_dir.resolve()):
+                errors.append("runner details_path must be inside output_dir")
+            elif hashlib.sha256(details.read_bytes()).hexdigest() != result.get("details_sha256"):
+                errors.append("runner details_sha256 does not match details file")
+        except (OSError, ValueError) as exc:
+            errors.append(f"runner details file is unavailable: {exc}")
+    if errors or (runner_errors and status == "passed"):
+        status = "failed"
+    elif items and status == "passed":
+        status = "needs_review"
+    return str(status), items, [*runner_errors, *errors]
+
+
+def resolve_suite(registry_path: str, suite_id: str) -> dict[str, Any]:
+    """Validate a suite ID against the trusted registry before any runner import."""
+    errors = validate_suite_id(suite_id)
+    if errors:
+        raise CiError("; ".join(errors))
+    registry_file = Path(registry_path)
+    if not registry_file.is_file():
+        raise CiError(f"semantic suite registry {registry_path} does not exist")
+    root = registry_file.resolve().parents[2]
+    registry = load_suite_registry(registry_file, root)
+    if registry["errors"]:
+        raise CiError("semantic suite registry is invalid: " + "; ".join(registry["errors"]))
+    entry = registry["suites"].get(suite_id)
+    if entry is None:
+        raise CiError(f"unknown semantic suite: {suite_id}")
+    return {"root": root, "suite_id": suite_id, **entry}
+
+
+def status_description(record: Mapping[str, Any] | None) -> tuple[str, str]:
+    """Commit-status state and description for a trusted evidence record."""
+    if not isinstance(record, Mapping):
+        return "failure", "required evidence is missing or failed"
+    status = str(record.get("status", ""))
+    if status in {"passed", "not_applicable"}:
+        return "success", f"evidence recorded for {record.get('candidate_sha', '')}"
+    if status == "needs_review":
+        items = record.get("needs_review")
+        count = len(items) if isinstance(items, list) else 0
+        return "failure", f"needs_review: {count} pending items"
+    return "failure", "failed"
+
+
+def _command_check_suite(argv: Sequence[str]) -> int:
+    parser = argparse.ArgumentParser(description="Validate a registered semantic suite ID")
+    parser.add_argument("--registry", required=True)
+    parser.add_argument("--suite", required=True)
+    args = parser.parse_args(argv)
+    try:
+        suite = resolve_suite(args.registry, args.suite)
+    except CiError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    print(suite_status_context(suite["suite_id"]))
+    return 0
+
+
+def _command_describe(argv: Sequence[str]) -> int:
+    parser = argparse.ArgumentParser(description="Describe an evidence record for a commit status")
+    parser.add_argument("--record", required=True)
+    args = parser.parse_args(argv)
+    record: Any = None
+    try:
+        record = json.loads(Path(args.record).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        record = None
+    state, description = status_description(record)
+    print(f"{state}\t{description}")
+    return 0
+
+
+def _run_suite(args: argparse.Namespace) -> int:
+    suite = resolve_suite(args.registry, args.suite)
+    config_path = suite["root"] / suite["config"]
+    config = load_yaml(config_path)
+    validation = validate_config(config)
+    if validation["errors"]:
+        return emit({"errors": validation["errors"]})
+    if not validation["approved"]:
+        return emit(
+            {
+                "errors": [
+                    f"semantic evaluation blocked: suite {suite['suite_id']} configuration "
+                    "is unapproved; provide an approved configuration or a reviewed "
+                    "not-applicable record"
+                ]
+            }
+        )
+    suite_fields = {
+        "suite_id": suite["suite_id"],
+        "config_path": suite["config"],
+        "config_sha256": sha256_lf(config_path),
+        "runner": suite["runner"],
+    }
+    function = load_runner(suite["root"], suite["runner"])
+    signature_errors = check_runner_signature(function)
+    if signature_errors:
+        raise CiError("; ".join(signature_errors))
+    if args.details_output:
+        output_dir = Path(args.details_output).parent
+    else:
+        import tempfile
+
+        output_dir = Path(tempfile.mkdtemp(prefix="semantic-suite-"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        result: Any = function(config, args.candidate, output_dir=output_dir)
+    except Exception as exc:  # runner contract: an exception is a failed evaluation
+        result = {"status": "failed", "errors": [f"runner raised: {exc}"]}
+    status, needs_review, errors = normalize_runner_result(result, output_dir=output_dir)
+    result_map: Mapping[str, Any] = result if isinstance(result, Mapping) else {}
+    details_path = str(result_map.get("details_path") or "")
+    details_sha = str(result_map.get("details_sha256") or "")
+    if args.details_output:
+        target_details = Path(args.details_output)
+        source_details: Path | None = None
+        try:
+            if details_path:
+                source = Path(details_path).resolve()
+                if source.is_relative_to(output_dir.resolve()) and source.is_file():
+                    source_details = source
+        except (OSError, ValueError):
+            pass  # Already reported as a runner contract error above.
+        if source_details is not None:
+            if source_details != target_details.resolve():
+                target_details.write_bytes(source_details.read_bytes())
+        else:
+            serialized = json.dumps(result_map, indent=2, sort_keys=True, default=str).encode("utf-8")
+            target_details.write_bytes(serialized)
+            details_sha = hashlib.sha256(serialized).hexdigest()
+        details_path = str(target_details)
+    record = build_record(
+        candidate=args.candidate,
+        workflow_sha=args.workflow_sha,
+        run_id=args.run_id,
+        kind="semantic",
+        status=status,
+        config_version=str((config.get("dataset") or {}).get("version", "")),
+        reason="; ".join(errors) if status != "passed" else "",
+        details_path=details_path,
+        details_sha256=details_sha,
+        dataset_sha256=str(result_map.get("dataset_sha256") or ""),
+        rubric_sha256=str(result_map.get("rubric_sha256") or ""),
+        request_count=result_map.get("request_count") if type(result_map.get("request_count")) is int else None,
+        candidate_summary=result_map.get("candidate_summary") if isinstance(result_map.get("candidate_summary"), Mapping) else None,
+        baseline_summary=result_map.get("baseline_summary") if isinstance(result_map.get("baseline_summary"), Mapping) else None,
+        suite=suite_fields,
+        needs_review=needs_review,
+    )
+    Path(args.output).write_text(json.dumps(record, indent=2), encoding="utf-8")
+    if status != "passed":
+        return emit({"errors": [f"semantic suite {suite['suite_id']} did not pass: {status}"]})
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "check-suite":
+        return _command_check_suite(arguments[1:])
+    if arguments and arguments[0] == "describe":
+        return _command_describe(arguments[1:])
     parser = argparse.ArgumentParser(description="Trusted semantic evaluation")
-    parser.add_argument("--config", required=True)
+    parser.add_argument("--registry", default="")
+    parser.add_argument("--suite", default="")
+    parser.add_argument("--config", default="", help="legacy; accepted only with --not-applicable")
+    parser.add_argument("--runner", default="", help="legacy; rejected")
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--workflow-sha", required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--runner", default="")
     parser.add_argument("--details-output", default="")
     parser.add_argument("--not-applicable", action="store_true")
     parser.add_argument("--reason", default="")
     parser.add_argument("--reviewer", default="")
     parser.add_argument("--approval-evidence", default="")
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
 
     try:
         if args.not_applicable:
@@ -187,66 +436,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             Path(args.output).write_text(json.dumps(record, indent=2), encoding="utf-8")
             return 0
-
-        config = load_yaml(args.config)
-        validation = validate_config(config)
-        if validation["errors"]:
-            return emit({"errors": validation["errors"]})
-        if not validation["approved"]:
-            return emit(
-                {
-                    "errors": [
-                        "semantic evaluation blocked: configuration is unapproved; "
-                        "provide an approved configuration or a reviewed not-applicable record"
-                    ]
-                }
-            )
-        result = run_approved_evaluation(
-            config,
-            args.candidate,
-            args.runner,
-            details_output=args.details_output,
-        )
-        details_path = str(result.get("details_path") or "")
-        details_sha = str(result.get("details_sha256") or "")
-        if args.details_output:
-            target_details = Path(args.details_output)
-            target_details.parent.mkdir(parents=True, exist_ok=True)
-            if details_path and Path(details_path).is_file():
-                if Path(details_path).resolve() != target_details.resolve():
-                    target_details.write_bytes(Path(details_path).read_bytes())
-            else:
-                import hashlib
-
-                serialized = json.dumps(result, indent=2, sort_keys=True).encode("utf-8")
-                target_details.write_bytes(serialized)
-                details_sha = hashlib.sha256(serialized).hexdigest()
-            details_path = str(target_details)
-
-        runner_status = str(result.get("status", "") or "failed")
-        record_status = "passed" if runner_status == "passed" else "failed"
-        record = build_record(
-            candidate=args.candidate,
-            workflow_sha=args.workflow_sha,
-            run_id=args.run_id,
-            kind="semantic",
-            status=record_status,
-            config_version=str(config.get("dataset", {}).get("version", "")),
-            reason="; ".join(str(e) for e in result.get("errors", [])) if record_status != "passed" else "",
-            details_path=details_path,
-            details_sha256=details_sha,
-            dataset_sha256=str(result.get("dataset_sha256") or ""),
-            rubric_sha256=str(result.get("rubric_sha256") or ""),
-            request_count=result.get("request_count") if isinstance(result.get("request_count"), int) else None,
-            candidate_summary=result.get("candidate_summary") if isinstance(result.get("candidate_summary"), Mapping) else None,
-            baseline_summary=result.get("baseline_summary") if isinstance(result.get("baseline_summary"), Mapping) else None,
-        )
-        Path(args.output).write_text(json.dumps(record, indent=2), encoding="utf-8")
-        if runner_status != "passed":
-            return emit(
-                {"errors": [f"semantic evaluation did not pass: {result.get('status')}"]}
-            )
-        return 0
+        if args.runner or not args.suite or not args.registry:
+            raise CiError("select a registered suite with --registry and --suite")
+        return _run_suite(args)
     except CiError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
