@@ -436,6 +436,17 @@ def display_complete_report(final_state):
         console.print(Panel("[bold]V. Portfolio Manager Decision[/bold]", border_style="green"))
         console.print(Panel(Markdown(final_state["final_trade_decision"]), title="Portfolio Manager", border_style="blue", padding=(1, 2)))
 
+    # VI. Program Data Availability (deterministic; from the passed state only).
+    # A terminal mapping renders that block; terminal null OR an absent field both
+    # render the fixed report-stage unavailable text (the section is always shown,
+    # never silently omitted). No live registry/scope/research fallback.
+    from tradingagents.dataflows.availability import report_block
+
+    block = report_block(final_state.get("data_availability_summary"))
+    console.print(Panel("[bold]VI. Program Data Availability[/bold]", border_style="blue"))
+    console.print(Panel(Markdown(block), title="Availability Summary",
+                        border_style="blue", padding=(1, 2)))
+
 
 def update_research_team_status(status):
     """Update status for research team members (not Trader)."""

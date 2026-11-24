@@ -22,11 +22,59 @@ from tradingagents.agents import (
 )
 from tradingagents.agents.analysts.turn import WRAP_UP
 from tradingagents.agents.state import AgentState
+from tradingagents.dataflows import availability
+from tradingagents.run_context import current as current_run
 
 from .analyst_execution import build_analyst_execution_plan
 from .conditional_logic import ConditionalLogic
 
 logger = logging.getLogger(__name__)
+
+
+def _research_identity(state):
+    """The minimal internal analysis identity for the research snapshot, from the
+    existing run state (no new input/config)."""
+    return {
+        "ticker": state.get("company_of_interest"),
+        "trade_date": str(state.get("trade_date")) if state.get("trade_date") else None,
+        "asset_type": state.get("asset_type", "stock"),
+    }
+
+
+def _first_bull_wrapper(bull_node, enabled_analysts):
+    """Wrap the first Bull call so it prepares the research snapshot ONCE and injects
+    the deterministic block into that SAME invocation (IF-24 / plan §6.2).
+
+    The wrapper is a plain function around the existing Bull node: on the first entry
+    it builds the summary from the current run registry, sets it on a LOCAL state copy
+    that the very same Bull call receives, and returns it in the published update so
+    later Bull/Bear/Manager turns read the identical fixed mapping. Later entries do
+    NOT refresh it (the state already carries ``research_availability_summary``), and
+    later accepted observations never rewrite it. No extra model/fetch is added.
+    """
+
+    def node(state):
+        if "research_availability_summary" in state:
+            # Later Bull turns already have the fixed research-stage summary.
+            return bull_node(state)
+
+        ctx = current_run()
+        registry = ctx.registry if ctx is not None else None
+        summary = availability.prepare_research_summary(
+            registry,
+            state.get("asset_type", "stock"),
+            tuple(enabled_analysts),
+            _research_identity(state),
+        )
+        # Inject into THIS call via a local state copy (a returned update alone would
+        # let the first Bull miss the block).
+        first_input = {**state, "research_availability_summary": summary}
+        result = dict(bull_node(first_input) or {})
+        # Publish the fixed value so Bear/Manager (and later Bull) consume the same one.
+        result["research_availability_summary"] = summary
+        return result
+
+    return node
 
 # Every target a shared conditional router can return. Each edge driven by the
 # router maps all of them, so a fall-through return (e.g. under prompt/i18n/
@@ -145,7 +193,8 @@ class GraphSetup:
             workflow.add_node(spec.agent_node,
                               _analyst_graph(spec, analyst_factories[spec.key](), self.max_tool_rounds))
 
-        workflow.add_node("Bull Researcher", bull_researcher_node)
+        workflow.add_node("Bull Researcher",
+                          _first_bull_wrapper(bull_researcher_node, selected_analysts))
         workflow.add_node("Bear Researcher", bear_researcher_node)
         workflow.add_node("Research Manager", research_manager_node)
         workflow.add_node("Trader", trader_node)

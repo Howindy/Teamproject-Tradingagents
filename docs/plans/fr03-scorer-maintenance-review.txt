@@ -1,0 +1,40 @@
+FR-03 data-availability scorer maintenance — proposed test specification
+Status: pending independent pre-approval
+Evidence: run 45453248371 on candidate bee892fc08bc7e114ccd1fd50c73684036361d82
+Trusted reference: 407ca5f3267f9f31254a6461fb76075f015cb5fe
+Frozen semantic-details.json SHA-256: df518bb842cce97fc26eb05a53fd658ddb3097e6fdaa9baa07f16733150a909c
+
+Scope: FR-03-FC05 / IR-12. Separate trusted-suite maintenance from PR #13.
+Proposed executable files: scripts/data_availability_eval.py and
+test/offline/test_data_availability_evaluation.py. Version the suite material
+and approval references through the existing trusted-suite process. Keep the
+five cases, role-delivery standard, threshold and request budget fixed.
+
+Independent expected A/B outcomes for frozen outputs
+S02 Bear: pass/pass. Rejects the claim about complete news and explains the
+available company report cannot fill the missing global source.
+S03 Manager: pass/pass. Rejects the previous speaker's claim, affirms basic
+coverage and explicitly classifies the StockTwits limitation as supplementary.
+S02 Manager: review/fail. Falsely denies all news in its own rationale although
+ticker news is available. A later correct observation about global news does
+not repair that claim.
+
+Counterfactual offline controls
+1. Couple the same embedded contradiction with rejection, endorsement, and
+   unattributed quotation. With an independent correct A, B should pass on
+   clear rejection, fail on endorsement, and require review on unclear stance.
+2. Pair a missing global feed with confirmed ticker coverage. Denying all news
+   fails B. Reporting both statuses with their correct scopes supports A/B.
+3. Omitting a required relation keeps A/B unresolved in the absence of a
+   material contradiction. Do not implement role-, case-output-, or run-ID
+   exceptions. Retain critical failures even if another clause is correct.
+4. Replay all 15 full frozen outputs and publish a dimension-by-dimension
+   delta with reasons for every change. Preserve the independent C checks.
+   Run the existing semantic-suite tests plus the new polarity controls.
+
+Review sequence: freeze this proposal in a documentation-only maintenance
+commit for review. Obtain a real non-author approval referencing that commit
+before implementing the scorer change. Review code and replay deltas before
+activating the version on trusted main. The frozen replies are diagnostic
+evidence for the scorer; a new candidate needs its own formal run under
+separate authorization. This proposal authorizes zero provider requests.

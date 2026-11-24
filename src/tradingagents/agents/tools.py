@@ -4,15 +4,50 @@ Each dated tool takes the run's ``trade_date`` from graph state (``InjectedState
 and never serves data past it, whatever date the model asks for.
 """
 
+from contextvars import ContextVar
 from typing import Annotated
 
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
+from tradingagents.dataflows.availability import (
+    observe_supported_call,
+    record_prefetch_rejection,
+)
+from tradingagents.dataflows.config import get_config
 from tradingagents.dataflows.date_window import as_of, as_of_window
 from tradingagents.dataflows.errors import NoMarketDataError, VendorUnavailableError
 from tradingagents.dataflows.router import no_data_available, route_to_vendor, vendor_unavailable
+from tradingagents.dataflows.vendors.fred import DEFAULT_LOOKBACK_DAYS
+from tradingagents.dataflows.vendors.polymarket import DEFAULT_LIMIT as DEFAULT_MARKET_LIMIT
 from tradingagents.dataflows.vendors.yahoo.snapshot import build_verified_market_snapshot
+from tradingagents.run_context import current as current_run
+
+# The explicit supported-path identity for the shared news executor. The P-09 tool
+# path is the default; the P-13 sentiment-prefetch caller sets it for its call via a
+# context-local value (no model-visible parameter, so the public tool schema is
+# unchanged). The same business query reached through both paths shares one query
+# identity; both path associations are kept.
+_NEWS_PATH: ContextVar[str] = ContextVar("tradingagents_news_path", default="P-09")
+
+
+def _registry():
+    """The active run's availability registry, or ``None`` outside a run scope."""
+    ctx = current_run()
+    return ctx.registry if ctx is not None else None
+
+
+def _effective_global_news_defaults(look_back_days, limit):
+    """Resolve the OMITTED/None global-news values from active config exactly as the
+    producers do (None-only; an explicit 0 is kept). Used only for the observation's
+    effective parameters; the original fetch keeps the original arguments."""
+    if look_back_days is None or limit is None:
+        cfg = get_config()
+        if look_back_days is None:
+            look_back_days = cfg["global_news_lookback_days"]
+        if limit is None:
+            limit = cfg["global_news_article_limit"]
+    return look_back_days, limit
 
 
 @tool
@@ -34,8 +69,15 @@ def get_stock_data(
     try:
         start_date, end_date = as_of_window(start_date, end_date, trade_date)
     except ValueError as e:
+        # Preserve the original text return; record only a private note with a scope.
+        record_prefetch_rejection(
+            _registry(), "get_stock_data",
+            {"symbol": symbol, "start_date": start_date, "end_date": end_date})
         return str(e)
-    return route_to_vendor("get_stock_data", symbol, start_date, end_date)
+    params = {"symbol": symbol, "start_date": start_date, "end_date": end_date}
+    return observe_supported_call(
+        _registry(), "get_stock_data", params, "P-01",
+        lambda: route_to_vendor("get_stock_data", symbol, start_date, end_date))
 
 
 @tool
@@ -60,12 +102,21 @@ def get_indicators(
     # split and process each individually.
     curr_date = as_of(curr_date, trade_date)
     indicators = [i.strip().lower() for i in indicator.split(",") if i.strip()]
+    reg = _registry()
     results = []
     for ind in indicators:
-        try:
-            results.append(route_to_vendor("get_indicators", symbol, ind, curr_date, look_back_days))
-        except ValueError as e:
-            results.append(str(e))
+        params = {"symbol": symbol, "indicator": ind, "as_of": curr_date,
+                  "look_back_days": look_back_days}
+
+        def _fetch(_ind=ind):
+            try:
+                return route_to_vendor("get_indicators", symbol, _ind, curr_date, look_back_days)
+            except ValueError as e:
+                return str(e)
+
+        # One observation per split indicator execution; the final joined string
+        # is never classified once.
+        results.append(observe_supported_call(reg, "get_indicators", params, "P-03", _fetch))
     return "\n\n".join(results)
 
 
@@ -86,12 +137,20 @@ def get_verified_market_snapshot(
     resistance, or historical comparisons, and treat it as the source of truth.
     """
     # An exception out of a tool would end the run.
-    try:
-        return build_verified_market_snapshot(symbol, as_of(curr_date, trade_date), look_back_days)
-    except VendorUnavailableError as exc:
-        return vendor_unavailable("get_verified_market_snapshot", exc)
-    except NoMarketDataError as exc:
-        return no_data_available(exc)
+    as_of_date = as_of(curr_date, trade_date)
+    params = {"symbol": symbol, "as_of": as_of_date, "look_back_days": look_back_days}
+
+    def _build():
+        try:
+            return build_verified_market_snapshot(symbol, as_of_date, look_back_days)
+        except VendorUnavailableError as exc:
+            return vendor_unavailable("get_verified_market_snapshot", exc)
+        except NoMarketDataError as exc:
+            return no_data_available(exc)
+
+    return observe_supported_call(
+        _registry(), "get_verified_market_snapshot", params, "P-02", _build,
+        source_hint="Yahoo")
 
 
 @tool
@@ -108,7 +167,11 @@ def get_fundamentals(
     Returns:
         str: A formatted report containing comprehensive fundamental data
     """
-    return route_to_vendor("get_fundamentals", ticker, as_of(curr_date, trade_date))
+    ticker, as_of_date = ticker, as_of(curr_date, trade_date)
+    params = {"ticker": ticker, "as_of": as_of_date}
+    return observe_supported_call(
+        _registry(), "get_fundamentals", params, "P-04",
+        lambda: route_to_vendor("get_fundamentals", ticker, as_of_date))
 
 
 @tool
@@ -127,7 +190,11 @@ def get_balance_sheet(
     Returns:
         str: A formatted report containing balance sheet data
     """
-    return route_to_vendor("get_balance_sheet", ticker, freq, as_of(curr_date, trade_date))
+    as_of_date = as_of(curr_date, trade_date)
+    params = {"ticker": ticker, "freq": freq, "as_of": as_of_date}
+    return observe_supported_call(
+        _registry(), "get_balance_sheet", params, "P-06",
+        lambda: route_to_vendor("get_balance_sheet", ticker, freq, as_of_date))
 
 
 @tool
@@ -146,7 +213,11 @@ def get_cashflow(
     Returns:
         str: A formatted report containing cash flow statement data
     """
-    return route_to_vendor("get_cashflow", ticker, freq, as_of(curr_date, trade_date))
+    as_of_date = as_of(curr_date, trade_date)
+    params = {"ticker": ticker, "freq": freq, "as_of": as_of_date}
+    return observe_supported_call(
+        _registry(), "get_cashflow", params, "P-07",
+        lambda: route_to_vendor("get_cashflow", ticker, freq, as_of_date))
 
 
 @tool
@@ -165,7 +236,32 @@ def get_income_statement(
     Returns:
         str: A formatted report containing income statement data
     """
-    return route_to_vendor("get_income_statement", ticker, freq, as_of(curr_date, trade_date))
+    as_of_date = as_of(curr_date, trade_date)
+    params = {"ticker": ticker, "freq": freq, "as_of": as_of_date}
+    return observe_supported_call(
+        _registry(), "get_income_statement", params, "P-05",
+        lambda: route_to_vendor("get_income_statement", ticker, freq, as_of_date))
+
+
+def observe_news(ticker, start_date, end_date, trade_date, path_id):
+    """Shared internal news executor used by P-09 (the get_news tool) and P-13 (the
+    sentiment prefetch). It performs the existing window/date handling, forms the
+    effective params, and records ONE observation associated with the explicit
+    ``path_id`` (never inferred from the call stack). The original value/exception
+    is preserved. FR-01 is not implemented here: the same query called twice still
+    fetches twice, but both path associations are kept on one logical query."""
+    try:
+        eff_start, eff_end = as_of_window(start_date, end_date, trade_date)
+    except ValueError as e:
+        # Preserve the original text return; record only a private note with a scope.
+        record_prefetch_rejection(
+            _registry(), "get_news",
+            {"ticker": ticker, "start_date": start_date, "end_date": end_date})
+        return str(e)
+    params = {"ticker": ticker, "start_date": eff_start, "end_date": eff_end}
+    return observe_supported_call(
+        _registry(), "get_news", params, path_id,
+        lambda: route_to_vendor("get_news", ticker, eff_start, eff_end))
 
 
 @tool
@@ -184,11 +280,7 @@ def get_news(
     Returns:
         str: A formatted string containing news data
     """
-    try:
-        start_date, end_date = as_of_window(start_date, end_date, trade_date)
-    except ValueError as e:
-        return str(e)
-    return route_to_vendor("get_news", ticker, start_date, end_date)
+    return observe_news(ticker, start_date, end_date, trade_date, _NEWS_PATH.get())
 
 
 @tool
@@ -212,7 +304,12 @@ def get_global_news(
     Returns:
         str: A formatted string containing global news data
     """
-    return route_to_vendor("get_global_news", as_of(curr_date, trade_date), look_back_days, limit)
+    as_of_date = as_of(curr_date, trade_date)
+    eff_lookback, eff_limit = _effective_global_news_defaults(look_back_days, limit)
+    params = {"as_of": as_of_date, "look_back_days": eff_lookback, "limit": eff_limit}
+    return observe_supported_call(
+        _registry(), "get_global_news", params, "P-10",
+        lambda: route_to_vendor("get_global_news", as_of_date, look_back_days, limit))
 
 
 @tool
@@ -226,7 +323,11 @@ def get_insider_transactions(
     Returns:
         str: A report of insider transaction data
     """
-    return route_to_vendor("get_insider_transactions", ticker, trade_date or None)
+    eff_trade_date = trade_date or None
+    params = {"ticker": ticker, "trade_date": eff_trade_date}
+    return observe_supported_call(
+        _registry(), "get_insider_transactions", params, "P-08",
+        lambda: route_to_vendor("get_insider_transactions", ticker, eff_trade_date))
 
 
 @tool
@@ -261,7 +362,13 @@ def get_macro_indicators(
     Returns:
         str: A formatted markdown report of the macro series
     """
-    return route_to_vendor("get_macro_indicators", indicator, as_of(curr_date, trade_date), look_back_days)
+    as_of_date = as_of(curr_date, trade_date)
+    eff_lookback = DEFAULT_LOOKBACK_DAYS if look_back_days is None else look_back_days
+    params = {"indicator": indicator, "as_of": as_of_date, "look_back_days": eff_lookback}
+    return observe_supported_call(
+        _registry(), "get_macro_indicators", params, "P-11",
+        lambda: route_to_vendor("get_macro_indicators", indicator, as_of_date, look_back_days),
+        source_hint="FRED")
 
 
 @tool
@@ -288,4 +395,10 @@ def get_prediction_markets(
     Returns:
         str: A formatted markdown report of matching prediction markets
     """
-    return route_to_vendor("get_prediction_markets", topic, limit, trade_date or None)
+    eff_trade_date = trade_date or None
+    eff_limit = DEFAULT_MARKET_LIMIT if limit is None else limit
+    params = {"topic": topic, "limit": eff_limit, "trade_date": eff_trade_date}
+    return observe_supported_call(
+        _registry(), "get_prediction_markets", params, "P-12",
+        lambda: route_to_vendor("get_prediction_markets", topic, limit, eff_trade_date),
+        source_hint="Polymarket")

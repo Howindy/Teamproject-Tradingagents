@@ -30,7 +30,8 @@ from tradingagents.agents.structured import (
     bind_structured,
     invoke_structured_or_freetext,
 )
-from tradingagents.agents.tools import get_news
+from tradingagents.agents.tools import _NEWS_PATH, get_news  # noqa: F401
+from tradingagents.dataflows.availability import observe_supported_call
 from tradingagents.dataflows.vendors.reddit import (
     CRYPTO_SUBREDDITS,
     DEFAULT_SUBREDDITS,
@@ -38,6 +39,12 @@ from tradingagents.dataflows.vendors.reddit import (
     subreddits_for,
 )
 from tradingagents.dataflows.vendors.stocktwits import fetch_stocktwits_messages
+from tradingagents.run_context import current as current_run
+
+
+def _registry():
+    ctx = current_run()
+    return ctx.registry if ctx is not None else None
 
 
 def _seven_days_back(trade_date: str) -> str:
@@ -63,17 +70,35 @@ def create_sentiment_analyst(llm):
         # Pre-fetch all three sources. Each fetcher degrades gracefully and
         # returns a string (no exceptions surface from here), so the LLM
         # always sees something — either real data or a clear placeholder.
-        news_block = get_news.func(ticker, start_date, end_date)
+        # P-13: ticker news through the shared internal news executor. The explicit
+        # P-13 path identity is set context-locally for this call (no new parameter,
+        # so the public get_news tool schema is unchanged); the same business query
+        # and both P-09/P-13 path associations are kept. One real fetch happens.
+        token = _NEWS_PATH.set("P-13")
+        try:
+            news_block = get_news.func(ticker, start_date, end_date)
+        finally:
+            _NEWS_PATH.reset(token)
         # Pass the analysis window so a historical run trims social posts to it
         # instead of leaking today's chatter into a backtest (#1220).
         screen = jev_screen(ticker)
-        stocktwits_block = fetch_stocktwits_messages(
-            ticker, limit=30, start_date=start_date, end_date=end_date, screen=screen
-        )
+        reg = _registry()
+        stocktwits_params = {"ticker": ticker, "limit": 30,
+                             "start_date": start_date, "end_date": end_date}
+        stocktwits_block = observe_supported_call(
+            reg, "fetch_stocktwits_messages", stocktwits_params, "P-14",
+            lambda: fetch_stocktwits_messages(
+                ticker, limit=30, start_date=start_date, end_date=end_date, screen=screen),
+            source_hint="StockTwits")
         subreddits = subreddits_for(ticker)
-        reddit_block = fetch_reddit_posts(
-            ticker, subreddits, start_date=start_date, end_date=end_date, screen=screen
-        )
+        reddit_params = {"ticker": ticker, "subreddits": subreddits,
+                         "start_date": start_date, "end_date": end_date,
+                         "limit_per_sub": 5}
+        reddit_block = observe_supported_call(
+            reg, "fetch_reddit_posts", reddit_params, "P-15",
+            lambda: fetch_reddit_posts(
+                ticker, subreddits, start_date=start_date, end_date=end_date, screen=screen),
+            source_hint="Reddit")
 
         system_message = _build_system_message(
             ticker=ticker,

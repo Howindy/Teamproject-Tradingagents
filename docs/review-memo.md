@@ -351,6 +351,25 @@ Local schema/FC-set/deferred-row/boundary/diff checks passed. Actual path classi
 
 The user requested tracking the actual session-20 export and making the local implementation commit. Staged scope is the 19 approved revision paths plus the user-selected transcripts/session-20.md; tmp remains excluded. The staged transcript matches the supplied working-tree bytes exactly. Full staged git diff --check returns exit 2 with 1328 whitespace notices, all confined to the original transcript (trailing spaces and final blank line). The other 19 staged files pass the same whitespace check. Raw evidence was not reformatted to manufacture a green check; this transcript-specific finding supersedes earlier diff-check passes before the raw export was staged. Staged schema and AI-use association checks pass. No source, workflow, gate script, schema, permission or frozen specification is staged. Local commit is authorized; push/remote CI/final review/merge are separate and not performed by this preparation.
 
+## Pre-PR Round 3 planning and isolated feasibility — 2026-11-23
+
+- PR: none. This is an AI-authored pre-PR evidence summary, not a human review verdict or test pre-approval.
+- The user authorized the partial [Round 3 draft](plans/round-03.md) to record only the confirmed first-eligible-request target rule and attachment feasibility. Exact implementation scope, concrete tests and execution arrangements remain for later preparation.
+- The authorized isolated exploration used a fresh copy and copied environment under `/Users/ichihann/Desktop/CS5351/test for round3/integration-check-20261123-01/`. Final results: 21 attachment probes and 36 related regressions passed, no final failures/skips. The first attachment run's single harness error was retained and corrected without changing production source.
+- Real graph/tool/CLI/report paths were exercised with controlled data, fake models and runtime wrappers. Explicit news path identity, same-call first-Bull input, fixed stage versus terminal delivery, passed-state Markdown/HTML, context isolation and experimental no-resume adapters were feasible. The negative control confirmed that a state update alone misses the first Bull input.
+- Original snapshot: 10,064 entries unchanged; 202 copied source/test/script/fixture files unchanged; no original/stale-source import attempts observed. Evidence is local and outside Git: `evidence/summary.json`, `source-integrity.json`, `probe-observations.json`, final JUnit/output/isolation records and retained first-attempt records beneath that exploration directory. These are not portable CI evidence.
+- Limitations: summaries were supplied fixtures, not a working FR-03 producer; target-binding/registry/classifier/failure behavior and full FC acceptance remain unimplemented/unverified. OQ-13/OQ-15 are not closed wholesale. No real-model semantic evaluation, Round 3 implementation approval, remote CI, commit, push or merge is established by this record.
+
+## Pre-PR Round 3 complete proposed specification — 2026-11-23
+
+Supersedes the partial-planning status above, not its historical feasibility results. The user authorized completing the execution/test specification while leaving immutable freeze and non-author pre-approval for the final PR operations. PR, P3, T3 and human verdict remain unset.
+
+The [Round 3 plan](plans/round-03.md) now selects FR-03-FC01–FC05, names 13 production files, two new offline test files and two existing-test adaptations, and supplies independent controlled expectations R03-01–R03-12, ownership/failure contracts, implementation order, isolated execution commands and evidence boundaries. Existing automatic-resume expectations in the programmatic/CLI entry tests are intentionally replaced with full fresh execution and old-checkpoint preservation, while explicit checkpoint component APIs/tests retain their contract. No FR-01 reuse or Round 4 core integration is selected.
+
+No application/test code, CI, semantic configuration, permission control or dependency was changed by this planning task. No tests were implemented/executed as Round 3 acceptance. Semantic configuration stays paused; actual prompt injection still requires the course's real fixed semantic evaluation before production/full acceptance. Role/tool readiness is checked before build; remaining producer/attachment questions have concrete offline tests rather than extra product requirements. This proposal neither resolves the separate context-budget course limitation nor claims full course compliance.
+
+Planning checks and their exact results are recorded in AI-062 and the bounded local document-check artifact. This is AI-authored planning review, not non-author approval or an APPROVE verdict.
+
 ## RM-14-R1 — FR-10 Integration Preparation (AI-authored review summary; final human verdict pending)
 
 - PR: [#14](https://github.com/Howindy/Teamproject-Tradingagents/pull/14)
@@ -433,3 +452,249 @@ frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be
 - `python -B -m ruff check scripts/ci_checks.py scripts/ci_semantic_eval.py test/offline/test_ci_gates.py`: passed. `python -B -m mypy --config-file mypy.ini --follow-imports=silent` on those same files: no diagnostics. `git diff --check`: passed. Earlier attempts with the project `.venv` additionally lacked jsonschema and sandbox loopback access; these were not counted as passes.
 - Evidence root: `D:/CityU/cs5351/project/baseline-review/semantic-routing-review/`; final JUnit `verified-regression.xml`, baseline reproduction `original-redirects.xml`, original source snapshot `original-0112cbc/`.
 - Application source, FR-10 scorer/configuration/oracle, workflows and frozen plan are unchanged by this repair. Full application regression, GitHub CI and live evaluation were not run. Final human verdict remains pending. No commit, push or merge in this repair session.
+
+
+## RM-18-R1 — FR-03 semantic maintenance (AI-authored; independent final review pending)
+
+- PR: [#18](https://github.com/Howindy/Teamproject-Tradingagents/pull/18).
+- Starting tree: `2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`; original suite specification
+  `1440c1ca2ae0806ce3b4b09c20634cfa213e63da` and original implementation start
+  `2982819d91784d29448671995dcf5937fc61ad27` remain unchanged.
+- Maintenance specification: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by non-author `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793)
+  at `2026-11-24T15:02:01Z`, before this maintenance implementation.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo.
+- R1-R6: T16 preserves exact FR-10 entry/hash/state checks while allowing valid
+  additional suites. T18 is unchanged and still inspects every registered runner.
+- S1-S7: supplements use their own reviewer, marker, ancestry and first-related-change
+  chronology. Only the explicit section-3 allowed-file list grants path coverage;
+  rationale and exclusions cannot expand selection. Invalid supplements contribute
+  nothing. Primary checks stay mandatory; duplicate machine fields are rejected.
+- C1-C10: the exact three frozen preparation paths can be removed from the primary
+  start-path set only under section-6 conditions. Git blob identity is used;
+  configuration approval/activation prevents the exception. Mixed-commit code,
+  shared routing, workflow and permission paths remain included.
+- No workflow, dependency, permission, runtime prompt, source application, FR-10
+  material or frozen FR-03 material/specification change is included.
+
+### Local evidence and limits
+
+Evidence root: `/private/tmp/cs5351-pr18-maintenance-13jnh35d`. Python 3.12.14 and pytest 9.2.0 from the existing
+suite environment; no installation. Imported application source was checked to
+resolve inside the isolated snapshot. HOME/temp/cache/JUnit outputs were confined
+to the new temporary evidence tree.
+
+- Reproduced the original T16 failure before implementation (`before.out`).
+- Final gate/FR-03/FR-10 combined tests: **220 passed**, including 45 new maintenance cases (`combined-final.xml`).
+- Default offline regression: **1759 passed, 3 failed, 1 skipped, 1 deselected**;
+  100 subtests passed (`regression.xml`). Remaining failures are the three simulated
+  Windows cache-lock tests using absent macOS `errno.EDEADLOCK`.
+- Repeated unchanged `2d10aa4` baseline cache tests: **5 passed, 3 failed**, with
+  the same cases/errors (`baseline-platform.xml`). They remain failures, not waived
+  passes; the optional skip is missing `langchain_aws`.
+- Ruff, baseline-relative mypy, direct changed-code/test mypy, requirements schema
+  and dependency check passed. No baseline diagnostics were changed.
+- Actual fetched PR fields and original/supplemental comments were replayed in an
+  isolated Git candidate: approval and contract-test selection reported no errors
+  (`actual-history-result.json`). That candidate is verification-only, not the
+  final project commit or a GitHub CI run.
+- The first sandbox gate run had six loopback-bind permission errors; existing
+  redirect tests were rerun with local loopback access. No skip/assertion weakening.
+- Public contract-job approval reads use no empty Bearer header; API failures or
+  rate limits block selection. No credentials are discovered and no workflow is changed.
+- Raw chat export is not in the repository; local command/JUnit evidence does not
+  substitute for it. No project commit/push, PR write, live semantic evaluation,
+  configuration activation or merge was performed in this implementation task.
+
+Independent human implementation verdict: pending. AI delivery recommendation
+while final remote CI and independent review remain outstanding: **CHANGES REQUIRED**.
+
+
+## RM-18-R2 — Lean approval-job dependency repair (AI-authored; human final review pending)
+
+- Starting commit: `e52ac47abebbc89489f7e5ddeeb88cd4559979c0` on the freshly cloned
+  `prep/fr03-semantic-suite` worktree under `~/Projects/CS5351`. Remote refs were
+  fetched and the branch was synchronized before implementation.
+- Existing maintenance basis: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793).
+- Actual remote defect: [test-approval job](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45423751532/job/138550088770)
+  raises `ModuleNotFoundError: No module named 'yaml'`. That job installs no
+  third-party packages; earlier rich-environment tests missed this runtime boundary.
+- Repair: use stdlib SHA-256 attestation of the exact reviewed unapproved config
+  on the approval path, preserving the existing three-path bound and Git blob
+  equality checks. Unrecognized or activated config text is not exempt. The
+  reference's unapproved/null/empty approval fields are independently asserted.
+- Added tests run the full approval function under `python -I -S` with YAML
+  unavailable, covering valid preparation and rejected activation. The synthetic
+  Git fixture uses actual frozen input bytes rather than values derived from the gate.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo. Workflows, dependencies,
+  permissions, application source and frozen specifications/materials are unchanged.
+
+### Actual validation and limitations
+
+Evidence: `/private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0`. The old checker reproduced missing YAML in both isolated
+cases (`before-stdlib.out`). Patched standalone public-gate tests: **161 passed**;
+maintenance-only subset: **48 passed**. Python 3.14.7 / pytest 9.1.1 was used with
+`--confcutdir=test/offline` and external plugin autoload disabled. This isolates
+CI-unit tests from missing application-level conftest dependencies and unrelated
+locally installed plugins; it is not a default application-regression pass.
+
+On the existing Python 3.12.14 interpreter, `-I -S` confirmed YAML and pytest were
+unavailable, then the approval CLI replayed current real PR fields/events against
+the existing `e52ac47` Git history and returned `errors: []` (`approval-stdlib.out`).
+This does not establish final-candidate remote CI. Python 3.12 syntax, requirements
+schema and the existing application environment's `pip check` passed.
+
+Full default regression cannot start in the existing application interpreter
+because pytest is missing. Ruff and mypy are unavailable. Their attempted command
+outputs are retained; no dependency installation, skipped assertion or fake pass
+was used to conceal these gaps. The old iCloud-dependent environment and the
+interrupted disappearing-file regression are not treated as current evidence.
+
+No iCloud source was used for the repair. No project commit/push, PR write, model
+call, activation or merge is included. Original approvals and chronology remain.
+Independent final verdict: pending. Until final-candidate CI and independent review
+complete, AI delivery recommendation: **CHANGES REQUIRED**.
+
+
+## RM-18-R4 — Authenticated contract approvals (AI-authored; final review pending)
+
+- Clean implementation checkpoint: `0539300c05b1b12c3ccff4a517dc132513a6facb`.
+- Frozen auth specification: `docs/plans/semantic-contract-auth-amendment.md` at
+  that commit, approved by non-author `espino2233` in
+  [comment 7137342374](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374)
+  at `2026-11-24T16:14:27Z`, before executable implementation.
+- Original primary suite and maintenance specifications/approvals remain intact.
+  No first-change SHA or historical result is reset.
+- New allowance is only `.github/workflows/ci.yml`, only the contract-tests job:
+  contents/read and pull-requests/read, step-local github.token, nonempty-token
+  guard and --token argument. No global token or other job change is selected.
+- Associated changes use the inherited script/test/record file allowances.
+  The contract CLI forwards an explicitly supplied token to every supplemental
+  query; legacy no-token callers remain supported. 401/403 failures block before
+  collection, with no anonymous retry or token output.
+- Only distinct supplemental fields may repeat; primary/ADR fields stay unique.
+  All supplements retain their own event, immutable version, allow-list and
+  related-change chronology. Invalid documents contribute no coverage and block
+  execution; inherited prose cannot add paths. Original approvals are preserved.
+
+### Actual local verification
+
+Evidence: `/private/tmp/cs5351-pr18-auth-fix-5smxirmi`. Tests first: **28 failed** against the unchanged checker.
+After implementation: new auth tests **28 passed**; all public gate tests
+**189 passed** (`gates-final.xml`). These are existing Python 3.14 standalone
+CI-unit runs with --confcutdir=test/offline and third-party plugin autoload
+disabled; no application stubs, assertion exemptions or installations were used.
+
+Python 3.12.14 -I -S replayed actual saved PR fields and all three real approval
+comments against a verification-only Git candidate containing workflow/script/test
+changes together. Approval and contract-plan errors were empty; both supplements
+were retained and the gate/FR-03/FR-10 tests were selected (`replay-result.json`).
+The candidate is not a project delivery commit or a final remote-CI result.
+
+Full default application regression and Ruff/mypy cannot run in the recovered
+environment because required tools are missing. They are recorded as unavailable,
+not passes. No dependency, application source, frozen material/specification,
+other workflow, security-path token policy or evaluation activation change is made.
+
+Implementation is ready for one combined auth delivery commit after review.
+The PR must retain its old supplemental field and add the new real auth field
+when the compatible parser is delivered. Final-candidate remote CI, independent
+human implementation review and merge remain outstanding. AI recommendation
+until that delivery evidence is complete: **CHANGES REQUIRED**.
+
+
+## RM-18-R5 — Auth test typing repair and review assessment (AI-authored)
+
+- Starting candidate: `069e2606bc67380bfacbc077e5286d4a6da421bc`.
+- [Run 45437892172](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45437892172)
+  passed all Python regression, approval, contract, static, schema, dependency,
+  security, evidence and smoke jobs. Type-check failed on two newly added tests:
+  the unannotated `_auth_body` accumulator and HTTPError headers supplied as dict.
+- Repair: annotate `lines: list[str]` and use `email.message.Message()` as the
+  HTTPError header argument. Assertions and 401/403 behavior remain unchanged;
+  no evaluator, workflow, type baseline, ignored diagnostic or frozen spec changed.
+- Gate tests: **189 passed** (`/private/tmp/cs5351-pr18-type-fix-bts6jccf/gates.xml`). Python 3.12 syntax and actual
+  Message-header construction passed. Local mypy is missing, so its new-candidate
+  result remains for remote CI; no installation or local type-check pass is claimed.
+- Supplied review: the earlier T16 whole-registry restriction was a genuine issue
+  and is already fixed. T18 still validates all registered suites. The trusted
+  workflow dispatches from the repository default branch (currently main), so
+  suite infrastructure must be available there before formal feature evaluation.
+  Configuration approval and model-execution authorization remain additional
+  prerequisites. FR-10 offline regression remains applicable; FR-03 does not
+  thereby require live financial-metrics evaluation. This historical explanation
+  does not diagnose the current two mypy errors or justify a baseline change.
+- Existing independent maintenance/auth approvals cover this type-only repair.
+  Independent final review and final-candidate CI remain pending. AI delivery
+  recommendation until those are complete: **CHANGES REQUIRED**.
+
+
+## RM-13-R03-SYNC — Trusted suite synchronization (AI-authored)
+
+PR #18 merged at `f24cde487f8119bb238e171614066da4b60e6915`.
+The feature starts at `30421f025fc075d40751bcc7a955fc8e91f939c8`.
+Conflict resolution retains main's suite/evidence/token/supplemental checks and
+the feature's existing scope-ID/documentation extraction. Existing tests are
+adapted to the main API and independently authored executable scope fixtures;
+assertions and rejection cases are retained. No application/prompt edit is made.
+
+Verification in `/private/tmp/cs5351-round3-final-ntzigbfm`:
+- Gate regression: **215 passed**, including local-loopback HTTP probes.
+- Python 3.12 application/evaluator checks: **249 passed, 1 failed**; the failure
+  is missing `jsonschema` in that interpreter, not a schema acceptance result.
+- Actual saved GitHub P3/A3 event replay on a synthetic merge: primary approval
+  succeeds; A3 is rejected because its frozen section 3 uses the older explicit
+  file format. Contract selection consequently misses the portfolio test path.
+- Source/fixtures remain fixed and no dependency is installed. Ruff/mypy and
+  final-candidate remote CI remain outstanding.
+
+Next maintenance must preserve A3 `9e2c7793dc7d70fd2aeeecd480f78a5a81635614`
+and its real approval, add narrowly bound legacy compatibility, and activate
+the reviewed suite on trusted main with real approval metadata. A new human
+pre-approval covers only future maintenance, not historical editing.
+Non-author I6 selection, protected-environment approval and final-SHA trusted
+semantic execution are still required. Mock transport checks are not quality
+evidence. Current recommendation: **CHANGES REQUIRED**.
+
+
+## PR #20 implementation review
+
+The independent approval binds the frozen activation plan at d9352ef.
+Verification covered the real A3 bytes and rejected altered content, path and
+commit. The gate tests plus the activation assertion passed (191 tests). The
+data-availability suite passed all 56 offline tests. The source configuration
+records the actual approval timestamp and comment. Independent review of this
+implementation and the protected candidate run remain pending.
+
+AI review disposition pending independent review: CHANGES REQUIRED.
+
+## PR #22 offline implementation review
+
+The non-author pre-approval binds the v2 threshold specification at
+8d30e289ae83da220543fdcd4b2e6147c7c140fe. The registered configuration and
+rubric remain v1. The offline suite exercises the v2 runner, detailed evidence
+and shared record normalization, including the all-advisory boundary and
+blocking controls. Historical run 45459356876 passes v2 with 19 passed grades
+and 26 advisories. Run 45453248371 fails with 19 passed, 25 advisories and the
+S02 Manager blanket denial of company news. The recorded v1 results stand.
+Implementation awaits independent review. Activation requires separately
+approved materials and a fresh authorized run for formal candidate evidence.
+
+## PR #23 activation materials
+
+The reviewer approved the frozen specification at b49c3261e344aea6ac650a413d9da2857a3785e4.
+The v2 rubric digest and canonical settings digest matched the independent approval.
+Full YAML SHA-256 including the real reviewer, timestamp and permalink:
+25d51c88a179951fcc932e6533ded29f62dbb48a3121fa01954f278b2a2b5a9c.
+
+Offline replay verified the archived details and dataset digests and reconstructed
+all 15 replies for each run. Run 45459356876 passed v2 with 19 passed grades and
+26 advisories. Run 45453248371 failed with 19 passed grades, 25 advisories and
+one critical S02 Manager denial of available company news. These are replay
+decisions; activation requires merge after independent review. PR #13 needs
+new candidate-bound evidence. No provider requests were made.

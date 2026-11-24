@@ -148,7 +148,16 @@ APPROVED test-spec: <exact Approved test specification value>
 
 The phrase must match the PR field exactly; `Not approved`, `Approval pending`,
 an `APPROVED` review without the phrase, or a phrase for a different version
-fails. The approval event must precede the first implementation commit, the
+fails.
+
+Each machine field (`Plan`, `Approved test specification`, `Approval evidence`,
+`Implementation start`, `Approved scope`, `ADR`) must appear AT MOST ONCE in the
+PR body. A duplicated field is an error, not last-one-wins: otherwise a pasted
+governance-note block could silently override the real P3 values. The parser
+reports every duplicated field by name and fails closed. Only `Supplemental test
+specification` may legitimately repeat (one line per supplement). Put governance
+maintenance notes in prose that does not start a line with a recognised
+`Field: value` key. The approval event must precede the first implementation commit, the
 approved specification commit must be ancestral, and scope changes after
 approval require a new approval. Git ancestry and author timestamps alone
 cannot prove the real implementation order; a trusted human approval event is
@@ -158,6 +167,59 @@ changed test paths, not every ID present in the full file. Round 1 was an
 unapproved example when this convention was written; its later real approval is
 recorded in RM-7-R1 and does not change the gate's negative-sequence
 requirement.
+
+### Scope-ID extraction (approval gate)
+
+The changed-scope set keeps only GENUINE requirement / fit-criterion /
+invariant IDs (namespaces `FR-`, `SB-`, `INV-`, `SR-`, `PR-`, `CR-` with
+`-NN`/`-FCNN`, and `IR-NN`). All of these must be in the PR `Approved scope`.
+D2 design labels the broad ID regex also matches — component `C-NN`,
+interface `IF-NN`, attachment/path `P-NN`, test-case `R03-NN`/`PA-NN`, and the
+`FC01-05` range shorthand — are NOT approval scope and are ignored by the
+coverage check. A scope ID that appears only on a NEGATED added line (for
+example "FR-01 is not implemented here" or "belongs to FR-01") is not treated
+as new scope. This is by NAMEspaces and diff-line negation, not by whether the
+ID exists in `requirements.yaml`: a genuine, unapproved `FR-`/`IR-` ID (for
+example a referenced `FR-04`) and an unknown well-formed ID still FAIL. The PR
+`Approved scope` alone cannot prove human approval; it must match the frozen
+specification bound by the approval event.
+
+Docstring classification is by syntactic position, not by the mere presence of a
+string. Ordinary assignment strings, asserts, dict keys/values, call arguments
+and f-strings remain executable and are scanned. A docstring that shares a
+physical line with other executable statements (for example
+`"""module docs"""; enabled = {"FR-04"}` or an inline `"""body"""; assert ...`)
+is conservatively treated as code so its IDs are still detected; only a line
+whose entire content is a standalone docstring is treated as documentation.
+
+### Supplemental test specification (P3 + A3 style)
+
+When a round has a second, separately approved specification/adjustment (a
+"supplemental" spec), add an optional field:
+
+```text
+Supplemental test specification: <spec path> @ <commit> (approval: <GitHub approval URL>)
+```
+
+Each supplemental spec is validated independently and, when it fails ANY check,
+contributes nothing (fail-closed):
+
+- the reviewer is not the PR author and not a bot;
+- the approval event contains exactly one `APPROVED test-spec:` line matching
+  the supplemental spec path and commit;
+- the approval time is earlier than the first commit that changes the paths the
+  supplemental spec covers (its own first related change, not the whole round's
+  first commit);
+- the supplemental spec commit is an ancestor of that first related change, and
+  the spec is not modified after approval without re-approval;
+- the supplemental only ADDS coverage; it never relaxes the primary checks and
+  cannot cover a changed code path that neither the primary nor the supplemental
+  spec mentions.
+
+A valid supplemental joins its test paths into the contract-test selection and
+adds only the scope IDs its own approved spec declares. The primary `Approved
+test specification` / approval checks always run unchanged.
+
 
 ## Evidence format
 
@@ -201,7 +263,7 @@ python scripts/ci_checks.py evidence --candidate "$HEAD" \
   --registry trusted/docs/ci/semantic-suites.yaml --trusted-root trusted \
   --semantic-required
 python scripts/ci_checks.py contract-tests --pr-body-file pr-body.txt \
-  --base "$BASE" --head "$HEAD"
+  --base "$BASE" --head "$HEAD" --token "$GH_TOKEN"
 python scripts/ci_checks.py live-result --junit "$RUNNER_TEMP/live.xml"
 python scripts/ci_checks.py aggregate --needs-json "$NEEDS" \
   --required "classify,test-approval,requirements-schema,static,type-check,dependency-check,regression,smoke-install,security-paths,ai-use-log,evidence-check,contract-tests" \
@@ -251,6 +313,25 @@ The `contract-tests` job selects actual tests rather than trusting plan prose:
 - pure documentation and build configuration require no application FC test;
 - plan text, `V-*` rows, or fixed baseline security tests are not accepted as
   new-feature coverage.
+
+### Where the gate test itself runs
+
+`test/offline/test_ci_gates.py` is executed by CI independently of
+`contract-tests` selection:
+
+- the `regression` job runs `pytest -q` over `testpaths = ["test"]` (excluding
+  only `integration`-marked tests), so the gate test is always collected and run;
+- when `security_applicable` is true (e.g. a safety-relevant/critical source
+  change), the `security-paths` job also runs `test/offline/test_ci_gates.py`
+  explicitly.
+
+So a mixed application + governance PR still executes the gate test. What
+`contract-tests` does not do for such a PR is add the gate test to its own
+selected test set (the pure-governance branch of `contract_test_plan` only runs
+when there is no other code path). Governance/CI-script changes still require a
+specification that names the governance paths (and, if it wants `contract-tests`
+to run the gate test specifically, `test/offline/test_ci_gates.py` too); that
+selection detail does not change whether the gate test runs elsewhere in CI.
 
 ## Runtime prompt and semantic classification
 
@@ -480,3 +561,102 @@ Phase 3/4 (trusted evidence and real verification):
 - `mypy==2.4.1`
 - `ruff==0.17.5`
 - `pytest==9.2.0` with the project dev extras.
+
+## PR #18 supplemental maintenance
+
+The independently approved maintenance specification is
+`docs/plans/semantic-registry-test-amendment.md @ 2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`,
+[approved by espino2233](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793)
+at `2026-11-24T15:02:01Z`. This is test-specification pre-approval, not a final
+implementation review, configuration activation or model-execution authorization.
+
+Keep the original primary PR fields and add one supplemental line per independent approval:
+
+```text
+Supplemental test specification: <path> @ <full 40-character SHA> (approval: <GitHub PR comment/review URL>)
+```
+
+Primary and other optional machine fields must occur once. Only
+`Supplemental test specification` may repeat: distinct values are retained,
+while identical entries or repeated normalized specification paths are rejected.
+No earlier approval is overwritten. A supplement must contain an explicit
+`## 3. Allowed files` section with project-relative file paths in bullet entries.
+Only that list grants path coverage or selects contract tests. Paths mentioned
+in rationale, historical references, verification commands or exclusions do not
+grant additional coverage. Approval must bind the exact immutable specification,
+come from a non-author human, and precede the first related implementation change.
+The specification's own creation does not count as that implementation. Invalid
+supplements add neither scope nor selected tests; primary checks remain mandatory.
+
+The contract-test command independently validates every supplied supplement
+before collection. The contract job now receives the Actions-provided token only
+on its command step, with `contents: read` and `pull-requests: read`. It checks
+that GH_TOKEN is nonempty and passes it via `--token`. API failures remain
+blocking; authentication errors never trigger an anonymous fallback. Direct
+callers may omit the optional argument for the previous public-read behavior.
+No stored credential discovery or personal token is used. The original
+security-path and token-bearing test-approval jobs remain unchanged.
+
+The implementation-start compatibility rule is bounded to the three exact
+FR-03 preparation-material paths in specification section 6. Each excluded path
+must be named in the primary frozen specification and have the identical Git
+blob at the evaluated candidate. The suite configuration at both revisions must
+remain unapproved with null approval identity/time and empty approval evidence.
+Unverifiable or changed materials remain subject to ordinary classification.
+Code, tests, shared routing, workflows, permissions and activation changes are
+never covered by this exception; other paths in a mixed commit still count.
+
+T16 now protects the complete `financial-metrics` entry rather than prohibiting
+additional registered suites. Its original hash/state protections remain, and
+T18 still inspects every registered suite's configuration and runner contract.
+
+
+### Lean approval-job dependency repair
+
+Run `45423751532` exposed that `test-approval` installs no third-party packages.
+Its preparation-material check must therefore remain standard-library-only.
+The check now attests the reviewed unapproved FR-03 configuration by its fixed
+LF-text SHA-256 (`96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015`)
+at both the approved specification and candidate revisions, instead of importing
+PyYAML. The independently checked reference has unapproved status, null approval
+identity/time and empty evidence. Other configuration content, including activation
+or equivalent but differently formatted YAML, conservatively receives no exception.
+Exact Git blob comparisons for each preparation material remain in place.
+
+Tests execute the approval check in an isolated `python -I -S` subprocess,
+asserting YAML is unavailable, and check both valid preparation and rejected
+activation. No workflow, dependency pin, frozen material or approval is changed.
+
+
+### Authenticated contract reads and separate supplemental approvals
+
+The auth amendment is `docs/plans/semantic-contract-auth-amendment.md @
+0539300c05b1b12c3ccff4a517dc132513a6facb`, independently approved by `espino2233`
+at `2026-11-24T16:14:27Z` in
+[comment 7137342374](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374).
+It adds the contract job's narrowly scoped workflow allowance. It does not
+replace the earlier suite or maintenance approval.
+
+Keep the existing primary fields and earlier supplemental line, and add:
+
+```text
+Supplemental test specification: docs/plans/semantic-contract-auth-amendment.md @ 0539300c05b1b12c3ccff4a517dc132513a6facb (approval: https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374)
+```
+
+Each supplemental document is checked against its own explicit section-3
+allowed-file list and first related change. The earlier maintenance approval
+continues covering its original script/test changes; the auth amendment's new
+path is `.github/workflows/ci.yml`. Inherited-file prose does not create new
+historical coverage. Any invalid supplied supplement blocks the gate, and only
+valid documents contribute scope/tests. The approval entry remains stdlib-only.
+
+The first auth implementation delivers workflow wiring, token forwarding,
+repeat-field handling and executable tests together after the real approval.
+Git commit times alone do not establish actual edit chronology; the drafting
+checkpoint and human review remain part of the evidence.
+
+The FR-03 data-availability standard and one run on the reviewed final candidate
+were [approved on PR #20](https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184).
+The protected evaluation uses at most 20 completion requests across the 15
+case/role combinations. Record the non-author suite-selection comment on PR #13
+and use the final candidate SHA when dispatching from main.

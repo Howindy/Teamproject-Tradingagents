@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from tradingagents.agents.context import get_instrument_context_from_state, get_language_instruction
+from tradingagents.agents.context import (
+    get_instrument_context_from_state,
+    get_language_instruction,
+    report_or_absent,
+)
 from tradingagents.agents.schemas import ResearchPlan, render_research_plan
 from tradingagents.agents.structured import (
     NO_EXTERNAL_TOOLS,
     bind_structured,
     invoke_structured_or_freetext,
 )
+from tradingagents.dataflows.availability import research_prompt_block
 
 
 def create_research_manager(llm):
@@ -17,6 +22,8 @@ def create_research_manager(llm):
     def research_manager_node(state) -> dict:
         instrument_context = get_instrument_context_from_state(state)
         history = state["investment_debate_state"].get("history", "")
+        news_report = report_or_absent(state.get("news_report", ""), "news")
+        availability_block = research_prompt_block(state.get("research_availability_summary"))
 
         investment_debate_state = state["investment_debate_state"]
 
@@ -39,6 +46,14 @@ The debate always contains conflicting arguments; deciding which side is stronge
 
 **Debate History:**
 {history}
+
+---
+
+**News analyst report:**
+{news_report}
+
+**Program data-availability summary (research stage):**
+{availability_block}
 
 ## Output
 

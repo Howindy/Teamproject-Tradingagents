@@ -160,13 +160,19 @@ def test_research_team_stays_blind_to_the_portfolio():
 
 
 @pytest.mark.unit
-def test_completed_run_clears_the_checkpoint_it_wrote(tmp_path, monkeypatch):
-    """The clear must key on the same portfolio the run was checkpointed under.
-
-    Keyed on a different one it deletes nothing, and the next identical call
-    resumes the finished thread and returns the old decision without running.
+def test_completed_portfolio_run_preserves_old_checkpoint_without_auto_clear(tmp_path, monkeypatch):
+    """PA-01 (Round 3 A3 amendment): a completed portfolio-bearing run must NOT
+    auto-clear an old checkpoint. Under the approved Round 3 default entry, the run
+    executes fresh (non-None initial state carrying the portfolio), performs no
+    checkpoint acquire/read/resume/clear, and leaves independently-seeded old
+    checkpoint evidence byte-identical. The superseded assertion
+    ``cleared == [written]`` is replaced: automatic clear is now asserted NEVER to
+    happen, while the retained explicit checkpoint component API is still used to
+    prepare (and later verify) real evidence independently of the entry.
     """
     import tradingagents.graph.trading_graph as tg
+    from tradingagents.graph import checkpointer
+    from tradingagents.run_context import RunContext, current as current_run
 
     graph = _bare_graph(tmp_path)
     graph.config.update({"checkpoint_enabled": True, "data_cache_dir": str(tmp_path),
@@ -175,16 +181,93 @@ def test_completed_run_clears_the_checkpoint_it_wrote(tmp_path, monkeypatch):
     graph._resuming = False
     graph.propagator.get_graph_args = lambda callbacks=None: {}
     graph._log_state = lambda *a, **k: None
-    graph.graph = type("G", (), {"invoke": lambda self, i, **k: {"final_trade_decision": "Rating: Hold\n\nx", "final_rating": "Hold"}})()
     book = PortfolioContext.model_validate(HOLDING)
 
-    written = graph._run_signature("stock", book)  # what begin_checkpoint keys on
-    cleared = []
-    monkeypatch.setattr(tg, "clear_checkpoint", lambda d, t, dt, signature: cleared.append(signature))
+    # --- PA-01 step 2: seed a REAL old checkpoint via the retained component API,
+    # independently of the entry under test; close the seeding resource, then
+    # record the non-empty evidence set and its initial bytes. ``setup()`` creates
+    # the per-ticker SQLite database (real, writable checkpoint schema).
+    signature = graph._run_signature("stock", book)
+    # thread_id only COMPUTES the deterministic identifier; it does not create a
+    # thread or checkpoint. The real database evidence comes from setup() below.
+    checkpointer.thread_id("AAPL", "2026-08-14", signature)
+    with checkpointer.get_checkpointer(graph.config["data_cache_dir"], "AAPL") as saver:
+        saver.setup()
+    db = checkpointer._db_path(graph.config["data_cache_dir"], "AAPL")
+    assert db.exists(), "seeding must create a real checkpoint database"
+    seeded = {p: p.read_bytes() for p in sorted(db.parent.glob(f"{db.name}*"))}
+    assert seeded, "seeding must produce at least one non-empty checkpoint evidence file"
+    assert any(b for b in seeded.values()), "seeded checkpoint evidence must be non-empty"
 
-    graph._run_graph("AAPL", "2026-08-14", "stock", checkpoint_thread_id=None, portfolio=book)
+    # --- PA-01 step 3: guard the acquisition/read/resume/clear bindings AFTER
+    # seeding, at their actual import binding. Any call fails the test.
+    violations = []
 
-    assert cleared == [written]
+    def _trap(name):
+        def fn(*a, **k):
+            violations.append(name)
+            raise AssertionError(f"default entry must not call {name}")
+        return fn
+
+    for name in ("get_checkpointer", "checkpoint_step", "thread_id", "clear_checkpoint"):
+        monkeypatch.setattr(tg, name, _trap(name))
+    for name in ("begin_checkpoint", "clear_checkpoint_on_success"):
+        monkeypatch.setattr(graph, name, _trap(name))
+
+    # --- PA-01 step 4/5: call the REAL ``propagate`` entry (not ``_run_graph``).
+    # Only the internal graph executor is controlled; propagate, RunContext, terminal
+    # preparation and record_decision all stay real.
+    observed = {}
+
+    class _Executor:
+        def invoke(self, graph_input, **k):
+            scope = current_run()
+            observed["scope"] = scope
+            observed["scope_is_none"] = scope is None
+            observed["registry"] = scope.registry if scope is not None else None
+            observed["input"] = graph_input
+            return {"final_trade_decision": "Rating: Hold\n\nx", "final_rating": "Hold"}
+
+    graph.graph = _Executor()
+
+    before_binding = current_run()
+    caller = RunContext()
+    caller.__enter__()
+    try:
+        assert current_run() is caller
+        result = graph.propagate("AAPL", "2026-08-14", "stock", portfolio=book)
+        # After propagate returns, the caller binding is restored.
+        assert current_run() is caller, "propagate must restore the caller binding"
+    finally:
+        caller.finish()
+    # After the caller scope exits, the binding is restored to what it was BEFORE
+    # this test entered it (do not assume it was None).
+    assert current_run() is before_binding
+
+    # Inside the executor: a real per-run scope existed, distinct from the caller,
+    # and it owned a fresh registry with THIS run's identity.
+    assert not observed["scope_is_none"], "the run scope must be active during execution"
+    assert observed["scope"] is not caller, "the entry must bind its OWN scope, not the caller's"
+    assert observed["registry"] is not None
+    assert observed["registry"] is not caller.registry, "the run must own a fresh registry"
+    assert observed["registry"]._analysis_context == {
+        "ticker": "AAPL", "trade_date": "2026-08-14", "asset_type": "stock"}
+    # The executor received a non-None FRESH initial state carrying the portfolio.
+    assert observed["input"] is not None
+    assert "120" in observed["input"]["portfolio_context"]
+
+    # Save the REAL return value, then assert its shape and controlled values.
+    assert isinstance(result, tuple) and len(result) == 2
+    final_state, signal = result
+    assert signal == "Hold"
+    assert final_state["final_trade_decision"].startswith("Rating: Hold")
+
+    # --- PA-01 step 6: automatic clear never called; all forbidden checkpoint calls
+    # absent (complete violations list empty); every seeded file exists byte-identical.
+    assert violations == [], f"forbidden checkpoint calls occurred: {violations}"
+    for path, before in seeded.items():
+        assert path.exists(), f"seeded evidence {path} was deleted"
+        assert path.read_bytes() == before, f"seeded evidence {path} was modified"
 
 
 @pytest.mark.unit

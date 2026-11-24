@@ -16,6 +16,7 @@ import socket
 import sys
 import threading
 import urllib.request
+from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -2921,12 +2922,10 @@ def test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite():
     assert ci_checks.load_yaml(config)["status"] == "unapproved"
     registry = ci_checks.load_suite_registry(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
     assert registry["errors"] == []
-    assert registry["suites"] == {
-        "financial-metrics": {
-            "requirement": "FR-10",
-            "config": "docs/ci/semantic_eval.yaml",
-            "runner": "financial_metrics_eval:evaluate",
-        }
+    assert registry["suites"]["financial-metrics"] == {
+        "requirement": "FR-10",
+        "config": "docs/ci/semantic_eval.yaml",
+        "runner": "financial_metrics_eval:evaluate",
     }
     states, errors = ci_checks.trusted_suite_states(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
     assert errors == []
@@ -3058,3 +3057,1090 @@ def test_current_pr_selection_is_read_when_event_body_has_no_selection(tmp_path,
     ])
     assert rc == 1
     assert captured["selection"]["suites"] == ["financial-metrics"]
+
+
+# Approved maintenance: semantic-registry-test-amendment.md, R1-R6/S1-S7/C1-C10.
+def _maintenance_t16_root(tmp_path, monkeypatch):
+    import shutil
+
+    original = ROOT
+    shutil.copytree(original / 'docs' / 'ci', tmp_path / 'docs' / 'ci')
+    (tmp_path / 'scripts').mkdir()
+    for name in ('financial_metrics_eval.py', 'data_availability_eval.py'):
+        shutil.copyfile(original / 'scripts' / name, tmp_path / 'scripts' / name)
+    monkeypatch.setitem(globals(), 'ROOT', tmp_path)
+    registry = tmp_path / 'docs' / 'ci' / 'semantic-suites.yaml'
+    return registry, ci_checks.load_yaml(registry)
+
+
+@pytest.mark.parametrize('additional', [False, True])
+def test_maintenance_t16_accepts_valid_registry_extensions(tmp_path, monkeypatch, additional):
+    """R1/R2: execute the real T16 assertions with one or multiple suites."""
+    path, registry = _maintenance_t16_root(tmp_path, monkeypatch)
+    if not additional:
+        registry['suites'].pop('data-availability')
+    path.write_text(yaml.safe_dump(registry), encoding='utf-8')
+    test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite()
+
+
+@pytest.mark.parametrize('change', ['missing', 'requirement', 'config', 'runner', 'invalid-extra', 'hash', 'status'])
+def test_maintenance_t16_keeps_original_protections(tmp_path, monkeypatch, change):
+    """R3-R6: missing/tampered FR-10 and invalid extensions cannot pass T16."""
+    path, registry = _maintenance_t16_root(tmp_path, monkeypatch)
+    entry = registry['suites']['financial-metrics']
+    if change == 'missing':
+        del registry['suites']['financial-metrics']
+    elif change in ('requirement', 'config', 'runner'):
+        entry[change] = {'requirement': 'FR-03', 'config': 'docs/ci/semantic-suites/data-availability.yaml',
+                         'runner': 'data_availability_eval:evaluate'}[change]
+    elif change == 'invalid-extra':
+        registry['suites']['invalid-suite'] = {'requirement': 'FR-03'}
+    else:
+        config = tmp_path / 'docs' / 'ci' / 'semantic_eval.yaml'
+        content = config.read_text(encoding='utf-8')
+        if change == 'status':
+            content = content.replace('status: "unapproved"', 'status: "approved"')
+        else:
+            content += '\n# changed material\n'
+        config.write_text(content, encoding='utf-8')
+    path.write_text(yaml.safe_dump(registry), encoding='utf-8')
+    with pytest.raises((AssertionError, KeyError)):
+        test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite()
+
+
+def _maintenance_commit(repo, message, timestamp):
+    _git(repo, 'add', '-A')
+    _git(repo, '-c', f'author.date={timestamp}', 'commit', '-q', '--allow-empty', '-m', message, '--date', timestamp)
+    return _git(repo, 'rev-parse', 'HEAD').strip()
+
+
+# Frozen draft bytes used by historical approval tests, independent of the active configuration.
+_FROZEN_DA_CONFIG = """# Draft material only. No suite approval or model execution is authorized.
+schema_version: '1.0'
+status: unapproved
+dataset:
+  version: fr03-data-availability-v1
+  path: docs/ci/data-availability-cases.json
+  sha256: f6ca5fc2c7eeb82deab34218eff19f84fb0d960bb37bea98929bc9c064ad84f2
+  cases:
+  - id: DA-S01
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S02
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S03
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S04
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S05
+    roles:
+    - bull
+    - bear
+    - research-manager
+rubric:
+  version: fr03-data-availability-rubric-v1
+  path: docs/ci/data-availability-rubric.md
+  sha256: 173f020b0ed79d7b92e2805abe7506d87fb5a0f01247c214900691e1fe775ae6
+  definition: 'Three required dimensions per case/role: availability meaning, no material availability contradiction,
+    and retained role delivery. All 45 outcomes must pass; ambiguous claims remain needs_review. This is a proposed
+    bounded release check, not universal natural-language validation.'
+thresholds:
+  required_case_count: 5
+  required_combinations: 15
+  required_dimension_outcomes: 45
+  require_all_applicable_checks: true
+  max_critical_failures: 0
+  max_unresolved_reviews: 0
+model:
+  provider: deepseek
+  model: deepseek-flash
+  base_url: https://api.deepseek.com
+  configuration:
+    temperature: 0
+    max_tokens: 4096
+    stream: false
+    n: 1
+    language: English
+    max_retries: 0
+    timeout_seconds: 120
+    extra_body:
+      thinking:
+        type: disabled
+execution:
+  runner: data_availability_eval:evaluate
+  max_completion_requests: 20
+  repetitions: 1
+  llm_judge: false
+approval:
+  approved_by: null
+  approved_at: null
+  evidence: []
+"""
+
+
+def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
+    """Synthetic real Git chronology; frozen literals are independent of gate output."""
+    repo, base = _repo(tmp_path)
+    primary = 'docs/plans/primary.md'
+    supplement = 'docs/plans/maintenance.md'
+    materials = ('docs/ci/data-availability-cases.json', 'docs/ci/data-availability-rubric.md',
+                 'docs/ci/semantic-suites/data-availability.yaml')
+    # Actual frozen input bytes, independent of the gate's implementation/digest.
+    config_text = _FROZEN_DA_CONFIG
+    for path, text in zip(materials, ('{}\n', '# Fixed rubric\n', config_text), strict=True):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding='utf-8')
+    plan = repo / primary
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text('Preparation materials:\n' + '\n'.join(materials) +
+                    '\nFR-03-FC05\nscripts/runner.py\ntest/offline/test_runner.py\n', encoding='utf-8')
+    source = repo / 'scripts' / 'runner.py'
+    source.parent.mkdir()
+    if mixed:
+        source.write_text('# FR-03-FC05\n', encoding='utf-8')
+    psha = _maintenance_commit(repo, 'specification and materials', '2026-01-01T10:00:00Z')
+    if not mixed:
+        source.write_text('# FR-03-FC05\n', encoding='utf-8')
+    test = repo / 'test' / 'offline' / 'test_runner.py'
+    test.parent.mkdir(parents=True)
+    test.write_text('def test_runner():\n    assert True\n', encoding='utf-8')
+    start = _maintenance_commit(repo, 'runner implementation', '2026-01-01T12:00:00Z')
+    amendment = repo / supplement
+    amendment.write_text('FR-10\n## 3. Allowed files\n- scripts/ci_checks.py\n- test/offline/test_ci_gates.py\n## 4. Exclusions\ndocs/ci/data-availability-cases.json\nscripts/unapproved.py\n', encoding='utf-8')
+    ssha = _maintenance_commit(repo, 'maintenance specification', '2026-01-01T13:00:00Z')
+    (repo / 'scripts' / 'ci_checks.py').write_text('SCOPE = \"FR-10\"\n', encoding='utf-8')
+    (repo / 'test' / 'offline' / 'test_ci_gates.py').write_text('def test_gate():\n    assert True\n', encoding='utf-8')
+    head = _maintenance_commit(repo, 'maintenance implementation', '2026-01-01T15:00:00Z')
+    primary_url = 'https://github.com/o/r/pull/1#issuecomment-1'
+    supplemental_url = 'https://github.com/o/r/pull/1#issuecomment-2'
+    fields = _approval_fields(**{
+        'Plan': primary, 'Approved test specification': f'{primary} @ {psha}',
+        'Approval evidence': primary_url, 'Implementation start': start,
+        'Approved scope': 'FR-03-FC05',
+        'Supplemental test specification': f'{supplement} @ {ssha} (approval: {supplemental_url})',
+    })
+    events = {
+        primary_url: _approval_event(url=primary_url, body=f'APPROVED test-spec: {primary} @ {psha}',
+                                    created_at='2026-01-01T11:00:00Z'),
+        supplemental_url: _approval_event(url=supplemental_url, body=f'APPROVED test-spec: {supplement} @ {ssha}',
+                                         created_at='2026-01-01T14:00:00Z'),
+    }
+    def fetch(repo_name, number, url, token):
+        if url not in events:
+            raise ci_checks.CiError('approval event unavailable')
+        return events[url], 'author'
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', fetch)
+    return SimpleNamespace(repo=repo, base=base, primary=primary, psha=psha, ssha=ssha, start=start,
+                           head=head, fields=fields, events=events, material_paths=materials,
+                           primary_url=primary_url, supplemental_url=supplemental_url)
+
+
+def _maintenance_approval(history):
+    body = '\n'.join(f'{key}: {value}' for key, value in history.fields.items())
+    return ci_checks.approval_check(history.repo, history.base, history.head, body, 'o/r', 1, 'synthetic-token')
+
+
+def test_maintenance_primary_and_supplement_approval_use_separate_chronology(tmp_path, monkeypatch):
+    """S1/C1: preparation precedes primary approval; maintenance follows its own approval."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    assert _maintenance_approval(history)['errors'] == []
+    excluded = ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    assert excluded == set(history.material_paths)
+
+
+@pytest.mark.parametrize('fault', ['author', 'bot', 'missing', 'marker', 'late', 'changed-spec', 'ancestry', 'ambiguous-marker', 'other-pr'])
+def test_maintenance_invalid_supplement_fails_closed(tmp_path, monkeypatch, fault):
+    """S2-S4: invalid supplements grant neither scope nor selected tests."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    event = history.events[history.supplemental_url]
+    if fault == 'author':
+        event['reviewer'] = 'author'
+    elif fault == 'bot':
+        event['reviewer_type'] = 'Bot'
+    elif fault == 'missing':
+        del history.events[history.supplemental_url]
+    elif fault == 'marker':
+        event['body'] = 'APPROVED test-spec: docs/plans/wrong.md @ ' + history.ssha
+    elif fault == 'late':
+        event['created_at'] = '2026-01-01T16:00:00Z'
+    elif fault == 'changed-spec':
+        (history.repo / 'docs' / 'plans' / 'maintenance.md').write_text('changed\n', encoding='utf-8')
+        history.head = _maintenance_commit(history.repo, 'changed specification', '2026-01-01T16:00:00Z')
+    elif fault == 'ancestry':
+        monkeypatch.setattr(ci_checks, '_is_ancestor', lambda *args: False)
+    elif fault == 'other-pr':
+        history.fields['Supplemental test specification'] = history.fields['Supplemental test specification'].replace('/pull/1#', '/pull/2#')
+    else:
+        event['body'] += '\n' + event['body']
+    result = _maintenance_approval(history)
+    assert result['errors']
+    assert result['supplemental_spec_texts'] == []
+    assert any('scope does not cover' in error for error in result['errors'])
+
+
+@pytest.mark.parametrize('fault', ['primary-author', 'primary-marker', 'missing-primary-scope', 'wrong-start', 'early-code', 'mixed'])
+def test_maintenance_preserves_primary_approval_checks(tmp_path, monkeypatch, fault):
+    """S5/C2/C3/C9: valid supplement cannot repair invalid primary evidence or history."""
+    history = _maintenance_history(tmp_path, monkeypatch, mixed=fault == 'mixed')
+    event = history.events[history.primary_url]
+    if fault == 'primary-author':
+        event['reviewer'] = 'author'
+    elif fault == 'primary-marker':
+        event['body'] = 'looks good'
+    elif fault == 'missing-primary-scope':
+        del history.fields['Approved scope']
+    elif fault == 'wrong-start':
+        history.fields['Implementation start'] = history.head
+    elif fault == 'early-code':
+        event['created_at'] = '2026-01-01T12:30:00Z'
+    assert _maintenance_approval(history)['errors']
+
+
+@pytest.mark.parametrize('fault', ['changed-material', 'approved', 'identity', 'approval-time', 'evidence', 'missing-approval', 'malformed-config', 'unlisted', 'missing-blob', 'unknown-sha'])
+def test_maintenance_preparation_exemption_is_exact_and_fail_closed(tmp_path, monkeypatch, fault):
+    """C4/C5/C7/C8: frozen material and configuration prerequisites are mandatory."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    config_path = history.repo / history.material_paths[2]
+    if fault == 'changed-material':
+        (history.repo / history.material_paths[0]).write_text('{"changed": true}\n', encoding='utf-8')
+    elif fault == 'unlisted':
+        plan = history.repo / history.primary
+        plan.write_text('not a preparation specification\n', encoding='utf-8')
+        revision = _maintenance_commit(history.repo, 'unlisted preparation', '2026-01-01T15:30:00Z')
+        history.fields['Approved test specification'] = f'{history.primary} @ {revision}'
+    elif fault == 'missing-blob':
+        (history.repo / history.material_paths[1]).unlink()
+    elif fault == 'unknown-sha':
+        history.fields['Approved test specification'] = f'{history.primary} @ ' + 'f' * 40
+    elif fault == 'malformed-config':
+        config_path.write_text('[invalid yaml', encoding='utf-8')
+    else:
+        config = ci_checks.load_yaml(config_path)
+        if fault == 'approved':
+            config['status'] = 'approved'
+        elif fault == 'missing-approval':
+            del config['approval']
+        else:
+            key = {'identity': 'approved_by', 'approval-time': 'approved_at', 'evidence': 'evidence'}[fault]
+            config['approval'][key] = ['review'] if fault == 'evidence' else 'review'
+        config_path.write_text(yaml.safe_dump(config), encoding='utf-8')
+    history.head = _maintenance_commit(history.repo, 'changed prerequisites', '2026-01-01T16:00:00Z')
+    excluded = ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    if fault == 'changed-material':
+        assert history.material_paths[0] not in excluded
+    elif fault == 'missing-blob':
+        assert history.material_paths[1] not in excluded
+    else:
+        assert excluded == set()
+    if fault == 'unknown-sha':
+        with pytest.raises(ci_checks.CiError):
+            _maintenance_approval(history)
+    elif fault != 'missing-blob':
+        assert _maintenance_approval(history)['errors']
+
+
+def test_maintenance_never_exempts_controls_or_unrelated_paths(tmp_path, monkeypatch):
+    """C6/C10: only three approved paths can be preparation materials."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    controls = ('docs/ci/semantic-suites.yaml', '.github/workflows/ci.yml', '.opencode/permissions.jsonc')
+    for path in controls:
+        target = history.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('{}\n', encoding='utf-8')
+    history.head = _maintenance_commit(history.repo, 'controls', '2026-01-01T16:00:00Z')
+    assert not set(controls) & ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    history.fields['Approved test specification'] = 'docs/plans/other.md @ ' + history.psha
+    assert ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head) == set()
+
+
+@pytest.mark.parametrize('valid', [True, False])
+def test_maintenance_contract_selection_adds_only_verified_supplement(tmp_path, monkeypatch, valid):
+    """S6: selection gets independent supplement validation before collection."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    approved = _maintenance_approval(history)
+    assert approved['errors'] == []
+    paths = ['scripts/runner.py', 'scripts/ci_checks.py', 'test/offline/test_ci_gates.py']
+    plan = ci_checks.contract_test_plan(history.repo, history.fields, paths,
+                                      supplemental_spec_texts=approved['supplemental_spec_texts'])
+    assert plan['errors'] == []
+    assert plan['test_paths'] == ['test/offline/test_ci_gates.py', 'test/offline/test_runner.py']
+    assert ci_checks.contract_test_plan(history.repo, history.fields, [*paths, 'scripts/unapproved.py'],
+                                      supplemental_spec_texts=approved['supplemental_spec_texts'])['errors']
+    body = history.repo / 'body.txt'
+    body.write_text('\n'.join(f'{key}: {value}' for key, value in history.fields.items()), encoding='utf-8')
+    if not valid:
+        history.events[history.supplemental_url]['reviewer'] = 'author'
+    monkeypatch.setattr(ci_checks, 'PROJECT_ROOT', history.repo)
+    # Independent invalid-event validation must stop before pytest collection.
+    original_run = ci_checks.run_command
+    collections = []
+    def no_collection(command, *args, **kwargs):
+        if '-m' in command and 'pytest' in command:
+            assert valid, 'invalid supplemental approval reached test collection'
+            collections.append(command)
+            for arg in command:
+                if arg.startswith('--junitxml='):
+                    Path(arg.split('=', 1)[1]).write_text('<testsuite><testcase name="passed" /></testsuite>', encoding='utf-8')
+            return ci_checks.CommandResult(command, 0, '2 passed', '')
+        return original_run(command, *args, **kwargs)
+    monkeypatch.setattr(ci_checks, 'run_command', no_collection)
+    args = SimpleNamespace(pr_body_file=str(body), base=history.base, head=history.head, paths=','.join(paths))
+    assert ci_checks._command_contract_tests(args) == (0 if valid else 1)
+    assert len(collections) == (2 if valid else 0)
+    if valid:
+        assert all('test/offline/test_ci_gates.py' in command and 'test/offline/test_runner.py' in command for command in collections)
+
+
+@pytest.mark.parametrize('field', [*ci_checks.PR_BODY_FIELDS, 'ADR'])
+def test_maintenance_rejects_duplicate_primary_fields(field):
+    """S7: a second machine field cannot overwrite the first approval record."""
+    with pytest.raises(ci_checks.CiError, match='duplicate'):
+        ci_checks.parse_pr_body(f'{field}: first\n{field}: second\n')
+
+
+def test_maintenance_public_approval_reads_do_not_send_empty_bearer(monkeypatch):
+    """S6: the public contract job needs no invented token or workflow change."""
+    requests = []
+    def reply(request, **kwargs):
+        requests.append(request)
+        return contextlib.nullcontext(SimpleNamespace(read=lambda: b'{"ok": true}'))
+    monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', reply)
+    assert ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', '') == {'ok': True}
+    assert requests[0].get_header('Authorization') is None
+    ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', 'synthetic-token')
+    assert requests[1].get_header('Authorization') == 'Bearer synthetic-token'
+
+
+@pytest.mark.parametrize('activated', [False, True])
+def test_maintenance_approval_runs_without_site_packages(tmp_path, monkeypatch, activated):
+    """C1/C5/S1: setup-python-only approval needs no PyYAML or other site-packages."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    if activated:
+        config = history.repo / history.material_paths[2]
+        document = yaml.safe_load(config.read_text(encoding='utf-8'))
+        document['status'] = 'approved'
+        config.write_text(yaml.safe_dump(document), encoding='utf-8')
+        history.head = _maintenance_commit(history.repo, 'activation', '2026-01-01T16:00:00Z')
+    fixture = tmp_path / 'approval-fixture.json'
+    fixture.write_text(json.dumps({
+        'root': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': '\n'.join(f'{key}: {value}' for key, value in history.fields.items()),
+        'events': history.events, 'expect_errors': activated,
+    }), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec("yaml") is None
+spec = importlib.util.spec_from_file_location("ci_checks", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+fixture = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (fixture["events"][url], "author")
+result = module.approval_check(Path(fixture["root"]), fixture["base"], fixture["head"], fixture["body"], "o/r", 1, "")
+assert bool(result["errors"]) == fixture["expect_errors"], result
+print("stdlib-only approval checked")
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'stdlib-only approval checked' in result.stdout
+
+
+def test_maintenance_frozen_config_attests_unapproved_state():
+    """C1/C5: independently pin and interpret the reviewed fixed configuration."""
+    import hashlib
+
+    content = _FROZEN_DA_CONFIG.encode()
+    assert hashlib.sha256(content).hexdigest() == '96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015'
+    config = yaml.safe_load(content)
+    assert config['status'] == 'unapproved'
+    assert config['approval'] == {'approved_by': None, 'approved_at': None, 'evidence': []}
+
+
+# Auth amendment CA-T01–CA-T12; original maintenance chronology stays intact.
+def _auth_history(tmp_path, monkeypatch):
+    history = _maintenance_history(tmp_path, monkeypatch)
+    history.auth_path = 'docs/plans/auth.md'
+    plan = history.repo / history.auth_path
+    plan.write_text('## 3. Allowed files\n- .github/workflows/ci.yml\n\n'
+                    'Inherited: scripts/ci_checks.py\n'
+                    '## 4. Exclusions\nscripts/unapproved.py\n', encoding='utf-8')
+    history.auth_sha = _maintenance_commit(history.repo, 'auth specification', '2026-01-01T16:00:00Z')
+    history.auth_url = 'https://github.com/o/r/pull/1#issuecomment-3'
+    history.auth_value = f'{history.auth_path} @ {history.auth_sha} (approval: {history.auth_url})'
+    history.fields['Supplemental test specification'] += '\n' + history.auth_value
+    history.events[history.auth_url] = _approval_event(
+        url=history.auth_url, body=f'APPROVED test-spec: {history.auth_path} @ {history.auth_sha}',
+        created_at='2026-01-01T17:00:00Z')
+    workflow = history.repo / '.github' / 'workflows' / 'ci.yml'
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text('jobs: {}\n', encoding='utf-8')
+    with (history.repo / 'scripts' / 'ci_checks.py').open('a') as f:
+        f.write('# authentication implementation\n')
+    history.head = _maintenance_commit(history.repo, 'auth implementation', '2026-01-01T18:00:00Z')
+    return history
+
+
+def _auth_body(history):
+    lines: list[str] = []
+    for key, value in history.fields.items():
+        values = value.splitlines() if key == 'Supplemental test specification' else [value]
+        lines.extend(f'{key}: {item}' for item in values)
+    return '\n'.join(lines)
+
+
+def _auth_approval(history):
+    return ci_checks.approval_check(history.repo, history.base, history.head,
+                                    _auth_body(history), 'o/r', 1, 'synthetic-auth-token')
+
+
+def _auth_contract(history, tmp_path, monkeypatch, token='synthetic-auth-token', *, can_execute=True):
+    body = tmp_path / 'auth-pr-body.txt'
+    body.write_text(_auth_body(history), encoding='utf-8')
+    monkeypatch.setattr(ci_checks, 'PROJECT_ROOT', history.repo)
+    fetch = ci_checks.fetch_approval_event
+    queries, executions = [], []
+    def record_fetch(repo, pr, url, supplied):
+        queries.append((url, supplied))
+        return fetch(repo, pr, url, supplied)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', record_fetch)
+    original_run = ci_checks.run_command
+    def execute(command, *args, **kwargs):
+        if '-m' in command and 'pytest' in command:
+            assert can_execute, 'invalid evidence reached collection/execution'
+            executions.append(command)
+            for arg in command:
+                if arg.startswith('--junitxml='):
+                    Path(arg.split('=', 1)[1]).write_text(
+                        '<testsuite><testcase name="ok" /></testsuite>', encoding='utf-8')
+            return ci_checks.CommandResult(command, 0, 'passed', '')
+        return original_run(command, *args, **kwargs)
+    monkeypatch.setattr(ci_checks, 'run_command', execute)
+    arguments = ['contract-tests', '--pr-body-file', str(body), '--base', history.base, '--head', history.head]
+    if token is not None:
+        arguments.extend(['--token', token])
+    args = ci_checks.build_parser().parse_args(arguments)
+    return ci_checks._command_contract_tests(args), queries, executions
+
+
+def test_auth_workflow_uses_job_scoped_read_only_token():
+    """CA-T01: inspect actual workflow wiring, including the empty-token guard."""
+    workflow = yaml.safe_load((ROOT / '.github/workflows/ci.yml').read_text())
+    job = workflow['jobs']['contract-tests']
+    assert job['if'] == "github.event_name == 'pull_request'"
+    assert job['permissions'] == {'contents': 'read', 'pull-requests': 'read'}
+    step = next(item for item in job['steps'] if 'scripts/ci_checks.py contract-tests' in item.get('run', ''))
+    assert step['env'] == {'GH_TOKEN': '${{ github.token }}'}
+    assert 'test -n "$GH_TOKEN"' in step['run']
+    assert step['run'].index('test -n "$GH_TOKEN"') < step['run'].index('python scripts/ci_checks.py')
+    assert '--token "$GH_TOKEN"' in step['run']
+    assert 'GH_TOKEN' not in workflow.get('env', {})
+    assert 'GH_TOKEN' not in json.dumps(workflow['jobs']['security-paths'])
+
+
+@pytest.mark.parametrize('token', ['synthetic-auth-token', '', None])
+def test_auth_contract_forwards_token_and_preserves_direct_call_defaults(tmp_path, monkeypatch, token):
+    """CA-T02/03/05/11: CLI token reaches both approval events, never last-one-wins."""
+    history = _auth_history(tmp_path, monkeypatch)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, token)
+    assert code == 0
+    assert queries == [(history.supplemental_url, token or ''), (history.auth_url, token or '')]
+    assert len(executions) == 2
+    assert all('test/offline/test_ci_gates.py' in cmd and 'test/offline/test_runner.py' in cmd for cmd in executions)
+
+
+@pytest.mark.parametrize('status', [401, 403])
+def test_auth_api_failure_blocks_without_anonymous_retry_or_disclosure(tmp_path, monkeypatch, capsys, status):
+    """CA-T04: real API error conversion, no fallback and no collection."""
+    history = _auth_history(tmp_path, monkeypatch)
+    fetch = ci_checks.fetch_approval_event
+    headers = []
+    def denied(request, **kwargs):
+        headers.append(request.get_header('Authorization'))
+        raise urllib.error.HTTPError(request.full_url, status, 'denied', Message(), None)
+    monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', denied)
+    def fetch_with_error(repo, pr, url, token):
+        if url == history.auth_url:
+            ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', token)
+        return fetch(repo, pr, url, token)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', fetch_with_error)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+    assert headers == ['Bearer synthetic-auth-token']
+    assert len(queries) == 2 and all(token == 'synthetic-auth-token' for _, token in queries)
+    output = capsys.readouterr()
+    assert f'HTTP Error {status}' in output.err
+    assert 'synthetic-auth-token' not in output.out + output.err
+
+
+@pytest.mark.parametrize('index', [0, 1])
+@pytest.mark.parametrize('fault', ['author', 'bot', 'marker', 'missing', 'late', 'wrong-pr', 'changed-spec', 'ancestry'])
+def test_auth_each_supplement_is_validated_independently(tmp_path, monkeypatch, index, fault):
+    """CA-T06/09/10: a later valid event cannot overwrite an invalid earlier one."""
+    history = _auth_history(tmp_path, monkeypatch)
+    url = (history.supplemental_url, history.auth_url)[index]
+    event = history.events[url]
+    target_sha = (history.ssha, history.auth_sha)[index]
+    if fault == 'author':
+        event['reviewer'] = 'author'
+    elif fault == 'bot':
+        event['reviewer_type'] = 'Bot'
+    elif fault == 'marker':
+        event['body'] = 'APPROVED test-spec: docs/plans/wrong.md @ ' + target_sha
+    elif fault == 'missing':
+        del history.events[url]
+    elif fault == 'late':
+        event['created_at'] = '2026-01-01T19:00:00Z'
+    elif fault == 'wrong-pr':
+        history.fields['Supplemental test specification'] = history.fields['Supplemental test specification'].replace(url, url.replace('/pull/1#', '/pull/2#'))
+    elif fault == 'changed-spec':
+        path = ('docs/plans/maintenance.md', history.auth_path)[index]
+        with (history.repo / path).open('a') as f:
+            f.write('\nchanged after approval\n')
+        history.head = _maintenance_commit(history.repo, 'changed frozen spec', '2026-01-01T19:00:00Z')
+    else:
+        ancestor = ci_checks._is_ancestor
+        monkeypatch.setattr(ci_checks, '_is_ancestor', lambda root, old, new: False if old == target_sha else ancestor(root, old, new))
+    result = _auth_approval(history)
+    assert result['errors']
+    assert len(result['supplemental_spec_texts']) == 1
+    invalid_path = ('scripts/ci_checks.py', '.github/workflows/ci.yml')[index]
+    assert invalid_path not in result['supplemental_spec_texts'][0].splitlines()
+    code, _, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+
+
+def test_auth_primary_and_both_supplements_keep_their_own_chronology(tmp_path, monkeypatch):
+    """CA-T05/08/09: primary=12:00, old maintenance=15:00, new workflow=18:00."""
+    history = _auth_history(tmp_path, monkeypatch)
+    assert _auth_approval(history)['errors'] == []
+    assert history.fields['Implementation start'] == history.start
+    texts = _auth_approval(history)['supplemental_spec_texts']
+    assert texts == ['scripts/ci_checks.py\ntest/offline/test_ci_gates.py', '.github/workflows/ci.yml']
+    plan = ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/ci_checks.py', 'test/offline/test_ci_gates.py', '.github/workflows/ci.yml'],
+        supplemental_spec_texts=texts)
+    assert plan['errors'] == []
+    assert ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/unapproved.py'], supplemental_spec_texts=texts)['errors']
+
+
+def test_auth_parser_preserves_distinct_supplements_and_rejects_ambiguity():
+    """CA-T07: only supplemental fields repeat; repeated paths/entries are rejected."""
+    field = 'Supplemental test specification'
+    old = 'docs/plans/old.md @ ' + 'a' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-1)'
+    new = 'docs/plans/new.md @ ' + 'b' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-2)'
+    assert ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {new}')[field] == old + '\n' + new
+    for value in (old, old.replace('a' * 40, 'c' * 40), old.replace('docs/plans/', './docs/plans/')):
+        with pytest.raises(ci_checks.CiError, match='duplicate|ambiguous'):
+            ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {value}')
+    with pytest.raises(ci_checks.CiError, match='duplicate'):
+        ci_checks.parse_pr_body(f'Plan: old\n{field}: {old}\nPlan: new')
+
+
+@pytest.mark.parametrize('invalid', [None, 'primary', 'old', 'new'])
+def test_auth_multiple_approval_checks_need_only_stdlib(tmp_path, monkeypatch, invalid):
+    """CA-T12: no YAML/pytest installation is required by the approval entry."""
+    history = _auth_history(tmp_path, monkeypatch)
+    if invalid is not None:
+        url = {'primary': history.primary_url, 'old': history.supplemental_url, 'new': history.auth_url}[invalid]
+        history.events[url]['body'] = 'not an approval'
+    fixture = tmp_path / 'multiple-approvals.json'
+    fixture.write_text(json.dumps({'repo': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': _auth_body(history), 'events': history.events, 'invalid': invalid is not None}), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec('yaml') is None
+spec = importlib.util.spec_from_file_location('ci_checks', sys.argv[1])
+module = importlib.util.module_from_spec(spec);sys.modules[spec.name] = module;spec.loader.exec_module(module)
+data = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (data['events'][url], 'author')
+result = module.approval_check(Path(data['repo']), data['base'], data['head'], data['body'], 'o/r', 1, 'synthetic-token')
+assert bool(result['errors']) == data['invalid'], result
+print('isolated multi-supplement checked')
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'isolated multi-supplement checked' in result.stdout
+
+
+# Retained Round 3 scope and approval regressions; supplemental fixtures use
+# the merged framework API and explicit allowed-file list.
+def test_scope_id_namespaces_distinguish_requirement_from_design_labels():
+    for token in ("FR-03", "FR-03-FC01", "IR-05", "IR-13", "SB-01-FC01", "INV-01", "SR-01"):
+        assert ci_checks.is_scope_id(token), token
+    for token in ("C-03", "C-20", "IF-24", "P-01", "P-15", "R03-01", "PA-01", "BO-01", "FC01-05"):
+        assert not ci_checks.is_scope_id(token), token
+
+
+_SRC = "src/tradingagents/dataflows/availability.py"
+
+
+def test_scope_changed_ids_excludes_design_labels_and_negated_fr01():
+    raw = {"FR-03", "FR-03-FC01", "IR-09", "FR-01", "C-03", "IF-24", "P-01", "R03-01", "PA-01", "FC01-05"}
+    lines = [
+        (_SRC, 'availability = "FR-03 (C-07)" and path "P-01"', True),
+        (_SRC, "# R03-01 scenario header (FC01-05; IR-09)", True),
+        (_SRC, "FR-01 is not implemented here; no FR-01 reuse", True),
+    ]
+    scoped = ci_checks.scope_changed_ids(raw, lines)
+    assert scoped == {"FR-03", "FR-03-FC01", "IR-09"}
+
+
+def test_scope_changed_ids_keeps_genuinely_unapproved_requirement():
+    # A real requirement ID referenced without negation and NOT in approved scope
+    # must still surface (fail-closed); it must not be dropped by namespace.
+    assert ci_checks.scope_changed_ids({"FR-04", "IR-99"}, []) == {"FR-04", "IR-99"}
+
+
+def test_scope_changed_ids_keeps_id_when_any_non_negated_reference():
+    raw = {"FR-01"}
+    lines = [(_SRC, "FR-01 is not implemented here", True), (_SRC, "see FR-01 for the reuse requirement", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-01"}
+
+
+def test_scope_changed_ids_same_line_implements_a_excludes_b_only_drops_b():
+    # "implements FR-03; excludes FR-01" must keep FR-03 and drop only FR-01.
+    raw = {"FR-03", "FR-01"}
+    lines = [(_SRC, "implements FR-03; excludes FR-01 here", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-03"}
+
+
+def test_scope_changed_ids_unrelated_negation_does_not_suppress_real_add():
+    # A vague negative word far from a real ID must NOT hide the genuine addition.
+    raw = {"FR-03", "FR-04"}
+    lines = [(_SRC, "no shortcuts; this adds FR-03 and FR-04 handling", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-03", "FR-04"}
+
+
+def test_scope_changed_ids_gate_harness_lines_do_not_add_business_scope():
+    # Example IDs in the gate's own test file are inputs/expectations, not scope.
+    lines = [
+        ("test/offline/test_ci_gates.py", 'changed_ids={"FR-04", "IR-99", "SB-01-FC01"}', False),
+        ("test/offline/test_ci_gates.py", 'Approved scope: "FR-04-FC01, IR-14"', False),
+    ]
+    raw = {"FR-04", "FR-04-FC01", "IR-14", "IR-99", "SB-01-FC01"}
+    assert ci_checks.scope_changed_ids(raw, lines) == set()
+    # An ID seen on a real (non-harness) line as well is still genuine scope.
+    raw2 = {"FR-04", "IR-99"}
+    lines2 = lines + [(_SRC, "real use of FR-04", True)]
+    assert ci_checks.scope_changed_ids(raw2, lines2) == {"FR-04"}
+
+
+def test_scope_changed_ids_real_unapproved_in_ordinary_test_still_fails():
+    # An unapproved requirement ID added in an ORDINARY application test still surfaces.
+    raw = {"FR-04"}
+    lines = [("test/offline/test_fr03_availability.py", "assert 'FR-04' in summary", True)]
+    assert ci_checks.scope_changed_ids(raw, lines) == {"FR-04"}
+
+
+def test_verify_approval_ignores_design_label_ids_but_fails_real_unapproved():
+    # Design labels present in changed_ids must not be reported as uncovered.
+    ok = _verify(changed_ids={"FR-04-FC01", "IR-14", "C-03", "P-01", "R03-01", "FC01-05"})
+    assert ok["errors"] == []
+    # A genuine requirement/FC not in Approved scope still fails.
+    bad = _verify(changed_ids={"FR-04-FC01", "IR-14", "FR-04-FC02"})
+    assert any("FR-04-FC02" in e for e in bad["errors"])
+
+
+def test_contract_plan_supplemental_covers_extra_path_and_unions_tests(tmp_path: Path):
+    repo, _ = _repo(tmp_path)
+    main_spec = repo / "docs" / "specs" / "main.md"
+    sup_spec = repo / "docs" / "specs" / "supp.md"
+    main_spec.parent.mkdir(parents=True)
+    main_spec.write_text("Code `src/old.py`; use `test/offline/test_m.py`.\n", encoding="utf-8")
+    sup_spec.write_text("Also `src/extra.py`; use `test/offline/test_s.py`.\n", encoding="utf-8")
+    for name in ("test_m.py", "test_s.py"):
+        f = repo / "test" / "offline" / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    (repo / "src" / "extra.py").write_text("x = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "specs")
+    commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": f"docs/specs/main.md @ {commit}",
+        "Approved scope": "FR-03",
+        "Supplemental test specification": f"docs/specs/supp.md @ {commit} (approval: https://github.com/o/r/pull/13#issuecomment-1)",
+    }
+    # Without the supplemental text, src/extra.py is uncovered.
+    only_main = ci_checks.contract_test_plan(repo, fields, ["src/old.py", "src/extra.py"])
+    assert any("src/extra.py" in e for e in only_main["errors"])
+    # With the supplemental spec text, coverage + test union succeed.
+    supp_text = sup_spec.read_text(encoding="utf-8")
+    plan = ci_checks.contract_test_plan(
+        repo, fields, ["src/old.py", "src/extra.py"], supplemental_spec_texts=[supp_text]
+    )
+    assert plan["errors"] == []
+    assert plan["test_paths"] == ["test/offline/test_m.py", "test/offline/test_s.py"]
+
+
+def test_contract_plan_supplemental_cannot_cover_unmentioned_path(tmp_path: Path):
+    repo, _ = _repo(tmp_path)
+    main_spec = repo / "docs" / "specs" / "main.md"
+    main_spec.parent.mkdir(parents=True)
+    main_spec.write_text("Code `src/old.py`; use `test/offline/test_m.py`.\n", encoding="utf-8")
+    t = repo / "test" / "offline" / "test_m.py"
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    (repo / "src" / "nowhere.py").write_text("y = 2\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "specs")
+    commit = _git(repo, "rev-parse", "HEAD").strip()
+    fields = {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": f"docs/specs/main.md @ {commit}",
+        "Approved scope": "FR-03",
+    }
+    plan = ci_checks.contract_test_plan(
+        repo, fields, ["src/nowhere.py"], supplemental_spec_texts=["Nothing relevant here.\n"]
+    )
+    assert any("src/nowhere.py" in e for e in plan["errors"])
+
+
+def _supp_fields(value: str) -> dict[str, str]:
+    return {
+        "Plan": "docs/plans/round-03.md",
+        "Approved test specification": "docs/plans/round-03.md @ d83abc9",
+        "Approval evidence": "https://github.com/o/r/pull/13#issuecomment-9",
+        "Implementation start": "53bfaf5",
+        "Approved scope": "FR-03",
+        "Supplemental test specification": value,
+    }
+
+
+def _supp_validate(tmp_path: Path, monkeypatch, value: str, event: dict[str, Any], *,
+                   use_event_body: bool = False, body_override: str | None = None):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    repo, base = _repo(tmp_path)
+    # Create a supplemental spec at a commit BEFORE a later implementation change.
+    sup = repo / "docs" / "specs" / "a3.md"
+    sup.parent.mkdir(parents=True)
+    sup.write_text("## 3. Allowed files\n\n- `test/offline/test_portfolio_context.py`\n", encoding="utf-8")
+    t = repo / "test" / "offline" / "test_portfolio_context.py"
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "spec")
+    spec_commit = _git(repo, "rev-parse", "HEAD").strip()
+    # A later change to the covered test file (the "first related change").
+    t.write_text("def test_ok():\n    assert True  # edit\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    if body_override is not None:
+        event = {**event, "body": body_override.replace("<COMMIT>", spec_commit)}
+    elif not use_event_body:
+        event = {**event, "body": f"APPROVED test-spec: docs/specs/a3.md @ {spec_commit}"}
+    monkeypatch.setattr(ci_checks, "fetch_approval_event", lambda *a, **k: (event, "author"))
+    resolved_value = value.replace("<COMMIT>", spec_commit)
+    event = {**event, "url": "https://github.com/o/r/pull/13#issuecomment-9"}
+    return ci_checks.validate_supplemental_specification(
+        repo, base, head, resolved_value, "o/r", 13, "tok",
+        ["test/offline/test_portfolio_context.py"],
+    )
+
+
+def test_supplemental_validation_accepts_valid_non_author(tmp_path: Path, monkeypatch):
+    event = _approval_event(created_at="2026-11-23T15:56:51Z")
+    result = _supp_validate(
+        tmp_path,
+        monkeypatch,
+        "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)",
+        event,
+    )
+    assert result["errors"] == []
+    assert "test/offline/test_portfolio_context.py" in result["spec_text"]
+
+
+def test_supplemental_validation_rejects_author_bot_late_and_bad_phrase(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    author = _approval_event(reviewer="author", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "a", monkeypatch, value, author)["errors"]
+    bot = _approval_event(reviewer="dependabot[bot]", reviewer_type="Bot", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "b", monkeypatch, value, bot)["errors"]
+    late = _approval_event(created_at="2099-01-01T00:00:00Z")
+    assert _supp_validate(tmp_path / "c", monkeypatch, value, late)["errors"]
+    wrong_phrase = _approval_event(body="APPROVED test-spec: docs/specs/other.md @ deadbee", created_at="2026-11-23T15:56:51Z")
+    assert _supp_validate(tmp_path / "d", monkeypatch, value, wrong_phrase, use_event_body=True)["errors"]
+
+
+def test_verify_approval_primary_fails_even_with_supplemental():
+    # Supplemental validity does not relax the primary checks (bot/author/late still fail).
+    bad = _verify(event=_approval_event(reviewer="author"))
+    assert any("PR author" in e for e in bad["errors"])
+
+
+def test_supplemental_validation_phrase_must_match_exactly(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    good = _approval_event(created_at="2026-11-23T15:56:51Z")
+    # Exact path + full SHA -> accepts.
+    ok = _supp_validate(tmp_path / "ok", monkeypatch, value, good,
+                        body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
+    assert ok["errors"] == []
+    # Correct path but SHA + extra char -> fail (prefix-only bug MUST NOT pass).
+    appended = _supp_validate(tmp_path / "ap", monkeypatch, value, good,
+                              body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>0")
+    assert appended["errors"]
+    # Correct phrase + trailing text -> fail.
+    trailing = _supp_validate(tmp_path / "tr", monkeypatch, value, good,
+                              body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT> WRONG-SPEC")
+    assert trailing["errors"]
+    # Wrong path -> fail.
+    wrong_path = _supp_validate(tmp_path / "wp", monkeypatch, value, good,
+                                body_override="APPROVED test-spec: docs/specs/other.md @ <COMMIT>")
+    assert wrong_path["errors"]
+    # Multiple approval markers -> fail.
+    multi = _supp_validate(tmp_path / "mu", monkeypatch, value, good,
+                           body_override=("APPROVED test-spec: docs/specs/a3.md @ <COMMIT>\n"
+                                          "APPROVED test-spec: docs/specs/a3.md @ <COMMIT>"))
+    assert multi["errors"]
+
+
+def test_supplemental_validation_sha_last_digit_differs_fails(tmp_path: Path, monkeypatch):
+    value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
+    good = _approval_event(created_at="2026-11-23T15:56:51Z")
+    # Resolve the real commit via a valid probe, then mutate its last hex digit.
+    base_value = value
+    probe = _supp_validate(tmp_path / "probe", monkeypatch, base_value, good,
+                           body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
+    assert probe["errors"] == []
+    real = _git(tmp_path / "probe" / "repo", "rev-parse", "HEAD~1").strip()
+    last = real[-1]
+    alt = "0" if last != "0" else "1"
+    bad_sha = real[:-1] + alt
+    diff = _supp_validate(tmp_path / "diff", monkeypatch, base_value, good,
+                          body_override=f"APPROVED test-spec: docs/specs/a3.md @ {bad_sha}")
+    assert diff["errors"]
+
+
+def test_scope_extraction_full_flow_doc_vs_code(tmp_path: Path, monkeypatch):
+    """Real git diff -> doc classification -> scope extraction (no manual scope_bearing)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text(
+        'def f(summary):\n'
+        '    """Module behaviour docstring."""\n'
+        '    assert "FR-04" in summary\n'
+        '    enabled = {"FR-04"}\n'
+        '    prompt = f"Implement FR-04 for {summary}"\n'
+        '    return enabled, prompt\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    scoped = ci_checks.scope_changed_ids(ids, triples)
+    # Executable strings (assert/dict/f-string) must keep FR-04; docstring-only IDs are not
+    # added. FR-04 is therefore reported as unapproved business scope.
+    assert "FR-04" in scoped
+    # Doc string-only identifiers (e.g. a doc-only id) are not turned into scope: add one.
+    src2 = repo / "src" / "doconly.py"
+    src2.write_text(
+        'def g():\n'
+        '    """Docstring mentions FR-06 only."""\n'
+        '    return 1\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "doc")
+    head2 = _git(repo, "rev-parse", "HEAD").strip()
+    ids2 = ci_checks.collect_changed_scope_ids(repo, base, head2, ["src/doconly.py"])
+    triples2 = ci_checks.collect_changed_scope_lines(repo, base, head2, ["src/doconly.py"])
+    assert "FR-06" not in ci_checks.scope_changed_ids(ids2, triples2)
+
+
+def test_documentation_line_same_line_as_code_is_scanned():
+    """A docstring sharing a physical line with executable code must NOT be excluded."""
+    # Module docstring then a real assignment on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        '"""module docs"""; enabled = {"FR-04"}\n'
+    ) == set()
+    # Function body docstring then a real assert on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'def f():\n    """docs"""; assert "FR-04" in summary\n'
+    ) == set()
+    # Class body docstring plus assignment on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'class C:\n    """cdocs"""; X = "FR-04"\n'
+    ) == set()
+    # Async function body docstring plus code on the SAME line.
+    assert ci_checks._documentation_line_numbers(
+        'async def g():\n    """adocs"""; y = "FR-04"\n'
+    ) == set()
+    # A multi-line docstring whose closing line also carries code is executable.
+    assert ci_checks._documentation_line_numbers(
+        'def h():\n    """line1\n    line2""" ; return "FR-04"\n'
+    ) == set()
+
+
+def test_documentation_line_pure_docstrings_and_comments_still_excluded():
+    """Boundary: a standalone docstring / comment line remains documentation."""
+    assert ci_checks._documentation_line_numbers('"""module FR-06 docs"""\n') == {1}
+    assert ci_checks._documentation_line_numbers(
+        'def f():\n    """body FR-06 docs"""\n    return 1\n'
+    ) == {2}
+    assert ci_checks._documentation_line_numbers(
+        'def h():\n    """line1\n    line2\n    """\n    return "FR-04"\n'
+    ) == {2, 3, 4}
+    assert ci_checks._documentation_line_numbers('# FR-06 comment only\n') == {1}
+    # Ordinary executable strings are never documentation.
+    for src in ('x = "FR-04"\n', 'assert "FR-04" in s\n', 'd = {"FR-04": 1}\n'):
+        assert ci_checks._documentation_line_numbers(src) == set()
+
+
+def test_scope_extraction_docstring_same_line_full_flow(tmp_path: Path):
+    """Real git diff -> doc classification -> scope extraction for semicolon docstrings."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text(
+        '"""module docs"""; enabled_requirements = {"FR-04"}\n'
+        '\n'
+        'def f():\n'
+        '    """docs"""; assert "FR-04" in summary\n'
+        '\n'
+        'class C:\n'
+        '    """cdocs"""; X = "FR-04"\n'
+        '\n'
+        'async def g():\n'
+        '    """adocs"""; await x\n'
+        '    Y = "FR-04"\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    # The docstring+code lines are scanned, so the genuine unapproved FR-04 surfaces.
+    assert "FR-04" in ci_checks.scope_changed_ids(ids, triples)
+
+
+def test_documentation_only_id_still_excluded_full_flow(tmp_path: Path):
+    """Regression: pure docstring IDs are still not business scope in a real diff."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("base\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _git(repo, "rev-parse", "HEAD").strip()
+    src = repo / "src" / "mod.py"
+    src.parent.mkdir()
+    src.write_text('def f():\n    """Only FR-06 in prose."""\n    return 1\n', encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "impl")
+    head = _git(repo, "rev-parse", "HEAD").strip()
+    ids = ci_checks.collect_changed_scope_ids(repo, base, head, ["src/mod.py"])
+    triples = ci_checks.collect_changed_scope_lines(repo, base, head, ["src/mod.py"])
+    assert "FR-06" not in ci_checks.scope_changed_ids(ids, triples)
+
+
+def test_parse_pr_body_single_fields_ok():
+    fields = ci_checks.parse_pr_body(
+        "Plan: docs/plans/round-03.md\n"
+        "Approved test specification: docs/plans/round-03.md @ abc1234\n"
+        "Approval evidence: https://github.com/o/r/pull/13#issuecomment-1\n"
+        "Implementation start: def5678\n"
+        "Approved scope: FR-03\n"
+        "ADR: docs/architecture/adr/001-graph-internal-final-check.md\n"
+        "Supplemental test specification: docs/plans/a3.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-2)\n"
+    )
+    assert fields["Plan"] == "docs/plans/round-03.md"
+    assert fields["Approved scope"] == "FR-03"
+    assert fields["Supplemental test specification"].startswith("docs/plans/a3.md")
+    assert ci_checks.find_duplicate_pr_body_fields(
+        "Plan: a\nApproved scope: FR-03\n"
+    ) == []
+
+
+def test_parse_pr_body_duplicate_machine_field_raises():
+    body = (
+        "Plan: docs/plans/round-03.md\n"
+        "Plan: docs/ci/README.md\n"
+        "Approved scope: FR-03\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == ["Plan"]
+    with pytest.raises(ci_checks.CiError) as excinfo:
+        ci_checks.parse_pr_body(body)
+    assert "duplicate" in str(excinfo.value)
+    assert "Plan" in str(excinfo.value)
+
+
+def test_parse_pr_body_duplicate_multiple_fields_reported():
+    body = (
+        "Plan: a\nPlan: b\n"
+        "Implementation start: 1111111\nImplementation start: 2222222\n"
+        "Approved scope: FR-03\nApproved scope: FR-04\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == [
+        "Approved scope",
+        "Implementation start",
+        "Plan",
+    ]
+
+
+def test_parse_pr_body_allows_multiple_supplemental(tmp_path: Path):
+    # Multiple supplements are legitimate and never a duplicate-field error.
+    body = (
+        "Supplemental test specification: docs/plans/a3.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-1)\n"
+        "Supplemental test specification: docs/plans/a4.md @ abc1234 (approval: https://github.com/o/r/pull/13#issuecomment-2)\n"
+    )
+    assert ci_checks.find_duplicate_pr_body_fields(body) == []
+    fields = ci_checks.parse_pr_body(body)
+    assert fields["Supplemental test specification"].endswith("#issuecomment-2)")
+
+
+def test_security_paths_cli_reports_duplicate_field(tmp_path: Path):
+    body = tmp_path / "body.txt"
+    body.write_text("Plan: a\nPlan: b\n", encoding="utf-8")
+    rc = ci_checks.main(
+        ["security-paths", "--pr-body-file", str(body), "--paths", "src/x.py"]
+    )
+    assert rc == 1
+
+
+
+def test_legacy_a3_heading_alone_cannot_grant_scope():
+    text = "## 3. Exact additional file and edit scope\n**`test/offline/test_portfolio_context.py`**\n"
+    assert ci_checks.supplemental_allowed_scope(
+        text, "docs/plans/round-03-portfolio-test-amendment.md", "9e2c7793dc7d70fd2aeeecd480f78a5a81635614",
+    ) == ""

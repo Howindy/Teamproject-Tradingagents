@@ -148,21 +148,39 @@ def test_a_full_run_reaches_a_logged_decision(tmp_path, monkeypatch, offline, st
 
 
 @pytest.mark.unit
-def test_an_interrupted_run_resumes_from_its_checkpoint(tmp_path, monkeypatch, offline):
+def test_an_interrupted_run_reexecutes_fully_instead_of_resuming(tmp_path, monkeypatch, offline):
+    """Round 3 (FR-03) changes the default entry to a full fresh execution.
+
+    An interrupted run no longer resumes from its checkpoint on the next
+    invocation: the new flow always re-executes the whole graph, so the second
+    run makes a full fresh call schedule rather than only the calls the
+    interrupted run had not completed. The interrupted scenario and the
+    decision outcome are kept; only the resume expectation changes. This is the
+    approved default-entry behavior update (``docs/plans/round-03.md`` §7).
+    """
     model = ScriptedModel(fail_at=12)            # past the analysts, before the decision
     graph = _graph(tmp_path, monkeypatch, model, checkpoint_enabled=True)
     with pytest.raises(RuntimeError, match="provider unavailable"):
         graph.propagate("NVDA", TRADE_DATE)
     calls_before = len(model.calls)
 
+    # Record the interrupted run's surviving checkpoint evidence before the rerun.
+    cp_dir = tmp_path / "cache" / "checkpoints"
+    old_dbs = {db: db.read_bytes() for db in (sorted(cp_dir.glob("*.db")) if cp_dir.exists() else [])}
+
     _, signal = graph.propagate("NVDA", TRADE_DATE)
 
     assert signal == "Overweight"
-    resumed_calls = len(model.calls) - calls_before
+    second_run_calls = len(model.calls) - calls_before
     full_run = ScriptedModel()
     _graph(tmp_path / "fresh", monkeypatch, full_run).propagate("NVDA", TRADE_DATE)
-    # The resumed run makes only the calls the interrupted one had not completed.
-    assert resumed_calls == len(full_run.calls) - (model.fail_at - 1)
+    # The second run re-executes the full schedule (no checkpoint resume).
+    assert second_run_calls == len(full_run.calls)
+    # The interrupted run's old checkpoint evidence is left untouched, not used or
+    # cleared (baseline would have cleared it on success).
+    for db, before in old_dbs.items():
+        assert db.exists(), f"{db} was deleted by the new flow"
+        assert db.read_bytes() == before, f"{db} was modified by the new flow"
 
 
 @pytest.mark.unit
