@@ -18,6 +18,7 @@ from tradingagents.financials.models import (
     decimal_value,
 )
 from tradingagents.financials.service import LocalReferenceDataProvider
+from tradingagents.financials.wiring import MetricProviderFactory, build_metrics_factory
 
 DATA = json.loads((Path(__file__).resolve().parents[2] / "docs/ci/financial-metrics-cases.json").read_text(encoding="utf-8"))
 CLOCK = EvaluationClock(date(2025, 8, 5), datetime(2025, 8, 5, tzinfo=ZoneInfo("America/New_York")), date(2026, 11, 24))
@@ -141,3 +142,82 @@ def test_previous_quarter_not_substituted_for_yoy_or_q4():
 def test_fr10_rejects_binary_or_boolean_authority(value):
     with pytest.raises(ValueError):
         decimal_value(value)
+
+
+def _counted_factory():
+    """ADR 002 / IR-05: fake only the external data source, not the metric path."""
+    calls = []
+
+    class Data:
+        def fetch(self, ticker, as_of):
+            calls.append((ticker, as_of))
+            return projected("aapl")
+
+    return MetricProviderFactory(lambda clock: Data()), calls
+
+
+def test_metric_scope_reuses_only_inside_one_analysis():
+    factory, calls = _counted_factory()
+    state = {"company_of_interest": "AAPL", "trade_date": "2025-08-05"}
+    for _ in range(2):
+        with factory.analysis_scope():
+            first = factory(state)
+            assert factory(state) is first
+            assert first.bundle.rows[-1].display == "33.4"
+    assert len(calls) == 2
+    # An unscoped caller must not accidentally create persistent cross-run reuse.
+    factory(state)
+    factory(state)
+    assert len(calls) == 4
+
+
+def test_metric_scope_nested_exception_restores_prior_context():
+    from contextvars import ContextVar
+
+    factory, calls = _counted_factory()
+    state = {"company_of_interest": "AAPL", "trade_date": "2025-08-05"}
+    existing_context = ContextVar("test_existing_research_context", default=None)
+    sentinel = object()
+    token = existing_context.set(sentinel)
+    try:
+        with factory.analysis_scope():
+            outer = factory(state)
+            with pytest.raises(RuntimeError, match="primary analysis failure"), factory.analysis_scope():
+                assert factory(state) is not outer
+                raise RuntimeError("primary analysis failure")
+            assert factory(state) is outer
+            assert existing_context.get() is sentinel
+        with factory.analysis_scope():
+            assert factory(state) is not outer
+        assert len(calls) == 3
+    finally:
+        existing_context.reset(token)
+
+
+def test_metric_scopes_concurrent_same_ticker_date_are_independent():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    factory, calls = _counted_factory()
+    barrier = Barrier(2)
+    state = {"company_of_interest": "AAPL", "trade_date": "2025-08-05"}
+
+    def run():
+        with factory.analysis_scope():
+            first = factory(state)
+            barrier.wait(timeout=5)
+            assert factory(state) is first
+            return first
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(lambda _: run(), range(2)))
+    assert results[0] is not results[1]
+    assert len(calls) == 2
+
+
+def test_disabled_or_unrequested_metrics_do_not_fetch():
+    factory, calls = _counted_factory()
+    assert build_metrics_factory({}) is None
+    with factory.analysis_scope():
+        assert factory({"trade_date": "2025-08-05"}) is None
+    assert calls == []

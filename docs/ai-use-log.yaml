@@ -3435,3 +3435,96 @@ entries:
       - "Live P/E freshness lacks independently evidenced expected latest trading session; avoid equating returned bar to latest session."
       - "Original date-keyed metric factory remains unintegrated and is not run-isolated; B requires explicit correction."
       - "Semantic evidence, trusted maintenance, standard approval and real model execution remain pending; no raw transcript export available."
+
+  - id: "AI-FM-FEATURE-A-002"
+    date: "2026-11-24"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_checkpoint_a_price_followup"
+    task: "Complete the scoped offline price-path follow-up; leave graph, CLI and analyst integration for checkpoint B."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC06"]
+    files_changed:
+      - "src/tradingagents/dataflows/vendors/yahoo/market.py"
+      - "src/tradingagents/financials/metrics.py"
+      - "src/tradingagents/financials/sec_provider.py"
+      - "test/offline/test_sec_financial_provider.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Preserved three pre-existing uncommitted changes: weekday-based price freshness in
+      completed_close, stale-price propagation in the SEC adapter, and explicit price reasons in
+      the calculator. Added offline tests exercising the real helper/adapter/calculator path with
+      synthetic Yahoo history. Found that the price helper inherited dividend-adjusted history;
+      explicitly requested auto_adjust=False for completed_close only, without changing get_closes
+      or existing baseline callers. Made freshness evidence identify the limited weekday policy.
+    human_intervention: >-
+      User instructed Codex to take over direct work from OpenCode. Continued the approved
+      checkpoint A price follow-up only; no GitHub operations, commit, push or live requests.
+    approval:
+      subject: "Existing approved checkpoint A plan and price tests"
+      status: "approved"
+      approved_at: "2026-11-24T14:12:00Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/19#issuecomment-7133994045"
+    verification:
+      status: "targeted_pass_related_regression_partial"
+      summary: >-
+        Initial price-provider tests: 6 failed, 7 passed. Three failures exposed adjusted price
+        90 instead of raw 100; three calculator cases first exposed missing calendar evidence in
+        the synthetic EPS fixture, which was completed without changing calculation expectations.
+        Final test_financial_metrics.py plus test_sec_financial_provider.py: 23 passed. Expanded
+        five-file run including test_sec_edgar.py, test_yahoo_snapshot.py and test_yahoo_rate_limit.py:
+        88 passed, 2 failed. Both failures independently reproduced in isolated reruns and report
+        SQLite OperationalError (unable to open database file) before the mocked Yahoo HTTP result.
+        No pristine-baseline comparison was performed in this follow-up. Ruff check . passed.
+        Synthetic cases cover raw versus adjusted close, completion cutoff, weekend, holiday/gap,
+        stale observation, split-query failure and preservation of P/E n/a reasons.
+    transcript_refs: []
+    limitations:
+      - "Weekday freshness is deliberately limited; exchange holidays or missing preceding-weekday bars remain price_availability_unknown."
+      - "No live SEC/Yahoo/model call or production P/E result was verified."
+      - "Checkpoint B lifecycle/cache isolation, prompt integration and semantic evaluation remain pending."
+      - "Two related Yahoo regression tests remain failing on local SQLite cache access; full suite not run."
+
+  - id: "AI-FM-FEATURE-A-003"
+    date: "2026-11-24"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_analysis_cache_cleanup"
+    task: "Remove the historical persistent date cache before dependent checkpoint B integration."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC09", "FR-10-FC10"]
+    files_changed:
+      - "src/tradingagents/financials/wiring.py"
+      - "test/offline/test_financial_metrics.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Fetched origin successfully and confirmed main remains dc77e6d, without merged Round 3 or
+      src/tradingagents/run_context.py. Did not implement dependent graph/CLI/prompt wiring or merge
+      the unapproved Round 3 branch. Completed the independent A factory cleanup specified by the
+      approved plan: analysis_scope uses an instance-owned ContextVar and fresh locked provider map;
+      exit restores the previous scope, and unscoped calls do not retain cross-analysis caches.
+      Tested actual calculation/provider reuse using a synthetic external data source only.
+    human_intervention: >-
+      User requested continuation of direct implementation. Continued independent authorized A
+      module/test work while preserving the frozen plan's merged-Round-3 prerequisite for B.
+    approval:
+      subject: "Existing approved feature plan and isolation tests"
+      status: "approved"
+      approved_at: "2026-11-24T14:12:00Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/19#issuecomment-7133994045"
+    verification:
+      status: "independent_cache_tests_passed_b_pending"
+      summary: >-
+        Four new tests first failed because analysis_scope did not exist. After implementation,
+        test_financial_metrics.py, test_sec_financial_provider.py, test_sec_edgar.py and
+        test_yahoo_snapshot.py: 57 passed. Tests cover same-analysis reuse, two same-ticker/date
+        analyses, unscoped non-reuse, nested failure restoring the outer scope and unrelated
+        context, parallel independent scopes, disabled configuration and absent ticker with no fetch.
+        Ruff check . passed. No live vendor/model calls, dependency installation or GitHub writes.
+    transcript_refs: []
+    limitations:
+      - "No graph or CLI entry currently enters analysis_scope; checkpoint B is not implemented or accepted."
+      - "Merged Round 3 remains a prerequisite for entry integration, stream-close cleanup and actual FR-03 paired regression."
+      - "Prior Yahoo SQLite failures remain unresolved; this four-file run did not repeat test_yahoo_rate_limit.py."

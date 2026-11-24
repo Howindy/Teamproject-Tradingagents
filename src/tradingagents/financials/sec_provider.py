@@ -200,6 +200,8 @@ def _price(ticker, as_of, clock, eps_period_end):
         return None, "missing_price"
     if not row["currency"] or not row["unit"]:
         return None, "price_currency_unconfirmed"
+    if row.get("freshness_status") == "stale_price":
+        return None, "stale_price"
     # A latest returned bar is not proof that it is the latest exchange
     # session. Do not self-certify stale vendor data as fresh (FR-10-FC06).
     if not row.get("expected_latest_session") or not row.get("freshness_evidence"):

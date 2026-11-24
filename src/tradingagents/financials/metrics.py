@@ -219,7 +219,12 @@ def calculate_metrics(inputs: FinancialInputs, clock: EvaluationClock) -> Metric
                 anchor, known = a, [a]
                 price = inputs.price
                 if price is None:
-                    raise _Unavailable("missing_price", known, ("completed_close",))
+                    # Preserve the price adapter's explicit reason, without
+                    # deriving availability from model prose or other fields.
+                    reason = next((issue for issue in inputs.issues if issue in {
+                        "stale_price", "price_availability_unknown", "price_currency_unconfirmed",
+                    }), "missing_price")
+                    raise _Unavailable(reason, known, ("completed_close",))
                 extra_sources = (price.source_ref,)
                 if price.price_date > clock.as_of:
                     raise _Unavailable("future_price_excluded", known)
