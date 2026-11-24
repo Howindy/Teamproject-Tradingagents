@@ -1,0 +1,129 @@
+schema_version: "1.0"
+
+archive:
+  id: "fundamentals-analyst-prompt-v1.1"
+  prompt_version: "1.1"
+  role: "Fundamentals Analyst"
+  status: "archived"
+  note: >-
+    This file is a versioned archive of the runtime prompt used by the project.
+    It is documentation only and is not loaded by the application at runtime.
+
+source:
+  path: "src/tradingagents/agents/analysts/fundamentals_analyst.py"
+  git_commit: "2fbd1cfe107e2ff985b7b2d079b4c0bfc572ff74"
+  git_commit_subject: "feat(fr10): integrate run-local metrics into fundamentals analysis"
+  git_commit_role: "FR-10 integration commit; this is the post-FR-10 prompt version."
+  file_sha256: "335c1ead74b1dfa80345a3a68314ee93681663eeb3702f1dc2608d74da3eb2c8"
+  factory_signature: "create_fundamentals_analyst(llm, metrics_factory=None)"
+
+runtime:
+  graph_role: "fundamentals"
+  entry_paths:
+    - "CLI analysis entry"
+    - "TradingAgentsGraph.propagate()"
+  activation:
+    when: >-
+      Used when metrics_factory is not None. In normal runs the factory is
+      supplied when FR-10 input is configured; tests may inject it directly.
+    fr10_state: "enabled by fr10_sec_enabled or fr10_reference_root, or explicitly injected"
+    data_requirements: >-
+      The existing five financial tools remain available. The analyst resolves
+      program-generated financial evidence once per analysis and receives the
+      rendered table (or an explicit unavailable notice) in its system prompt.
+  tools:
+    - "get_fundamentals"
+    - "get_balance_sheet"
+    - "get_cashflow"
+    - "get_income_statement"
+    - "get_insider_transactions"
+
+prompt:
+  assembly_order:
+    - "1. Build the same base system_message as version 1.0."
+    - "2. If metrics_factory is provided, resolve metrics_factory(state) in an exception boundary."
+    - "3. Append two newlines and the FR-10 program financial evidence block."
+    - "4. Insert metrics.text when available; otherwise insert the fixed unavailable fallback."
+    - "5. The outer system envelope interpolates tool_names, current_date, instrument_context and system_message."
+    - "6. MessagesPlaceholder('messages') supplies the conversation and tool history."
+  archive_markers:
+    "{{LANGUAGE_INSTRUCTION}}": >-
+      Archive marker for the string returned by get_language_instruction(). It is
+      an empty string for English and begins with a leading space for other
+      configured output languages.
+    "{{FR10_MATERIAL_OR_FALLBACK}}": >-
+      Archive marker for either metrics.text (the rendered financial-metrics
+      table) or the fixed fallback text described below.
+  base_system_message_template: >-
+    You are a researcher tasked with analyzing fundamental information over the past week about a company. Please write a comprehensive report of the company's fundamental information such as financial documents, company profile, basic company financials, and company financial history to gain a full view of the company's fundamental information to inform traders. Make sure to include as much detail as possible. Provide specific, actionable insights with supporting evidence to help traders make informed decisions. Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read. Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements, and `get_insider_transactions` for recent insider buying and selling.{{LANGUAGE_INSTRUCTION}}
+  fr10_evidence_block_template: |-
+    FR-10 program financial evidence: use the supplied value for the matching metric and period instead of recomputing it from narrative. Preserve units, periods, sources and n/a reasons. n/a does not mean zero. Other metrics may still use the existing tools; label any additional model calculation as an unverified derivation. Do not relabel annual P/E as TTM, or reported-span FCF as a derived quarter. This table does not establish overall data completeness or determine risk/final rating.
+    {{FR10_MATERIAL_OR_FALLBACK}}
+  system_message_assembly: 'base_system_message_template + "\n\n" + fr10_evidence_block_template'
+  fr10_material_resolution:
+    material_source: "metrics.text"
+    fallback_template: "FR-10 metrics unavailable: {reason}."
+    missing_result_reason: "missing_input"
+    exception_reason: "data_entry_failure"
+    empty_text_behavior: >-
+      If metrics is None or its text is empty, the fallback line is inserted.
+      A non-empty table replaces the fallback line.
+  outer_system_template: "You are a helpful AI assistant, collaborating with other assistants. Use the provided tools to progress towards answering the question. If you are unable to fully answer, that's OK; another assistant with different tools will help where you left off. Execute what you can to make progress. Report what your tools support; another agent decides the trade. You have access to the following tools: {tool_names}. Today's date is {current_date}; treat it as 'now' for all analysis and tool-call date ranges. {instrument_context}\n{system_message}"
+  placeholders:
+    tool_names:
+      source: "', '.join(tool.name for tool in TOOLS)"
+      runtime_value: "get_fundamentals, get_balance_sheet, get_cashflow, get_income_statement, get_insider_transactions"
+    current_date:
+      source: "state['trade_date']"
+      runtime_value: "The analysis date in YYYY-MM-DD form."
+    instrument_context:
+      source: "get_instrument_context_from_state(state)"
+      runtime_value: "Deterministic ticker identity and asset context resolved at run start."
+    system_message:
+      source: "The assembled system_message shown above."
+    messages:
+      source: "MessagesPlaceholder(variable_name='messages')"
+      runtime_value: "Conversation and tool-call history for the current analyst turn."
+    language_instruction:
+      source: "get_language_instruction()"
+      runtime_value: "Empty for English; a configured-language instruction otherwise."
+    fr10_material:
+      source: "metrics.text"
+      runtime_value: "The rendered ten-row financial-metrics table, when available."
+    fr10_reason:
+      source: "metrics.reason, or the fixed exception fallback"
+      runtime_value: "A typed n/a / unavailable reason such as missing_input or data_entry_failure."
+
+runtime_turns:
+  first_model_call: >-
+    The system prompt contains the base instructions and, when FR-10 is active,
+    the rendered metrics table before the first model invocation.
+  tool_rounds: >-
+    Tool calls and tool results are added through the message history. The same
+    analysis-local metrics resolver is reused; it does not fetch a second table
+    for a later turn in the same analysis.
+  wrap_up_turn: >-
+    At the tool-round limit, tool bindings are removed and the prior calls and
+    results are rendered as text. The system prompt still contains the same
+    metrics table (or unavailable notice) for the final report.
+  evidence_test:
+    path: "test/offline/test_financial_metrics_integration.py"
+    test: "test_first_tool_and_wrapup_keep_one_metric_table"
+    assertion: >-
+      Captures two financial-analyst prompts (first call and wrap-up) and checks
+      that each contains exactly one "Program financial metrics (" table and
+      the same pe_fy row, while the resolver is read once per analysis.
+
+change_and_evidence:
+  relative_to: "1.0"
+  change_summary: >-
+    Adds an optional FR-10 program financial evidence block after the existing
+    role instructions. The base instructions and the five-tool set are
+    unchanged. The new block tells the model to use supplied values for the
+    matching metric and period, preserve units/periods/sources and n/a reasons,
+    and not treat n/a as zero or relabel annual P/E as TTM.
+  evidence:
+    - "PR #19: https://github.com/Howindy/Teamproject-Tradingagents/pull/19"
+    - "Commit 2fbd1cf: https://github.com/Howindy/Teamproject-Tradingagents/commit/2fbd1cfe107e2ff985b7b2d079b4c0bfc572ff74"
+    - "test/offline/test_financial_metrics_integration.py::test_first_tool_and_wrapup_keep_one_metric_table"
+    - "PR #25 retains this prompt unchanged while fixing FR-10 source contracts: https://github.com/Howindy/Teamproject-Tradingagents/pull/25"

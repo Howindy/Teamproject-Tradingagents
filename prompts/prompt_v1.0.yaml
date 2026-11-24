@@ -1,0 +1,84 @@
+schema_version: "1.0"
+
+archive:
+  id: "fundamentals-analyst-prompt-v1.0"
+  prompt_version: "1.0"
+  role: "Fundamentals Analyst"
+  status: "archived"
+  note: >-
+    This file is a versioned archive of the runtime prompt used by the project.
+    It is documentation only and is not loaded by the application at runtime.
+
+source:
+  path: "src/tradingagents/agents/analysts/fundamentals_analyst.py"
+  git_commit: "00cf810f0ffc9b4261ee1e7eb00045ff551c388d"
+  git_commit_subject: "Merge remote-tracking branch 'origin/main' into feat/financial-metrics-integration"
+  git_commit_role: "Parent of the FR-10 integration commit 2fbd1cf; this is the pre-FR-10 prompt version."
+  file_sha256: "daa6deb211ffea262da168a935464080cd75e61815d164502d6466dbd60845b4"
+  factory_signature: "create_fundamentals_analyst(llm)"
+
+runtime:
+  graph_role: "fundamentals"
+  entry_paths:
+    - "CLI analysis entry"
+    - "TradingAgentsGraph.propagate()"
+  activation:
+    when: >-
+      Used when metrics_factory is None. This is the default path when FR-10 is
+      disabled or no FR-10 metrics resolver is injected.
+    fr10_state: "disabled or not configured"
+    data_requirements: >-
+      The analyst uses the five existing financial tools; no program-generated
+      financial-metrics table is added to the system prompt.
+  tools:
+    - "get_fundamentals"
+    - "get_balance_sheet"
+    - "get_cashflow"
+    - "get_income_statement"
+    - "get_insider_transactions"
+
+prompt:
+  assembly_order:
+    - "1. Role instruction and report requirement."
+    - "2. Instruction to append a Markdown summary table."
+    - "3. Instruction naming the five available tools."
+    - "4. get_language_instruction(): empty for English; otherwise appends the configured-language instruction."
+    - "5. The outer system envelope interpolates tool_names, current_date, instrument_context and system_message."
+    - "6. MessagesPlaceholder('messages') supplies the conversation and tool history."
+  archive_markers:
+    "{{LANGUAGE_INSTRUCTION}}": >-
+      Archive marker for the string returned by get_language_instruction(). It is
+      an empty string for English and begins with a leading space for other
+      configured output languages.
+  system_message_template: >-
+    You are a researcher tasked with analyzing fundamental information over the past week about a company. Please write a comprehensive report of the company's fundamental information such as financial documents, company profile, basic company financials, and company financial history to gain a full view of the company's fundamental information to inform traders. Make sure to include as much detail as possible. Provide specific, actionable insights with supporting evidence to help traders make informed decisions. Make sure to append a Markdown table at the end of the report to organize key points in the report, organized and easy to read. Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements, and `get_insider_transactions` for recent insider buying and selling.{{LANGUAGE_INSTRUCTION}}
+  outer_system_template: "You are a helpful AI assistant, collaborating with other assistants. Use the provided tools to progress towards answering the question. If you are unable to fully answer, that's OK; another assistant with different tools will help where you left off. Execute what you can to make progress. Report what your tools support; another agent decides the trade. You have access to the following tools: {tool_names}. Today's date is {current_date}; treat it as 'now' for all analysis and tool-call date ranges. {instrument_context}\n{system_message}"
+  placeholders:
+    tool_names:
+      source: "', '.join(tool.name for tool in TOOLS)"
+      runtime_value: "get_fundamentals, get_balance_sheet, get_cashflow, get_income_statement, get_insider_transactions"
+    current_date:
+      source: "state['trade_date']"
+      runtime_value: "The analysis date in YYYY-MM-DD form."
+    instrument_context:
+      source: "get_instrument_context_from_state(state)"
+      runtime_value: "Deterministic ticker identity and asset context resolved at run start."
+    system_message:
+      source: "The assembled system_message shown above."
+    messages:
+      source: "MessagesPlaceholder(variable_name='messages')"
+      runtime_value: "Conversation and tool-call history for the current analyst turn."
+    language_instruction:
+      source: "get_language_instruction()"
+      runtime_value: "Empty for English; a configured-language instruction otherwise."
+
+change_and_evidence:
+  relative_to: "none (baseline version)"
+  change_summary: >-
+    Baseline Fundamentals Analyst prompt before FR-10 integration. It defines
+    the role, report requirement, Markdown summary table requirement and the
+    five financial tools, with no program-generated financial evidence.
+  evidence:
+    - "Commit 00cf810 is the parent of FR-10 integration commit 2fbd1cf."
+    - "PR #19: https://github.com/Howindy/Teamproject-Tradingagents/pull/19"
+    - "File hash above identifies the archived source version."
