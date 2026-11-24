@@ -3114,6 +3114,81 @@ def _maintenance_commit(repo, message, timestamp):
     return _git(repo, 'rev-parse', 'HEAD').strip()
 
 
+# Frozen draft bytes used by historical approval tests, independent of the active configuration.
+_FROZEN_DA_CONFIG = """# Draft material only. No suite approval or model execution is authorized.
+schema_version: '1.0'
+status: unapproved
+dataset:
+  version: fr03-data-availability-v1
+  path: docs/ci/data-availability-cases.json
+  sha256: f6ca5fc2c7eeb82deab34218eff19f84fb0d960bb37bea98929bc9c064ad84f2
+  cases:
+  - id: DA-S01
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S02
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S03
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S04
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S05
+    roles:
+    - bull
+    - bear
+    - research-manager
+rubric:
+  version: fr03-data-availability-rubric-v1
+  path: docs/ci/data-availability-rubric.md
+  sha256: 173f020b0ed79d7b92e2805abe7506d87fb5a0f01247c214900691e1fe775ae6
+  definition: 'Three required dimensions per case/role: availability meaning, no material availability contradiction,
+    and retained role delivery. All 45 outcomes must pass; ambiguous claims remain needs_review. This is a proposed
+    bounded release check, not universal natural-language validation.'
+thresholds:
+  required_case_count: 5
+  required_combinations: 15
+  required_dimension_outcomes: 45
+  require_all_applicable_checks: true
+  max_critical_failures: 0
+  max_unresolved_reviews: 0
+model:
+  provider: deepseek
+  model: deepseek-flash
+  base_url: https://api.deepseek.com
+  configuration:
+    temperature: 0
+    max_tokens: 4096
+    stream: false
+    n: 1
+    language: English
+    max_retries: 0
+    timeout_seconds: 120
+    extra_body:
+      thinking:
+        type: disabled
+execution:
+  runner: data_availability_eval:evaluate
+  max_completion_requests: 20
+  repetitions: 1
+  llm_judge: false
+approval:
+  approved_by: null
+  approved_at: null
+  evidence: []
+"""
+
+
 def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
     """Synthetic real Git chronology; frozen literals are independent of gate output."""
     repo, base = _repo(tmp_path)
@@ -3122,7 +3197,7 @@ def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
     materials = ('docs/ci/data-availability-cases.json', 'docs/ci/data-availability-rubric.md',
                  'docs/ci/semantic-suites/data-availability.yaml')
     # Actual frozen input bytes, independent of the gate's implementation/digest.
-    config_text = (ROOT / materials[2]).read_text(encoding='utf-8')
+    config_text = _FROZEN_DA_CONFIG
     for path, text in zip(materials, ('{}\n', '# Fixed rubric\n', config_text), strict=True):
         target = repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -3388,7 +3463,7 @@ def test_maintenance_frozen_config_attests_unapproved_state():
     """C1/C5: independently pin and interpret the reviewed fixed configuration."""
     import hashlib
 
-    content = (ROOT / 'docs/ci/semantic-suites/data-availability.yaml').read_bytes().replace(b'\r\n', b'\n')
+    content = _FROZEN_DA_CONFIG.encode()
     assert hashlib.sha256(content).hexdigest() == '96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015'
     config = yaml.safe_load(content)
     assert config['status'] == 'unapproved'
@@ -4062,3 +4137,10 @@ def test_security_paths_cli_reports_duplicate_field(tmp_path: Path):
     )
     assert rc == 1
 
+
+
+def test_legacy_a3_heading_alone_cannot_grant_scope():
+    text = "## 3. Exact additional file and edit scope\n**`test/offline/test_portfolio_context.py`**\n"
+    assert ci_checks.supplemental_allowed_scope(
+        text, "docs/plans/round-03-portfolio-test-amendment.md", "9e2c7793dc7d70fd2aeeecd480f78a5a81635614",
+    ) == ""

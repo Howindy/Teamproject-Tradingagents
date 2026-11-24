@@ -3956,3 +3956,36 @@ entries:
       approval, trusted evidence, feature merge or deployment is claimed.
     - Earlier CI-maintenance chronology is preserved; later authorization is not represented
       as pre-approval.
+
+  - id: AI-FR03-ACTIVATION-001
+    date: '2026-11-25'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_implementation
+    task: Activate the approved data-availability standard and recognize the frozen A3 file list.
+    requirement_ids: [FR-03]
+    fit_criterion_ids: [FR-03-FC05]
+    files_changed:
+      - scripts/ci_checks.py
+      - test/offline/test_ci_gates.py
+      - test/offline/test_data_availability_evaluation.py
+      - docs/ci/semantic-suites/data-availability.yaml
+      - docs/ci/README.md
+      - docs/ai-use-log.yaml
+      - docs/review-memo.md
+    ai_contribution: Bound the legacy path to its immutable version and digest, recorded the approved configuration, and checked the positive and negative scope cases.
+    human_intervention: User supplied the real non-author approval of the frozen specification and bounded evaluation.
+    approval:
+      subject: Frozen PR 20 maintenance specification and one bounded final-candidate run
+      status: approved
+      evidence: [https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184]
+    verification:
+      status: offline_passed
+      summary: Gate regression with activation assertion 191 passed. FR-03 evaluator 56 passed. No real completion requests.
+      evidence: [/private/tmp/fr20-gates.txt]
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/20
+    limitations: [Independent final review and candidate-bound trusted execution pending.]
