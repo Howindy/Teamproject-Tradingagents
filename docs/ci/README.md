@@ -115,7 +115,16 @@ APPROVED test-spec: <exact Approved test specification value>
 
 The phrase must match the PR field exactly; `Not approved`, `Approval pending`,
 an `APPROVED` review without the phrase, or a phrase for a different version
-fails. The approval event must precede the first implementation commit, the
+fails.
+
+Each machine field (`Plan`, `Approved test specification`, `Approval evidence`,
+`Implementation start`, `Approved scope`, `ADR`) must appear AT MOST ONCE in the
+PR body. A duplicated field is an error, not last-one-wins: otherwise a pasted
+governance-note block could silently override the real P3 values. The parser
+reports every duplicated field by name and fails closed. Only `Supplemental test
+specification` may legitimately repeat (one line per supplement). Put governance
+maintenance notes in prose that does not start a line with a recognised
+`Field: value` key. The approval event must precede the first implementation commit, the
 approved specification commit must be ancestral, and scope changes after
 approval require a new approval. Git ancestry and author timestamps alone
 cannot prove the real implementation order; a trusted human approval event is
@@ -125,6 +134,59 @@ changed test paths, not every ID present in the full file. Round 1 was an
 unapproved example when this convention was written; its later real approval is
 recorded in RM-7-R1 and does not change the gate's negative-sequence
 requirement.
+
+### Scope-ID extraction (approval gate)
+
+The changed-scope set keeps only GENUINE requirement / fit-criterion /
+invariant IDs (namespaces `FR-`, `SB-`, `INV-`, `SR-`, `PR-`, `CR-` with
+`-NN`/`-FCNN`, and `IR-NN`). All of these must be in the PR `Approved scope`.
+D2 design labels the broad ID regex also matches — component `C-NN`,
+interface `IF-NN`, attachment/path `P-NN`, test-case `R03-NN`/`PA-NN`, and the
+`FC01-05` range shorthand — are NOT approval scope and are ignored by the
+coverage check. A scope ID that appears only on a NEGATED added line (for
+example "FR-01 is not implemented here" or "belongs to FR-01") is not treated
+as new scope. This is by NAMEspaces and diff-line negation, not by whether the
+ID exists in `requirements.yaml`: a genuine, unapproved `FR-`/`IR-` ID (for
+example a referenced `FR-04`) and an unknown well-formed ID still FAIL. The PR
+`Approved scope` alone cannot prove human approval; it must match the frozen
+specification bound by the approval event.
+
+Docstring classification is by syntactic position, not by the mere presence of a
+string. Ordinary assignment strings, asserts, dict keys/values, call arguments
+and f-strings remain executable and are scanned. A docstring that shares a
+physical line with other executable statements (for example
+`"""module docs"""; enabled = {"FR-04"}` or an inline `"""body"""; assert ...`)
+is conservatively treated as code so its IDs are still detected; only a line
+whose entire content is a standalone docstring is treated as documentation.
+
+### Supplemental test specification (P3 + A3 style)
+
+When a round has a second, separately approved specification/adjustment (a
+"supplemental" spec), add an optional field:
+
+```text
+Supplemental test specification: <spec path> @ <commit> (approval: <GitHub approval URL>)
+```
+
+Each supplemental spec is validated independently and, when it fails ANY check,
+contributes nothing (fail-closed):
+
+- the reviewer is not the PR author and not a bot;
+- the approval event contains exactly one `APPROVED test-spec:` line matching
+  the supplemental spec path and commit;
+- the approval time is earlier than the first commit that changes the paths the
+  supplemental spec covers (its own first related change, not the whole round's
+  first commit);
+- the supplemental spec commit is an ancestor of that first related change, and
+  the spec is not modified after approval without re-approval;
+- the supplemental only ADDS coverage; it never relaxes the primary checks and
+  cannot cover a changed code path that neither the primary nor the supplemental
+  spec mentions.
+
+A valid supplemental joins its test paths into the contract-test selection and
+adds only the scope IDs its own approved spec declares. The primary `Approved
+test specification` / approval checks always run unchanged.
+
 
 ## Evidence format
 
@@ -217,6 +279,25 @@ The `contract-tests` job selects actual tests rather than trusting plan prose:
 - pure documentation and build configuration require no application FC test;
 - plan text, `V-*` rows, or fixed baseline security tests are not accepted as
   new-feature coverage.
+
+### Where the gate test itself runs
+
+`test/offline/test_ci_gates.py` is executed by CI independently of
+`contract-tests` selection:
+
+- the `regression` job runs `pytest -q` over `testpaths = ["test"]` (excluding
+  only `integration`-marked tests), so the gate test is always collected and run;
+- when `security_applicable` is true (e.g. a safety-relevant/critical source
+  change), the `security-paths` job also runs `test/offline/test_ci_gates.py`
+  explicitly.
+
+So a mixed application + governance PR still executes the gate test. What
+`contract-tests` does not do for such a PR is add the gate test to its own
+selected test set (the pure-governance branch of `contract_test_plan` only runs
+when there is no other code path). Governance/CI-script changes still require a
+specification that names the governance paths (and, if it wants `contract-tests`
+to run the gate test specifically, `test/offline/test_ci_gates.py` too); that
+selection detail does not change whether the gate test runs elsewhere in CI.
 
 ## Runtime prompt and semantic classification
 

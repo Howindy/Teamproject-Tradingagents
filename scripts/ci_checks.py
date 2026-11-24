@@ -189,7 +189,7 @@ PR_BODY_FIELDS = (
     "Implementation start",
     "Approved scope",
 )
-OPTIONAL_PR_BODY_FIELDS = ("ADR",)
+OPTIONAL_PR_BODY_FIELDS = ("ADR", "Supplemental test specification")
 ADR_PREFIX = "docs/architecture/adr/"
 APPROVAL_PHRASE_PREFIX = "APPROVED test-spec:"
 
@@ -1110,7 +1110,36 @@ def ai_log_check(
     }
 
 
+def find_duplicate_pr_body_fields(text: str) -> list[str]:
+    """Machine fields that appear more than once in the PR body.
+
+    The parsers key by field name, so a second occurrence would silently override
+    the first (last-one-wins). For machine-read fields that is unsafe: a draft that
+    pastes a second ``Plan``/``Implementation start``/``Approved scope`` block for a
+    governance note would overwrite the real P3 values. We therefore report every
+    duplicated machine field so callers can fail closed instead of adopting the last
+    value. ``Supplemental test specification`` may legitimately appear more than
+    once (multiple supplements), so it is exempt.
+    """
+    seen: dict[str, int] = {}
+    for line in text.splitlines():
+        if ":" not in line:
+            continue
+        key = line.split(":", 1)[0].strip()
+        if key in PR_BODY_FIELDS or key == "ADR":
+            seen[key] = seen.get(key, 0) + 1
+    return sorted(key for key, count in seen.items() if count > 1)
+
+
 def parse_pr_body(text: str) -> dict[str, str]:
+    duplicates = find_duplicate_pr_body_fields(text)
+    if duplicates:
+        raise CiError(
+            "PR body has duplicate machine fields, so the last value would silently "
+            "override the first; write each machine field exactly once and move "
+            "governance notes into prose (no 'Key: value' line): "
+            + ", ".join(duplicates)
+        )
     fields: dict[str, str] = {}
     for line in text.splitlines():
         if ":" not in line:
@@ -1124,6 +1153,138 @@ def parse_pr_body(text: str) -> dict[str, str]:
 
 def extract_ids(text: str) -> set[str]:
     return set(ID_PATTERN.findall(text))
+
+
+# A scope ID is a requirement / fit-criterion / invariant identifier, i.e. one of
+# the namespaces the requirements table and invariants actually approve. Other
+# ID_PATTERN matches are design/test labels and must NOT be treated as new scope.
+_SCOPE_ID_PREFIXES = ("FR-", "SB-", "INV-", "SR-", "PR-", "CR-", "IR-")
+# Non-scope D2/test namespaces the broad ID_PATTERN also matches:
+#   C-NN (component), IF-NN (interface), P-NN (attachment/path), R03-NN / PA-NN
+#   (test-case), and range shorthand such as FC01-05. These are excluded from the
+#   "approved scope must cover" set by namespace, not by looking them up.
+_NON_SCOPE_ID_PREFIXES = ("C-", "IF-", "P-", "R03-", "PA-", "BO-")
+_RANGE_SHORTHAND_PATTERN = re.compile(r"^FC[0-9]{2}-[0-9]{2}$")
+_SCOPE_ID_PATTERN = re.compile(
+    r"\b(?:FR|SB|INV|SR|PR|CR)-[0-9]{2}(?:-FC[0-9]{2})?\b"
+)
+
+
+def is_scope_id(token: str) -> bool:
+    """True for a requirement / fit-criterion / invariant identifier.
+
+    Excludes component/interface/attachment/test-case namespaces and the
+    ``FC01-05`` range shorthand. A deferred requirement ID (e.g. the query-reuse
+    requirement) is still a genuine requirement ID, so it is a
+    scope ID here even though it is out of a particular round's approved scope;
+    membership in the approved scope is checked separately (a real, unapproved
+    FR/IR must still fail).
+    """
+    if _RANGE_SHORTHAND_PATTERN.match(token):
+        return False
+    if token.startswith(_NON_SCOPE_ID_PREFIXES):
+        return False
+    if token.startswith("IR-"):
+        return True
+    if any(token.startswith(prefix) for prefix in ("FR-", "SB-", "INV-", "SR-", "PR-", "CR-")):
+        return bool(_SCOPE_ID_PATTERN.match(token))
+    return False
+
+
+# Direct negation of a specific scope ID. Matched with a TIGHT window so that an
+# unrelated negative word elsewhere on the line never suppresses a genuinely-added ID
+# (e.g. "no shortcuts; this adds a requirement" keeps it; "implements one, excludes another"
+# drops only the excluded one). Two directional forms are recognised:
+#   * a negating phrase immediately before the ID: "excludes <id>", "not <id>",
+#     "belongs to <id>", "deferred: <id>", "outside <id>", "prohibited: <id>";
+#   * a negating predicate immediately after the ID: "<id> is not implemented",
+#     "<id> is not in scope", "<id> deferred", "<id> is excluded", "<id> not implemented".
+_PRE_NEGATION = re.compile(
+    r"(?:excludes?|excluded|not|no|belongs\s+to|deferred|outside|prohibited|never|"
+    r"out\s+of\s+scope|not\s+part\s+of|not\s+in\s+scope)\W{0,4}$"
+)
+_POST_NEGATION = re.compile(
+    r"^\W{0,4}(?:is\s+)?(?:not\s+implemented|not\s+implement|not\s+in\s+scope|"
+    r"not\s+part\s+of|is\s+excluded|is\s+deferred|deferred|out\s+of\s+scope|"
+    r"is\s+outside|prohibited|belongs\s+to\s+another)"
+)
+_PRE_NEGATION_WINDOW = 18
+_POST_NEGATION_WINDOW = 24
+
+
+def _id_is_negated(line: str, token: str) -> bool:
+    """True when EVERY occurrence of ``token`` is directly negated on ``line``.
+
+    Negation must sit immediately before ("excludes <id>") or immediately after
+    ("<id> is not implemented") the ID, within a tight window, so unrelated negative
+    words elsewhere on the line do not suppress a genuinely-added ID.
+    """
+    search_start = 0
+    occurrences = 0
+    while True:
+        idx = line.find(token, search_start)
+        if idx == -1:
+            break
+        occurrences += 1
+        before = line[max(0, idx - _PRE_NEGATION_WINDOW):idx]
+        after = line[idx + len(token): idx + len(token) + _POST_NEGATION_WINDOW]
+        if not (_PRE_NEGATION.search(before) or _POST_NEGATION.search(after)):
+            return False  # a non-negated occurrence -> real add
+        search_start = idx + len(token)
+    return occurrences > 0
+
+
+# Gate-harness files whose added lines are the gate's OWN test inputs/expectations, not
+# business scope. Only these exact governance gate-test files are skipped for scope-ID
+# extraction; ordinary application tests are still scanned, and the file itself is still
+# covered for path-mention, test selection and the AI-use log.
+_GATE_HARNESS_FILES = frozenset({"test/offline/test_ci_gates.py"})
+
+
+def scope_changed_ids(
+    changed_ids: Iterable[str],
+    added_lines: Iterable[tuple[str, str, bool]] = (),
+) -> set[str]:
+    """Reduce raw extracted IDs to genuine, non-negated business scope IDs.
+
+    ``added_lines`` is an iterable of ``(path, line)`` for added diff lines.
+      * A gate-harness file's own lines contribute NO scope IDs (test inputs); an ID
+        seen ONLY in gate-harness lines is excluded.
+      * For other added lines, an ID that is DIRECTLY negated (``_id_is_negated``) is
+        dropped only if it has no non-negated reference anywhere.
+      * A candidate never located on any added line falls back to fail-closed (kept).
+    Non-scope namespaces are always excluded by ``is_scope_id``.
+    """
+    candidates = {token for token in changed_ids if is_scope_id(token)}
+    if not candidates:
+        return set()
+    triples = list(added_lines)
+    if not triples:
+        return candidates
+    positive_pool: set[str] = set()
+    negated_pool: set[str] = set()
+    documentation_pool: set[str] = set()
+    for _path, line, scope_bearing in triples:
+        ids = {token for token in extract_ids(line) if token in candidates}
+        if not scope_bearing:
+            documentation_pool.update(ids)
+            continue
+        for token in ids:
+            if _id_is_negated(line, token):
+                negated_pool.add(token)
+            else:
+                positive_pool.add(token)
+    result: set[str] = set()
+    for token in candidates:
+        if token in positive_pool:
+            result.add(token)
+        elif token in negated_pool:
+            continue
+        elif token in documentation_pool:
+            continue  # only appears in documentation/harness prose -> not scope
+        else:
+            result.add(token)  # not located on any line -> fail-closed keep
+    return result
 
 
 def resolve_project_file(root: Path, value: str, label: str) -> tuple[Path | None, str]:
@@ -1207,6 +1368,7 @@ def contract_test_plan(
     fields: Mapping[str, str],
     changed_paths: Iterable[str],
     spec_text: str | None = None,
+    supplemental_spec_texts: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     classification = classify_paths(changed_paths)
     errors: list[str] = []
@@ -1261,14 +1423,18 @@ def contract_test_plan(
                     "test_paths": [],
                 }
         assert spec_text is not None
+        supplements = [text for text in (supplemental_spec_texts or []) if text]
         test_paths = plan_test_paths(spec_text)
+        for supplement_text in supplements:
+            test_paths = sorted(set(test_paths) | set(plan_test_paths(supplement_text)))
         if not test_paths:
             errors.append(
                 "approved test specification contains no test/offline or "
                 "test/live test paths"
             )
+        all_spec_texts = [spec_text, *supplements]
         for code_path in code_paths:
-            if not specification_mentions_path(spec_text, code_path):
+            if not any(specification_mentions_path(text, code_path) for text in all_spec_texts):
                 errors.append(
                     "approved test specification does not mention changed "
                     f"code path: {code_path}"
@@ -1282,6 +1448,7 @@ def contract_test_plan(
             "mode": "application" if classification["application_code"] else "code",
             "specification_path": specification_path,
             "specification_commit": specification_commit,
+            "supplemental_specifications": len(supplements),
             "test_paths": test_paths,
         }
     if classification["governance_ci"]:
@@ -1333,6 +1500,133 @@ def collect_changed_scope_ids(
     return ids
 
 
+def _documentation_line_numbers(source: str) -> set[int]:
+    """Line numbers (1-based) of true docstrings and comment-only lines.
+
+    A docstring is recognised by SYNTACTIC POSITION — only the first statement of a
+    module, class, or function body when it is an ``ast.Expr`` wrapping a string
+    ``ast.Constant`` — NOT by the mere presence of a string node. Ordinary assignment
+    strings, assert strings, dict keys/values, call arguments and f-strings are
+    executable code and are NOT treated as documentation. Comment-only lines are
+    detected textually. Scope IDs on documentation lines are prose, not business scope.
+
+    A docstring that SHARES a physical line with other executable statements (for
+    example ``\"\"\"module docs\"\"\"; enabled = {\"FR-04\"}`` or an inline
+    ``\"\"\"body\"\"\"; assert ...``) is conservatively scanned: such a line only
+    counts as documentation when the whole line is the docstring itself. Detecting
+    this needs no string-interval analysis; it only compares the docstring's own
+    line span against the other nodes parsed on that same line.
+    """
+    lines: set[int] = set()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        tree = None
+    if tree is not None:
+        # Lines that carry any statement OTHER than a pure docstring constant. A
+        # docstring line that also holds other executable statements must stay
+        # scope-bearing, so it is excluded from the documentation set below.
+        occupied: set[int] = set()
+        doc_fields: list[tuple[int, int]] = []
+        for node in ast.walk(tree):
+            body = getattr(node, "body", None)
+            if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not body:
+                continue
+            first = body[0]
+            if (
+                isinstance(first, ast.Expr)
+                and isinstance(first.value, ast.Constant)
+                and isinstance(first.value.value, str)
+            ):
+                start = getattr(first, "lineno", None)
+                if start is None:
+                    continue
+                end = getattr(first, "end_lineno", None)
+                end = end if end is not None else start
+                doc_fields.append((start, end))
+                # Any body statement that starts on the docstring's own line
+                # (semicolon-separated, e.g. ``"""docs"""; assert ...``) makes that
+                # line executable code, so it must NOT be treated as documentation.
+                for stmt in body[1:]:
+                    s_line = getattr(stmt, "lineno", None)
+                    if s_line is not None and s_line <= end:
+                        occupied.update(range(start, end + 1))
+                        break
+        for start, end in doc_fields:
+            for line_no in range(start, end + 1):
+                if line_no not in occupied:
+                    lines.add(line_no)
+    for i, text in enumerate(source.splitlines(), start=1):
+        if text.lstrip().startswith("#"):
+            lines.add(i)
+    return lines
+
+
+def collect_changed_scope_lines(
+    root: Path,
+    base: str,
+    head: str,
+    paths: Iterable[str],
+) -> list[tuple[str, str, bool]]:
+    """Added diff lines under src/, test/, scripts/ as (path, line, scope_bearing) triples.
+
+    ``scope_bearing`` is False for documentation lines (docstrings / comment-only) and
+    for the known gate-harness test file: scope IDs there are prose or test inputs, not
+    executable business-scope changes. All other added lines are scope-bearing.
+    """
+    relevant = [
+        normalize_path(path)
+        for path in paths
+        if normalize_path(path).startswith(("src/", "test/", "scripts/"))
+    ]
+    if not relevant:
+        return []
+    try:
+        diff = git_output(
+            ["diff", "-U0", base, head, "--", *relevant],
+            cwd=root,
+        )
+    except CiError as exc:
+        raise CiError(f"cannot determine changed scope: {exc}") from exc
+    doc_cache: dict[str, set[int]] = {}
+
+    def _doc_lines(path: str) -> set[int]:
+        if path not in doc_cache:
+            try:
+                text = git_output(["show", f"{head}:{path}"], cwd=root)
+            except CiError:
+                text = ""
+            doc_cache[path] = _documentation_line_numbers(text)
+        return doc_cache[path]
+
+    triples: list[tuple[str, str, bool]] = []
+    current = ""
+    new_line = 0
+    for line in diff.splitlines():
+        if line.startswith("+++ "):
+            target = line[4:].strip()
+            current = normalize_path(target[2:]) if target.startswith("b/") else normalize_path(target)
+            continue
+        if line.startswith("@@"):
+            match = re.search(r"\+(\d+)(?:,(\d+))?", line)
+            new_line = int(match.group(1)) if match else 0
+            continue
+        if line.startswith("+"):  # added line (not the +++ header)
+            scope_bearing = bool(current) and (
+                normalize_path(current) not in _GATE_HARNESS_FILES
+                and new_line not in _doc_lines(current)
+            )
+            triples.append((current, line[1:], scope_bearing))
+            new_line += 1
+        elif line.startswith("-"):
+            continue
+        else:
+            new_line += 1
+    return triples
+
+
 def _parse_timestamp(value: str) -> dt.datetime | None:
     if not value:
         return None
@@ -1368,6 +1662,7 @@ def verify_approval(
     implementation_start_time: str,
     declared_start_matches: bool,
     changed_ids: Iterable[str],
+    scoped_changed_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
     missing = [field for field in PR_BODY_FIELDS if not fields.get(field)]
@@ -1419,7 +1714,16 @@ def verify_approval(
     if not declared_start_matches:
         errors.append("implementation start is not the first changing commit")
     approved_scope = extract_ids(fields.get("Approved scope", ""))
-    uncovered = sorted(set(changed_ids) - approved_scope)
+    # Only genuine requirement/FC/invariant IDs are approval scope. Design labels
+    # (component/interface/attachment/test-case namespaces, FC01-05 shorthand) and
+    # negated references are not new scope. ``scoped_changed_ids`` (computed with
+    # diff-line negation context by approval_check) is preferred when available.
+    scope_candidates = (
+        set(scoped_changed_ids)
+        if scoped_changed_ids is not None
+        else scope_changed_ids(changed_ids)
+    )
+    uncovered = sorted(scope_candidates - approved_scope)
     if uncovered:
         errors.append(f"approved scope does not cover changed IDs: {', '.join(uncovered)}")
     return {"errors": errors}
@@ -1582,6 +1886,8 @@ def approval_check(
         root, specification_commit, start_commit
     )
     changed_ids = collect_changed_scope_ids(root, base, head, changed)
+    changed_lines = collect_changed_scope_lines(root, base, head, changed)
+    scoped = scope_changed_ids(changed_ids, changed_lines)
     result = verify_approval(
         fields,
         approval_event=approval_event,
@@ -1596,8 +1902,156 @@ def approval_check(
         implementation_start_time=start_time,
         declared_start_matches=fields.get("Implementation start", "") == start_commit,
         changed_ids=changed_ids,
+        scoped_changed_ids=scoped,
     )
+    supplemental = fields.get("Supplemental test specification", "")
+    if supplemental:
+        sup = validate_supplemental_specification(
+            root,
+            supplemental,
+            base=base,
+            head=head,
+            pr_author=author,
+            pr_number=pr_number,
+            repo=repo,
+            token=token,
+            changed_paths=changed,
+        )
+        if sup["ok"]:
+            # Validated supplement extends the approved scope ONLY with the IDs its
+            # own approved spec declares, and can never relax the primary checks.
+            approved_scope = extract_ids(fields.get("Approved scope", "")) | set(sup["scope_ids"])
+            still_uncovered = sorted(scoped - approved_scope)
+            result["errors"] = [
+                e
+                for e in result["errors"]
+                if not e.startswith("approved scope does not cover changed IDs:")
+            ]
+            if still_uncovered:
+                result["errors"].append(
+                    "approved scope does not cover changed IDs: " + ", ".join(still_uncovered)
+                )
+            result["supplemental_specification"] = {
+                "spec_path": sup["spec_path"],
+                "spec_commit": sup["spec_commit"],
+            }
+        else:
+            # Invalid supplement is fail-closed: report, and it contributes nothing.
+            result["errors"].extend(
+                f"supplemental test specification: {message}" for message in sup["errors"]
+            )
     return result
+
+
+_SUPPLEMENT_APPROVAL_PATTERN = re.compile(r"approval:\s*(https://github\.com/\S+)", re.IGNORECASE)
+
+
+def parse_supplemental_specification(value: str) -> tuple[str, str, str, list[str]]:
+    """Parse "Supplemental test specification": spec path @ commit (approval: URL)."""
+    errors: list[str] = []
+    path_match = SPEC_PATH_PATTERN.search(value)
+    commit_match = re.search(r"@\s*([0-9a-f]{7,40})\b", value)
+    if commit_match is None:
+        commit_match = re.search(r"\b([0-9a-f]{7,40})\b", value)
+    approval_match = _SUPPLEMENT_APPROVAL_PATTERN.search(value)
+    if path_match is None:
+        errors.append("Supplemental test specification must name a specification file")
+    if commit_match is None:
+        errors.append("Supplemental test specification must include a commit SHA")
+    if approval_match is None:
+        errors.append("Supplemental test specification must include an approval URL")
+    return (
+        path_match.group(1) if path_match else "",
+        commit_match.group(1) if commit_match else "",
+        approval_match.group(1) if approval_match else "",
+        errors,
+    )
+
+
+def validate_supplemental_specification(
+    root: Path,
+    value: str,
+    *,
+    base: str,
+    head: str,
+    pr_author: str,
+    pr_number: int,
+    repo: str,
+    token: str,
+    changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """Validate ONE supplemental spec: independent approval + ancestry + timing.
+
+    Returns {"ok", "errors", "spec_path", "spec_commit", "spec_text", "scope_ids"}.
+    A supplement that fails any check is NOT used for coverage/selection (fail-closed).
+    """
+    errors: list[str] = []
+    spec_path, spec_commit, approval_url, parse_errors = parse_supplemental_specification(value)
+    if parse_errors:
+        return {"ok": False, "errors": parse_errors, "scope_ids": set(), "spec_text": ""}
+    resolved, spec_path_error = resolve_project_file(root, spec_path, "Supplemental test specification")
+    if spec_path_error:
+        return {"ok": False, "errors": [spec_path_error], "scope_ids": set(), "spec_text": ""}
+    spec_text = read_specification_at_commit(root, spec_path, spec_commit)
+    text, text_error = spec_text
+    if text_error:
+        return {"ok": False, "errors": [text_error], "scope_ids": set(), "spec_text": ""}
+    try:
+        approval_event, _author = fetch_approval_event(repo, pr_number, approval_url, token)
+    except CiError as exc:
+        return {"ok": False, "errors": [f"supplemental approval not verifiable: {exc}"],
+                "scope_ids": set(), "spec_text": text or ""}
+    reviewer = str(approval_event.get("reviewer", ""))
+    reviewer_type = str(approval_event.get("reviewer_type", "")).lower()
+    if not reviewer:
+        errors.append("supplemental approval has no reviewer")
+    if reviewer == pr_author:
+        errors.append("supplemental approval reviewer is the PR author")
+    if reviewer_type == "bot" or reviewer.endswith("[bot]"):
+        errors.append("supplemental approval reviewer is a bot")
+    if not str(approval_event.get("url", "")).startswith("https://github.com/"):
+        errors.append("supplemental approval URL is not a GitHub event URL")
+    if str(approval_event.get("state", "")).upper() not in {"APPROVED", "COMMENTED"}:
+        errors.append("supplemental approval is not an approving review or comment")
+    phrases = approval_phrases(str(approval_event.get("body", "")))
+    expected_phrase = normalize_specification(f"{spec_path} @ {spec_commit}")
+    if len(phrases) != 1:
+        errors.append('supplemental approval must contain exactly one "APPROVED test-spec:" line')
+    elif normalize_specification(phrases[0]) != expected_phrase:
+        errors.append("supplemental approval phrase does not exactly match its spec path and commit")
+    # First change commit among THIS supplement's COVERED implementation/test paths.
+    # The spec file itself is excluded: its own authoring commit predates the
+    # approval by design (a spec is written, then approved, then implemented), so it
+    # must not be mistaken for the "first related change" the approval must precede.
+    covered = [p for p in changed_paths if specification_mentions_path(text or "", p)]
+    covered = [p for p in covered if normalize_path(p) != normalize_path(spec_path)]
+    supplement_paths = sorted(set(covered))
+    if supplement_paths:
+        first_commit, first_time = _implementation_start(root, base, head, supplement_paths)
+    else:
+        # No covered implementation path changed; ancestry uses the spec commit and
+        # timing falls back to the earliest commit so the approval-earlier check is
+        # vacuous for this supplement (nothing it covers was implemented).
+        first_commit, first_time = spec_commit, ""
+    if not _is_ancestor(root, spec_commit, first_commit):
+        errors.append("supplemental spec commit is not an ancestor of its first related change")
+    if _specification_changed(root, spec_commit, head, [spec_path]):
+        errors.append("supplemental spec changed after approval without reapproval")
+    approval_time = _parse_timestamp(str(approval_event.get("created_at", "")))
+    first_dt = _parse_timestamp(first_time) if first_time else None
+    if approval_time is None:
+        errors.append("supplemental approval time missing or invalid")
+    elif first_dt is not None and approval_time >= first_dt:
+        errors.append("supplemental approval is not earlier than its first related change")
+    scope_ids = extract_ids(text or "")
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "spec_path": spec_path,
+        "spec_commit": spec_commit,
+        "spec_text": text or "",
+        "scope_ids": scope_ids,
+    }
 
 
 def validate_adr_reference(root: Path, value: str) -> list[str]:
@@ -2259,7 +2713,30 @@ def _command_contract_tests(args: argparse.Namespace) -> int:
         paths = [item.strip() for item in args.paths.split(",") if item.strip()]
     else:
         paths = changed_paths_from_git(args.base, args.head, PROJECT_ROOT)
-    plan = contract_test_plan(PROJECT_ROOT, fields, paths)
+    supplemental_texts: list[str] = []
+    supplemental = fields.get("Supplemental test specification", "")
+    if supplemental:
+        spec_path, spec_commit, _approval_url, parse_errors = (
+            parse_supplemental_specification(supplemental)
+        )
+        if parse_errors:
+            return _print_result({"errors": parse_errors, "test_paths": []})
+        _, spec_path_error = resolve_project_file(
+            PROJECT_ROOT, spec_path, "Supplemental test specification"
+        )
+        if spec_path_error:
+            return _print_result({"errors": [spec_path_error], "test_paths": []})
+        sup_text, sup_error = read_specification_at_commit(
+            PROJECT_ROOT, spec_path, spec_commit
+        )
+        if sup_error:
+            return _print_result({"errors": [sup_error], "test_paths": []})
+        # Selection completeness only; the authoritative approval binding of this
+        # supplement is enforced by the test-approval job (which has the GitHub token).
+        supplemental_texts.append(sup_text or "")
+    plan = contract_test_plan(
+        PROJECT_ROOT, fields, paths, supplemental_spec_texts=supplemental_texts
+    )
     if plan["errors"]:
         return _print_result(plan)
     test_paths = plan["test_paths"]
