@@ -468,11 +468,21 @@ def test_t16_registry_and_frozen_materials():
     }
     assert registry["suites"]["financial-metrics"]["runner"] == "financial_metrics_eval:evaluate"
     config = yaml.safe_load((ROOT / "docs/ci/semantic-suites/data-availability.yaml").read_text())
+    registered = ci_semantic_eval.resolve_suite(str(ROOT / "docs/ci/semantic-suites.yaml"), "data-availability")
+    config_path = ROOT / registered["config"]
+    assert hashlib.sha256(config_path.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == "25d51c88a179951fcc932e6533ded29f62dbb48a3121fa01954f278b2a2b5a9c"
+    suite._validate_config(config)
+    _, _, rubric_hash = suite._load_materials(config, ROOT)
+    assert config["rubric"]["version"] == suite.V2_RUBRIC
+    assert rubric_hash == '977c52c1a2c4180c3135d931cab4177213244f73c4de49c89dedcd38e021f1d9'
+    settings = {key: value for key, value in config.items() if key != "approval"}
+    canonical = json.dumps(settings, sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(canonical).hexdigest() == '55a697db3e57e048291d391572f52f3471b04039e8781765d216849de54e5ff3'
     assert config["status"] == "approved"
     assert config["approval"] == {
         "approved_by": "espino2233",
-        "approved_at": "2026-11-24T17:16:24Z",
-        "evidence": ["https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184"],
+        "approved_at": "2026-11-24T18:46:23Z",
+        "evidence": ["https://github.com/Howindy/Teamproject-Tradingagents/pull/23#issuecomment-7141130685"],
     }
 
 
@@ -565,20 +575,8 @@ def test_limited_or_negated_news_claim_is_not_a_blanket_denial(cases, qualifier)
     assert "available_company_news_denied" not in result["critical_failures"]
 
 
-@pytest.fixture
-def v2_candidate(candidate):
+def test_v2_advisories_survive_runner_and_record(candidate):
     root, sha, config = candidate
-    config["rubric"]["version"] = suite.V2_RUBRIC
-    config["thresholds"] = suite.V2_THRESHOLDS
-    rubric = Path(config["rubric"]["path"])
-    rubric.write_text("Offline fixture: " + suite.V2_RUBRIC)
-    config["rubric"]["sha256"] = hashlib.sha256(rubric.read_bytes()).hexdigest()
-
-    return root, sha, config
-
-
-def test_v2_advisories_survive_runner_and_record(v2_candidate):
-    root, sha, config = v2_candidate
 
     def omit_coverage(req):
         response = transport(req)
@@ -642,8 +640,8 @@ def test_v2_blocks_incomplete_or_failed_evidence(cases, change):
     {"content": "", "finish_reason": "stop"},
     {"content": "", "finish_reason": "tool_calls", "tool_calls": [{}]},
 ])
-def test_v2_provider_errors_block(v2_candidate, response):
-    root, sha, config = v2_candidate
+def test_v2_provider_errors_block(candidate, response):
+    root, sha, config = candidate
     result = suite.evaluate(config, sha, output_dir=root.parent / "out", model_transport=lambda _: response)
     assert result["status"] == "failed" and result["errors"]
     assert result["request_count"] == 1
@@ -651,6 +649,10 @@ def test_v2_provider_errors_block(v2_candidate, response):
 
 def test_v2_rejects_v1_materials_and_thresholds(materials):
     root, config = materials
+    config["thresholds"] = suite.THRESHOLDS
+    rubric = root / config["rubric"]["path"]
+    rubric.write_text("Offline legacy fixture: fr03-data-availability-rubric-v1")
+    config["rubric"]["sha256"] = hashlib.sha256(rubric.read_bytes()).hexdigest()
     config["rubric"]["version"] = suite.V2_RUBRIC
     with pytest.raises(ValueError, match="thresholds"):
         suite._validate_config(config)

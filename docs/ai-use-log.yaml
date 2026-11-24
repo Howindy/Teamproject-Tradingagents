@@ -3719,3 +3719,27 @@ entries:
       summary: 82 offline suite tests passed. Run 45459356876 gives 26 advisory dimensions and passes v2. Run 45453248371 still fails on the S02 Manager contradiction. No provider calls.
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/22
     limitations: [Activation and formal candidate evaluation require separate approval.]
+
+  - id: AI-FR03-V2-ACTIVATION-001
+    date: '2026-11-25'
+    tool: Codex
+    activity: ci_implementation
+    task: Prepare the approved FR-03 v2 configuration and rubric for independent implementation review.
+    fit_criterion_ids: [FR-03-FC05]
+    files_changed:
+      - docs/ci/data-availability-rubric.md
+      - docs/ci/semantic-suites/data-availability.yaml
+      - test/offline/test_data_availability_evaluation.py
+      - docs/ai-use-log.yaml
+      - docs/review-memo.md
+    ai_contribution: Applied the frozen material edits, verified approval metadata and digests, and exercised the registered v2 materials and historical replay controls.
+    human_intervention: espino2233 approved activation after independent code review and offline verification.
+    approval:
+      status: approved
+      subject: Frozen activation specification at b49c3261e344aea6ac650a413d9da2857a3785e4
+      evidence: [https://github.com/Howindy/Teamproject-Tradingagents/pull/23#issuecomment-7141130685]
+    verification:
+      status: offline_passed
+      summary: All 82 data-availability and six financial-metrics tests passed across local environments. The financial requirements schema test was repeated in Python 3.14 with jsonschema installed. Zero provider requests.
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/23
+    limitations: [Formal candidate evaluation needs separate execution approval.]

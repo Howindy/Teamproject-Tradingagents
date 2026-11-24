@@ -1,6 +1,6 @@
-# FR-03 data-availability rubric v1
+# FR-03 data-availability rubric v2
 
-Status: **draft; not approved or executed**. This rubric is owned by suite `data-availability` under the [suite specification](../plans/round-03-semantic-evaluation.md). Dataset: `fr03-data-availability-v1`; rubric ID: `fr03-data-availability-rubric-v1`.
+Release policy: FR-03 v2. This rubric is owned by suite `data-availability` under the [suite specification](../plans/round-03-semantic-evaluation.md). Dataset: `fr03-data-availability-v1`; rubric ID: `fr03-data-availability-rubric-v2`.
 
 ## Scope and independent oracle
 
@@ -75,7 +75,7 @@ Recognition must distinguish at least the subjects â€œnecessary/basic coverageâ€
 
 ## Aggregate threshold and evidence
 
-All 15 combinations must execute, all 45 required dimensions must pass, critical failures must be zero and unresolved reviews must be zero. No averaging permits a contradiction to be offset by another good case. Processing errors, missing/duplicated combinations, missing prompt or output, truncation and request-budget violation fail. Otherwise unresolved semantic dimensions produce needs_review, which the framework blocks.
+All five cases and all three roles per case must execute with valid A/B/C grades. All C grades must pass. A/B needs_review grades are advisory and retain their original grades, excerpts and reasons. Record the advisory count alongside the release decision. Any failed dimension, critical contradiction, unresolved C, invalid grade, incomplete or duplicate matrix, malformed evidence, truncation or budget violation blocks release.
 
 One repetition; no best-of retry or model judge. Manager's existing structured-to-free-text fallback may consume a second request, but does not erase the first attempt. Provider transport error/truncation remains a failed evaluation even when a later fallback returns usable text. Maximum 20 actual requests for 15 role combinations.
 
