@@ -16,6 +16,7 @@ import socket
 import sys
 import threading
 import urllib.request
+from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -3419,7 +3420,7 @@ def _auth_history(tmp_path, monkeypatch):
 
 
 def _auth_body(history):
-    lines = []
+    lines: list[str] = []
     for key, value in history.fields.items():
         values = value.splitlines() if key == 'Supplemental test specification' else [value]
         lines.extend(f'{key}: {item}' for item in values)
@@ -3494,7 +3495,7 @@ def test_auth_api_failure_blocks_without_anonymous_retry_or_disclosure(tmp_path,
     headers = []
     def denied(request, **kwargs):
         headers.append(request.get_header('Authorization'))
-        raise urllib.error.HTTPError(request.full_url, status, 'denied', {}, None)
+        raise urllib.error.HTTPError(request.full_url, status, 'denied', Message(), None)
     monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', denied)
     def fetch_with_error(repo, pr, url, token):
         if url == history.auth_url:

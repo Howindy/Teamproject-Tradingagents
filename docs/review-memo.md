@@ -587,3 +587,29 @@ The PR must retain its old supplemental field and add the new real auth field
 when the compatible parser is delivered. Final-candidate remote CI, independent
 human implementation review and merge remain outstanding. AI recommendation
 until that delivery evidence is complete: **CHANGES REQUIRED**.
+
+
+## RM-18-R5 — Auth test typing repair and review assessment (AI-authored)
+
+- Starting candidate: `069e2606bc67380bfacbc077e5286d4a6da421bc`.
+- [Run 45437892172](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45437892172)
+  passed all Python regression, approval, contract, static, schema, dependency,
+  security, evidence and smoke jobs. Type-check failed on two newly added tests:
+  the unannotated `_auth_body` accumulator and HTTPError headers supplied as dict.
+- Repair: annotate `lines: list[str]` and use `email.message.Message()` as the
+  HTTPError header argument. Assertions and 401/403 behavior remain unchanged;
+  no evaluator, workflow, type baseline, ignored diagnostic or frozen spec changed.
+- Gate tests: **189 passed** (`/private/tmp/cs5351-pr18-type-fix-bts6jccf/gates.xml`). Python 3.12 syntax and actual
+  Message-header construction passed. Local mypy is missing, so its new-candidate
+  result remains for remote CI; no installation or local type-check pass is claimed.
+- Supplied review: the earlier T16 whole-registry restriction was a genuine issue
+  and is already fixed. T18 still validates all registered suites. The trusted
+  workflow dispatches from the repository default branch (currently main), so
+  suite infrastructure must be available there before formal feature evaluation.
+  Configuration approval and model-execution authorization remain additional
+  prerequisites. FR-10 offline regression remains applicable; FR-03 does not
+  thereby require live financial-metrics evaluation. This historical explanation
+  does not diagnose the current two mypy errors or justify a baseline change.
+- Existing independent maintenance/auth approvals cover this type-only repair.
+  Independent final review and final-candidate CI remain pending. AI delivery
+  recommendation until those are complete: **CHANGES REQUIRED**.

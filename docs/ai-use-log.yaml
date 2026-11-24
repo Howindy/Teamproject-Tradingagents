@@ -3586,3 +3586,50 @@ entries:
     - No model/vendor request, configuration activation, other-workflow change, branch protection change,
       PAT creation or merge was performed.
     - Local temporary evidence does not replace a raw chat export or published CI artifacts.
+
+  - id: AI-FR03-CI-TEST-TYPES-001
+    date: '2026-11-25'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_test_type_repair
+    task: Repair the two new mypy errors in auth tests and review the supplied historical T16 explanation
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids: []
+    files_changed:
+    - test/offline/test_ci_gates.py
+    - docs/ai-use-log.yaml
+    - docs/review-memo.md
+    ai_contribution: Confirmed T16 already checks only the financial-metrics entry and T18 still validates
+      every registered suite. Corrected the auth test helper accumulator to list[str], and constructed urllib.error.HTTPError
+      with email.message.Message headers instead of an empty dict. Preserved all assertions, negative cases,
+      checker behavior and recorded mypy baseline.
+    human_intervention: User reported the type-check failure and requested assessment of a proposed T16/multi-suite
+      explanation. Current logs confirmed two test-only typing errors. The original maintenance/auth test
+      pre-approvals remain the applicable scope; no new expectation or file allowance is introduced.
+    approval:
+      subject: Type-only repair within existing CI maintenance/auth test approvals; no scope expansion
+      status: approved
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374
+    verification:
+      status: unit_tests_passed_remote_mypy_pending
+      summary: 'All standalone public-gate tests: 189 passed. Python 3.12 syntax and runtime Message-header
+        construction passed. Existing local environment still lacks mypy, so no local mypy pass is claimed;
+        final candidate must be checked in remote CI. Verified prior PR run 45437892172 passed all regression/approval/contract
+        jobs and failed type-check on exactly the two reported test diagnostics.'
+      evidence:
+      - /private/tmp/cs5351-pr18-type-fix-bts6jccf/gates.xml
+      - https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45437892172/job/138600597966
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
+    limitations:
+    - Standalone gate tests exclude application-level conftest and are not full application regression.
+    - Mypy remains unavailable locally; no dependency was installed and no baseline, ignore or assertion
+      was relaxed.
+    - No project commit/push, PR write, live model/vendor request, activation or merge performed.
+    - Temporary local evidence does not replace raw session export or final-candidate CI.
