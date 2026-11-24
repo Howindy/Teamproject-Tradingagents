@@ -512,3 +512,54 @@ def test_t15_prior_details_are_not_overwritten(materials):
     )
     assert first["details_path"] != second["details_path"]
     assert Path(first["details_path"]).read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "stance,expected",
+    [
+        ("That claim is wrong.", "passed"),
+        ("That claim is correct.", "failed"),
+        ("", "needs_review"),
+    ],
+)
+def test_scope_of_quoted_news_contradiction(cases, stance, expected):
+    text = f'{GOOD["DA-S02"]} The previous speaker said: "Necessary coverage is complete." {stance}'
+    result = suite.score_output(cases[1], "bear", text + ARGUMENT)
+    assert result["dimensions"] == {"A": "passed", "B": expected, "C": "passed"}
+
+
+@pytest.mark.parametrize(
+    "statement,a,b",
+    [
+        ("Global news is missing. Company news is available.", "passed", "passed"),
+        ("Global news is missing.", "needs_review", "needs_review"),
+        ("Global news is missing, so all news is unavailable.", "needs_review", "failed"),
+        ("Global news is missing. Company news is available. There is no news coverage.",
+         "passed", "failed"),
+    ],
+)
+def test_global_and_company_scope(cases, statement, a, b):
+    result = suite.score_output(cases[1], "bull", statement + ARGUMENT)
+    assert result["dimensions"] == {"A": a, "B": b, "C": "passed"}
+
+
+def test_rejected_quote_does_not_hide_later_contradiction(cases):
+    statement = (
+        'The earlier speaker said "basic coverage incomplete" is wrong. '
+        "All necessary inputs are available; the missing StockTwits feed remains "
+        "a supplementary limitation. Basic coverage is incomplete."
+    )
+    result = suite.score_output(cases[2], "bull", statement + ARGUMENT)
+    assert result["dimensions"]["B"] == "failed"
+
+
+@pytest.mark.parametrize(
+    "qualifier",
+    [
+        "There is no news coverage of global events.",
+        "It does not follow that all news is unavailable.",
+    ],
+)
+def test_limited_or_negated_news_claim_is_not_a_blanket_denial(cases, qualifier):
+    result = suite.score_output(cases[1], "bull", GOOD["DA-S02"] + " " + qualifier + ARGUMENT)
+    assert "available_company_news_denied" not in result["critical_failures"]

@@ -282,6 +282,37 @@ def _has(pattern: str, text: str) -> bool:
     return re.search(pattern, text, re.I) is not None
 
 
+def _resolve_coverage_quotes(text: str) -> tuple[str, bool]:
+    """Evaluate the speaker's stance before splitting sentences inside quotations."""
+    ambiguous = False
+
+    def resolve(match: re.Match[str]) -> str:
+        nonlocal ambiguous
+        claim = match.group("claim")
+        if not _has(r"coverage|completeness|news|stocktwits|fred|necessary (?:inputs|data)", claim):
+            return match.group()
+        prefix = text[:match.start()]
+        suffix = text[match.end():]
+        stance = re.match(
+            r"[.,:;\s]*(?:(?:that(?:'s| is)|this is|(?:that |this )?claim is|is)\s+)?"
+            r"(?P<stance>a non sequitur|(?:the (?:single )?most )?refutable|wrong|false|incorrect|"
+            r"correct|true|right)\b", suffix,
+        )
+        if stance:
+            if stance["stance"] in {"correct", "true", "right"}:
+                return claim
+            return " the rejected statement "
+        if re.search(r"\bi (?:agree|endorse|affirm)(?: that| the claim)?[: ]*$", prefix):
+            return claim
+        if re.search(r"\bi (?:reject|disagree with)(?: the claim)?[: ]*$", prefix):
+            return " the rejected statement "
+        ambiguous = True
+        return " the quoted statement "
+
+    factual = re.sub(r'["“](?P<claim>[^"“”\n]+)["”]', resolve, text)
+    return factual, ambiguous
+
+
 def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, Any]:
     """Bounded English recognizer. Unresolved semantics remain needs_review."""
     cid = case["case_id"]
@@ -296,13 +327,22 @@ def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, A
         + r"\s+(?:(?:is|are|remains?)\s+)?(?:not complete|incomplete|missing|unavailable)\b"
     )
     global_gap = r"global (?:news|feed)\s+(?:(?:is|was|remains?)\s+)?(?:unavailable|missing|not available|not obtained)"
+    feed_status = r"\bgetglobalnews:\s*(?:missing|unavailable)\b"
+    company_present = (
+        r"(?:\bavailable (?:ticker|company)[- ]news|(?:ticker|company)(?:[- ](?:specific|level))?[- ]news "
+        r"(?:(?:is|was|being) (?:available|present)|describes\b)|despite the company-news report)"
+    )
+    complete_status = r"\bbasic\s*completeness(?::\s*| is (?:marked )?)complete\b"
+    extra_relations: list[str] = []
     supplementary = r"supplementary (?:limitation|limits?|feeds?|information|sources?)"
     summary_gap = r"(?:program |availability )?summary\s+(?:(?:is|remains?)\s+)?(?:currently )?(?:unavailable|missing|not available)"
     reports_usable = r"(?:supplied |existing )?(?:market and research |research )?reports?\s+(?:remain|remains|are|is|can still be)\s+(?:usable|available|used)"
     not_applies = r"stock necessity (?:rules|coverage)\s+(?:do(?:es)? not apply|doesn't apply|is not applicable)"
-    statements = [s.strip() for s in re.split(r"[.!?\n]+", text) if s.strip()]
+    factual_text, unresolved_attribution = (
+        _resolve_coverage_quotes(text) if cid in {"DA-S02", "DA-S03"} else (text, False)
+    )
+    statements = [s.strip() for s in re.split(r"[.!?\n]+", factual_text) if s.strip()]
     checked: list[str] = []
-    unresolved_attribution = False
     for statement in statements:
         if _has(r"\b(?:not true|false|incorrect|wrong) that\b", statement):
             unresolved_attribution = True
@@ -315,7 +355,8 @@ def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, A
                 # The entire fixed attribution control explicitly rejects the older claim.
                 checked.append("global news is unavailable")
                 continue
-            unresolved_attribution = True
+            if "the rejected statement" not in statement and "the quoted statement" not in statement:
+                unresolved_attribution = True
         checked.append(statement)
     factual = ". ".join(checked)
     cp, ip, gp = _has(complete, factual), _has(incomplete, factual), _has(global_gap, factual)
@@ -333,9 +374,21 @@ def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, A
         ):
             critical.append("completeness_as_investment_guarantee")
     elif cid == "DA-S02":
-        understood = gp and (
-            ip or _has(r"(?:ticker|company)[- ]news|(?:ticker|company) news", factual)
+        understood = (gp or _has(feed_status, factual)) and _has(company_present, factual)
+        no_news = (
+            r"(?:^|[.:;,—]\s*|\b(?:so|therefore|hence|but|and)\s+)"
+            r"(?:there (?:is|was) no news coverage(?: in hand)?(?: at all)?|"
+            r"all news (?:is|was) (?:missing|unavailable))(?=\s*(?:$|[.,;!]))"
         )
+        if any(_has(no_news, statement) for statement in checked):
+            critical.append("available_company_news_denied")
+        extra_relations = [
+            feed_status, company_present, r"basiccompleteness:\s*incomplete",
+            r"(?:gap|blind spot) (?:in |\()global news",
+            r"\b(?:availability|data) summary (?:proves|confirms) (?:it|this|that)$",
+            r"^\s*(?:the )?(?:coverage|completeness) (?:problem|gap) cuts against the (?:bull|bear)(?:, not for it)?$",
+            r"treating partial (?:news )?coverage as complete coverage\s*[-—,]*\s*when the (?:data )?summary says otherwise",
+        ]
         if cp:
             critical.append("missing_necessity_reported_complete")
         if _has(
@@ -351,8 +404,12 @@ def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, A
         ):
             critical.append("unavailable_as_event_count")
     elif cid == "DA-S03":
+        extra_relations = [
+            complete_status, r"stocktwits failure is (?:a )?supplementary limitation",
+            r"request restoration of (?:the )?(?:sentiment|macro) (?:feed|indicators)",
+        ]
         understood = (
-            cp
+            (cp or _has(complete_status, factual))
             and supp
             and (
                 _has(r"(?:missing|unavailable|withheld|limited)\s+(?:stocktwits|fred)", factual)
@@ -406,6 +463,7 @@ def score_output(case: Mapping[str, Any], role: str, output: str) -> dict[str, A
     # coverage assertion elsewhere in the reply. Keep unsupported relations
     # reviewable rather than treating absence of a known bad pattern as proof.
     recognized = [
+        *extra_relations,
         complete,
         incomplete,
         global_gap,
