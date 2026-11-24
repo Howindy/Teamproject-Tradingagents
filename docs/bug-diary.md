@@ -198,7 +198,7 @@ Important bugs may remain open with partial information. Leave unresolved fields
   2. Monkeypatch `market.completed_close` to fail on the first price read and succeed afterwards.
   3. Build the metrics factory with `SecCompanyFactsProvider` and call it for `AAPL` on `2025-08-05`.
   4. Inspect the ten rows and then run a second analysis scope with a successful price read.
-- Observed evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230), `test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`. The recorded pre-fix run had three failing cases (timeout, Infinity, NaN); after the fix the same targeted group recorded 90 passed. PR #25 added the float-quote case and the recovery assertion.
+- Observed evidence: [`test_sec_financial_provider.py:230`](../test/offline/test_sec_financial_provider.py#L230), `test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`. The recorded pre-fix run had three failing cases (timeout, Infinity, NaN); after the fix the same targeted group recorded 90 passed. PR #25 added the float-quote case and the recovery assertion.
 - Reproducibility: Deterministic in the controlled test; no intermittent network condition is required.
 
 #### Classification and impact
@@ -213,13 +213,13 @@ Important bugs may remain open with partial information. Leave unresolved fields
 - Requirements / FCs: `FR-10-FC06` (fiscal-year P/E and price evidence), `FR-10-FC10` (explicit degradation without aborting valid analysis).
 - Invariants / ADR decisions: `ADR 002` D-201–D-203; no dedicated IR number was assigned to this narrow failure. The exposed property is stated in the invariant-gap section below.
 - Runtime policies: `RP-36` (FR-10 disabled/unsupported/provider-failure degradation).
-- Existing tests or evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`; commit `33f3eb9`; PR #19; PR #25.
+- Existing tests or evidence: [`test_sec_financial_provider.py:230`](../test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`; commit `33f3eb9`; PR #19; PR #25.
 
 #### Root cause
 
 - Status: Confirmed.
 - Cause: `_price()` was called inside `SecCompanyFactsProvider.fetch()` before constructing the `FinancialInputs` return value. In the pre-fix source, the call was an unguarded expression in the same execution path as the already selected SEC facts. A `TimeoutError` or another price-read exception escaped `fetch()`. The broader `FinancialMetricProvider.get()` boundary then caught it and substituted `FinancialInputs(..., issues=("data_entry_failure",))`, so the calculator saw no facts and marked every metric unavailable.
-- Evidence: The diff in commit `33f3eb9` wraps only the price read in `try/except` and records `price_availability_unknown`; the current test asserts nine computed rows and a P/E-only `n/a` row. See [`sec_provider.py:255`](src/tradingagents/financials/sec_provider.py#L255).
+- Evidence: The diff in commit `33f3eb9` wraps only the price read in `try/except` and records `price_availability_unknown`; the current test asserts nine computed rows and a P/E-only `n/a` row. See [`sec_provider.py:255`](../src/tradingagents/financials/sec_provider.py#L255).
 - Why the bug escaped detection: The initial tests exercised a successful price path and did not inject a failure at the optional price boundary. They therefore did not distinguish "SEC facts acquired" from "price evidence acquired".
 
 #### Fix and change history
@@ -232,7 +232,7 @@ Important bugs may remain open with partial information. Leave unresolved fields
 
 #### Regression and re-verification
 
-- New regression test: [`test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`](test/offline/test_sec_financial_provider.py#L230), parameterized over `timeout`, `infinity`, `nan` and `float` (the float case was added in PR #25). It cites FR-10-FC06/FC10 in its docstring.
+- New regression test: [`test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`](../test/offline/test_sec_financial_provider.py#L230), parameterized over `timeout`, `infinity`, `nan` and `float` (the float case was added in PR #25). It cites FR-10-FC06/FC10 in its docstring.
 - Reused test: None required; the existing financial-metric and SEC-adapter suites were also exercised in the recorded target run.
 - Exact command or CI run: The exact original command was not recorded. The evidence is the targeted run summarized in `AI-FM-PRICE-ISOLATION-001` (90 passed) and the PR #25 targeted run summarized in `AI-FR10-SOURCE-CONTRACTS-001` (460 targeted tests passed on macOS/Python 3.12). A reproducible command from the project root is:
   `python -m pytest -q test/offline/test_sec_financial_provider.py::test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`
@@ -240,7 +240,7 @@ Important bugs may remain open with partial information. Leave unresolved fields
 - Expected result: The first nine rows remain computed with their fact IDs and sources; `pe_fy` is `n/a` with `price_availability_unknown` (or `price_precision_unknown` for a float quote) and retains the annual EPS evidence; one price attempt occurs per analysis; a new analysis scope recovers all ten computed rows.
 - Actual result: The current regression test asserts exactly those outcomes. The recorded targeted runs passed after the fix.
 - Status: `Re-verified` (recorded evidence, not a new execution performed by this diary update).
-- Evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`.
+- Evidence: [`test_sec_financial_provider.py:230`](../test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`.
 
 #### Exposed invariant or test gap
 
@@ -252,6 +252,6 @@ Important bugs may remain open with partial information. Leave unresolved fields
 #### Status, remaining work, and follow-up
 
 - Current state: `Re-verified`.
-- Unresolved items: No dedicated review-memo record was created for the fix; the PR #25 merge and targeted test records are the current evidence. No live-provider validation is claimed.
+- Review record: [RM-25-R1](review-memo.md#rm-25-r1--fr-10-source-contract-repairs) documents the PR #25 repair and its recorded targeted verification; final human review remains unrecorded in that assessment. No live-provider validation is claimed.
 - Follow-up actions: None assigned; keep the price-boundary regression in the FR-10 suite.
 - Closure evidence: The regression test above and the recorded targeted runs; no new run was performed for this diary update.
