@@ -36,6 +36,8 @@ Observed, outside this plan (reported to the FR-10 session, not changed here): `
 
 ## 3. Design
 
+Design method: attribute-driven design (ADD), applied briefly. Drivers: per-feature fixed evaluation and explicit PR selection (functional); Q1 isolation (one suite's pass never satisfies another), Q2 trust (config and runner come only from the default branch), Q3 modifiability (a new suite adds its own files and one registry line, no framework edit), Q4 parallel development (a suite unit can be built without waiting for this framework work), Q5 bounded cost (fixed request cap per suite); constraints: existing workflows, secret, protected environment, no new dependency, `.agent/rules.md` §1. Decomposition: two elements, the **framework** (§3.1–§3.4) and **suite units** (§3.5), joined only by the interfaces in §3.5.
+
 Minimum change: one static registry file, one PR field plus one reviewer phrase, a `suite_id` workflow input, and per-suite status/record verification inside the existing `evidence-check` job. No new workflow, job, service, dependency, plugin loader or automatic path→suite mapping. The registry is a fixed allow-list read as data (it does not discover or load arbitrary code), which keeps it within `.agent/rules.md` §1's limit on generic registries.
 
 ### 3.1 Registry — `docs/ci/semantic-suites.yaml` (new)
@@ -134,6 +136,63 @@ plus all existing fields (`candidate_sha`, `workflow_sha`, `run_id`, `details_sh
 - bootstrap: if the default branch has no registry and the selection is not enforced (first row of §3.3), pass exactly as today; if enforced, block `trusted semantic suite registry is not present on the default branch`. This lets this maintenance PR itself pass evidence-check before merge.
 - `aggregate`, `classify` outputs and other jobs are unchanged. The checker code still runs from the candidate checkout (existing limitation; CI paths require human review via branch protection, CI.md "CI self-protection").
 
+### 3.5 Suite unit contract (interfaces I1–I6, for parallel work)
+
+This section is the stable boundary between the framework (owner: CI maintenance, this plan) and each suite unit (owner: the feature's author, e.g. Yifan for FR-03 Round 3). The framework calls only the runner entry point and does not interpret scorer business rules; a suite unit does not depend on status names or evidence verification. A change to I1–I6 after approval is a material revision of this plan.
+
+**I1 — registry entry.** One entry per suite in `docs/ci/semantic-suites.yaml` with exactly `requirement`, `config`, `runner` (§3.1). A suite unit's PR adds only its own line to this shared file.
+
+**I2 — suite configuration.** The structure already accepted by `ci_semantic_eval.validate_config()` on main, unchanged: `schema_version`, `status` (`unapproved` until a real approval), `dataset{version, path, sha256, cases}`, `rubric{version, path, sha256, definition}`, `thresholds`, `model{provider, model, base_url, configuration}`, `execution{runner, max_completion_requests}`, `approval{approved_by, approved_at, evidence}`. `execution.runner` equals the registry runner. Hashes are SHA-256 of LF-normalized bytes. Dataset content, rubric, thresholds, model settings and request cap are owned and justified by the suite unit; the framework adds no threshold.
+
+**I3 — runner entry point.**
+
+```python
+def evaluate(
+    config: Mapping[str, Any],
+    candidate_sha: str,
+    *,
+    output_dir: Path,
+    model_transport: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+) -> dict[str, Any]: ...
+```
+
+Framework guarantees at call time (trusted workflow): working directory is the trusted default-branch checkout; the candidate is checked out at `candidate/` with `HEAD == candidate_sha` verified and installed with `pip install -e candidate[dev]`; `DEEPSEEK_API_KEY` is in the environment; `output_dir` exists and is writable; `model_transport` is not passed (it exists for offline test stubs only).
+
+Runner obligations: verify dataset and rubric hashes against I2; never exceed `execution.max_completion_requests`; run candidate code only from `candidate/`; no network access other than the configured model provider; no GitHub status or API writes; return `failed` instead of raising for evaluation failures (an exception is recorded as `failed` by the framework).
+
+Return mapping:
+
+| Key | Required | Meaning |
+|---|---|---|
+| `status` | yes | exactly `passed`, `failed` or `needs_review` |
+| `errors` | yes | `list[str]`, may be empty |
+| `needs_review` | yes | top-level `list[str]` of `<case-id>:<reason>`, may be empty (the framework also reads FR-10's `candidate_summary.needs_review` for compatibility) |
+| `request_count` | yes | integer number of model requests actually sent |
+| `dataset_sha256`, `rubric_sha256` | yes | hashes actually verified |
+| `details_path`, `details_sha256` | yes | details JSON written inside `output_dir` |
+| `candidate_summary` | no | copied into the evidence record unchanged |
+
+**I4 — file naming** (`<id>` hyphenated, `<id_>` with underscores): config `docs/ci/semantic-suites/<id>.yaml`; cases `docs/ci/<id>-cases.json`; rubric `docs/ci/<id>-rubric.md`; runner `scripts/<id_>_eval.py`; offline tests `test/offline/test_<id_>_evaluation.py`. FR-10 keeps its existing names (§3.1).
+
+**I5 — dispatch and status** (framework-owned, stated for suite owners): trusted dispatch `mode=semantic`, `suite_id=<id>`; status `semantic-eval/<id>`; artifacts `ci-evidence-<sha>-semantic-<id>` and `ci-semantic-details-<sha>-<id>`.
+
+**I6 — feature PR fields** (§3.2): `Semantic suites: <id>[, <id>...]`, `Semantic suites approval: <URL>`, reviewer line `APPROVED semantic-suites: <same list>`.
+
+Provisional FR-03 suite ID: `data-availability`, to be confirmed by its owner. The ID itself is not part of the contract; choosing another valid ID needs no revision of this plan.
+
+Parallel tracks and merge order:
+
+| Stage | Framework track | Suite unit track (FR-03) |
+|---|---|---|
+| 0 | This plan, including I1–I6, approved | Owner reviews I1–I6 and confirms the suite ID |
+| 1 | Implement §3.1–§3.4 and tests T01–T18 | Build the I4 files and offline tests with a stub `model_transport`, on its own branch from current main; self-check the config with main's existing `validate_config()`; no framework file edits |
+| 2 | Framework PR merges first (registry contains only `financial-metrics`) | Suite unit PR merges next: own files plus one registry line. It contains `scripts/*.py`, so it needs its own test-specification approval |
+| 3 | — | A separate change on main sets the suite config to `approved` with real approval evidence; then the Round 3 feature PR selects the suite and the trusted evaluation is dispatched |
+
+The only waiting point is merge order (stage 2). A suite unit and the feature it evaluates stay in separate PRs, because the trusted workflow reads config and runner only from the default branch.
+
+Excluded to control effort: shared scorer library, LLM-judge framework, automatic path-to-suite mapping, multi-suite single dispatch, per-suite secrets.
+
 ## 4. Exact files
 
 Implementation checkpoint (after approval):
@@ -146,7 +205,7 @@ Implementation checkpoint (after approval):
 | `scripts/ci_semantic_eval.py` | `--registry/--suite`, config hash, record fields, `needs_review` preservation, legacy semantic-mode rejection |
 | `.github/workflows/trusted-evaluation.yml` | `suite_id` input, drop `semantic_runner`, env-passed inputs, per-suite context/artifact/concurrency names |
 | `.github/workflows/ci.yml` | `evidence-check` only: default-branch checkout, permissions, new args |
-| `test/offline/test_ci_gates.py` | New tests §5; adapt existing evidence/workflow tests to suite contexts (no assertion weakened: every old negative keeps a suite-scoped equivalent) |
+| `test/offline/test_ci_gates.py` | New tests §5 (including the T18 contract conformance check); adapt existing evidence/workflow tests to suite contexts (no assertion weakened: every old negative keeps a suite-scoped equivalent) |
 | `docs/ci/README.md`, `CI.md` (§3 diagram, §4.4) | Operator instructions, field/phrase format, status names, migration note |
 | `docs/ai-use-log.yaml`, `docs/review-memo.md` | Actual AI-use and per-PR review record |
 | `docs/plans/semantic-suite-routing.md` | Freeze at the approved commit and keep byte-identical after approval. Record approval, implementation and verification events in the PR, AI-use log and review memo. A material specification revision needs a new fixed version and approval. |
@@ -179,7 +238,9 @@ All use fixtures (statuses, runs, records, approval events, temporary registries
 | T16 | migration: `docs/ci/semantic_eval.yaml` LF SHA-256 equals `20e15937…d9b7`; `status == unapproved`; registry maps `financial-metrics` → that file and `financial_metrics_eval:evaluate` | as stated |
 | T17 | bootstrap: default branch without registry + not enforced → `[]`; + enforced → block "registry is not present" | as stated |
 
-Negative coverage: T02–T11, T13, T14, T17. Regression: the full `test/offline/test_ci_gates.py` and `test/offline/test_financial_metrics_evaluation.py`, then default `pytest -q`.
+| T18 | suite contract conformance (§3.5): for every registry entry, the trusted config passes `validate_config()` structure checks and `execution.runner` equals the registry runner; the runner callable accepts `(config, candidate_sha, *, output_dir, model_transport=None)` (signature inspection, no execution); a fixture runner returning a mapping without `status`, with a status outside `passed/failed/needs_review`, or with non-list `needs_review` makes `ci_semantic_eval.py` record `failed` and exit non-zero | as stated |
+
+Negative coverage: T02–T11, T13, T14, T17, T18. Regression: the full `test/offline/test_ci_gates.py` and `test/offline/test_financial_metrics_evaluation.py`, then default `pytest -q`.
 
 ## 6. Commands and verification
 
@@ -199,7 +260,7 @@ Temporary outputs only under the OS temp directory. Remote: push, PR CI on Ubunt
 | Work | Current state | After this lands |
 |---|---|---|
 | FR-10 (financial-metrics session) | PR #14 merged; config unapproved; next PR (src integration) will be `semantic_required` | Declares `Semantic suites: financial-metrics` + reviewer line. Blocked until that session approves `docs/ci/semantic_eval.yaml` on main (its own PR) and resolves the baseline-input gap in §2. Dispatch uses `suite_id=financial-metrics`. Config values/path unchanged, so no rebase conflict on the config. |
-| FR-03 (Yifan, `round-03-fr03` @ `7bf46d1`) | Classifier reports `semantic_required: true` (research_manager, bull/bear researcher prompts). Under current rules it is blocked anyway (only config is FR-10, unapproved). | Needs its own registry entry (ID chosen by that work, e.g. `data-availability`), config and runner merged to main first, then selection + evidence. Or, if the reviewer judges the prompt edits non-semantic, `Semantic suites: none` + reviewed not-applicable. No code conflict with this PR (no shared files). |
+| FR-03 (Yifan, `round-03-fr03` @ `7bf46d1`) | Classifier reports `semantic_required: true` (research_manager, bull/bear researcher prompts). Under current rules it is blocked anyway (only config is FR-10, unapproved). | Builds its suite unit against §3.5 (I1–I6) in parallel with the framework track; merges it after the framework PR, then approves its config on main, then selects `data-availability` (or its confirmed ID) in the Round 3 PR and gets evidence. Or, if the reviewer judges the prompt edits non-semantic, `Semantic suites: none` + reviewed not-applicable. No code conflict with this PR (no shared files). |
 | Shared summary (PR #15, `prep/shared-summary-integration` @ `7cc38da`) | Docs-only; plan §6D foresaw "conditional compatibility" edits to the CI scripts/workflow for config selection | Those CI edits become unnecessary: slice D adds `docs/ci/semantic-suites/shared-summary.yaml`, its runner, and one registry entry. Its new `run/summary.py` prompt-path detection remains that session's classifier change. |
 | Any PR with a reviewed noop | `semantic-eval/not-applicable` alone sufficed | Must also state `Semantic suites: none` with reviewer phrase. |
 | Non-semantic PRs | — | Unchanged (§3.3 first row). |
@@ -209,7 +270,7 @@ Coordination: this PR touches `scripts/ci_checks.py`, `scripts/ci_semantic_eval.
 ## 8. Implementation and verification order
 
 1. Human approves this plan at its commit (§10). Keep the approved plan byte-identical; record the actual approval reference and subsequent implementation events in the PR, AI-use log and review memo.
-2. Tests first: add T01–T17 and adapt existing evidence tests; confirm the new ones fail against current code (record counts).
+2. Tests first: add T01–T18 and adapt existing evidence tests; confirm the new ones fail against current code (record counts).
 3. `scripts/ci_checks.py` registry + selection + per-suite evidence; then `scripts/ci_semantic_eval.py`.
 4. Registry file; workflows (`trusted-evaluation.yml`, then `ci.yml` evidence-check).
 5. Docs (`docs/ci/README.md`, `CI.md`), AI-use log, review memo.

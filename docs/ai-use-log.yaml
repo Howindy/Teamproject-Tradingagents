@@ -3206,3 +3206,37 @@ entries:
     limitations:
       - "Historical failed push retained; no job-log root cause claimed."
       - "No application, workflow, checker or evaluation-policy change in this correction."
+
+  - id: "AI-SSR-PLAN-003"
+    date: "2026-11-24"
+    round: null
+    human_operator: "espino2233"
+    tool: "Claude (claude.ai agent session)"
+    model: "claude-opus-5-5"
+    activity: "ci_maintenance_planning"
+    task: "Add the ADD-based suite unit contract (I1-I6) and parallel-track order to the pending semantic suite routing plan."
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/plans/semantic-suite-routing.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Added ADD drivers and the framework/suite-unit decomposition, the suite unit contract (registry entry,
+      configuration structure reused from the existing validate_config, runner entry point and return mapping,
+      file naming, dispatch/status names, feature PR fields), the parallel tracks and merge order for the FR-03
+      suite unit, and offline test T18 for contract conformance. The plan remains pending approval; no workflow,
+      checker, configuration or application file was changed.
+    human_intervention: "User requested an ADD-based interface and convention design so that framework and FR-03 suite work can proceed in parallel with limited effort, then requested it be processed per the project workflow and uploaded."
+    approval:
+      subject: "Semantic suite routing plan"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "not_applicable"
+      summary: "Planning only; AI-use log structure and diff whitespace checked locally."
+      evidence: []
+    transcript_refs: []
+    limitations:
+      - "No raw session export is in the repository; none fabricated."
+      - "Push and PR update performed by the human operator; this session has no GitHub write access."
