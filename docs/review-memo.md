@@ -624,3 +624,15 @@ records the actual approval timestamp and comment. Independent review of this
 implementation and the protected candidate run remain pending.
 
 AI review disposition pending independent review: CHANGES REQUIRED.
+
+## PR #22 offline implementation review
+
+The non-author pre-approval binds the v2 threshold specification at
+8d30e289ae83da220543fdcd4b2e6147c7c140fe. The registered configuration and
+rubric remain v1. The offline suite exercises the v2 runner, detailed evidence
+and shared record normalization, including the all-advisory boundary and
+blocking controls. Historical run 45459356876 passes v2 with 19 passed grades
+and 26 advisories. Run 45453248371 fails with 19 passed, 25 advisories and the
+S02 Manager blanket denial of company news. The recorded v1 results stand.
+Implementation awaits independent review. Activation requires separately
+approved materials and a fresh authorized run for formal candidate evidence.

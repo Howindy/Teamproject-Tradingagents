@@ -51,6 +51,15 @@ THRESHOLDS = {
     "max_critical_failures": 0,
     "max_unresolved_reviews": 0,
 }
+V2_RUBRIC = "fr03-data-availability-rubric-v2"
+V2_THRESHOLDS = {
+    "required_case_count": 5,
+    "required_combinations": 15,
+    "required_dimension_outcomes": 45,
+    "advisory_dimensions": ["A", "B"],
+    "required_pass_dimensions": ["C"],
+    "max_critical_failures": 0,
+}
 MATERIALS = {
     "dataset": ("docs/ci/data-availability-cases.json", "fr03-data-availability-v1"),
     "rubric": ("docs/ci/data-availability-rubric.md", "fr03-data-availability-rubric-v1"),
@@ -179,7 +188,8 @@ def _validate_config(config: Mapping[str, Any]) -> None:
     approval = config.get("approval", {})
     if not all(approval.get(k) for k in ("approved_by", "approved_at", "evidence")):
         raise ValueError("suite approval evidence is missing")
-    if config.get("thresholds") != THRESHOLDS:
+    advisory = config.get("rubric", {}).get("version") == V2_RUBRIC
+    if config.get("thresholds") != (V2_THRESHOLDS if advisory else THRESHOLDS):
         raise ValueError("thresholds differ from the frozen suite standard")
     model = config.get("model", {})
     if (model.get("provider"), model.get("model"), model.get("base_url")) != (
@@ -202,6 +212,8 @@ def _load_materials(config: Mapping[str, Any], root: Path):
     hashes, data = {}, None
     for key, (rel, version) in MATERIALS.items():
         spec = config.get(key, {})
+        if key == "rubric" and spec.get("version") == V2_RUBRIC:
+            version = V2_RUBRIC
         if spec.get("path") != rel or spec.get("version") != version:
             raise ValueError(f"{key} path/version mismatch")
         path = (root / rel).resolve()
@@ -209,6 +221,8 @@ def _load_materials(config: Mapping[str, Any], root: Path):
             raise ValueError("material path escapes trusted docs/ci")
         content = path.read_bytes().replace(b"\r\n", b"\n")
         actual = hashlib.sha256(content).hexdigest()
+        if version == V2_RUBRIC and V2_RUBRIC.encode() not in content:
+            raise ValueError("v2 rubric content lacks its version identifier")
         if actual != spec.get("sha256"):
             raise ValueError(f"{key} hash mismatch")
         hashes[key] = actual
@@ -573,6 +587,65 @@ def aggregate_scores(scores: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def aggregate_v2(scores: list[dict[str, Any]]) -> dict[str, Any]:
+    """Keep A/B review grades in evidence; only blocking reviews reach I3."""
+    errors = []
+    blockers = []
+    advisories = []
+    passed = critical = 0
+    failed = False
+    if [(s.get("case_id"), s.get("role")) for s in scores] != [
+        (cid, role) for cid in CASE_IDS for role in ROLES
+    ]:
+        errors.append("executed matrix is incomplete, duplicated or out of order")
+    for score in scores:
+        key = f"{score.get('case_id')}:{score.get('role')}"
+        grades = score.get("dimensions")
+        reasons = score.get("needs_review")
+        findings = score.get("critical_failures")
+        excerpt = score.get("output_excerpt")
+        if (
+            not isinstance(grades, dict) or set(grades) != {"A", "B", "C"}
+            or any(v not in ("passed", "failed", "needs_review") for v in grades.values())
+            or not isinstance(reasons, list) or not all(isinstance(r, str) for r in reasons)
+            or not isinstance(findings, list) or not all(isinstance(r, str) for r in findings)
+            or not isinstance(excerpt, str) or not excerpt.strip()
+        ):
+            errors.append(f"{key}: invalid dimension evidence")
+            continue
+        critical += len(findings)
+        failed |= bool(findings) or "failed" in grades.values() or score.get("status") == "failed"
+        expected_status = (
+            "failed" if "failed" in grades.values() or findings
+            else "needs_review" if "needs_review" in grades.values() else "passed"
+        )
+        if score.get("status") != expected_status or (reasons and expected_status == "passed"):
+            errors.append(f"{key}: inconsistent score status")
+        for dimension, grade in grades.items():
+            if grade == "passed":
+                passed += 1
+            elif grade == "needs_review":
+                if f"dimension_{dimension}_unresolved" not in reasons:
+                    errors.append(f"{key}:{dimension}: missing review reason")
+                if dimension == "C":
+                    blockers.append(f"{key}:dimension_C_unresolved")
+                else:
+                    advisories.append(f"{key}:{dimension}")
+    return {
+        "release_policy": V2_RUBRIC,
+        "status": "failed" if errors or failed else "needs_review" if blockers else "passed",
+        "errors": errors,
+        "needs_review": blockers,
+        "advisories": advisories,
+        "advisory_count": len(advisories),
+        "expected_combinations": 15,
+        "executed_combinations": len(scores),
+        "expected_dimensions": 45,
+        "passed_dimensions": passed,
+        "critical_failures": critical,
+    }
+
+
 class _CandidateWorker:
     def __init__(self, candidate: Path):
         env = {
@@ -687,6 +760,23 @@ def _model_request(request: Mapping[str, Any], config: Mapping[str, Any]) -> Map
     }
 
 
+def _validate_v2_response(response: Mapping[str, Any]) -> None:
+    if response["finish_reason"] == "stop":
+        if not str(response.get("content", "")).strip():
+            raise ValueError("empty completion")
+        return
+    calls = response.get("tool_calls")
+    if not isinstance(calls, list) or not calls:
+        raise ValueError("missing tool calls")
+    for call in calls:
+        function = call.get("function") if isinstance(call, Mapping) else None
+        if not isinstance(function, Mapping) or not isinstance(function.get("name"), str) or not function["name"]:
+            raise ValueError("invalid tool function")
+        arguments = function.get("arguments")
+        if not isinstance(arguments, str) or not isinstance(json.loads(arguments), dict):
+            raise ValueError("invalid tool arguments")
+
+
 def evaluate(
     config: Mapping[str, Any],
     candidate_sha: str,
@@ -712,8 +802,12 @@ def evaluate(
     budget = RequestBudget(20)
     worker = None
     scores = []
+    aggregate = aggregate_scores
     try:
         _validate_config(config)
+        use_v2 = config["rubric"]["version"] == V2_RUBRIC
+        if use_v2:
+            aggregate = aggregate_v2
         root = Path.cwd().resolve()
         data, dataset_sha, rubric_sha = _load_materials(config, root)
         details.update(dataset_sha256=dataset_sha, rubric_sha256=rubric_sha)
@@ -789,12 +883,14 @@ def evaluate(
                             )
                         if not isinstance(response.get("content", ""), str):
                             raise ValueError("model response content is invalid")
+                        if use_v2:
+                            _validate_v2_response(response)
                         worker.send({"reply": dict(response)})
                     except Exception as exc:
                         # Do not record raw provider exceptions/headers or secret values.
                         attempt["error"] = "model attempt failed: " + type(exc).__name__
                         raise ValueError(attempt["error"]) from exc
-        summary = aggregate_scores(scores)
+        summary = aggregate(scores)
         details["candidate_summary"] = summary
         details["status"] = summary["status"]
         details["errors"] = summary["errors"]
@@ -804,7 +900,7 @@ def evaluate(
         details["errors"].append(
             str(exc) if isinstance(exc, ValueError) else "evaluation failed: " + type(exc).__name__
         )
-        details["candidate_summary"] = aggregate_scores(scores)
+        details["candidate_summary"] = aggregate(scores)
     finally:
         if worker is not None:
             worker.close()

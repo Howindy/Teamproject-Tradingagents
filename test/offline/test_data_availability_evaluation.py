@@ -563,3 +563,97 @@ def test_rejected_quote_does_not_hide_later_contradiction(cases):
 def test_limited_or_negated_news_claim_is_not_a_blanket_denial(cases, qualifier):
     result = suite.score_output(cases[1], "bull", GOOD["DA-S02"] + " " + qualifier + ARGUMENT)
     assert "available_company_news_denied" not in result["critical_failures"]
+
+
+@pytest.fixture
+def v2_candidate(candidate):
+    root, sha, config = candidate
+    config["rubric"]["version"] = suite.V2_RUBRIC
+    config["thresholds"] = suite.V2_THRESHOLDS
+    rubric = Path(config["rubric"]["path"])
+    rubric.write_text("Offline fixture: " + suite.V2_RUBRIC)
+    config["rubric"]["sha256"] = hashlib.sha256(rubric.read_bytes()).hexdigest()
+
+    return root, sha, config
+
+
+def test_v2_advisories_survive_runner_and_record(v2_candidate):
+    root, sha, config = v2_candidate
+
+    def omit_coverage(req):
+        response = transport(req)
+        if req["attempt_kind"] == "structured":
+            function = response["tool_calls"][0]["function"]
+            plan = json.loads(function["arguments"])
+            plan["rationale"] = ARGUMENT
+            function["arguments"] = json.dumps(plan)
+        else:
+            response["content"] = ARGUMENT
+        return response
+
+    out = root.parent / "out"
+    result = suite.evaluate(config, sha, output_dir=out, model_transport=omit_coverage)
+    status, blocking, errors = ci_semantic_eval.normalize_runner_result(result, output_dir=out)
+    assert (status, blocking, errors) == ("passed", [], [])
+    summary = result["candidate_summary"]
+    record = ci_semantic_eval.build_record(
+        candidate=sha, workflow_sha="offline", run_id="offline", kind="semantic",
+        status=status, candidate_summary=summary, needs_review=blocking,
+    )
+    assert record["candidate_summary"]["advisory_count"] == len(set(summary["advisories"])) == 30
+    details = json.loads(Path(result["details_path"]).read_text())
+    for score in details["cases"]:
+        assert score["dimensions"] == {"A": "needs_review", "B": "needs_review", "C": "passed"}
+        assert score["output_excerpt"] and score["needs_review"]
+    assert suite.aggregate_scores(details["cases"])["status"] == "needs_review"
+
+
+@pytest.mark.parametrize("change", [
+    "missing-role", "duplicate-role", "missing-dimension", "extra-dimension", "unknown",
+    "failed-A", "failed-B", "failed-C", "pending-C", "critical", "missing-excerpt",
+])
+def test_v2_blocks_incomplete_or_failed_evidence(cases, change):
+    scores = [suite.score_output(c, r, reply(c["case_id"], r)) for c in cases for r in suite.ROLES]
+    first = scores[0]
+    if change == "missing-role":
+        scores.pop()
+    elif change == "duplicate-role":
+        scores[-1] = first
+    elif change == "missing-dimension":
+        del first["dimensions"]["B"]
+    elif change == "extra-dimension":
+        first["dimensions"]["D"] = "passed"
+    elif change == "unknown":
+        first["dimensions"]["A"] = "unknown"
+    elif change.startswith("failed-"):
+        first["dimensions"][change[-1]] = first["status"] = "failed"
+    elif change == "pending-C":
+        first["dimensions"]["C"] = first["status"] = "needs_review"
+        first["needs_review"] = ["dimension_C_unresolved"]
+    elif change == "missing-excerpt":
+        first["output_excerpt"] = ""
+    else:
+        first["critical_failures"] = ["contradiction"]
+    assert suite.aggregate_v2(scores)["status"] == ("needs_review" if change == "pending-C" else "failed")
+
+
+@pytest.mark.parametrize("response", [
+    {"content": "partial", "finish_reason": "length"},
+    {"content": "", "finish_reason": "stop"},
+    {"content": "", "finish_reason": "tool_calls", "tool_calls": [{}]},
+])
+def test_v2_provider_errors_block(v2_candidate, response):
+    root, sha, config = v2_candidate
+    result = suite.evaluate(config, sha, output_dir=root.parent / "out", model_transport=lambda _: response)
+    assert result["status"] == "failed" and result["errors"]
+    assert result["request_count"] == 1
+
+
+def test_v2_rejects_v1_materials_and_thresholds(materials):
+    root, config = materials
+    config["rubric"]["version"] = suite.V2_RUBRIC
+    with pytest.raises(ValueError, match="thresholds"):
+        suite._validate_config(config)
+    config["thresholds"] = suite.V2_THRESHOLDS
+    with pytest.raises(ValueError, match="v2 rubric"):
+        suite._load_materials(config, root)
