@@ -2946,3 +2946,54 @@ entries:
         Staged schema and AI-use association pass. Full staged diff --check exits 2 with 1328 whitespace notices confined to the original session-20 export; the other 19 staged files pass.
         Raw transcript was preserved without formatting edits. Earlier diff-check passes predate staging this export; no full staged whitespace pass is claimed.
       boundary: No source/workflow/gate-script/schema/permission/frozen-plan changes staged. Commit SHA is not invented in this pre-commit record; no remote CI or merge claim.
+
+  - id: "AI-SS-PREP-001"
+    date: "2026-11-24"
+    round: "shared-summary-integration / SS-PREP-1"
+    human_operator: null
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-sol"
+    activity: "integration_planning"
+    task: "Prepare an isolated shared-summary plan and Draft PR, separate from FR-10; stop for real teammate approval."
+    requirement_ids: ["FR-07"]
+    fit_criterion_ids: ["FR-07-FC01", "FR-07-FC02", "FR-07-FC03", "FR-07-FC04", "FR-07-FC05"]
+    files_changed:
+      - "docs/plans/shared-summary-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Fetched the team repository, created prep/shared-summary-integration from origin/main
+      5c6e2caed5e4baceb136b5544ba5e283c0822cdb, created the separate summary-prep worktree,
+      moved the desktop session and rechecked cwd/root/branch. Read current governance,
+      course PDF pages 6/7/10, haoxi summary implementation/tests and historical evaluation
+      records, Round 3 design and amendment, and public PR 14 metadata. Proposed FR-07
+      activation, one separate structured-summary call, honest proxy-token budgeting,
+      nonblocking protected/full-report fallback, one replaceable assembly seam, exact
+      migration paths and independent tests, FR-03 single-injection coordination,
+      separate semantic data/rubric/config and minimal common-CI compatibility review.
+    human_intervention: >-
+      The user explicitly limited this checkpoint to the plan and necessary planning records,
+      authorized fetch/branch/worktree/commit/push/Draft PR creation, required preservation
+      of haoxi and financial-prep, and reserved implementation and actual model execution
+      for later approvals. An interrupted response was resumed at the user's request.
+    approval:
+      status: "pending_non_author_plan_and_test_review"
+      evidence:
+        - "Current user task authorizes planning/publication only; no implementation or model execution approval."
+    verification:
+      status: "planning_checks_only"
+      summary: >-
+        Verified isolated cwd/Git root/branch and clean starting tree; existing worktrees
+        untouched. Current main requirements schema check returned errors=[] and 13/55,
+        active 6/27, deferred 7/28. No application tests or semantic evaluation run.
+        The discovered Python 3.13.15 lacks pytest; no dependency installed.
+      evidence:
+        - "docs/plans/shared-summary-integration.md"
+        - "Session tool outputs: workspace checks and scripts/ci_checks.py schema."
+    transcript_refs: []
+    commit: null
+    pull_request: null
+    limitations:
+      - "Raw transcript export pending; no transcript reconstructed."
+      - "True approval URL/time, implementation start and final verdict do not yet exist."
+      - "Historical pilot/checklist located in approved local temp evidence; later portable projection must verify source bytes/hashes; no historical scripts rerun."
+      - "No source/test/requirements/architecture/CI/permission changes, live requests, merge or product acceptance in this checkpoint."
