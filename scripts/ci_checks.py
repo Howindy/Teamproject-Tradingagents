@@ -197,6 +197,10 @@ SUITE_PHRASE_PREFIX = "APPROVED semantic-suites:"
 SUPPLEMENTAL_SPEC_FIELD = "Supplemental test specification"
 OPTIONAL_PR_BODY_FIELDS = ("ADR", SUITE_SELECTION_FIELD, SUITE_APPROVAL_FIELD, SUPPLEMENTAL_SPEC_FIELD)
 # Approved bounded compatibility rule: semantic-registry-test-amendment.md §6.
+# Exact reviewed configuration at the original frozen specification. Its status
+# is unapproved and approval identity/time/evidence are empty. Using a digest
+# keeps the setup-python-only approval job independent of YAML packages.
+FR03_PREPARATION_CONFIG_SHA256 = "96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015"
 FR03_PREPARATION_PATHS = frozenset({
     "docs/ci/data-availability-cases.json",
     "docs/ci/data-availability-rubric.md",
@@ -1570,7 +1574,7 @@ def frozen_preparation_paths(root: Path, fields: Mapping[str, str], head: str) -
     This is classification, not approval. The calling gate must still validate
     the primary event, specification ancestry, timing and unchanged spec.
     """
-    import yaml
+    import hashlib
 
     path, commit, errors = parse_approved_specification(fields.get("Approved test specification", ""))
     if errors:
@@ -1581,16 +1585,10 @@ def frozen_preparation_paths(root: Path, fields: Mapping[str, str], head: str) -
     config_path = "docs/ci/semantic-suites/data-availability.yaml"
     try:
         for revision in (commit, head):
-            config = yaml.safe_load(git_output(["show", f"{revision}:{config_path}"], cwd=root))
-            if not isinstance(config, Mapping) or config.get("status") != "unapproved":
-                return set()
-            approval = config.get("approval")
-            if not isinstance(approval, Mapping) or any(key not in approval for key in (
-                "approved_by", "approved_at", "evidence"
-            )):
-                return set()
-            if (approval["approved_by"] is not None or approval["approved_at"] is not None
-                    or approval["evidence"] != []):
+            config_text = git_output(["show", f"{revision}:{config_path}"], cwd=root)
+            # Recognize only the fixed reviewed content. Different formatting,
+            # values or activation are conservatively outside this exception.
+            if hashlib.sha256(config_text.encode("utf-8")).hexdigest() != FR03_PREPARATION_CONFIG_SHA256:
                 return set()
         eligible: set[str] = set()
         for material in FR03_PREPARATION_PATHS:
@@ -1606,7 +1604,7 @@ def frozen_preparation_paths(root: Path, fields: Mapping[str, str], head: str) -
             if kind == "blob" and frozen == candidate:
                 eligible.add(material)
         return eligible
-    except (CiError, yaml.YAMLError):
+    except CiError:
         return set()
 
 

@@ -523,3 +523,20 @@ never covered by this exception; other paths in a mixed commit still count.
 T16 now protects the complete `financial-metrics` entry rather than prohibiting
 additional registered suites. Its original hash/state protections remain, and
 T18 still inspects every registered suite's configuration and runner contract.
+
+
+### Lean approval-job dependency repair
+
+Run `45423751532` exposed that `test-approval` installs no third-party packages.
+Its preparation-material check must therefore remain standard-library-only.
+The check now attests the reviewed unapproved FR-03 configuration by its fixed
+LF-text SHA-256 (`96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015`)
+at both the approved specification and candidate revisions, instead of importing
+PyYAML. The independently checked reference has unapproved status, null approval
+identity/time and empty evidence. Other configuration content, including activation
+or equivalent but differently formatted YAML, conservatively receives no exception.
+Exact Git blob comparisons for each preparation material remain in place.
+
+Tests execute the approval check in an isolated `python -I -S` subprocess,
+asserting YAML is unavailable, and check both valid preparation and rejected
+activation. No workflow, dependency pin, frozen material or approval is changed.

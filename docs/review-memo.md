@@ -491,3 +491,52 @@ to the new temporary evidence tree.
 
 Independent human implementation verdict: pending. AI delivery recommendation
 while final remote CI and independent review remain outstanding: **CHANGES REQUIRED**.
+
+
+## RM-18-R2 — Lean approval-job dependency repair (AI-authored; human final review pending)
+
+- Starting commit: `e52ac47abebbc89489f7e5ddeeb88cd4559979c0` on the freshly cloned
+  `prep/fr03-semantic-suite` worktree under `~/Projects/CS5351`. Remote refs were
+  fetched and the branch was synchronized before implementation.
+- Existing maintenance basis: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793).
+- Actual remote defect: [test-approval job](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45423751532/job/138550088770)
+  raises `ModuleNotFoundError: No module named 'yaml'`. That job installs no
+  third-party packages; earlier rich-environment tests missed this runtime boundary.
+- Repair: use stdlib SHA-256 attestation of the exact reviewed unapproved config
+  on the approval path, preserving the existing three-path bound and Git blob
+  equality checks. Unrecognized or activated config text is not exempt. The
+  reference's unapproved/null/empty approval fields are independently asserted.
+- Added tests run the full approval function under `python -I -S` with YAML
+  unavailable, covering valid preparation and rejected activation. The synthetic
+  Git fixture uses actual frozen input bytes rather than values derived from the gate.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo. Workflows, dependencies,
+  permissions, application source and frozen specifications/materials are unchanged.
+
+### Actual validation and limitations
+
+Evidence: `/private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0`. The old checker reproduced missing YAML in both isolated
+cases (`before-stdlib.out`). Patched standalone public-gate tests: **161 passed**;
+maintenance-only subset: **48 passed**. Python 3.14.7 / pytest 9.1.1 was used with
+`--confcutdir=test/offline` and external plugin autoload disabled. This isolates
+CI-unit tests from missing application-level conftest dependencies and unrelated
+locally installed plugins; it is not a default application-regression pass.
+
+On the existing Python 3.12.14 interpreter, `-I -S` confirmed YAML and pytest were
+unavailable, then the approval CLI replayed current real PR fields/events against
+the existing `e52ac47` Git history and returned `errors: []` (`approval-stdlib.out`).
+This does not establish final-candidate remote CI. Python 3.12 syntax, requirements
+schema and the existing application environment's `pip check` passed.
+
+Full default regression cannot start in the existing application interpreter
+because pytest is missing. Ruff and mypy are unavailable. Their attempted command
+outputs are retained; no dependency installation, skipped assertion or fake pass
+was used to conceal these gaps. The old iCloud-dependent environment and the
+interrupted disappearing-file regression are not treated as current evidence.
+
+No iCloud source was used for the repair. No project commit/push, PR write, model
+call, activation or merge is included. Original approvals and chronology remain.
+Independent final verdict: pending. Until final-candidate CI and independent review
+complete, AI delivery recommendation: **CHANGES REQUIRED**.

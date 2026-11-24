@@ -3461,3 +3461,67 @@ entries:
     - No real model/vendor calls, configuration activation, project commit/push, PR write or merge performed
       in this implementation task.
     - No independent final implementation verdict or final remote-candidate CI result is established.
+
+  - id: AI-FR03-SEMANTIC-STDLIB-001
+    date: '2026-11-24'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_bug_repair
+    task: 'Fix PR #18 test-approval missing PyYAML in setup-python-only job, using the new ~/Projects/CS5351
+      worktree'
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids: []
+    files_changed:
+    - scripts/ci_checks.py
+    - test/offline/test_ci_gates.py
+    - docs/ci/README.md
+    - docs/ai-use-log.yaml
+    - docs/review-memo.md
+    ai_contribution: Reproduced the missing-yaml error with isolated Python subprocesses. Replaced YAML
+      parsing on the approval path with stdlib content attestation of the exact reviewed unapproved configuration;
+      preserved Git blob checks, primary/supplemental approvals and fail-closed classification. Added isolated-interpreter
+      acceptance/rejection tests and an independent reference-config state check. Used a fresh GitHub snapshot
+      and no iCloud source.
+    human_intervention: User directed work to the new ~/Projects/CS5351 root and requested repair of the
+      existing test-approval failure. Previously verified non-author maintenance approval remains the implementation/test
+      basis. The abandoned iCloud backup process was stopped; no iCloud files were changed.
+    approval:
+      subject: Maintenance specification @ 2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f; implementation bug
+        repair within approved files
+      status: approved
+      approved_at: '2026-11-24T15:02:01Z'
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793
+    verification:
+      status: targeted_checked_full_environment_unavailable_remote_pending
+      summary: 'Standalone public-gate tests: 161 passed on existing Python 3.14.7 / pytest 9.1.1, with
+        application-level conftest excluded because application test dependencies are unavailable. Python
+        3.12.14 -I -S approval CLI, replaying actual current PR body/events against existing e52ac47 Git
+        history, returned errors: []. Python 3.12 syntax and requirements schema passed. Existing application
+        environment pip check passed. Full default pytest could not start (pytest missing there); Ruff and
+        mypy unavailable. No packages installed. These limits are not passes.'
+      evidence:
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/gates-final.xml
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/targeted-isolated.xml
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/before-stdlib.out
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/approval-stdlib.out
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/schema.out
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/full-regression-unavailable.out
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/ruff-unavailable.out
+      - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/mypy-unavailable.out
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
+    limitations:
+    - No full application regression, Ruff or mypy success is claimed in the recovered environment.
+    - The gate tests were run independently with --confcutdir=test/offline and third-party pytest plugin
+      autoload disabled; no stubs or test-assertion exemptions were added.
+    - The fixed-config attestation deliberately rejects other configuration text rather than introducing
+      a YAML parser or a broad exemption.
+    - Real PR event replay is local evidence against existing Git history, not final-candidate remote CI.
+    - No model/vendor request, dependency installation, project commit/push, PR write, merge or configuration
+      activation performed.
+    - Evidence remains in local temporary storage; raw chat export is not in the repository.

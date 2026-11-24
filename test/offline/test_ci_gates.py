@@ -3120,8 +3120,9 @@ def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
     supplement = 'docs/plans/maintenance.md'
     materials = ('docs/ci/data-availability-cases.json', 'docs/ci/data-availability-rubric.md',
                  'docs/ci/semantic-suites/data-availability.yaml')
-    config = {'status': 'unapproved', 'approval': {'approved_by': None, 'approved_at': None, 'evidence': []}}
-    for path, text in zip(materials, ('{}\n', '# Fixed rubric\n', yaml.safe_dump(config)), strict=True):
+    # Actual frozen input bytes, independent of the gate's implementation/digest.
+    config_text = (ROOT / materials[2]).read_text(encoding='utf-8')
+    for path, text in zip(materials, ('{}\n', '# Fixed rubric\n', config_text), strict=True):
         target = repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding='utf-8')
@@ -3344,3 +3345,50 @@ def test_maintenance_public_approval_reads_do_not_send_empty_bearer(monkeypatch)
     assert requests[0].get_header('Authorization') is None
     ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', 'synthetic-token')
     assert requests[1].get_header('Authorization') == 'Bearer synthetic-token'
+
+
+@pytest.mark.parametrize('activated', [False, True])
+def test_maintenance_approval_runs_without_site_packages(tmp_path, monkeypatch, activated):
+    """C1/C5/S1: setup-python-only approval needs no PyYAML or other site-packages."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    if activated:
+        config = history.repo / history.material_paths[2]
+        document = yaml.safe_load(config.read_text(encoding='utf-8'))
+        document['status'] = 'approved'
+        config.write_text(yaml.safe_dump(document), encoding='utf-8')
+        history.head = _maintenance_commit(history.repo, 'activation', '2026-01-01T16:00:00Z')
+    fixture = tmp_path / 'approval-fixture.json'
+    fixture.write_text(json.dumps({
+        'root': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': '\n'.join(f'{key}: {value}' for key, value in history.fields.items()),
+        'events': history.events, 'expect_errors': activated,
+    }), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec("yaml") is None
+spec = importlib.util.spec_from_file_location("ci_checks", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+fixture = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (fixture["events"][url], "author")
+result = module.approval_check(Path(fixture["root"]), fixture["base"], fixture["head"], fixture["body"], "o/r", 1, "")
+assert bool(result["errors"]) == fixture["expect_errors"], result
+print("stdlib-only approval checked")
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'stdlib-only approval checked' in result.stdout
+
+
+def test_maintenance_frozen_config_attests_unapproved_state():
+    """C1/C5: independently pin and interpret the reviewed fixed configuration."""
+    import hashlib
+
+    content = (ROOT / 'docs/ci/semantic-suites/data-availability.yaml').read_bytes().replace(b'\r\n', b'\n')
+    assert hashlib.sha256(content).hexdigest() == '96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015'
+    config = yaml.safe_load(content)
+    assert config['status'] == 'unapproved'
+    assert config['approval'] == {'approved_by': None, 'approved_at': None, 'evidence': []}
