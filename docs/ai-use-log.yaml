@@ -4318,3 +4318,27 @@ entries:
       - "Round 4 has not merged; the handoff contract is branch-side documentation, not teammate sign-off."
       - "CI remains unchanged; local passes do not imply remote gates passed or course-process compliance."
       - "Prior independent calendar/price-policy limitations remain; unsupported inputs degrade explicitly."
+  - id: "AI-FM-HANDOFF-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_teammate_handoff"
+    task: "Push the existing FR-10 feature branch and explain its current state to Yifan."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/fr10-handoff-yifan.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Pushed existing tested application commit 2fbd1cf to the existing feature branch;
+      added a Chinese handoff distinguishing implemented runtime integration from incomplete
+      probe compatibility, numeric-source precision, boundary tests and semantic acceptance.
+      Documented the Round-04A ownership boundary, historical starting-point mismatch and
+      unsupported claims to avoid. No application changes in this documentation step.
+    human_intervention: "User explicitly requested pushing the current version and publishing a handoff document for Yifan's AI review."
+    verification:
+      status: "documentation_only"
+      summary: "Existing code push succeeded (0b9de96 to 2fbd1cf); checked handoff against current source and supplied Round-04B-v3. No new functional tests or live API calls."
+    transcript_refs: []
+    limitations:
+      - "No main merge, CI configuration change, teammate approval or semantic pass is claimed."
