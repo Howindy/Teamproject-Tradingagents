@@ -480,3 +480,46 @@ Phase 3/4 (trusted evidence and real verification):
 - `mypy==2.4.1`
 - `ruff==0.17.5`
 - `pytest==9.2.0` with the project dev extras.
+
+## PR #18 supplemental maintenance
+
+The independently approved maintenance specification is
+`docs/plans/semantic-registry-test-amendment.md @ 2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`,
+[approved by espino2233](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793)
+at `2026-11-24T15:02:01Z`. This is test-specification pre-approval, not a final
+implementation review, configuration activation or model-execution authorization.
+
+Keep the original primary PR fields and add one field:
+
+```text
+Supplemental test specification: <path> @ <full 40-character SHA> (approval: <GitHub PR comment/review URL>)
+```
+
+Recognized machine fields must occur once; duplicates are rejected rather than
+overwriting an earlier record. A supplement must contain an explicit
+`## 3. Allowed files` section with project-relative file paths in bullet entries.
+Only that list grants path coverage or selects contract tests. Paths mentioned
+in rationale, historical references, verification commands or exclusions do not
+grant additional coverage. Approval must bind the exact immutable specification,
+come from a non-author human, and precede the first related implementation change.
+The specification's own creation does not count as that implementation. Invalid
+supplements add neither scope nor selected tests; primary checks remain mandatory.
+
+The contract-test command validates supplemental evidence independently before
+collection. The existing public-repository job has no configured API token, so
+this read uses the public GitHub API without an Authorization header. An API
+failure or rate limit fails closed; no credential discovery or workflow change
+is introduced. The token-bearing approval job retains its authenticated reads.
+
+The implementation-start compatibility rule is bounded to the three exact
+FR-03 preparation-material paths in specification section 6. Each excluded path
+must be named in the primary frozen specification and have the identical Git
+blob at the evaluated candidate. The suite configuration at both revisions must
+remain unapproved with null approval identity/time and empty approval evidence.
+Unverifiable or changed materials remain subject to ordinary classification.
+Code, tests, shared routing, workflows, permissions and activation changes are
+never covered by this exception; other paths in a mixed commit still count.
+
+T16 now protects the complete `financial-metrics` entry rather than prohibiting
+additional registered suites. Its original hash/state protections remain, and
+T18 still inspects every registered suite's configuration and runner contract.

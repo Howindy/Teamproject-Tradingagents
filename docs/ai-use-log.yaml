@@ -3398,3 +3398,66 @@ entries:
       - "Public T16 compatibility failure remains unresolved; no claim that remote CI or Round3 semantic evaluation passes."
       - "Evidence paths are local temporary files, not published CI artifacts; no raw session export is in the repository."
       - "Human operator identity and exact model identifier were not established; no values invented."
+
+  - id: AI-FR03-SEMANTIC-MAINT-001
+    date: '2026-11-24'
+    round: 3
+    human_operator: null
+    tool: Codex
+    model: null
+    activity: ci_test_maintenance
+    task: 'PR #18 approved T16 registry compatibility and supplemental approval/implementation-start maintenance'
+    requirement_ids:
+    - FR-03
+    - FR-10
+    fit_criterion_ids: []
+    files_changed:
+    - scripts/ci_checks.py
+    - test/offline/test_ci_gates.py
+    - docs/ci/README.md
+    - docs/ai-use-log.yaml
+    - docs/review-memo.md
+    ai_contribution: Implemented the approved T16 entry-level invariant, independent supplemental approval
+      validation and contract selection, duplicate machine-field rejection and the bounded three-path frozen-preparation
+      rule. Added real synthetic-Git positive and negative tests. Worked in an isolated snapshot before
+      synchronizing only the approved files.
+    human_intervention: The user created/froze the maintenance specification, obtained espino2233 non-author
+      pre-approval, updated PR machine fields and confirmed a clean worktree before implementation. The
+      original suite specification and chronology were preserved.
+    approval:
+      subject: semantic-registry-test-amendment.md @ 2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f; maintenance
+        test-spec pre-approval only
+      status: approved
+      approved_at: '2026-11-24T15:02:01Z'
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793
+    verification:
+      status: local_checked_with_platform_failures_remote_pending
+      summary: 'Final relevant combined tests: 220 passed (including 45 new maintenance cases). Final default offline regression: 1759 passed, 3 failed, 1 skipped, 1 deselected; 100 subtests
+        passed. All three failures are macOS errno.EDEADLOCK cases and reproduce in the unchanged 2d10aa4
+        snapshot (5 passed, 3 failed for test_cache_writes.py). Ruff, baseline-relative mypy, direct mypy
+        of changed code/tests, requirements schema and pip check passed. Real fetched PR fields and approval
+        comments replayed against an isolated Git candidate yielded no approval/contract-selection errors.
+        No remote success is claimed.'
+      evidence:
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/regression.xml
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/combined-final.xml
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/baseline-platform.xml
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/actual-history-result.json
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/types-final.out
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/schema-final.out
+      - /private/tmp/cs5351-pr18-maintenance-13jnh35d/dependencies-final.out
+    transcript_refs: []
+    commit: null
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
+    limitations:
+    - Local temporary evidence is not a published CI artifact or a raw chat export.
+    - Initial sandbox run could not bind existing loopback HTTP fixtures; the combined check was rerun with
+      loopback access, without skipping tests.
+    - The contract job uses unauthenticated public GitHub reads because its unchanged workflow supplies
+      no token; API failures/rate limits fail closed.
+    - Existing optional langchain_aws dependency was unavailable; no installation or test exemption was
+      added.
+    - No real model/vendor calls, configuration activation, project commit/push, PR write or merge performed
+      in this implementation task.
+    - No independent final implementation verdict or final remote-candidate CI result is established.

@@ -433,3 +433,61 @@ frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be
 - `python -B -m ruff check scripts/ci_checks.py scripts/ci_semantic_eval.py test/offline/test_ci_gates.py`: passed. `python -B -m mypy --config-file mypy.ini --follow-imports=silent` on those same files: no diagnostics. `git diff --check`: passed. Earlier attempts with the project `.venv` additionally lacked jsonschema and sandbox loopback access; these were not counted as passes.
 - Evidence root: `D:/CityU/cs5351/project/baseline-review/semantic-routing-review/`; final JUnit `verified-regression.xml`, baseline reproduction `original-redirects.xml`, original source snapshot `original-0112cbc/`.
 - Application source, FR-10 scorer/configuration/oracle, workflows and frozen plan are unchanged by this repair. Full application regression, GitHub CI and live evaluation were not run. Final human verdict remains pending. No commit, push or merge in this repair session.
+
+
+## RM-18-R1 — FR-03 semantic maintenance (AI-authored; independent final review pending)
+
+- PR: [#18](https://github.com/Howindy/Teamproject-Tradingagents/pull/18).
+- Starting tree: `2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`; original suite specification
+  `1440c1ca2ae0806ce3b4b09c20634cfa213e63da` and original implementation start
+  `2982819d91784d29448671995dcf5937fc61ad27` remain unchanged.
+- Maintenance specification: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by non-author `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793)
+  at `2026-11-24T15:02:01Z`, before this maintenance implementation.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo.
+- R1-R6: T16 preserves exact FR-10 entry/hash/state checks while allowing valid
+  additional suites. T18 is unchanged and still inspects every registered runner.
+- S1-S7: supplements use their own reviewer, marker, ancestry and first-related-change
+  chronology. Only the explicit section-3 allowed-file list grants path coverage;
+  rationale and exclusions cannot expand selection. Invalid supplements contribute
+  nothing. Primary checks stay mandatory; duplicate machine fields are rejected.
+- C1-C10: the exact three frozen preparation paths can be removed from the primary
+  start-path set only under section-6 conditions. Git blob identity is used;
+  configuration approval/activation prevents the exception. Mixed-commit code,
+  shared routing, workflow and permission paths remain included.
+- No workflow, dependency, permission, runtime prompt, source application, FR-10
+  material or frozen FR-03 material/specification change is included.
+
+### Local evidence and limits
+
+Evidence root: `/private/tmp/cs5351-pr18-maintenance-13jnh35d`. Python 3.12.14 and pytest 9.2.0 from the existing
+suite environment; no installation. Imported application source was checked to
+resolve inside the isolated snapshot. HOME/temp/cache/JUnit outputs were confined
+to the new temporary evidence tree.
+
+- Reproduced the original T16 failure before implementation (`before.out`).
+- Final gate/FR-03/FR-10 combined tests: **220 passed**, including 45 new maintenance cases (`combined-final.xml`).
+- Default offline regression: **1759 passed, 3 failed, 1 skipped, 1 deselected**;
+  100 subtests passed (`regression.xml`). Remaining failures are the three simulated
+  Windows cache-lock tests using absent macOS `errno.EDEADLOCK`.
+- Repeated unchanged `2d10aa4` baseline cache tests: **5 passed, 3 failed**, with
+  the same cases/errors (`baseline-platform.xml`). They remain failures, not waived
+  passes; the optional skip is missing `langchain_aws`.
+- Ruff, baseline-relative mypy, direct changed-code/test mypy, requirements schema
+  and dependency check passed. No baseline diagnostics were changed.
+- Actual fetched PR fields and original/supplemental comments were replayed in an
+  isolated Git candidate: approval and contract-test selection reported no errors
+  (`actual-history-result.json`). That candidate is verification-only, not the
+  final project commit or a GitHub CI run.
+- The first sandbox gate run had six loopback-bind permission errors; existing
+  redirect tests were rerun with local loopback access. No skip/assertion weakening.
+- Public contract-job approval reads use no empty Bearer header; API failures or
+  rate limits block selection. No credentials are discovered and no workflow is changed.
+- Raw chat export is not in the repository; local command/JUnit evidence does not
+  substitute for it. No project commit/push, PR write, live semantic evaluation,
+  configuration activation or merge was performed in this implementation task.
+
+Independent human implementation verdict: pending. AI delivery recommendation
+while final remote CI and independent review remain outstanding: **CHANGES REQUIRED**.
