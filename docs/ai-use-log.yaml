@@ -3694,3 +3694,28 @@ entries:
     commit: 5904b9f4aabfe5c02238aee3247114ad6692c511
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/21
     limitations: [Frozen replay covers the historical candidate only.]
+
+  - id: AI-FR03-ADVISORY-V2-001
+    date: '2026-11-25'
+    round: 3
+    tool: Codex
+    activity: ci_implementation
+    task: Implement the separately versioned data-availability release policy for offline validation.
+    fit_criterion_ids: [FR-03-FC05]
+    files_changed:
+      - docs/plans/fr03-semantic-threshold-v2.md
+      - scripts/data_availability_eval.py
+      - test/offline/test_data_availability_evaluation.py
+      - docs/ai-use-log.yaml
+      - docs/review-memo.md
+    ai_contribution: Added versioned aggregation, blocking and advisory evidence separation, and offline integrity and runner-contract controls. Reconstructed replies and compared two historical runs.
+    human_intervention: Non-author reviewer espino2233 pre-approved the fixed implementation and tests. The operator requested offline verification only.
+    approval:
+      subject: FR-03-FC05 / IR-12 v2 implementation and offline tests
+      status: approved
+      evidence: [https://github.com/Howindy/Teamproject-Tradingagents/pull/22#issuecomment-7140862970]
+    verification:
+      status: offline_passed
+      summary: 82 offline suite tests passed. Run 45459356876 gives 26 advisory dimensions and passes v2. Run 45453248371 still fails on the S02 Manager contradiction. No provider calls.
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/22
+    limitations: [Activation and formal candidate evaluation require separate approval.]
