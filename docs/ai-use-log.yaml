@@ -4506,3 +4506,33 @@ entries:
       - "Tests use synthetic external model/vendor responses, not real completions or live data."
       - "CI configuration/scoring was not independently changed or disabled; main's inherited maintenance is retained."
       - "Formal semantic-quality evidence and final human merge review remain outstanding."
+
+  - id: "AI-FR10-SOURCE-CONTRACTS-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "GPT-6"
+    activity: "financial_metrics_source_contract_repair"
+    task: "Fix the FR-10 findings on main at cfa79eb and submit a pull request."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC03", "FR-10-FC06", "FR-10-FC07", "FR-10-FC10"]
+    files_changed:
+      - "src/tradingagents/dataflows/vendors/yahoo/market.py"
+      - "src/tradingagents/financials/metrics.py"
+      - "src/tradingagents/financials/sec_provider.py"
+      - "src/tradingagents/financials/service.py"
+      - "test/offline/test_sec_financial_provider.py"
+      - "test/offline/test_financial_metrics_integration.py"
+      - "docs/fr10-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Reproduced and corrected quote precision loss, the reported net income proxy
+      and the SEC outage classification. Updated sibling test imports for standard
+      pytest discovery and added price-only degradation and recovery coverage.
+    human_intervention: "The user requested a repair PR after reviewing the findings."
+    verification:
+      status: "targeted_pass"
+      summary: >-
+        Four new regression cases failed before the product fix. On macOS with Python
+        3.12, all 460 targeted tests passed. Ruff, API checks and pip check passed.
+    transcript_refs: []
+    limitations: ["Controlled offline inputs only. The PR records the default suite result."]

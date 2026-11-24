@@ -221,10 +221,11 @@ class FinancialMetricProvider:
                     bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "invalid_financial_input")
                     self._cache[ticker.upper()] = FinancialMetricResult(
                         bundle, render_metrics(bundle), "unavailable", "invalid_financial_input")
-                elif "data_entry_failure" in inputs.issues:
-                    bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "data_entry_failure")
+                elif failure := next((issue for issue in inputs.issues
+                                      if issue.partition(":")[0] == "data_entry_failure"), None):
+                    bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), failure)
                     self._cache[ticker.upper()] = FinancialMetricResult(
-                        bundle, render_metrics(bundle), "unavailable", "data_entry_failure")
+                        bundle, render_metrics(bundle), "unavailable", failure)
                 elif inputs.issues and inputs.issues[0].startswith("not_supported"):
                     bundle = unavailable_bundle(ticker.upper(), as_of.isoformat(), "not_supported")
                     self._cache[ticker.upper()] = FinancialMetricResult(

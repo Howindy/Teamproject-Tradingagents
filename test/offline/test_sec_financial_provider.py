@@ -122,7 +122,7 @@ def test_real_price_adapter_path_handles_cutoff_weekend_holiday_and_staleness(
     """FC06: run the helper and SEC price adapter together, with no network."""
     from tradingagents.financials.models import EvaluationClock
 
-    yahoo_daily_history(dates, [100.0] * len(dates))
+    yahoo_daily_history(dates, [Decimal("100")] * len(dates))
     day = date.fromisoformat(as_of)
     clock = EvaluationClock(day, datetime.combine(day, datetime.min.time(), ZoneInfo("America/New_York")), date(2026, 11, 24))
     price, reason = _price("AAPL", day, clock, date(2024, 9, 28))
@@ -148,7 +148,7 @@ def test_fiscal_pe_uses_raw_daily_close_or_preserves_adapter_reason(
     from tradingagents.financials.metrics import calculate_metrics
     from tradingagents.financials.models import EvaluationClock, FinancialFact, FinancialInputs
 
-    yahoo_daily_history(dates, [100.0])
+    yahoo_daily_history(dates, [Decimal("100")])
     day = date.fromisoformat(as_of)
     clock = EvaluationClock(day, datetime.combine(day, datetime.min.time(), ZoneInfo("America/New_York")), date(2026, 11, 24))
     eps = FinancialFact(
@@ -226,12 +226,13 @@ def test_january_fiscal_year_comparative_is_not_carrying_filing_year():
     assert dict(by_end[date(2023, 10, 31)].disclosure)["fy"] == "2025"
 
 
-@pytest.mark.parametrize("fault", ["timeout", "infinity", "nan"])
+@pytest.mark.parametrize("fault", ["timeout", "infinity", "nan", "float"])
 def test_price_failure_preserves_sec_metrics_and_next_analysis_recovers(monkeypatch, fault):
     """FC06/FC10: optional Yahoo failure affects P/E only, including cached failure and recovery."""
     import copy
 
-    from test.offline.test_financial_metrics import DATA
+    from test_financial_metrics import DATA
+
     from tradingagents.financials.sec_provider import SecCompanyFactsProvider
     from tradingagents.financials.wiring import build_metrics_factory
 
@@ -252,7 +253,7 @@ def test_price_failure_preserves_sec_metrics_and_next_analysis_recovers(monkeypa
             raise TimeoutError("synthetic Yahoo timeout")
         value = Decimal(reference["price_records"]["aapl"]["value"])
         if len(calls) == 1:
-            value = Decimal("Infinity" if fault == "infinity" else "NaN")
+            value = {"infinity": Decimal("Infinity"), "nan": Decimal("NaN"), "float": 123.45}[fault]
         return {"value": value, "currency": "USD", "unit": "USD/shares",
                 "price_date": "2025-08-04", "completed_at": datetime(
                     2025, 8, 4, 16, tzinfo=ZoneInfo("America/New_York")),
@@ -270,7 +271,8 @@ def test_price_failure_preserves_sec_metrics_and_next_analysis_recovers(monkeypa
         rows = failed_price.bundle.rows
         assert [r.display for r in rows[:-1]] == expected[:-1]
         assert all(r.status == "computed" and r.input_fact_ids and r.sources for r in rows[:-1])
-        assert (rows[-1].status, rows[-1].reason) == ("n/a", "price_availability_unknown")
+        reason = "price_precision_unknown" if fault == "float" else "price_availability_unknown"
+        assert (rows[-1].status, rows[-1].reason) == ("n/a", reason)
         assert rows[-1].input_fact_ids and rows[-1].sources  # annual EPS evidence remains
         assert failed_price.bundle.facts
         assert "data_entry_failure" not in failed_price.bundle.issues
@@ -281,3 +283,52 @@ def test_price_failure_preserves_sec_metrics_and_next_analysis_recovers(monkeypa
         assert all(r.status == "computed" for r in recovered.bundle.rows)
         assert factory(state) is recovered
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize("quote", [Decimal("12.34567890123456789"), 12.345678901234567])
+def test_pe_requires_exact_source_quote(yahoo_daily_history, quote):
+    from tradingagents.financials.wiring import run_clock
+
+    clock = run_clock("2025-08-05")
+    yahoo_daily_history(["2025-08-04"], [quote])
+    price, reason = _price("AAPL", clock.as_of, clock, date(2024, 9, 28))
+    if isinstance(quote, Decimal):
+        assert reason is None
+        assert price.value == quote
+    else:
+        assert price is None
+        assert reason == "price_precision_unknown"
+
+
+def test_common_shareholders_income_cannot_supply_reported_net_margin(monkeypatch):
+    from tradingagents.financials.sec_provider import SecCompanyFactsProvider
+    from tradingagents.financials.wiring import build_metrics_factory
+
+    fact = {"start": "2025-01-01", "end": "2025-03-31", "filed": "2025-05-01",
+            "accn": "q1", "fy": 2025, "fp": "Q1"}
+    concepts = {
+        tag: {"units": {"USD": [{**fact, "val": value}]}}
+        for tag, value in [("Revenues", 100), ("NetIncomeLossAvailableToCommonStockholdersBasic", 20)]
+    }
+    monkeypatch.setattr(sec_edgar, "company_facts", lambda _: ("0000000001", {"facts": {"us-gaap": concepts}}))
+    factory = build_metrics_factory({}, data_factory=SecCompanyFactsProvider)
+    result = factory({"company_of_interest": "ABC", "trade_date": "2025-08-05"})
+    margin = next(row for row in result.bundle.rows if row.metric_id == "net_margin")
+    assert (margin.status, margin.reason) == ("n/a", "missing_input")
+
+
+def test_sec_outage_is_reported_to_the_analyst(monkeypatch):
+    from tradingagents.dataflows.errors import VendorUnavailableError
+    from tradingagents.financials.sec_provider import SecCompanyFactsProvider
+    from tradingagents.financials.wiring import build_metrics_factory
+
+    def outage(_):
+        raise VendorUnavailableError("synthetic SEC outage")
+
+    monkeypatch.setattr(sec_edgar, "company_facts", outage)
+    factory = build_metrics_factory({}, data_factory=SecCompanyFactsProvider)
+    result = factory({"company_of_interest": "AAPL", "trade_date": "2025-08-05"})
+    assert (result.mode, result.reason) == ("unavailable", "data_entry_failure:sec_unavailable")
+    assert len(result.bundle.rows) == 10
+    assert all(row.status == "n/a" and row.reason == result.reason for row in result.bundle.rows)
+    assert result.reason in result.text
