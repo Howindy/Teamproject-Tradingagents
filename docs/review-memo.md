@@ -672,3 +672,29 @@ records the actual approval timestamp and comment. Independent review of this
 implementation and the protected candidate run remain pending.
 
 AI review disposition pending independent review: CHANGES REQUIRED.
+
+## PR #22 offline implementation review
+
+The non-author pre-approval binds the v2 threshold specification at
+8d30e289ae83da220543fdcd4b2e6147c7c140fe. The registered configuration and
+rubric remain v1. The offline suite exercises the v2 runner, detailed evidence
+and shared record normalization, including the all-advisory boundary and
+blocking controls. Historical run 45459356876 passes v2 with 19 passed grades
+and 26 advisories. Run 45453248371 fails with 19 passed, 25 advisories and the
+S02 Manager blanket denial of company news. The recorded v1 results stand.
+Implementation awaits independent review. Activation requires separately
+approved materials and a fresh authorized run for formal candidate evidence.
+
+## PR #23 activation materials
+
+The reviewer approved the frozen specification at b49c3261e344aea6ac650a413d9da2857a3785e4.
+The v2 rubric digest and canonical settings digest matched the independent approval.
+Full YAML SHA-256 including the real reviewer, timestamp and permalink:
+25d51c88a179951fcc932e6533ded29f62dbb48a3121fa01954f278b2a2b5a9c.
+
+Offline replay verified the archived details and dataset digests and reconstructed
+all 15 replies for each run. Run 45459356876 passed v2 with 19 passed grades and
+26 advisories. Run 45453248371 failed with 19 passed grades, 25 advisories and
+one critical S02 Manager denial of available company news. These are replay
+decisions; activation requires merge after independent review. PR #13 needs
+new candidate-bound evidence. No provider requests were made.
