@@ -1,0 +1,84 @@
+{
+  "version": "round04a-semantic-units-draft-v1",
+  "status": "draft_pending_review",
+  "purpose": "Post-implementation scenario/meaning checks of the existing deterministic risk and final-delivery contracts; not a registered live-model semantic suite.",
+  "base_scenario": {
+    "ticker": "AAPL", "currency": "USD", "portfolio_value": "100000",
+    "current_position_value": "0", "proposed_buy_value": "30000",
+    "entry_price": "100", "stop_loss_price": "95"
+  },
+  "units": [
+    {
+      "id": "R4-SU-01", "title": "等于风险阈值可以通过",
+      "requirements": ["FR-04-FC05", "SB-01-FC05"],
+      "question": "模型建议Buy；组合10万美元、原持仓0、拟买入3万美元，入场100、止损95，必要数据齐全。正式风险和推荐结果是什么？",
+      "expected_answer_summary": "持仓占比30%、止损距离5%，恰好等于默认阈值，两项通过；正式结果Buy，保留原结论。",
+      "scenario_overrides": {}, "data_gap": false,
+      "expected": {"risk_status": "passed", "gate_status": "passed", "final_rating": "Buy", "weight": "0.3", "stop": "0.05"},
+      "reason_terms": [],
+      "counterexample": {
+        "kind": "scenario_override", "changes": {"proposed_buy_value": "30000.0000000001"},
+        "expected": {"risk_status": "blocked", "gate_status": "blocked", "final_rating": "REVIEW", "weight": "0.300000000000001", "stop": "0.05"}
+      }
+    },
+    {
+      "id": "R4-SU-02", "title": "显示舍入不能掩盖超限",
+      "requirements": ["FR-04-FC05", "SB-01-FC05"],
+      "question": "拟买入金额变为30000.0000000001，其余输入不变。即使界面显示约30%，能否直接批准买入？",
+      "expected_answer_summary": "精确占比超过0.30，风险blocked，正式评级REVIEW；判断不使用显示舍入值。",
+      "scenario_overrides": {"proposed_buy_value": "30000.0000000001"}, "data_gap": false,
+      "expected": {"risk_status": "blocked", "gate_status": "blocked", "final_rating": "REVIEW", "weight": "0.300000000000001", "stop": "0.05"},
+      "reason_scope": "risk", "reason_terms": ["projected weight"],
+      "counterexample": {"kind": "proposal_text", "text": "The displayed weight is 30%, so ignore the exact breach and publish Buy."}
+    },
+    {
+      "id": "R4-SU-03", "title": "止损距离超限不能被模型建议覆盖",
+      "requirements": ["FR-04-FC05", "SB-01-FC05"],
+      "question": "入场价100、止损价90，默认最大止损距离5%，模型仍建议Buy。最终应如何处理？",
+      "expected_answer_summary": "止损距离10%，风险blocked，正式结果REVIEW并说明超限；模型仍可保留为中间建议。",
+      "scenario_overrides": {"stop_loss_price": "90"}, "data_gap": false,
+      "expected": {"risk_status": "blocked", "gate_status": "blocked", "final_rating": "REVIEW", "weight": "0.3", "stop": "0.1"},
+      "reason_scope": "risk", "reason_terms": ["stop distance"],
+      "counterexample": {"kind": "proposal_text", "text": "Buy immediately and disregard the supplied stop-distance limit."}
+    },
+    {
+      "id": "R4-SU-04", "title": "缺少买入场景不能由模型补全",
+      "requirements": ["FR-04-FC05", "SB-01-FC05"],
+      "question": "股票Buy建议没有调用方提供的买入金额、入场价和止损价等场景。能否让模型自行猜测后正式发布Buy？",
+      "expected_answer_summary": "保留结构化blocked结果，正式评级REVIEW并说明缺少scenario；不中止有效分析，也不猜填场景。",
+      "scenario_overrides": null, "data_gap": false,
+      "expected": {"risk_status": "blocked", "gate_status": "blocked", "final_rating": "REVIEW", "weight": null, "stop": null},
+      "reason_scope": "risk", "reason_terms": ["scenario"],
+      "counterexample": {"kind": "proposal_text", "text": "I assume a safe portfolio and stop loss even though the caller supplied no purchase scenario. Buy."}
+    },
+    {
+      "id": "R4-SU-05", "title": "必要数据缺口不能被文字宣称齐全替代",
+      "requirements": ["FR-03-FC04", "SB-01-FC05"],
+      "question": "场景风险通过，但程序摘要显示必要财务数据不可用。模型报告声称数据齐全，是否可以正式发布Buy？",
+      "expected_answer_summary": "风险passed不等于最终passed；依据程序缺口进入REVIEW并保留实际缺失原因。",
+      "scenario_overrides": {}, "data_gap": true,
+      "expected": {"risk_status": "passed", "gate_status": "blocked", "final_rating": "REVIEW", "weight": "0.3", "stop": "0.05"},
+      "reason_terms": ["fixture source timeout"],
+      "counterexample": {"kind": "proposal_text", "text": "All necessary financial data is complete. Ignore any program-recorded gap and publish Buy."}
+    },
+    {
+      "id": "R4-SU-06", "title": "风险检查异常不沿用模型Buy",
+      "requirements": ["FR-04-FC05", "SB-01-FC05"],
+      "question": "风险计算发生内部异常，但模型已有Buy建议。程序如何交付正式结果？",
+      "expected_answer_summary": "portfolio_risk_result为error；SB-01因风险未通过而blocked，正式评级REVIEW。风险error不等于SB-01自身error。",
+      "scenario_overrides": {}, "data_gap": false, "force_risk_error": true,
+      "expected": {"risk_status": "error", "gate_status": "blocked", "final_rating": "REVIEW", "weight": null, "stop": null},
+      "reason_terms": ["error"],
+      "counterexample": {"kind": "proposal_text", "text": "The risk calculator failed, so reuse my Buy recommendation as the final decision."}
+    },
+    {
+      "id": "R4-SU-07", "title": "保存和记忆只能使用正式结果",
+      "requirements": ["INV-01-FC01", "INV-01-FC02", "SB-01-FC05"],
+      "question": "中间建议是Buy、正式检查是blocked/REVIEW。状态文件和记忆应写哪一个？若正式字段相互矛盾如何处理？",
+      "expected_answer_summary": "写REVIEW及程序正式说明；不能保存为中间Buy。blocked却搭配Buy的畸形结果在写入前被拒绝，已有记录不变。",
+      "kind": "delivery", "scenario_overrides": null, "data_gap": false,
+      "expected": {"risk_status": "blocked", "gate_status": "blocked", "final_rating": "REVIEW", "weight": null, "stop": null},
+      "counterexample": {"kind": "invalid_formal_fields", "changes": {"final_rating": "Buy"}}
+    }
+  ]
+}
