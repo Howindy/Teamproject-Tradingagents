@@ -1,6 +1,6 @@
 # Round-04A | Integrate purchase risk and the formal recommendation
 
-**Planning draft v4, 2026-11-25.** Baseline `5718bacff6cafb9412a805878fe82e97f279a8bc` includes Round 3. D1 version 1.50.0 defines the acceptance criteria. The [architecture blueprint](../../architecture-blueprint.md), [ADR 001](../architecture/adr/001-graph-internal-final-check.md) and [verification constraints](../code-governance/verification-constraints.md) govern the integration. Implementation, test approval and final acceptance are pending.
+**Planning draft v5, 2026-11-25.** Baseline `5718bacff6cafb9412a805878fe82e97f279a8bc` includes Round 3. D1 version 1.50.0 defines the acceptance criteria. The [architecture blueprint](../../architecture-blueprint.md), [ADR 001](../architecture/adr/001-graph-internal-final-check.md) and [verification constraints](../code-governance/verification-constraints.md) govern the integration. Implementation, test approval and final acceptance are pending.
 
 ## Scope and existing evidence
 
@@ -20,7 +20,7 @@ The core suites are [FR-04 risk](../../test/offline/test_fr04_risk.py) and [SB-0
 
 ## Implementation sequence and ownership
 
-1. **Acquire the scenario.** Subject to OQ-01 approval, add optional `--purchase-scenario <json-file>` to `src/cli/main.py` and an optional keyword-only `purchase_scenario=None` to `TradingAgentsGraph.propagate`. Carry the CLI input through the existing flags mapping in `src/cli/run.py`. Preserve positional callers and the programmatic return shape `(final_state, signal)`. A missing option supplies no scenario. An explicitly unreadable file or malformed JSON is an entry error before analysis starts. Parsed but business-invalid data reaches the risk core, which decides applicability and status.
+1. **Acquire the scenario.** Use the reviewed OQ-01 contract below. Add optional `--purchase-scenario <json-file>` to `src/cli/main.py` and an optional keyword-only `purchase_scenario=None` to `TradingAgentsGraph.propagate`. Carry the CLI input through the existing flags mapping in `src/cli/run.py`. Preserve positional callers and the programmatic return shape `(final_state, signal)`. A missing option supplies no scenario. An explicitly unreadable file or malformed JSON is an entry error before analysis starts. Parsed but business-invalid data reaches the risk core, which decides applicability and status.
 2. **Build the initial state.** In `src/tradingagents/graph/trading_graph.py` and `src/tradingagents/agents/state.py`, carry the current ticker, scenario and supplied threshold keys as JSON-compatible values. Parse decimal JSON tokens without a binary-float intermediate. Preserve the distinction between an omitted threshold and an explicitly invalid value. The core owns the classroom defaults for `max_projected_weight` (0.30) and `max_stop_distance` (0.05). Holdings, model text and vendor data cannot supply missing scenario fields.
 3. **Connect the two existing decisions.** In `src/tradingagents/agents/managers/portfolio_manager.py`, emit the advisory `model_proposal` with rating and text. In `src/tradingagents/graph/setup.py`, route PM → Portfolio Risk Check → Final Recommendation Check → END. The risk node obtains a fresh check-time snapshot from the existing FR-03 producer and calls IF-08, `evaluate(analysis_ticker, proposal, scenario, thresholds, asset_type)`. Publish the summary and `portfolio_risk_result`. The final node calls IF-09, `evaluate(proposal, availability, risk, asset_type)`, exactly once. Keep the research-start and terminal snapshots at their existing stages. A late terminal observation cannot rerun either decision.
 4. **Validate delivery.** Add a small IF-19 structural validator in `src/tradingagents/final_recommendation.py`, outside the existing evaluator. Require all five fields. The proposal is null or an object with rating and text, each string or null. A passed gate carries a legal five-tier rating. A blocked or error gate carries REVIEW. The decision is nonblank text. Reasons are a string list with at least one substantive reason on blocked/error. An illegal proposal rating can coexist with a valid blocked result. A malformed formal result is an execution error before normal return, display or save. Consumers must never repair it by parsing the proposal or manufacturing REVIEW.
@@ -32,9 +32,41 @@ These named application files bound the proposed changes. Keep `src/tradingagent
 
 Start from the pinned baseline with FR-10 absent. The only shared application files are `graph/setup.py` and `graph/trading_graph.py` under `src/tradingagents/`. A owns post-PM edges, scenario transport and formal delivery. If B is present, preserve its optional graph constructor resolver, fundamentals analyst factory and metric scope in invoke/stream. A requires no financials import, configuration, placeholder or result. A alone owns CLI scenario changes.
 
-OQ-01 covers the new entry signature. On approval, separately scope the matching one-parameter update in `scripts/ci_checks.py` and its API regression in `test/offline/test_ci_gates.py`. Keep checks for omitted/reordered old parameters and unexpected additions. OQ-04 verifies the existing save interaction. OQ-08 verifies sufficient graph depth. OQ-07 concerns effective file permissions.
+Limit the OQ-01 API gate change to the matching one-parameter update in `scripts/ci_checks.py` and its API regression in `test/offline/test_ci_gates.py`. Keep checks for omitted/reordered old parameters and unexpected additions. OQ-04 verifies the existing save interaction. OQ-08 verifies sufficient graph depth. OQ-07 concerns effective file permissions.
 
 One baseline test, P07 in `test/offline/test_financial_metrics_evaluation.py`, assumes the preparation PR has no application diff against moving main. This can fail on either feature branch. Treat it as a separate test-maintenance issue if reproduced. The proposed common correction checks the preparation-only conditions against the pinned historical tree above and retains the current deferred-brief check. Verify a violating preparation fixture is rejected. Either round can carry the same reviewed correction independently or reuse it if already present. It is outside the product increment and confers no permission to relax CI or scoring.
+
+## OQ-01 decision and entry test specification
+
+OQ-01 technical review is complete for this revision. Both entries accept one flat purchase-scenario object. It uses the existing IF-08 scenario field names and two optional top-level keys, `max_projected_weight` and `max_stop_distance`. At the risk boundary, pass those two keys in the IF-08 thresholds mapping only when present, preserving their values, including null. Pass the remaining scenario fields as the scenario argument. This uses one CLI option and one optional programmatic keyword and leaves threshold validation and defaults with the risk evaluator.
+
+Use this JSON as the contents of `purchase.json`. In the programmatic example, `payload` is the mapping obtained by decoding the same file.
+
+```json
+{
+  "ticker": "AAPL",
+  "currency": "USD",
+  "portfolio_value": 100000,
+  "current_position_value": 0,
+  "proposed_buy_value": 30000,
+  "entry_price": 100,
+  "stop_loss_price": 95
+}
+```
+
+- CLI invocation: `tradingagents --ticker AAPL --date 2025-01-15 --purchase-scenario purchase.json`.
+- Programmatic invocation: `graph.propagate("AAPL", "2025-01-15", purchase_scenario=payload)`.
+
+For FR-04-FC05, SB-01-FC05 and IR-14, use a stock Buy proposal and a sufficient FR-03 summary. Apply each variation to both entries. Compare the structured risk result and formal outcome. With these operands, the risk result must retain `projected_weight="0.3"` and `stop_distance="0.05"` in every row below.
+
+| Variation from the shared sample | Expected result through both entries |
+|---|---|
+| Neither threshold key is present | The core reports thresholds `{"max_projected_weight":"0.3","max_stop_distance":"0.05"}`. Equality passes both checks. The formal rating is Buy. |
+| Add only `"max_projected_weight": "0.25"` | The core reports the supplied weight limit and the default stop limit. Projected weight exceeds 0.25. Risk and gate are blocked and the formal rating is REVIEW. |
+| Add only `"max_projected_weight": null` | Input acquisition succeeds. Risk is blocked. Its threshold map contains only `{"max_stop_distance":"0.05"}`. Reasons identify the invalid weight limit and the need for manual review. The gate is blocked and the formal rating is REVIEW. |
+| Add only `"max_stop_distance": 1` | Input acquisition succeeds. Risk is blocked. Its threshold map contains only `{"max_projected_weight":"0.3"}`. Reasons identify the out-of-range stop limit and the need for manual review. The gate is blocked and the formal rating is REVIEW. |
+
+With the option or keyword omitted entirely, the applicable Buy reaches FR-04 with a missing scenario and yields a structured block. An explicitly unreadable CLI file or malformed JSON fails before analysis starts. For the precision variant below, use the literal JSON token `30000.0000000001` and the equivalent exact decimal string in the programmatic mapping.
 
 ## Acceptance on the candidate
 
@@ -51,4 +83,9 @@ Use real entries, graph, evaluators, registry, writers and memory with controlle
 
 Run the two existing core suites, the two targeted integration/contract suites and then `python -m pytest -q` from the repository root. Use isolated test outputs under `/private/tmp/tradingagents-round-04a/`. Run Ruff, the repository schema/API/permission and mypy-baseline checks, `python -m pip check`, and `git diff --check`. Review applicable PR gates and the actual classification of any prompt change. Record candidate SHA, environment, commands, FC/IR mappings, failures and skips. The default pytest selection excludes live integration.
 
-Freeze this plan and the specific tests for review before implementation. Record the actual approval reference, safety review under ADR 001, first implementation commit and review evidence when available. Completion requires current regression evidence for the eight existing core criteria and production-path evidence for the five outstanding criteria.
+## Approval records before implementation
+
+1. Record the revised specification commit and an eligible reviewer's test-spec pre-approval using the repository's `APPROVED test-spec:` convention. Identify the test files, FC/IR mappings and expected assertions, including the dual-entry cases above. The previous freeze at `b1b9821` predates this payload decision.
+2. Record the ADR 001 safety-critical implementation approval for the same revision and scope, covering the entry contract, post-PM checks and formal delivery. Attach the reviewer, approval reference and timestamp for each approval. The OQ-01 technical decision above settles the payload design; the two approval records are pending.
+
+When implementation starts, record its first commit so reviewers can verify approval order. Completion requires current regression evidence for the eight existing core criteria and production-path evidence for the five outstanding criteria.
