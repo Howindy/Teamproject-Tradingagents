@@ -3851,7 +3851,13 @@ entries:
         - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/regression-final.xml"
         - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/fr03-prior.xml"
         - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/real-candidate-smoke/result-final.json"
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R000720 (anchor #R000720; line 2266274)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R000725 (anchor #R000725; line 2266397)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R000786 (anchor #R000786; line 2268072)'
     commit: null
     pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/18"
     limitations:
@@ -3909,7 +3915,11 @@ entries:
       - /private/tmp/cs5351-pr18-maintenance-13jnh35d/types-final.out
       - /private/tmp/cs5351-pr18-maintenance-13jnh35d/schema-final.out
       - /private/tmp/cs5351-pr18-maintenance-13jnh35d/dependencies-final.out
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001037 (anchor #R001037; line 2276460)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001039 (anchor #R001039; line 2276537)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
     limitations:
@@ -3974,7 +3984,9 @@ entries:
       - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/full-regression-unavailable.out
       - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/ruff-unavailable.out
       - /private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0/mypy-unavailable.out
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001291 (anchor #R001291; line 2283942)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
     limitations:
@@ -4032,7 +4044,9 @@ entries:
       - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/auth-targeted.xml
       - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/gates-final.xml
       - /private/tmp/cs5351-pr18-auth-fix-5smxirmi/replay-result.json
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001452 (anchor #R001452; line 2288735)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
     limitations:
@@ -4086,7 +4100,9 @@ entries:
       evidence:
       - /private/tmp/cs5351-pr18-type-fix-bts6jccf/gates.xml
       - https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45437892172/job/138600597966
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001484 (anchor #R001484; line 2289943)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/18
     limitations:
@@ -4140,7 +4156,11 @@ entries:
       - /private/tmp/cs5351-round3-final-ntzigbfm/gates-v2.xml
       - /private/tmp/cs5351-round3-final-ntzigbfm/targeted.xml
       - /private/tmp/cs5351-round3-final-ntzigbfm/approval-replay.json
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001611 (anchor #R001611; line 2293731)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001654 (anchor #R001654; line 2294958)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/13
     limitations:
@@ -4181,7 +4201,15 @@ entries:
       status: offline_passed
       summary: Gate regression with activation assertion 191 passed. FR-03 evaluator 56 passed. No real completion requests.
       evidence: [/private/tmp/fr20-gates.txt]
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001693 (anchor #R001693; line 2295943)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001701 (anchor #R001701; line 2296175)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001718 (anchor #R001718; line 2296569)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001747 (anchor #R001747; line 2297308)'
     commit: null
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/20
     limitations: [Independent final review and candidate-bound trusted execution pending.]
@@ -4209,7 +4237,11 @@ entries:
       status: offline_passed
       summary: 66 suite tests passed. On 15 historical replies, five grades changed and forty matched the original. The revised replay yielded 19 passed, 25 unresolved and one failed. Zero provider requests.
       evidence: [https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45453248371]
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002063 (anchor #R002063; line 2305788)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002069 (anchor #R002069; line 2305956)'
     commit: 5904b9f4aabfe5c02238aee3247114ad6692c511
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/21
     limitations: [Frozen replay covers the historical candidate only.]
@@ -4238,6 +4270,11 @@ entries:
       summary: 82 offline suite tests passed. Run 45459356876 gives 26 advisory dimensions and passes v2. Run 45453248371 still fails on the S02 Manager contradiction. No provider calls.
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/22
     limitations: [Activation and formal candidate evaluation require separate approval.]
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002289 (anchor #R002289; line 2311719)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002298 (anchor #R002298; line 2311971)'
 
   - id: AI-FR03-V2-ACTIVATION-001
     date: '2026-11-25'
@@ -4262,6 +4299,11 @@ entries:
       summary: All 82 data-availability and six financial-metrics tests passed across local environments. The financial requirements schema test was repeated in Python 3.14 with jsonschema installed. Zero provider requests.
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/23
     limitations: [Formal candidate evaluation needs separate execution approval.]
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002353 (anchor #R002353; line 2313389)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002358 (anchor #R002358; line 2313537)'
 
   - id: "AI-FM-FEATURE-B-001"
     date: "2026-11-25"
@@ -4595,8 +4637,362 @@ entries:
       summary: >-
         Four new regression cases failed before the product fix. On macOS with Python
         3.12, all 460 targeted tests passed. Ruff, API checks and pip check passed.
-    transcript_refs: []
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003688 (anchor #R003688; line 2350425)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003705 (anchor #R003705; line 2350909)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003717 (anchor #R003717; line 2351237)'
     limitations: ["Controlled offline inputs only. The PR records the default suite result."]
+
+  - id: AI-FR03-PROMPT-SOURCE-SCOPE-001
+    date: '2026-11-25'
+    recorded_on: '2026-11-25'
+    round: round-03
+    human_operator: 学生团队
+    tool: Codex
+    model: Not recorded in the visible transcript
+    activity: research_prompt_source_scope_correction
+    task: Correct the FR-03 research candidate after the frozen S02 Manager reply conflated unavailable
+      global news with all news.
+    requirement_ids:
+    - FR-03
+    fit_criterion_ids:
+    - FR-03-FC05
+    files_changed:
+    - src/tradingagents/agents/managers/research_manager.py
+    - src/tradingagents/agents/researchers/bear_researcher.py
+    - src/tradingagents/agents/researchers/bull_researcher.py
+    - src/tradingagents/dataflows/availability.py
+    ai_contribution: Added a shared coverage-scope explanation in availability.py and used it in the Bull,
+      Bear and Research Manager prompts. Passed the existing news analyst report directly to the Manager
+      so available company news and the missing global source are both visible; relabelled researcher news
+      sections to avoid presenting company news as global news. Clarified complete necessary coverage, missing
+      summary and not-applicable stock rules without rewriting evaluator thresholds or formal decisions.
+    human_intervention: The student team directed correction of S02 and clarification of S01/S04/S05, prohibited
+      further model calls, then requested technical review and authorized committing/pushing only the four
+      reviewed source files. Trusted scorer maintenance was kept in a separately pre-approved PR.
+    approval:
+      subject: User-authorized code correction; no independent final approval inferred
+      status: not_established
+      evidence:
+      - transcripts/merged-opencode-then-codex.md#R001907
+    verification:
+      status: historical_results_backfilled
+      summary: The recorded FR-03 offline regression passed 155 tests. Captured actual candidate prompts
+        for all 15 case/role combinations and checked the program summary, existing news report and shared
+        explanation. Replayed all 45 frozen original grades identically before proposing scorer corrections.
+        Zero new model requests; these checks did not establish semantic quality for the new prompt.
+      evidence:
+      - /private/tmp/fr03-result-45453248371/ci-semantic-details-bee892fc08bc7e114ccd1fd50c73684036361d82-data-availability/semantic-details.json
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001907 (anchor #R001907; line 2301467)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001959 (anchor #R001959; line 2302937)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001975 (anchor #R001975; line 2303367)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R001983 (anchor #R001983; line 2303548)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002004 (anchor #R002004; line 2304175)'
+    commit: d52fcfcb715250265be9755813418d78787b76ac
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/13
+    limitations:
+    - Retrospective record from the selected Codex transcript and local Git history; no application tests
+      or model calls rerun for this log update.
+    - Historical test results and approval comments do not establish current-candidate semantic acceptance.
+  - id: AI-R04A-TESTS-001
+    date: '2026-11-25'
+    recorded_on: '2026-11-25'
+    round: round-04a
+    human_operator: 学生团队
+    tool: Codex
+    model: Not recorded in the visible transcript
+    activity: round04a_test_first_acceptance
+    task: Write and commit the frozen Round-04A integration and formal-result contract tests before product
+      changes.
+    requirement_ids:
+    - FR-04
+    - SB-01
+    - INV-01
+    fit_criterion_ids:
+    - FR-04-FC05
+    - SB-01-FC05
+    - INV-01-FC01
+    - INV-01-FC02
+    - INV-01-FC03
+    files_changed:
+    - test/offline/test_formal_result_contract.py
+    - test/offline/test_round04a_integration.py
+    ai_contribution: Added two test modules with 47 cases for equivalent CLI/programmatic purchase-scenario
+      payloads, threshold defaults and invalid overrides, once-only graph checks, strict formal-result validation,
+      delivery consistency, conditional/deduplicated memory append, save/error ordering, run isolation and
+      settlement preserving the original decision. Retained the 181 existing risk/final-check core tests.
+    human_intervention: 'After the student supplied the real PR #24 approval comment, the team required
+      completing coverage and committing tests separately, with no product-code changes, push or Round-04B
+      edits.'
+    approval:
+      subject: Frozen Round-04A test specification and ADR 001 implementation scope @ 838447f1a24edcf1633daa6061299140a1ba1582
+      status: approved
+      approved_at: '2026-11-24T19:47:08Z'
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7142585900
+    verification:
+      status: historical_results_backfilled
+      summary: 'Frozen tests before implementation: 38 failed and 9 passed. Existing FR-04/SB-01 core regression:
+        181 passed. Ruff on the two new test files passed. Some entry cases failed at the missing input
+        option/parameter before downstream assertions could execute; these were expected test-first failures.'
+      evidence:
+      - /private/tmp/tradingagents-round-04a/test-freeze.log
+      - /private/tmp/tradingagents-round-04a/coverage-core.log
+      environment: Recorded macOS run using /opt/miniconda3/envs/tradingagents/bin/python; plugin autoload
+        and bytecode/cache writes disabled. Commands retain the recorded temporary test wrapper or explicit
+        PYTHONPATH; these are historical controlled runs, not newly repeated tests.
+      commands:
+      - PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python
+        /private/tmp/fr10pytest.py -p no:cacheprovider -q --basetemp=/private/tmp/tradingagents-round-04a/test-freeze-tmp
+        --tb=line test/offline/test_formal_result_contract.py test/offline/test_round04a_integration.py
+        > /private/tmp/tradingagents-round-04a/test-freeze.log 2>&1; result=$?; tail -12 /private/tmp/tradingagents-round-04a/test-freeze.log;
+        exit $result
+      command_transcript_refs:
+      - path: transcripts/merged-opencode-then-codex.md
+        locator: 'R002901 (anchor #R002901; line 2328391)'
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002837 (anchor #R002837; line 2326604)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002905 (anchor #R002905; line 2328484)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R002910 (anchor #R002910; line 2328632)'
+    commit: 8babc1ab7f97f9632e04a7544865ee70aacf95d0
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    limitations:
+    - Retrospective record from the selected Codex transcript and local Git history; no application tests
+      or model calls rerun for this log update.
+    - Historical test results and approval comments do not establish current-candidate semantic acceptance.
+  - id: AI-R04A-IMPLEMENTATION-001
+    date: '2026-11-25'
+    recorded_on: '2026-11-25'
+    round: round-04a
+    human_operator: 学生团队
+    tool: Codex
+    model: Not recorded in the visible transcript
+    activity: round04a_formal_delivery_integration
+    task: Implement the minimum Round-04A integration on the separately committed frozen tests.
+    requirement_ids:
+    - FR-04
+    - SB-01
+    - INV-01
+    fit_criterion_ids:
+    - FR-04-FC05
+    - SB-01-FC05
+    - INV-01-FC01
+    - INV-01-FC02
+    - INV-01-FC03
+    files_changed:
+    - scripts/ci_checks.py
+    - src/cli/display.py
+    - src/cli/main.py
+    - src/cli/run.py
+    - src/tradingagents/agents/managers/portfolio_manager.py
+    - src/tradingagents/agents/rating.py
+    - src/tradingagents/agents/state.py
+    - src/tradingagents/final_recommendation.py
+    - src/tradingagents/graph/setup.py
+    - src/tradingagents/graph/trading_graph.py
+    - src/tradingagents/reporting.py
+    ai_contribution: Connected the shared purchase scenario through CLI and propagate(), added post-Portfolio-Manager
+      risk and final-check graph nodes, and transported the existing evaluators' checked formal values into
+      state, return values, CLI, reports and conditional memory. Tightened consumer validation of malformed
+      formal results while preserving legitimate REVIEW. Updated the API-signature expectation for the new
+      purchase_scenario parameter; retained existing risk/final-check decision rules and the frozen tests.
+    human_intervention: The student team explicitly authorized implementation from 8babc1a, required the
+      47 new tests and 181 core tests to pass, and requested a separate local implementation commit with
+      no push or Round-04B change.
+    approval:
+      subject: Frozen Round-04A test specification and ADR 001 implementation scope @ 838447f1a24edcf1633daa6061299140a1ba1582
+      status: approved
+      approved_at: '2026-11-24T19:47:08Z'
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7142585900
+    verification:
+      status: historical_results_backfilled
+      summary: 'Recorded target results: 47 new tests and 181 core tests passed (228 total). Ruff, API signature,
+        requirements schema, permissions and dependency checks passed. Default suite: 1986 passed, 62 failed,
+        1 skipped, 1 deselected, 100 subtests passed. The line-sensitive mypy baseline check failed; ignoring
+        line movement yielded no new diagnostics. Later approved legacy-test/P07 changes are recorded separately
+        and are not retroactively applied to this result.'
+      evidence:
+      - /private/tmp/tradingagents-round-04a/commit-tests.log
+      - /private/tmp/tradingagents-round-04a/final-full.log
+      - /private/tmp/tradingagents-round-04a/final-mypy-compare.log
+      environment: Recorded macOS run using /opt/miniconda3/envs/tradingagents/bin/python; plugin autoload
+        and bytecode/cache writes disabled. Commands retain the recorded temporary test wrapper or explicit
+        PYTHONPATH; these are historical controlled runs, not newly repeated tests.
+      commands:
+      - PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /opt/miniconda3/envs/tradingagents/bin/python
+        /private/tmp/fr10pytest.py -p no:cacheprovider -q --basetemp=/private/tmp/tradingagents-round-04a/commit-tmp
+        test/offline/test_formal_result_contract.py test/offline/test_round04a_integration.py test/offline/test_fr04_risk.py
+        test/offline/test_sb01_final_check.py > /private/tmp/tradingagents-round-04a/commit-tests.log 2>&1;
+        result=$?; tail -5 /private/tmp/tradingagents-round-04a/commit-tests.log; exit $result
+      - PYTHONPATH=src:/private/tmp/cs5351-semantic-rollback-20261123/semantic-eval-20261123-01/environment/lib/python3.12/site-packages
+        PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 /opt/miniconda3/envs/tradingagents/bin/python
+        -m pytest -p no:cacheprovider --basetemp=/private/tmp/tradingagents-round-04a/final-full-tmp -q
+        --tb=line > /private/tmp/tradingagents-round-04a/final-full.log 2>&1; result=$?; tail -8 /private/tmp/tradingagents-round-04a/final-full.log;
+        exit $result
+      command_transcript_refs:
+      - path: transcripts/merged-opencode-then-codex.md
+        locator: 'R003010 (anchor #R003010; line 2331483)'
+      - path: transcripts/merged-opencode-then-codex.md
+        locator: 'R003032 (anchor #R003032; line 2332053)'
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003017 (anchor #R003017; line 2331671)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003039 (anchor #R003039; line 2332266)'
+    commit: 66b75ed224be739482c01cc6631d9c80ea825a09
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    limitations:
+    - Retrospective record from the selected Codex transcript and local Git history; no application tests
+      or model calls rerun for this log update.
+    - Historical test results and approval comments do not establish current-candidate semantic acceptance.
+  - id: AI-R04A-LEGACY-TESTS-001
+    date: '2026-11-25'
+    recorded_on: '2026-11-25'
+    round: round-04a
+    human_operator: 学生团队
+    tool: Codex
+    model: Not recorded in the visible transcript
+    activity: round04a_approved_legacy_test_alignment
+    task: Apply the separately approved minimum adjustments to 58 old test cases after formal delivery integration.
+    requirement_ids:
+    - FR-03
+    - FR-04
+    - SB-01
+    - INV-01
+    fit_criterion_ids: []
+    files_changed:
+    - test/offline/test_cli_display.py
+    - test/offline/test_cli_headless.py
+    - test/offline/test_cli_memory_log.py
+    - test/offline/test_fr03_integration.py
+    - test/offline/test_graph_end_to_end.py
+    - test/offline/test_memory_log.py
+    - test/offline/test_portfolio_context.py
+    - test/offline/test_rating_integrity.py
+    - test/offline/test_report_html.py
+    - test/offline/test_reporting.py
+    ai_contribution: Adjusted expectations and fixtures in exactly ten approved legacy test modules to consume
+      checked formal decisions rather than PM proposals and incomplete result fixtures. Preserved the assertions
+      required by the frozen amendment and checked case-ID changes against 66b75ed. Did not alter production
+      code, the frozen 04A tests, P07, mypy baseline or Windows lock tests.
+    human_intervention: The student team required checking the supplemental approval before editing, recording
+      its real link, running the affected/target/default suites and committing only the reviewed test changes.
+      P07 and other remaining problems were explicitly excluded.
+    approval:
+      subject: Round-04A supplemental test specification @ 45e0e09359f9f00469e8f53d3bc49c1a3ae60eb9
+      status: approved
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7143051917
+    verification:
+      status: historical_results_backfilled
+      summary: 'All 58 amended cases passed; all ten affected modules: 330 passed; frozen 04A plus core
+        regression: 228 passed. Default suite: 2044 passed, 4 failed, 1 skipped, 1 deselected, 100 subtests
+        passed. Only the approved 58 case IDs changed from failed to passed; remaining failures were P07
+        and three Windows-lock simulations. The overlapping suite counts are not additive.'
+      evidence:
+      - /private/tmp/tradingagents-round-04a/supplement-7143051917/full-final.log
+      - /private/tmp/tradingagents-round-04a/supplement-7143051917/target-final.log
+      environment: Recorded macOS run using /opt/miniconda3/envs/tradingagents/bin/python; plugin autoload
+        and bytecode/cache writes disabled. Commands retain the recorded temporary test wrapper or explicit
+        PYTHONPATH; these are historical controlled runs, not newly repeated tests.
+      commands:
+      - PYTHONPATH=src:/private/tmp/cs5351-semantic-rollback-20261123/semantic-eval-20261123-01/environment/lib/python3.12/site-packages
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python
+        -m pytest -p no:cacheprovider -q --tb=line --basetemp=/private/tmp/tradingagents-round-04a/supplement-7143051917/full-final-tmp
+        --junitxml=/private/tmp/tradingagents-round-04a/supplement-7143051917/full-final.xml  > /private/tmp/tradingagents-round-04a/supplement-7143051917/full-final.log
+        2>&1; result=$?; tail -7 /private/tmp/tradingagents-round-04a/supplement-7143051917/full-final.log;
+        exit $result
+      command_transcript_refs:
+      - path: transcripts/merged-opencode-then-codex.md
+        locator: 'R003221 (anchor #R003221; line 2337293)'
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003224 (anchor #R003224; line 2337377)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003226 (anchor #R003226; line 2337441)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003273 (anchor #R003273; line 2338741)'
+    commit: af50d74b9cccb08d0ac3ed7ae023cbb89f956955
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    limitations:
+    - Retrospective record from the selected Codex transcript and local Git history; no application tests
+      or model calls rerun for this log update.
+    - Historical test results and approval comments do not establish current-candidate semantic acceptance.
+  - id: AI-R04A-P07-TEST-MAINT-001
+    date: '2026-11-25'
+    recorded_on: '2026-11-25'
+    round: round-04a
+    human_operator: 学生团队
+    tool: Codex
+    model: Not recorded in the visible transcript
+    activity: round04a_p07_preparation_history_test_maintenance
+    task: Repair only the approved P07 preparation-scope test and add meaningful negative controls.
+    requirement_ids:
+    - FR-10
+    fit_criterion_ids: []
+    files_changed:
+    - test/offline/test_financial_metrics_evaluation.py
+    ai_contribution: 'Changed test_financial_metrics_evaluation.py so the preparation-only source guard
+      compares the frozen PR #14 preparation endpoints (5c6e2ca and 88d47e7), while deferred-feature guards
+      continue checking the current tree. Added positive/negative controls for later legitimate implementation,
+      preparation-time source changes, forbidden live paths/configuration and unresolved history. Retained
+      the original protection against unapproved preparation changes.'
+    human_intervention: The student team isolated P07 into its own frozen maintenance specification and
+      required validating its real non-author approval before editing the sole allowed test module. Product
+      code, mypy baseline, Windows lock tests and Round-04B remained outside scope.
+    approval:
+      subject: P07 preparation-scope maintenance @ 8269667956d9e706e1519e2bf766273e67e3a462
+      status: approved
+      evidence:
+      - https://github.com/Howindy/Teamproject-Tradingagents/pull/24#issuecomment-7143292591
+    verification:
+      status: historical_results_backfilled
+      summary: 'P07 plus negative controls: 6 passed. Whole evaluation test module: 11 passed. Default suite:
+        2050 passed, 3 failed, 1 skipped, 1 deselected, 100 subtests passed. The remaining three Windows-lock
+        simulations were subsequently reproduced on unchanged pre-04A 5718bac; no lock repair was included
+        in this commit.'
+      evidence:
+      - /private/tmp/tradingagents-round-04a/p07-7143292591/full.log
+      environment: Recorded macOS run using /opt/miniconda3/envs/tradingagents/bin/python; plugin autoload
+        and bytecode/cache writes disabled. Commands retain the recorded temporary test wrapper or explicit
+        PYTHONPATH; these are historical controlled runs, not newly repeated tests.
+      commands:
+      - PYTHONPATH=src:/private/tmp/cs5351-semantic-rollback-20261123/semantic-eval-20261123-01/environment/lib/python3.12/site-packages
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONDONTWRITEBYTECODE=1 /opt/miniconda3/envs/tradingagents/bin/python
+        -m pytest -p no:cacheprovider -q --tb=short --basetemp=/private/tmp/tradingagents-round-04a/p07-7143292591/full-tmp
+        --junitxml=/private/tmp/tradingagents-round-04a/p07-7143292591/full.xml > /private/tmp/tradingagents-round-04a/p07-7143292591/full.log
+        2>&1; result=$?; tail -9 /private/tmp/tradingagents-round-04a/p07-7143292591/full.log; exit $result
+      command_transcript_refs:
+      - path: transcripts/merged-opencode-then-codex.md
+        locator: 'R003396 (anchor #R003396; line 2341955)'
+    transcript_refs:
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003399 (anchor #R003399; line 2342039)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003406 (anchor #R003406; line 2342261)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003429 (anchor #R003429; line 2342884)'
+    - path: transcripts/merged-opencode-then-codex.md
+      locator: 'R003480 (anchor #R003480; line 2344629)'
+    commit: aed85acaf9ca586ecb7b2224561696f262b82cc6
+    pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    limitations:
+    - Retrospective record from the selected Codex transcript and local Git history; no application tests
+      or model calls rerun for this log update.
+    - Historical test results and approval comments do not establish current-candidate semantic acceptance.
 
   - id: "AI-SEMANTIC-UNITS-REVIEW-001"
     date: "2026-11-25"
