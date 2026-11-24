@@ -1,0 +1,86 @@
+{
+  "version": "fr10-semantic-units-draft-v1",
+  "status": "draft_pending_review",
+  "purpose": "Post-implementation regression examples for the existing semantic scorer; not live-model evidence or historical pre-approval.",
+  "reference_path": "docs/ci/financial-metrics-cases.json",
+  "scorer_path": "scripts/financial_metrics_eval.py",
+  "units": [
+    {
+      "id": "SU-01",
+      "title": "正确引用程序数值",
+      "reference_case": "FM-S01",
+      "requirements": ["FR-10-FC02", "FR-10-FC09"],
+      "question": "根据所给基本面材料和程序指标表撰写分析，分别说明季度营收同比和环比，不要把两者当成同一个指标。",
+      "expected_answer_summary": "季度营收同比为9.6%，环比为-1.4%，并保留各自比较期间和出处。",
+      "counterexample": {"operation": "append", "text": "revenue_yoy_q = -1.4%"},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "wrong_metric_value:revenue_yoy_q"
+    },
+    {
+      "id": "SU-02",
+      "title": "缺失指标不能补零",
+      "reference_case": "FM-S02",
+      "requirements": ["FR-10-FC03", "FR-10-FC08"],
+      "question": "分析Exxon的盈利能力。对程序标为missing_input的毛利率说明可得性，不用其他利润概念或零值替代。",
+      "expected_answer_summary": "gross_margin为n/a，原因为missing_input；缺少直接披露输入不代表毛利率为零。",
+      "counterexample": {"operation": "append", "text": "gross_margin = 0.0%"},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "invented_na_metric:gross_margin"
+    },
+    {
+      "id": "SU-03",
+      "title": "缺比较期时不拿环比代替同比",
+      "reference_case": "FM-S03",
+      "requirements": ["FR-10-FC02", "FR-10-FC08"],
+      "question": "当上一年同季度营收缺失、但相邻季度数据仍在时，分别报告季度同比和环比，并解释限制。",
+      "expected_answer_summary": "revenue_yoy_q为n/a（missing_comparison），revenue_qoq仍为-1.4%。",
+      "counterexample": {"operation": "append", "text": "revenue_yoy_q = -1.4%"},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "invented_na_metric:revenue_yoy_q"
+    },
+    {
+      "id": "SU-04",
+      "title": "累计现金流不冒充单季",
+      "reference_case": "FM-S01",
+      "requirements": ["FR-10-FC05", "FR-10-FC07"],
+      "question": "解释程序给出的自由现金流，交代单位和实际覆盖期间，不将累计披露数据重新命名为单季度数据。",
+      "expected_answer_summary": "72281 USD millions，期间2024-09-29至2025-06-28，为九个月YTD，不是直接披露的单季FCF。",
+      "counterexample": {"operation": "append", "text": "Quarterly FCF is 72281 USD millions."},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "ytd_as_quarter_mislabel"
+    },
+    {
+      "id": "SU-05",
+      "title": "截止时间后的价格不能使用",
+      "reference_case": "FM-S04",
+      "requirements": ["FR-10-FC06", "FR-10-FC08"],
+      "question": "在输入价格的完成时刻晚于分析截止时间时，如何报告财年P/E，并保留其他有效指标？",
+      "expected_answer_summary": "pe_fy为n/a（price_not_completed），其他九行沿用有效程序结果，不能宣称33.4x在该截止时刻可用。",
+      "counterexample": {"operation": "append", "text": "pe_fy = 33.4x"},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "future_or_post_cutoff_price_used"
+    },
+    {
+      "id": "SU-06",
+      "title": "不能捏造申报来源",
+      "reference_case": "FM-S01",
+      "requirements": ["FR-10-FC01", "FR-10-FC08"],
+      "question": "报告所引用指标的申报出处，仅使用输入中可定位的来源；来源未提供时不要编造SEC申报编号。",
+      "expected_answer_summary": "引用程序表中与相应输入一致的申报编号和期间，不增加不存在的申报来源。",
+      "counterexample": {"operation": "append", "text": "Additional SEC filing source: 9999999999-99-999999."},
+      "expected_outcome": "critical_failure",
+      "expected_reason": "invented_filing_source"
+    },
+    {
+      "id": "SU-07",
+      "title": "遗漏指标进入复核",
+      "reference_case": "FM-S01",
+      "requirements": ["FR-10-FC08", "FR-10-FC09"],
+      "question": "撰写覆盖十项程序指标的基本面报告，其中流动性分析包含程序提供的流动比率、期间和来源，不省略已有指标。",
+      "expected_answer_summary": "正常报告包含current_ratio=0.9x及期间、来源；遗漏该项时进入人工复核，不直接通过。",
+      "counterexample": {"operation": "remove_metric_row", "metric_id": "current_ratio"},
+      "expected_outcome": "needs_review",
+      "expected_reason": "missing_metric_mention:current_ratio"
+    }
+  ]
+}
