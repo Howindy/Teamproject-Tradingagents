@@ -3331,3 +3331,70 @@ entries:
     limitations:
       - "Full application regression and remote GitHub CI not run in this repair session."
       - "Final human review remains pending; no commit, push or merge."
+
+
+  - id: "AI-FR03-SEMANTIC-IMPL-001"
+    date: "2026-11-24"
+    round: "round-03"
+    human_operator: null
+    tool: "Codex"
+    model: "not_exposed"
+    activity: "semantic_suite_implementation"
+    task: "Implement and locally verify the FR-03 data-availability runner, offline tests and suite registration under the frozen approved specification."
+    requirement_ids:
+      - "FR-03"
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/data_availability_eval.py"
+      - "test/offline/test_data_availability_evaluation.py"
+      - "docs/ci/semantic-suites.yaml"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Implemented the I3 runner with fixed-material hash and candidate SHA/origin checks,
+      actual candidate Bull/Bear/Research Manager execution through a subprocess bridge,
+      fixed model controls and a maximum twenty-request budget, case-specific scoring,
+      blocking needs_review outcomes and hashed details evidence. Added offline positive,
+      negative, boundary and failure tests using injected model transport, and registered
+      data-availability alongside financial-metrics. Preserved the four frozen specification
+      and material files and the unapproved configuration. Identified the public T16
+      single-suite registry assertion; analyzed its repair without modifying the public test.
+    human_intervention: >-
+      User supplied the independent approval comment, limited implementation to runner,
+      tests and registration, and subsequently explicitly requested this AI-use-log entry
+      identifying Codex as the tool. Public framework modification and remote delivery
+      were not performed in this task.
+    approval:
+      subject: "FR-03 semantic evaluation specification @ 1440c1ca2ae0806ce3b4b09c20634cfa213e63da; scoped implementation/test pre-approval only"
+      status: "approved"
+      approved_at: "2026-11-24T13:51:24Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7133438544"
+    verification:
+      status: "local_checked_with_failures_remote_pending"
+      summary: >-
+        Suite tests: 56 passed. Combined suite/public-gate/FR-10 tests: 174 passed,
+        1 failed because public T16 requires a registry containing only financial-metrics.
+        Default regression: 1713 passed, 4 failed, 1 skipped, 1 deselected, with 100
+        subtests passed; failures comprise T16 and three existing macOS EDEADLOCK cases.
+        Ruff, baseline-relative mypy, standalone runner mypy, requirements schema and
+        pip check passed. Real Round3 candidate 30421f025fc075d40751bcc7a955fc8e91f939c8
+        related prior tests: 188 passed. Its real role/prompt paths completed fifteen
+        combinations and forty-five dimensions using fifteen mocked completions;
+        this is integration evidence, not real-model semantic quality evidence.
+      evidence:
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/REPORT.md"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/RESULT.json"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/suite-final.xml"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/targeted-final.xml"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/regression-final.xml"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/fr03-prior.xml"
+        - "/private/tmp/cs5351-fr03-suite-verification-155lfe61/real-candidate-smoke/result-final.json"
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/18"
+    limitations:
+      - "No real model/vendor requests, commit, push, remote PR update or merge performed."
+      - "Configuration remains unapproved; implementation pre-approval is not configuration activation, real model execution authorization, final review or acceptance."
+      - "Public T16 compatibility failure remains unresolved; no claim that remote CI or Round3 semantic evaluation passes."
+      - "Evidence paths are local temporary files, not published CI artifacts; no raw session export is in the repository."
+      - "Human operator identity and exact model identifier were not established; no values invented."
