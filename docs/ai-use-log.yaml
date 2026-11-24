@@ -3245,7 +3245,12 @@ entries:
         in the existing Python environment; no dependency was installed. No application or semantic evaluation
         executed; planned P01-P07 are not passing evidence.
       evidence: []
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0721 (anchor #m0721; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0764 (anchor #m0764; Part I: OpenCode)"
     limitations:
       - "No genuine current-session raw transcript export is available in the repository; do not fabricate one."
       - "Existing permission-file effective loading and GitHub branch/environment protection are not verified."
@@ -3281,7 +3286,12 @@ entries:
         D:/CityU/cs5351/project/tradingagents/__init__.py rather than this worktree; recorded the installation
         prerequisite without overriding discovery or installing dependencies. No model requests, application
         migration or product tests executed. Final documentation/parser checks are reported with the revision SHA.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0766 (anchor #m0766; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0797 (anchor #m0797; Part I: OpenCode)"
     limitations:
       - "No current-session raw transcript export is available; none fabricated."
       - "Previous schema CLI block (missing jsonschema) remains unresolved; installation not authorized."
@@ -3341,7 +3351,12 @@ entries:
       evidence:
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/full.xml"
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/mypy-current.txt"
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0800 (anchor #m0800; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0959 (anchor #m0959; Part I: OpenCode)"
     pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/14"
     limitations:
       - "No genuine current-session raw transcript export is available in the repository; none fabricated."
@@ -3396,7 +3411,12 @@ entries:
       evidence:
         - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951/job/137773536552"
         - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198769895"
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0885 (anchor #m0885; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0959 (anchor #m0959; Part I: OpenCode)"
     limitations:
       - "No raw session export is available; none fabricated."
       - "No live model requests or merge; remote result after this fix must be verified separately."
@@ -3633,7 +3653,14 @@ entries:
         Confirmed independent worktree root and clean initial branch at dc77e6d, PR #14 and #17 merged,
         PR #13 open at 30421f0, and financial-metrics registered with unapproved config. Inspected the
         course PDF pages 6, 7 and 10. No feature tests, model calls, installation or workflow dispatch.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M0995 (anchor #m0995; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M1009 (anchor #m1009; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M1030 (anchor #m1030; Part I: OpenCode)"
     limitations:
       - "Actual current-session raw transcript export unavailable; no fabricated transcript."
       - "Round 3 final merge and Round 4 interfaces remain pending; separate trusted-side maintenance is required before real evaluation."
@@ -3693,7 +3720,12 @@ entries:
         substitutes, no model/vendor request. Full regression, live and graph integration not run.
       evidence:
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/"
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "M1032 (anchor #m1032; Part I: OpenCode)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C03987 (anchor #c03987; Part II: supplementary conversation)"
     commit: "8db62f850e1d3ba1b289ad378cf4295e2840efdb"
     pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/19"
     limitations:
@@ -3745,7 +3777,12 @@ entries:
         No pristine-baseline comparison was performed in this follow-up. Ruff check . passed.
         Synthetic cases cover raw versus adjusted close, completion cutoff, weekend, holiday/gap,
         stale observation, split-query failure and preservation of P/E n/a reasons.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04009 (anchor #c04009; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04147 (anchor #c04147; Part II: supplementary conversation)"
     limitations:
       - "Weekday freshness is deliberately limited; exchange holidays or missing preceding-weekday bars remain price_availability_unknown."
       - "No live SEC/Yahoo/model call or production P/E result was verified."
@@ -3789,7 +3826,12 @@ entries:
         analyses, unscoped non-reuse, nested failure restoring the outer scope and unrelated
         context, parallel independent scopes, disabled configuration and absent ticker with no fetch.
         Ruff check . passed. No live vendor/model calls, dependency installation or GitHub writes.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04154 (anchor #c04154; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04222 (anchor #c04222; Part II: supplementary conversation)"
     limitations:
       - "No graph or CLI entry currently enters analysis_scope; checkpoint B is not implemented or accepted."
       - "Merged Round 3 remains a prerequisite for entry integration, stream-close cleanup and actual FR-03 paired regression."
@@ -4354,7 +4396,12 @@ entries:
         Yahoo SQLite cases. No tests were skipped or weakened for that repair. CLI --help smoke
         succeeded. Final combined run of all thirteen named application test files: 463 passed
         in 9.19s; Ruff check . and git diff --check passed. AI-use YAML parsed successfully.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04467 (anchor #c04467; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04642 (anchor #c04642; Part II: supplementary conversation)"
     limitations:
       - "No live SEC/Yahoo/model execution or semantic-quality acceptance for this integration."
       - "Round 4 has not merged; the handoff contract is branch-side documentation, not teammate sign-off."
@@ -4381,7 +4428,12 @@ entries:
     verification:
       status: "documentation_only"
       summary: "Existing code push succeeded (0b9de96 to 2fbd1cf); checked handoff against current source and supplied Round-04B-v3. No new functional tests or live API calls."
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04702 (anchor #c04702; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04739 (anchor #c04739; Part II: supplementary conversation)"
     limitations:
       - "No main merge, CI configuration change, teammate approval or semantic pass is claimed."
 
@@ -4406,7 +4458,12 @@ entries:
     verification:
       status: "documentation_only"
       summary: "No application code changed; checked documentation diff and AI-use YAML syntax."
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04746 (anchor #c04746; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04778 (anchor #c04778; Part II: supplementary conversation)"
     limitations: ["No division of work, teammate approval or joint interface agreement is asserted."]
 
   - id: "AI-FM-ACCEPTANCE-OFFLINE-001"
@@ -4459,7 +4516,12 @@ entries:
         all four real-driver offline probe cases and the strengthened rounding test. These runs
         overlap and are not an additive total. API check returned errors=[], pip check reported
         no broken requirements. Final Ruff check . and diff whitespace checks passed; AI-use YAML parsed.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C04857 (anchor #c04857; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05069 (anchor #c05069; Part II: supplementary conversation)"
     limitations:
       - "No paid/model/data-vendor request, approved semantic activation or candidate-bound semantic-quality pass."
       - "Current main remains 5718bac; Round-04A is on a separate branch, with no combined acceptance performed."
@@ -4494,7 +4556,12 @@ entries:
         90 passed in 13.94s. Asserted nine unchanged computed rows with operands/sources, P/E-only
         unavailability retaining annual EPS evidence, one price attempt within an analysis and
         full recovery in the next analysis. Ruff check . passed. No external API request.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05086 (anchor #c05086; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05138 (anchor #c05138; Part II: supplementary conversation)"
     limitations: ["Targeted regression only; no full-suite rerun, live evaluation or main merge."]
 
   - id: "AI-FM-MERGE-04A-001"
@@ -4542,7 +4609,12 @@ entries:
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/merged-main-results.xml"
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/main-baseline-results.xml"
         - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/merged-evaluation-recheck.xml"
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05199 (anchor #c05199; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05532 (anchor #c05532; Part II: supplementary conversation)"
     limitations:
       - "Baseline comparison worktree: D:/CityU/cs5351/project/Teamproject-Tradingagents-fr10-main-check, detached at a835d43; test-only environment, not a delivery branch."
       - "Tests use synthetic external model/vendor responses, not real completions or live data."
@@ -4572,7 +4644,12 @@ entries:
     verification:
       status: "local_draft_tests_passed"
       summary: "14 passed in 2.41s; Ruff check passed. Zero model/vendor requests. No production/configuration/scorer changes."
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05638 (anchor #c05638; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05690 (anchor #c05690; Part II: supplementary conversation)"
     limitations:
       - "Uncommitted on local codex/fr10-semantic-unit-draft; no push, workflow activation or approval event."
       - "Known-answer regression fixtures are not evidence of unseen-data or live-model quality."
@@ -4606,7 +4683,12 @@ entries:
         sought in SB-01's decision text. Checked the existing separate-reason contract and corrected
         the test locator, not production behavior. Round-04A and FR-10 drafts together: 28 passed
         in 2.60s; Ruff passed. Zero LLM/vendor requests. Draft JSON and AI-use YAML checked on completion.
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05706 (anchor #c05706; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05765 (anchor #c05765; Part II: supplementary conversation)"
     limitations:
       - "Uncommitted local discussion draft; no push, registered semantic suite or CI activation."
       - "Constructed questions/counterexamples and deterministic checks do not measure real-model analysis quality."
@@ -5021,7 +5103,115 @@ entries:
     verification:
       status: "local_checks_passed_review_pending"
       summary: "After synchronization, standard pytest entry: 28 passed in 2.76s. Import-only lint corrections followed; final Ruff, JSON/YAML and diff checks are recorded before push. No model/vendor requests."
-    transcript_refs: []
+    transcript_annotation: "References added retrospectively on 2026-11-25 to a prepared local submission artifact. Its repository-relative path is reserved for the final submission package; the transcript is not uploaded in this YAML-only change."
+    transcript_refs:
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05802 (anchor #c05802; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05885 (anchor #c05885; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05890 (anchor #c05890; Part II: supplementary conversation)"
+      - path: "transcripts/student-id-haoxi.md"
+        locator: "C05927 (anchor #c05927; Part II: supplementary conversation)"
     limitations:
       - "Draft PR preparation/publication is not independent approval, CI success or main merge."
       - "The tests use controlled examples and deterministic contracts, not real LLM completions."
+
+  - id: AI-HAOXI-RECORD-RECONCILIATION-001
+    date: '2026-11-25'
+    tool: Codex
+    model: Model identifier not independently verified for this record-maintenance task
+    activity: retrospective_transcript_reference_maintenance
+    task: Reconcile haoxi-owned AI-use entries with the prepared annotated transcript and record the previously unlogged
+      FR-10 main merge.
+    files_changed:
+    - docs/ai-use-log.yaml
+    ai_contribution: Added transcript references to 17 existing haoxi-owned records and this explicitly retrospective
+      follow-up. Preserved all historical dates, approval states, verification claims and other contributors' entries.
+      No application, test, runtime prompt, CI or permission file was modified.
+    human_intervention: User requested downloading the current log, supplementing only their own records and uploading
+      only this YAML file. Prepared transcript files were read without alteration.
+    verification:
+      status: record_structure_and_anchor_checks_only
+      summary: YAML parsing, unique IDs, existing validate_ai_log contract, exact transcript anchors, preservation
+        of unrelated entries and Git diff checks. No application regression or live-model/data-vendor checks rerun.
+    historical_follow_up:
+      fr10_main_merge:
+        recorded_retrospectively_on: '2026-11-25'
+        user_authorization: C05571; explicit request to merge into main
+        agent_report: 'C05608; reports remote main at cfa79eb and PR #19 merged'
+        commit: cfa79eb8cbad82694745b13b39c1d392d46c5aca
+        pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/19
+        qualification: A merge is not evidence that course gates or live semantic evaluations passed.
+    transcript_refs:
+    - path: transcripts/student-id-haoxi.md
+      locator: 'C05571 (anchor #c05571; main-merge authorization)'
+    - path: transcripts/student-id-haoxi.md
+      locator: 'C05608 (anchor #c05608; recorded main-merge outcome)'
+    - path: transcripts/student-id-haoxi.md
+      locator: 'C05927 (anchor #c05927; PR #26 handoff)'
+    submission_artifact:
+      status: prepared_locally_pending_repository_or_final_package_inclusion
+      path: transcripts/student-id-haoxi.md
+      local_path: D:/CityU/cs5351/project/对话/Final-delivery/student-id-haoxi.md
+      sha256_at_reconciliation: de2872f934af8a6bb4eb93925380aeffa2ef9afb41a586be3950c835f04c85fe
+      raw_path: transcripts/student-id-haoxi.raw.json
+      raw_sha256_at_reconciliation: 07a9d7245001f5c724564951c5e65c5c10989b3e84b855f93b1cddfe1df2c159
+      note: Digests identify the actual user-edited files read now; the previously embedded digest may predate those
+        edits. No transcript content or identity fields changed.
+    limitations:
+    - This is retrospective record maintenance, not pre-implementation approval or new human review.
+    - The current log-edit request postdates the prepared transcript cutoff; the cited historical messages do not
+      purport to contain this new request.
+    - Transcript references target a prepared submission artifact, not an existing GitHub file. Include the two transcript
+      files at the stated paths in the final package or a separately authorized upload.
+    - Other contributors' empty or missing transcript references remain unchanged.
+    - No historical approval status, test result or semantic-quality acceptance was upgraded.
+
+  - id: AI-D4-REVIEW-DEBT-MAINTENANCE-001
+    date: '2026-11-25'
+    tool: Codex
+    model: Model identifier not independently recorded for this documentation task
+    activity: review_memo_and_confirmed_debt_maintenance
+    task: Complete evidence-based recent PR review summaries and register confirmed retained debt; publish the documentation
+      update.
+    files_changed:
+    - docs/review-memo.md
+    - docs/debt-register.md
+    - docs/ai-use-log.yaml
+    ai_contribution: Added five retrospective records for PRs 19, 24, 25, 26 and 27. Transcribed the actual Howindy
+      APPROVED event for PR 26 at its reviewed revision; left the other final human verdicts unestablished. Registered
+      three open debt items for inactive remote CI enforcement, FR-10 formal evaluation and the documented context-budget
+      course-alignment gap. Preserved earlier histories and did not change application code, tests, prompts, approved
+      thresholds, workflow configuration or permissions.
+    human_intervention: User explicitly requested completing the review memo and debt register and pushing them to
+      the repository. This related AI-use record accompanies the two requested documents on the existing documentation-review
+      branch; main is not directly changed.
+    verification:
+      status: documentation_checks_only
+      summary: Check Git diff whitespace, YAML structure and unique IDs with the existing AI-use validator; verify
+        the five reviewed commits resolve locally and newly added local Markdown links resolve. No application regression,
+        vendor request or paid model replay is performed. GitHub detail retrieval encountered TLS interruption and
+        then public API rate limiting; the records distinguish earlier successful read-only snapshots from unavailable
+        follow-up detail.
+    evidence_refs:
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/19
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/24
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/25
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/26
+    - https://github.com/Howindy/Teamproject-Tradingagents/pull/27
+    - Inspected main a78aee443e4c3be127535dd86e3e50745b5da5de; actual workflow state and main protection queried read-only
+      on 2026-11-25.
+    approval:
+      subject: Final human review of this documentation-maintenance change
+      status: pending
+      approved_at: null
+      evidence: []
+    transcript_refs: []
+    limitations:
+    - Current maintenance postdates the prepared personal transcript cutoff; its raw conversation reference remains
+      pending export.
+    - AI-authored retrospective assessments are not substitutes for pre-implementation test approval or an independent
+      final human review.
+    - Open debt records neither approve the compromises nor establish completed remediation.
+    - No fresh full-suite success, remote CI pass or formal semantic acceptance is claimed.
