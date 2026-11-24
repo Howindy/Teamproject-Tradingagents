@@ -151,11 +151,11 @@ ci.yml
     └─ aggregate
 
 trusted-evaluation.yml (manual dispatch from trusted default branch, protected environment)
-  input: candidate SHA
+  input: candidate SHA, mode, suite_id (semantic mode; registered in docs/ci/semantic-suites.yaml)
   trusted tools: checked out at github.sha (the default-branch trigger commit) and verified
   candidate: checked out separately at candidate SHA and verified
   ├─ verify checked-out HEAD == candidate SHA
-  ├─ semantic-eval        -> semantic-eval/evidence on candidate SHA
+  ├─ semantic-eval        -> semantic-eval/<suite_id> on candidate SHA (one dispatch per selected suite)
   ├─ semantic-noop review -> semantic-eval/not-applicable on candidate SHA
   └─ live-tests           -> optional live-tests/evidence on candidate SHA (not a merge gate)
 
@@ -176,7 +176,7 @@ Manual loop:
 - `ci.yml` uses `permissions: contents: read`; `test-approval` adds `pull-requests: read`, and `evidence-check` adds `statuses: read` and `actions: read`. The security-path job does not query reviews and does not request `pull-requests: read`.
 - `ci.yml` does not receive model or data API secrets.
 - `trusted-evaluation.yml` is manually dispatched from the trusted default branch and uses a protected environment. It checks out the trusted tool directory at the triggering `github.sha`, verifies that checkout, and checks out/verifies the candidate separately.
-- The trusted workflow writes `semantic-eval/evidence`, `semantic-eval/not-applicable`, or optional `live-tests/evidence` to the candidate SHA. It needs `statuses: write`; the PR workflow only reads.
+- The trusted workflow writes `semantic-eval/<suite_id>`, `semantic-eval/not-applicable`, or optional `live-tests/evidence` to the candidate SHA. It needs `statuses: write`; the PR workflow only reads.
 - A manual evaluation does not modify the earlier failed CI run. The human must rerun the PR CI on the same candidate SHA.
 - A new commit creates a new candidate SHA and cannot reuse an earlier evaluation status.
 - No polling service, automatic retry, cross-workflow event bus, or evidence platform is added.
@@ -199,7 +199,7 @@ Manual loop:
 
 ### Trusted evaluation status verification
 
-- Merge-blocking status names are `semantic-eval/evidence` and `semantic-eval/not-applicable`. `live-tests/evidence` remains optional and is not required by the aggregate.
+- Merge-blocking status names are `semantic-eval/<suite_id>` for each suite the PR selects (semantic-suite routing, §4.4) and `semantic-eval/not-applicable` for a reviewed `none` selection. The former shared `semantic-eval/evidence` context is no longer written or accepted. `live-tests/evidence` remains optional and is not required by the aggregate.
 - `evidence-check` queries statuses for the exact PR head SHA. It does not search other commits or branches.
 - A successful status must be present on the candidate SHA. A status on the default-branch workflow SHA is not sufficient.
 - `target_url` only locates the trusted run. The check must verify that run belongs to the specified repository, uses `.github/workflows/trusted-evaluation.yml`, was dispatched from the repository default branch, was manually dispatched, concluded successfully, and produced an artifact/record with the same candidate SHA and required configuration/dataset version.
@@ -427,7 +427,7 @@ Path detection covers actual runtime prompt/model locations without treating eve
 
 Ordinary control-flow or formatting changes in those files do not by themselves require semantic evidence. `src/cli/prompts.py` is interactive CLI text, not a model prompt. `Prompt.md` is a development launch workflow, not an application runtime prompt, so neither is automatically subject to model semantic evaluation. Ambiguous changes may use the existing candidate-bound reviewed `semantic-eval/not-applicable` path; no new confirmation field or general semantic analyzer is added.
 
-The minimal configuration is a single `docs/ci/semantic_eval.yaml` containing:
+**Semantic suite routing (2026-11-24 amendment; design and tests in [`docs/plans/semantic-suite-routing.md`](docs/plans/semantic-suite-routing.md)).** The single shared configuration below is replaced by one configuration per *suite*. The trusted default-branch registry `docs/ci/semantic-suites.yaml` maps each stable suite ID to its configuration and runner; FR-10's `docs/ci/semantic_eval.yaml` is unchanged and bound to `financial-metrics`. The classifier still only decides `semantic_required`; which suites run is the PR's explicit `Semantic suites:` selection confirmed by a non-author human `APPROVED semantic-suites:` line. `evidence-check` requires a passing, config-hash-matching record for every selected suite; one suite's evidence never satisfies another. Operator details: [`docs/ci/README.md`](docs/ci/README.md#semantic-suite-routing). Each suite configuration contains:
 
 - dataset version and cases;
 - rubric/version;
@@ -436,13 +436,13 @@ The minimal configuration is a single `docs/ci/semantic_eval.yaml` containing:
 - repetition rule if any;
 - approval state and evidence reference.
 
-No dataset, rubric, threshold, or model configuration is approved yet. The file will remain in an `unapproved` state; prompt/model changes are blocked rather than evaluated against invented standards.
+No dataset, rubric, threshold, or model configuration is approved yet. Each configuration remains `unapproved` until its own real approval; prompt/model changes are blocked rather than evaluated against invented standards.
 
 The minimum semantic-evaluation loop is:
 
 1. Main CI runs for a candidate SHA and fails the evidence check when semantic evaluation is required but no result exists.
 2. A human reviews the exact candidate SHA and approves use of the protected environment.
-3. The trusted default-branch workflow receives the candidate SHA as input, checks out that candidate, verifies `HEAD`, runs the approved dataset/config, and writes `semantic-eval/evidence` or `semantic-eval/not-applicable` to the candidate SHA. It records candidate SHA, workflow SHA, run ID, configuration/dataset version, and actual result.
+3. The trusted default-branch workflow receives the candidate SHA as input, checks out that candidate, verifies `HEAD`, runs the selected suite's approved dataset/config, and writes `semantic-eval/<suite_id>` or `semantic-eval/not-applicable` to the candidate SHA. It records candidate SHA, workflow SHA, run ID, suite ID, configuration path/hash/dataset version, and actual result (`passed`, `failed` or `needs_review` with items).
 4. The human reruns the PR CI on the same candidate SHA.
 5. The evidence check reads the trusted status and artifact/record; aggregate succeeds only after this rerun and all other checks pass.
 

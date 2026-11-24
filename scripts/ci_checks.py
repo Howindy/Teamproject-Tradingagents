@@ -14,6 +14,7 @@ import datetime as dt
 import importlib
 import inspect
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -29,7 +30,9 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ZERO_SHA = "0" * 40
 TRUSTED_WORKFLOW = ".github/workflows/trusted-evaluation.yml"
+# Legacy shared context; no longer written or accepted (semantic-suite-routing §3.4).
 SEMANTIC_STATUS = "semantic-eval/evidence"
+SEMANTIC_STATUS_PREFIX = "semantic-eval/"
 SEMANTIC_NOOP_STATUS = "semantic-eval/not-applicable"
 LIVE_STATUS = "live-tests/evidence"
 
@@ -189,7 +192,28 @@ PR_BODY_FIELDS = (
     "Implementation start",
     "Approved scope",
 )
-OPTIONAL_PR_BODY_FIELDS = ("ADR", "Supplemental test specification")
+SUITE_SELECTION_FIELD = "Semantic suites"
+SUITE_APPROVAL_FIELD = "Semantic suites approval"
+SUITE_PHRASE_PREFIX = "APPROVED semantic-suites:"
+SUPPLEMENTAL_SPEC_FIELD = "Supplemental test specification"
+OPTIONAL_PR_BODY_FIELDS = ("ADR", SUITE_SELECTION_FIELD, SUITE_APPROVAL_FIELD, SUPPLEMENTAL_SPEC_FIELD)
+# Approved bounded compatibility rule: semantic-registry-test-amendment.md §6.
+# Exact reviewed configuration at the original frozen specification. Its status
+# is unapproved and approval identity/time/evidence are empty. Using a digest
+# keeps the setup-python-only approval job independent of YAML packages.
+FR03_PREPARATION_CONFIG_SHA256 = "96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015"
+FR03_PREPARATION_PATHS = frozenset({
+    "docs/ci/data-availability-cases.json",
+    "docs/ci/data-availability-rubric.md",
+    "docs/ci/semantic-suites/data-availability.yaml",
+})
+SUITE_REGISTRY_PATH = "docs/ci/semantic-suites.yaml"
+SUITE_CONFIG_PREFIX = "docs/ci/"
+SUITE_ID_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+SUITE_ID_MAX_LENGTH = 40
+RESERVED_SUITE_IDS = {"evidence", "not-applicable"}
+SUITE_ENTRY_KEYS = {"requirement", "config", "runner"}
+RUNNER_PATTERN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*):([A-Za-z_][A-Za-z0-9_]*)$")
 ADR_PREFIX = "docs/architecture/adr/"
 APPROVAL_PHRASE_PREFIX = "APPROVED test-spec:"
 
@@ -1131,15 +1155,25 @@ def find_duplicate_pr_body_fields(text: str) -> list[str]:
     return sorted(key for key, count in seen.items() if count > 1)
 
 
+def supplemental_specifications(fields: Mapping[str, str]) -> list[str]:
+    """Preserve distinct supplemental lines; never replace historical evidence."""
+    values = [value.strip() for value in fields.get(SUPPLEMENTAL_SPEC_FIELD, "").splitlines() if value.strip()]
+    seen_values: set[str] = set()
+    seen_paths: set[str] = set()
+    for value in values:
+        if value in seen_values:
+            raise CiError("duplicate supplemental specification entry")
+        seen_values.add(value)
+        match = re.match(r"(\S+)\s+@", value)
+        if match:
+            path = posixpath.normpath(normalize_path(match[1]))
+            if path in seen_paths:
+                raise CiError(f"ambiguous duplicate supplemental specification path: {path}")
+            seen_paths.add(path)
+    return values
+
+
 def parse_pr_body(text: str) -> dict[str, str]:
-    duplicates = find_duplicate_pr_body_fields(text)
-    if duplicates:
-        raise CiError(
-            "PR body has duplicate machine fields, so the last value would silently "
-            "override the first; write each machine field exactly once and move "
-            "governance notes into prose (no 'Key: value' line): "
-            + ", ".join(duplicates)
-        )
     fields: dict[str, str] = {}
     for line in text.splitlines():
         if ":" not in line:
@@ -1147,7 +1181,13 @@ def parse_pr_body(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         key = key.strip()
         if key in PR_BODY_FIELDS or key in OPTIONAL_PR_BODY_FIELDS:
-            fields[key] = value.strip()
+            if key == SUPPLEMENTAL_SPEC_FIELD:
+                fields[key] = fields[key] + "\n" + value.strip() if key in fields else value.strip()
+                supplemental_specifications(fields)
+            else:
+                if key in fields:
+                    raise CiError(f"duplicate PR body field: {key}")
+                fields[key] = value.strip()
     return fields
 
 
@@ -1368,7 +1408,7 @@ def contract_test_plan(
     fields: Mapping[str, str],
     changed_paths: Iterable[str],
     spec_text: str | None = None,
-    supplemental_spec_texts: Sequence[str] | None = None,
+    supplemental_spec_texts: Sequence[str] = (),
 ) -> dict[str, Any]:
     classification = classify_paths(changed_paths)
     errors: list[str] = []
@@ -1423,18 +1463,15 @@ def contract_test_plan(
                     "test_paths": [],
                 }
         assert spec_text is not None
-        supplements = [text for text in (supplemental_spec_texts or []) if text]
-        test_paths = plan_test_paths(spec_text)
-        for supplement_text in supplements:
-            test_paths = sorted(set(test_paths) | set(plan_test_paths(supplement_text)))
+        specifications = [spec_text, *supplemental_spec_texts]
+        test_paths = sorted({path for text in specifications for path in plan_test_paths(text)})
         if not test_paths:
             errors.append(
                 "approved test specification contains no test/offline or "
                 "test/live test paths"
             )
-        all_spec_texts = [spec_text, *supplements]
         for code_path in code_paths:
-            if not any(specification_mentions_path(text, code_path) for text in all_spec_texts):
+            if not any(specification_mentions_path(text, code_path) for text in specifications):
                 errors.append(
                     "approved test specification does not mention changed "
                     f"code path: {code_path}"
@@ -1448,7 +1485,6 @@ def contract_test_plan(
             "mode": "application" if classification["application_code"] else "code",
             "specification_path": specification_path,
             "specification_commit": specification_commit,
-            "supplemental_specifications": len(supplements),
             "test_paths": test_paths,
         }
     if classification["governance_ci"]:
@@ -1714,10 +1750,6 @@ def verify_approval(
     if not declared_start_matches:
         errors.append("implementation start is not the first changing commit")
     approved_scope = extract_ids(fields.get("Approved scope", ""))
-    # Only genuine requirement/FC/invariant IDs are approval scope. Design labels
-    # (component/interface/attachment/test-case namespaces, FC01-05 shorthand) and
-    # negated references are not new scope. ``scoped_changed_ids`` (computed with
-    # diff-line negation context by approval_check) is preferred when available.
     scope_candidates = (
         set(scoped_changed_ids)
         if scoped_changed_ids is not None
@@ -1782,7 +1814,7 @@ def _github_request(url: str, token: str) -> Any:
         url,
         headers={
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
+            **({"Authorization": f"Bearer {token}"} if token else {}),
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "cs5351-ci-gates",
         },
@@ -1845,6 +1877,142 @@ def fetch_approval_event(
     raise CiError("approval event cannot be located from the GitHub API")
 
 
+def frozen_preparation_paths(root: Path, fields: Mapping[str, str], head: str) -> set[str]:
+    """§6: exact frozen FR-03 preparation materials only; uncertainty grants nothing.
+
+    This is classification, not approval. The calling gate must still validate
+    the primary event, specification ancestry, timing and unchanged spec.
+    """
+    import hashlib
+
+    path, commit, errors = parse_approved_specification(fields.get("Approved test specification", ""))
+    if errors:
+        return set()
+    text, error = read_specification_at_commit(root, path, commit)
+    if error or text is None:
+        return set()
+    config_path = "docs/ci/semantic-suites/data-availability.yaml"
+    try:
+        for revision in (commit, head):
+            config_text = git_output(["show", f"{revision}:{config_path}"], cwd=root)
+            # Recognize only the fixed reviewed content. Different formatting,
+            # values or activation are conservatively outside this exception.
+            if hashlib.sha256(config_text.encode("utf-8")).hexdigest() != FR03_PREPARATION_CONFIG_SHA256:
+                return set()
+        eligible: set[str] = set()
+        for material in FR03_PREPARATION_PATHS:
+            if not specification_mentions_path(text, material):
+                continue
+            # Compare Git blob identities, not decoded/line-ending-normalized text.
+            try:
+                frozen = git_output(["rev-parse", "--verify", f"{commit}:{material}"], cwd=root).strip()
+                candidate = git_output(["rev-parse", "--verify", f"{head}:{material}"], cwd=root).strip()
+                kind = git_output(["cat-file", "-t", frozen], cwd=root).strip()
+            except CiError:
+                continue
+            if kind == "blob" and frozen == candidate:
+                eligible.add(material)
+        return eligible
+    except CiError:
+        return set()
+
+
+def _approval_location(url: str) -> tuple[str, int]:
+    match = re.fullmatch(
+        r"https://github\.com/([^/]+/[^/]+)/pull/([1-9][0-9]*)#(?:issuecomment-|pullrequestreview-)[0-9]+",
+        url,
+    )
+    if not match:
+        raise CiError("approval URL must identify a GitHub PR comment or review")
+    return match[1], int(match[2])
+
+
+def supplemental_allowed_scope(text: str) -> str:
+    """Only the explicit allowed-file list grants coverage; rationale/exclusions do not."""
+    section = re.search(r"(?m)^## 3\. Allowed files\s*$", text)
+    if section is None:
+        return ""
+    tail = text[section.end():]
+    next_section = re.search(r"(?m)^## ", tail)
+    allowed = tail[:next_section.start()] if next_section else tail
+    paths = re.findall(r"(?m)^- `?([\w./-]+\.(?:py|sh|md|yaml|yml|json))`?\s*$", allowed)
+    return "\n".join(paths)
+
+
+def validate_supplemental_specification(
+    root: Path, base: str, head: str, value: str, repo: str, pr_number: int,
+    token: str, changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """§5: validate independently before granting scope or contract selection."""
+    def failed(errors: list[str]) -> dict[str, Any]:
+        return {"errors": errors, "spec_text": "", "scope_ids": set()}
+
+    match = re.fullmatch(r"(\S+)\s+@\s+([0-9a-f]{40})\s+\(approval:\s*(https://[^\s)]+)\)", value.strip())
+    if not match:
+        return failed(["invalid Supplemental test specification: expected path @ full SHA (approval: URL)"])
+    path, commit, url = match.groups()
+    _, error = resolve_project_file(root, path, SUPPLEMENTAL_SPEC_FIELD)
+    if error:
+        return failed([error])
+    try:
+        if _approval_location(url) != (repo, pr_number):
+            return failed(["supplemental approval belongs to another PR"])
+        text, error = read_specification_at_commit(root, path, commit)
+        if error or text is None:
+            return failed([error])
+        allowed_scope = supplemental_allowed_scope(text)
+        if not allowed_scope:
+            return failed(["supplemental specification has no explicit allowed-file list"])
+        event, author = fetch_approval_event(repo, pr_number, url, token)
+        classification = classify_paths(changed_paths)
+        implementation_paths = set(
+            classification["code"] + classification["tests"] + classification["semantic"]
+            + classification["governance_ci"] + classification["safety_critical"]
+            + classification["safety_relevant"]
+        )
+        covered = sorted(p for p in implementation_paths if p != path and specification_mentions_path(allowed_scope, p))
+        first, first_time = _implementation_start(root, base, head, covered) if covered else (head, "")
+        # Reuse the same independent reviewer/marker/time checks as the primary.
+        fields = {
+            "Plan": path, "Approved test specification": f"{path} @ {commit}",
+            "Approval evidence": url, "Implementation start": first, "Approved scope": "supplement",
+        }
+        result = verify_approval(
+            fields, approval_event=event, pr_author=author,
+            specification_ancestor=_is_ancestor(root, commit, first),
+            specification_changed_after=_specification_changed(root, commit, head, [path]),
+            implementation_start_time=first_time or "9999-01-01T00:00:00Z",
+            declared_start_matches=True, changed_ids=(),
+        )
+        errors = result["errors"]
+        if event.get("url") != url:
+            errors.append("supplemental approval event URL does not match its evidence URL")
+        if errors:
+            return failed([f"supplemental: {error}" for error in errors])
+        return {"errors": [], "spec_text": allowed_scope, "scope_ids": extract_ids(text)}
+    except CiError as exc:
+        return failed([f"supplemental approval not verifiable: {exc}"])
+
+
+def validate_supplemental_specifications(
+    root: Path, base: str, head: str, fields: Mapping[str, str], repo: str,
+    pr_number: int, token: str, changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """Each approved version retains its own event, coverage and chronology."""
+    errors: list[str] = []
+    texts: list[str] = []
+    scope_ids: set[str] = set()
+    for value in supplemental_specifications(fields):
+        result = validate_supplemental_specification(
+            root, base, head, value, repo, pr_number, token, changed_paths,
+        )
+        errors.extend(result["errors"])
+        if not result["errors"]:
+            texts.append(result["spec_text"])
+            scope_ids.update(result["scope_ids"])
+    return {"errors": errors, "spec_texts": texts, "scope_ids": scope_ids}
+
+
 def approval_check(
     root: Path,
     base: str,
@@ -1856,202 +2024,45 @@ def approval_check(
 ) -> dict[str, Any]:
     fields = parse_pr_body(pr_body)
     if not fields.get("Approval evidence"):
-        return {"errors": ["approval evidence is missing"]}
-    approval_event, author = fetch_approval_event(
-        repo,
-        pr_number,
-        fields["Approval evidence"],
-        token,
-    )
+        return {"errors": ["approval evidence is missing"], "supplemental_spec_texts": []}
+    approval_event, author = fetch_approval_event(repo, pr_number, fields["Approval evidence"], token)
     changed = changed_paths_from_git(base, head, root)
     classification = classify_paths(changed)
-    implementation_paths = [
-        *classification["code"],
-        *classification["tests"],
-        *classification["semantic"],
-        *classification["governance_ci"],
-        *classification["safety_critical"],
-        *classification["safety_relevant"],
-    ]
-    start_commit, start_time = _implementation_start(
-        root,
-        base,
-        head,
-        sorted(set(implementation_paths)) or changed,
+    implementation_paths = set(
+        classification["code"] + classification["tests"] + classification["semantic"]
+        + classification["governance_ci"] + classification["safety_critical"]
+        + classification["safety_relevant"]
     )
+    implementation_paths -= frozen_preparation_paths(root, fields, head)
+    start_commit, start_time = _implementation_start(root, base, head, sorted(implementation_paths) or changed)
     specification = fields.get("Approved test specification", "")
     specification_paths = SPEC_PATH_PATTERN.findall(specification)
     _, specification_commit, _ = parse_approved_specification(specification)
-    ancestor = bool(specification_commit) and _is_ancestor(
-        root, specification_commit, start_commit
+    ancestor = bool(specification_commit) and _is_ancestor(root, specification_commit, start_commit)
+    supplemental = validate_supplemental_specifications(
+        root, base, head, fields, repo, pr_number, token, changed,
     )
-    changed_ids = collect_changed_scope_ids(root, base, head, changed)
-    changed_lines = collect_changed_scope_lines(root, base, head, changed)
-    scoped = scope_changed_ids(changed_ids, changed_lines)
+    # A valid supplement adds IDs; never manufacture a missing primary scope field.
+    effective_fields = dict(fields)
+    if fields.get("Approved scope"):
+        effective_fields["Approved scope"] += " " + " ".join(sorted(supplemental["scope_ids"]))
     result = verify_approval(
-        fields,
-        approval_event=approval_event,
-        pr_author=author,
+        effective_fields, approval_event=approval_event, pr_author=author,
         specification_ancestor=ancestor,
         specification_changed_after=_specification_changed(
-            root,
-            specification_commit or start_commit,
-            head,
-            specification_paths,
+            root, specification_commit or start_commit, head, specification_paths,
         ),
         implementation_start_time=start_time,
         declared_start_matches=fields.get("Implementation start", "") == start_commit,
-        changed_ids=changed_ids,
-        scoped_changed_ids=scoped,
+        changed_ids=collect_changed_scope_ids(root, base, head, changed),
+        scoped_changed_ids=scope_changed_ids(
+            collect_changed_scope_ids(root, base, head, changed),
+            collect_changed_scope_lines(root, base, head, changed),
+        ),
     )
-    supplemental = fields.get("Supplemental test specification", "")
-    if supplemental:
-        sup = validate_supplemental_specification(
-            root,
-            supplemental,
-            base=base,
-            head=head,
-            pr_author=author,
-            pr_number=pr_number,
-            repo=repo,
-            token=token,
-            changed_paths=changed,
-        )
-        if sup["ok"]:
-            # Validated supplement extends the approved scope ONLY with the IDs its
-            # own approved spec declares, and can never relax the primary checks.
-            approved_scope = extract_ids(fields.get("Approved scope", "")) | set(sup["scope_ids"])
-            still_uncovered = sorted(scoped - approved_scope)
-            result["errors"] = [
-                e
-                for e in result["errors"]
-                if not e.startswith("approved scope does not cover changed IDs:")
-            ]
-            if still_uncovered:
-                result["errors"].append(
-                    "approved scope does not cover changed IDs: " + ", ".join(still_uncovered)
-                )
-            result["supplemental_specification"] = {
-                "spec_path": sup["spec_path"],
-                "spec_commit": sup["spec_commit"],
-            }
-        else:
-            # Invalid supplement is fail-closed: report, and it contributes nothing.
-            result["errors"].extend(
-                f"supplemental test specification: {message}" for message in sup["errors"]
-            )
+    result["errors"].extend(supplemental["errors"])
+    result["supplemental_spec_texts"] = supplemental["spec_texts"]
     return result
-
-
-_SUPPLEMENT_APPROVAL_PATTERN = re.compile(r"approval:\s*(https://github\.com/\S+)", re.IGNORECASE)
-
-
-def parse_supplemental_specification(value: str) -> tuple[str, str, str, list[str]]:
-    """Parse "Supplemental test specification": spec path @ commit (approval: URL)."""
-    errors: list[str] = []
-    path_match = SPEC_PATH_PATTERN.search(value)
-    commit_match = re.search(r"@\s*([0-9a-f]{7,40})\b", value)
-    if commit_match is None:
-        commit_match = re.search(r"\b([0-9a-f]{7,40})\b", value)
-    approval_match = _SUPPLEMENT_APPROVAL_PATTERN.search(value)
-    if path_match is None:
-        errors.append("Supplemental test specification must name a specification file")
-    if commit_match is None:
-        errors.append("Supplemental test specification must include a commit SHA")
-    if approval_match is None:
-        errors.append("Supplemental test specification must include an approval URL")
-    return (
-        path_match.group(1) if path_match else "",
-        commit_match.group(1) if commit_match else "",
-        approval_match.group(1) if approval_match else "",
-        errors,
-    )
-
-
-def validate_supplemental_specification(
-    root: Path,
-    value: str,
-    *,
-    base: str,
-    head: str,
-    pr_author: str,
-    pr_number: int,
-    repo: str,
-    token: str,
-    changed_paths: Sequence[str],
-) -> dict[str, Any]:
-    """Validate ONE supplemental spec: independent approval + ancestry + timing.
-
-    Returns {"ok", "errors", "spec_path", "spec_commit", "spec_text", "scope_ids"}.
-    A supplement that fails any check is NOT used for coverage/selection (fail-closed).
-    """
-    errors: list[str] = []
-    spec_path, spec_commit, approval_url, parse_errors = parse_supplemental_specification(value)
-    if parse_errors:
-        return {"ok": False, "errors": parse_errors, "scope_ids": set(), "spec_text": ""}
-    resolved, spec_path_error = resolve_project_file(root, spec_path, "Supplemental test specification")
-    if spec_path_error:
-        return {"ok": False, "errors": [spec_path_error], "scope_ids": set(), "spec_text": ""}
-    spec_text = read_specification_at_commit(root, spec_path, spec_commit)
-    text, text_error = spec_text
-    if text_error:
-        return {"ok": False, "errors": [text_error], "scope_ids": set(), "spec_text": ""}
-    try:
-        approval_event, _author = fetch_approval_event(repo, pr_number, approval_url, token)
-    except CiError as exc:
-        return {"ok": False, "errors": [f"supplemental approval not verifiable: {exc}"],
-                "scope_ids": set(), "spec_text": text or ""}
-    reviewer = str(approval_event.get("reviewer", ""))
-    reviewer_type = str(approval_event.get("reviewer_type", "")).lower()
-    if not reviewer:
-        errors.append("supplemental approval has no reviewer")
-    if reviewer == pr_author:
-        errors.append("supplemental approval reviewer is the PR author")
-    if reviewer_type == "bot" or reviewer.endswith("[bot]"):
-        errors.append("supplemental approval reviewer is a bot")
-    if not str(approval_event.get("url", "")).startswith("https://github.com/"):
-        errors.append("supplemental approval URL is not a GitHub event URL")
-    if str(approval_event.get("state", "")).upper() not in {"APPROVED", "COMMENTED"}:
-        errors.append("supplemental approval is not an approving review or comment")
-    phrases = approval_phrases(str(approval_event.get("body", "")))
-    expected_phrase = normalize_specification(f"{spec_path} @ {spec_commit}")
-    if len(phrases) != 1:
-        errors.append('supplemental approval must contain exactly one "APPROVED test-spec:" line')
-    elif normalize_specification(phrases[0]) != expected_phrase:
-        errors.append("supplemental approval phrase does not exactly match its spec path and commit")
-    # First change commit among THIS supplement's COVERED implementation/test paths.
-    # The spec file itself is excluded: its own authoring commit predates the
-    # approval by design (a spec is written, then approved, then implemented), so it
-    # must not be mistaken for the "first related change" the approval must precede.
-    covered = [p for p in changed_paths if specification_mentions_path(text or "", p)]
-    covered = [p for p in covered if normalize_path(p) != normalize_path(spec_path)]
-    supplement_paths = sorted(set(covered))
-    if supplement_paths:
-        first_commit, first_time = _implementation_start(root, base, head, supplement_paths)
-    else:
-        # No covered implementation path changed; ancestry uses the spec commit and
-        # timing falls back to the earliest commit so the approval-earlier check is
-        # vacuous for this supplement (nothing it covers was implemented).
-        first_commit, first_time = spec_commit, ""
-    if not _is_ancestor(root, spec_commit, first_commit):
-        errors.append("supplemental spec commit is not an ancestor of its first related change")
-    if _specification_changed(root, spec_commit, head, [spec_path]):
-        errors.append("supplemental spec changed after approval without reapproval")
-    approval_time = _parse_timestamp(str(approval_event.get("created_at", "")))
-    first_dt = _parse_timestamp(first_time) if first_time else None
-    if approval_time is None:
-        errors.append("supplemental approval time missing or invalid")
-    elif first_dt is not None and approval_time >= first_dt:
-        errors.append("supplemental approval is not earlier than its first related change")
-    scope_ids = extract_ids(text or "")
-    return {
-        "ok": not errors,
-        "errors": errors,
-        "spec_path": spec_path,
-        "spec_commit": spec_commit,
-        "spec_text": text or "",
-        "scope_ids": scope_ids,
-    }
 
 
 def validate_adr_reference(root: Path, value: str) -> list[str]:
@@ -2326,6 +2337,301 @@ def _verify_trusted_status(
     return errors, status, record
 
 
+# ---------------------------------------------------------------------------
+# Semantic suite routing (docs/plans/semantic-suite-routing.md §3.1-§3.5)
+# ---------------------------------------------------------------------------
+
+
+def suite_status_context(suite_id: str) -> str:
+    return f"{SEMANTIC_STATUS_PREFIX}{suite_id}"
+
+
+def sha256_lf(path: Path | str) -> str:
+    """SHA-256 of LF-normalized bytes, matching the FR-10 material hashing."""
+    import hashlib
+
+    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _load_unique_yaml(path: Path | str) -> Any:
+    import yaml
+
+    class _UniqueKeyLoader(yaml.SafeLoader):
+        pass
+
+    def _construct_mapping(loader: Any, node: Any, deep: bool = False) -> dict[Any, Any]:
+        mapping: dict[Any, Any] = {}
+        for key_node, value_node in node.value:
+            key = loader.construct_object(key_node, deep=deep)
+            if key in mapping:
+                raise CiError(f"duplicate key {key!r} in {path}")
+            mapping[key] = loader.construct_object(value_node, deep=deep)
+        return mapping
+
+    _UniqueKeyLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping
+    )
+    try:
+        return yaml.load(Path(path).read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
+    except (OSError, yaml.YAMLError) as exc:
+        raise CiError(f"cannot parse YAML file {path}: {exc}") from exc
+
+
+def validate_suite_id(suite_id: Any) -> list[str]:
+    if not isinstance(suite_id, str) or not SUITE_ID_PATTERN.match(suite_id):
+        return [f"invalid semantic suite ID: {suite_id!r}"]
+    if len(suite_id) > SUITE_ID_MAX_LENGTH:
+        return [f"semantic suite ID is longer than {SUITE_ID_MAX_LENGTH}: {suite_id}"]
+    if suite_id in RESERVED_SUITE_IDS:
+        return [f"semantic suite ID is reserved: {suite_id}"]
+    return []
+
+
+def load_suite_registry(path: Path | str, root: Path | str | None = None) -> dict[str, Any]:
+    """Load and validate the trusted suite registry; every problem is an error."""
+    registry_path = Path(path)
+    project_root = Path(root).resolve() if root is not None else registry_path.resolve().parents[2]
+    try:
+        document = _load_unique_yaml(registry_path)
+    except CiError as exc:
+        return {"suites": {}, "errors": [str(exc)]}
+    if not isinstance(document, Mapping):
+        return {"suites": {}, "errors": ["semantic suite registry must be a mapping"]}
+    errors: list[str] = []
+    if document.get("schema_version") != "1.0":
+        errors.append('semantic suite registry schema_version must be "1.0"')
+    unknown_top = sorted(set(document) - {"schema_version", "suites"})
+    if unknown_top:
+        errors.append(f"semantic suite registry has unknown keys: {', '.join(map(str, unknown_top))}")
+    raw_suites = document.get("suites")
+    if not isinstance(raw_suites, Mapping):
+        return {"suites": {}, "errors": errors + ["semantic suite registry suites must be a mapping"]}
+    suites: dict[str, dict[str, str]] = {}
+    config_owner: dict[str, str] = {}
+    config_root = (project_root / SUITE_CONFIG_PREFIX).resolve()
+    for suite_id, entry in raw_suites.items():
+        id_errors = validate_suite_id(suite_id)
+        if id_errors:
+            errors.extend(id_errors)
+            continue
+        if not isinstance(entry, Mapping):
+            errors.append(f"semantic suite {suite_id}: entry must be a mapping")
+            continue
+        missing = sorted(SUITE_ENTRY_KEYS - set(entry))
+        unknown = sorted(set(entry) - SUITE_ENTRY_KEYS)
+        if missing:
+            errors.append(f"semantic suite {suite_id}: missing keys: {', '.join(missing)}")
+        if unknown:
+            errors.append(f"semantic suite {suite_id}: unknown keys: {', '.join(map(str, unknown))}")
+        if missing or unknown:
+            continue
+        requirement = entry["requirement"]
+        config = entry["config"]
+        runner = entry["runner"]
+        entry_errors: list[str] = []
+        if not isinstance(requirement, str) or not requirement.strip():
+            entry_errors.append(f"semantic suite {suite_id}: requirement must be a non-empty string")
+        config_path: Path | None = None
+        if not isinstance(config, str) or not config or Path(config).is_absolute() or "\\" in config:
+            entry_errors.append(f"semantic suite {suite_id}: config must be a project-relative path")
+        else:
+            config_path = (project_root / config).resolve()
+            if not config_path.is_relative_to(config_root):
+                entry_errors.append(f"semantic suite {suite_id}: config must be inside {SUITE_CONFIG_PREFIX}")
+            elif not config_path.is_file():
+                entry_errors.append(f"semantic suite {suite_id}: config does not exist: {config}")
+            elif config in config_owner:
+                entry_errors.append(
+                    f"semantic suite {suite_id}: config {config} is already used by {config_owner[config]}"
+                )
+        runner_match = RUNNER_PATTERN.match(runner) if isinstance(runner, str) else None
+        if runner_match is None:
+            entry_errors.append(f"semantic suite {suite_id}: runner must be module:function")
+        elif not (project_root / "scripts" / f"{runner_match.group(1)}.py").is_file():
+            entry_errors.append(
+                f"semantic suite {suite_id}: runner module scripts/{runner_match.group(1)}.py does not exist"
+            )
+        if not entry_errors and config_path is not None:
+            try:
+                config_document = load_yaml(config_path)
+            except CiError as exc:
+                entry_errors.append(f"semantic suite {suite_id}: {exc}")
+            else:
+                execution = config_document.get("execution") if isinstance(config_document, Mapping) else None
+                declared = execution.get("runner") if isinstance(execution, Mapping) else None
+                if declared and declared != runner:
+                    entry_errors.append(
+                        f"semantic suite {suite_id}: config execution.runner {declared} does not match registry runner {runner}"
+                    )
+        if entry_errors:
+            errors.extend(entry_errors)
+            continue
+        config_owner[str(config)] = str(suite_id)
+        suites[str(suite_id)] = {
+            "requirement": str(requirement),
+            "config": str(config),
+            "runner": str(runner),
+        }
+    return {"suites": suites, "errors": errors}
+
+
+def _suite_config_approved(config: Any) -> bool:
+    if not isinstance(config, Mapping) or str(config.get("status", "")) != "approved":
+        return False
+    dataset = config.get("dataset")
+    approval = config.get("approval")
+    if not isinstance(dataset, Mapping) or not dataset.get("version"):
+        return False
+    if not isinstance(approval, Mapping):
+        return False
+    return all(approval.get(key) for key in ("approved_by", "approved_at", "evidence"))
+
+
+def trusted_suite_states(
+    registry_path: Path | str,
+    trusted_root: Path | str,
+) -> tuple[dict[str, dict[str, Any]] | None, list[str]]:
+    """Return per-suite trusted state, or ``None`` when the registry is absent (bootstrap)."""
+    path = Path(registry_path)
+    if not path.is_file():
+        return None, []
+    root = Path(trusted_root)
+    registry = load_suite_registry(path, root)
+    if registry["errors"]:
+        return {}, list(registry["errors"])
+    states: dict[str, dict[str, Any]] = {}
+    for suite_id, entry in registry["suites"].items():
+        config_path = root / entry["config"]
+        config = load_yaml(config_path)
+        dataset = config.get("dataset") if isinstance(config, Mapping) else None
+        states[suite_id] = {
+            "approved": _suite_config_approved(config),
+            "config_path": entry["config"],
+            "config_sha256": sha256_lf(config_path),
+            "config_version": str(dataset.get("version") or "") if isinstance(dataset, Mapping) else "",
+            "runner": entry["runner"],
+        }
+    return states, []
+
+
+def parse_suite_list(value: str) -> tuple[list[str], bool, list[str]]:
+    """Parse a comma-separated suite list; returns (sorted IDs, is_none, errors)."""
+    items = sorted({item.strip().lower() for item in value.split(",") if item.strip()})
+    if not items:
+        return [], False, []
+    if "none" in items:
+        if len(items) > 1:
+            return [], False, ['"none" must be the only semantic suite value']
+        return [], True, []
+    errors: list[str] = []
+    for item in items:
+        errors.extend(validate_suite_id(item))
+    return items, False, errors
+
+
+def verify_suite_selection(
+    fields: Mapping[str, str],
+    approval_event: Mapping[str, Any] | None,
+    pr_author: str,
+) -> dict[str, Any]:
+    """Verify the PR's explicit, reviewer-confirmed suite selection (§3.2)."""
+    suites, is_none, errors = parse_suite_list(fields.get(SUITE_SELECTION_FIELD, ""))
+    if not suites and not is_none and not errors:
+        errors.append(
+            'semantic evaluation required but no semantic suite was selected (add "Semantic suites:" '
+            f'and a reviewer "{SUITE_PHRASE_PREFIX}" line)'
+        )
+    result = {"suites": suites, "none": is_none, "errors": errors}
+    if not fields.get(SUITE_APPROVAL_FIELD):
+        errors.append(f'missing PR body field "{SUITE_APPROVAL_FIELD}"')
+        return result
+    if approval_event is None:
+        errors.append("semantic suite selection approval is not verifiable")
+        return result
+    reviewer = str(approval_event.get("reviewer", ""))
+    reviewer_type = str(approval_event.get("reviewer_type", "")).lower()
+    if not reviewer:
+        errors.append("semantic suite selection approval has no reviewer")
+    if reviewer == pr_author:
+        errors.append("semantic suite selection approval reviewer is the PR author")
+    if reviewer_type == "bot" or reviewer.endswith("[bot]"):
+        errors.append("semantic suite selection approval reviewer is a bot")
+    if not str(approval_event.get("url", "")).startswith("https://github.com/"):
+        errors.append("semantic suite selection approval URL is not a GitHub event URL")
+    if str(approval_event.get("state", "")).upper() not in {"APPROVED", "COMMENTED"}:
+        errors.append("semantic suite selection approval is not an approving review or comment")
+    phrases = [
+        line.strip()[len(SUITE_PHRASE_PREFIX) :].strip()
+        for line in str(approval_event.get("body", "")).splitlines()
+        if line.strip().startswith(SUITE_PHRASE_PREFIX)
+    ]
+    if len(phrases) != 1:
+        errors.append(f'semantic suite approval must contain exactly one "{SUITE_PHRASE_PREFIX}" line')
+    else:
+        approved_suites, approved_none, phrase_errors = parse_suite_list(phrases[0])
+        if phrase_errors or (approved_suites, approved_none) != (suites, is_none):
+            errors.append("semantic suite approval list does not match the PR body selection")
+    return result
+
+
+def _verify_suite_evidence(
+    suite_id: str,
+    trusted: Mapping[str, Any],
+    statuses: Iterable[Mapping[str, Any]],
+    runs: Mapping[str, Mapping[str, Any]],
+    candidate: str,
+    repo: str,
+    default_branch: str,
+) -> list[str]:
+    context = suite_status_context(suite_id)
+    status_errors, status, record = _verify_trusted_status(
+        statuses, runs, context, candidate, repo, default_branch, "semantic"
+    )
+    if status is None:
+        return status_errors
+    errors = list(status_errors)
+    if record is None:
+        return errors
+    if str(record.get("suite_id", "")) != suite_id:
+        errors.append(f"{context} record belongs to suite {record.get('suite_id')!r}")
+    if str(record.get("config_path", "")) != str(trusted.get("config_path", "")):
+        errors.append(f"{context} record config path does not match the trusted registry")
+    if str(record.get("config_sha256", "")) != str(trusted.get("config_sha256", "")):
+        errors.append(f"{context} record config hash does not match the trusted config (re-run required)")
+    if str(record.get("config_version", "")) != str(trusted.get("config_version", "")):
+        errors.append(f"{context} record config version does not match the trusted config")
+    record_status = str(record.get("status", ""))
+    if record_status == "needs_review":
+        items = record.get("needs_review")
+        listed = ", ".join(str(item) for item in items) if isinstance(items, list) else ""
+        errors.append(f"semantic suite {suite_id} needs human review: {listed or 'no items recorded'}")
+    elif record_status != "passed":
+        errors.append(f"semantic suite {suite_id} evidence did not pass")
+    return errors
+
+
+def _verify_noop_evidence(
+    statuses: Iterable[Mapping[str, Any]],
+    runs: Mapping[str, Mapping[str, Any]],
+    candidate: str,
+    repo: str,
+    default_branch: str,
+) -> list[str]:
+    noop_errors, noop_status, noop_record = _verify_trusted_status(
+        statuses, runs, SEMANTIC_NOOP_STATUS, candidate, repo, default_branch, "semantic-noop"
+    )
+    if noop_status is None or noop_errors:
+        return noop_errors or ["required semantic not-applicable record is absent"]
+    if noop_record is None:
+        return ["semantic not-applicable record is missing"]
+    errors: list[str] = []
+    if not str(noop_record.get("reason", "")).strip():
+        errors.append("semantic not-applicable review has no reason")
+    if not str(noop_record.get("reviewed_by", "")).strip():
+        errors.append("semantic not-applicable review has no reviewer")
+    return errors
+
+
 def verify_evidence(
     *,
     candidate: str,
@@ -2335,44 +2641,56 @@ def verify_evidence(
     runs: Mapping[str, Mapping[str, Any]],
     semantic_required: bool,
     live_required: bool,
-    semantic_config_approved: bool,
-    semantic_config_version: str,
+    selection: Mapping[str, Any] | None = None,
+    trusted_suites: Mapping[str, Mapping[str, Any]] | None = None,
+    registry_errors: Sequence[str] = (),
 ) -> dict[str, Any]:
+    """Verify trusted evidence per selected semantic suite (semantic-suite-routing §3.3)."""
     errors: list[str] = []
-    if semantic_required:
-        evidence_errors, evidence_status, evidence_record = _verify_trusted_status(
-            statuses, runs, SEMANTIC_STATUS, candidate, repo, default_branch, "semantic"
-        )
-        noop_errors, noop_status, noop_record = _verify_trusted_status(
-            statuses, runs, SEMANTIC_NOOP_STATUS, candidate, repo, default_branch, "semantic-noop"
-        )
-        semantic_ok = False
-        if evidence_status is not None and not evidence_errors:
-            semantic_ok = True
-            if not semantic_config_approved:
-                errors.append("semantic evidence exists but configuration is unapproved")
-            elif (
-                evidence_record is None
-                or str(evidence_record.get("config_version", ""))
-                != semantic_config_version
-            ):
-                errors.append("semantic evidence config version does not match")
-            elif str(evidence_record.get("status", "")) != "passed":
-                errors.append("semantic evidence did not pass")
-        if noop_status is not None and not noop_errors:
-            if noop_record is None:
-                errors.append("semantic not-applicable record is missing")
-            else:
-                if not str(noop_record.get("reason", "")).strip():
-                    errors.append("semantic not-applicable review has no reason")
-                if not str(noop_record.get("reviewed_by", "")).strip():
-                    errors.append("semantic not-applicable review has no reviewer")
-                semantic_ok = True
-        if not semantic_ok:
-            errors.extend(evidence_errors)
-            errors.extend(noop_errors)
-            if not errors:
-                errors.append("required semantic evidence is absent")
+    statuses = list(statuses)
+    selected = list(selection.get("suites", [])) if selection is not None else []
+    enforced = semantic_required or bool(selected)
+    if enforced:
+        if selection is None:
+            errors.append(
+                'semantic evaluation required but no semantic suite was selected (add "Semantic suites:" '
+                f'and a reviewer "{SUITE_PHRASE_PREFIX}" line)'
+            )
+        else:
+            selection_errors = [str(error) for error in selection.get("errors", [])]
+            errors.extend(selection_errors)
+            if not selection.get("none") and not selected and not selection_errors:
+                errors.append(
+                    'semantic evaluation required but no semantic suite was selected (add "Semantic suites:" '
+                    f'and a reviewer "{SUITE_PHRASE_PREFIX}" line)'
+                )
+            if selection.get("none"):
+                errors.extend(
+                    _verify_noop_evidence(statuses, runs, candidate, repo, default_branch)
+                )
+            elif selected:
+                if trusted_suites is None:
+                    errors.append(
+                        "trusted semantic suite registry is not present on the default branch"
+                    )
+                else:
+                    errors.extend(str(error) for error in registry_errors)
+                    for suite_id in selected:
+                        trusted = trusted_suites.get(suite_id)
+                        if trusted is None:
+                            errors.append(
+                                f"unknown semantic suite: {suite_id} (not in default-branch {SUITE_REGISTRY_PATH})"
+                            )
+                        elif not trusted.get("approved"):
+                            errors.append(
+                                f"semantic suite {suite_id} configuration {trusted.get('config_path')} is unapproved"
+                            )
+                        else:
+                            errors.extend(
+                                _verify_suite_evidence(
+                                    suite_id, trusted, statuses, runs, candidate, repo, default_branch
+                                )
+                            )
     if live_required:
         live_errors, live_status, live_record = _verify_trusted_status(
             statuses, runs, LIVE_STATUS, candidate, repo, default_branch, "live"
@@ -2440,7 +2758,7 @@ def _github_bytes(url: str, token: str) -> bytes:
         url,
         headers={
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
+            **({"Authorization": f"Bearer {token}"} if token else {}),
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "cs5351-ci-gates",
         },
@@ -2539,8 +2857,9 @@ def fetch_evidence(
     *,
     semantic_required: bool,
     live_required: bool,
-    semantic_config_approved: bool,
-    semantic_config_version: str,
+    selection: Mapping[str, Any] | None = None,
+    trusted_suites: Mapping[str, Mapping[str, Any]] | None = None,
+    registry_errors: Sequence[str] = (),
 ) -> dict[str, Any]:
     if not default_branch:
         raise CiError("default branch is required for evidence verification")
@@ -2554,8 +2873,9 @@ def fetch_evidence(
         runs=runs,
         semantic_required=semantic_required,
         live_required=live_required,
-        semantic_config_approved=semantic_config_approved,
-        semantic_config_version=semantic_config_version,
+        selection=selection,
+        trusted_suites=trusted_suites,
+        registry_errors=registry_errors,
     )
 
 
@@ -2642,15 +2962,55 @@ def _command_approval(args: argparse.Namespace) -> int:
     return _print_result(result)
 
 
+def _event_selection_declared(pr_body_file: str) -> bool:
+    if not pr_body_file:
+        return False
+    try:
+        text = Path(pr_body_file).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise CiError(f"cannot read PR body file: {exc}") from exc
+    suites, _, _ = parse_suite_list(parse_pr_body(text).get(SUITE_SELECTION_FIELD, ""))
+    return bool(suites)
+
+
+def resolve_suite_selection(repo: str, pr_number: int, token: str) -> dict[str, Any] | None:
+    """Fetch the current PR body (not the event payload) and verify its suite selection."""
+    pull = _github_request(f"https://api.github.com/repos/{repo}/pulls/{pr_number}", token)
+    fields = parse_pr_body(str(pull.get("body") or ""))
+    if not fields.get(SUITE_SELECTION_FIELD, "").strip():
+        return None
+    author = str((pull.get("user") or {}).get("login", ""))
+    event: Mapping[str, Any] | None = None
+    url = fields.get(SUITE_APPROVAL_FIELD, "")
+    if url:
+        try:
+            event, author = fetch_approval_event(repo, pr_number, url, token)
+        except CiError:
+            event = None
+    return verify_suite_selection(fields, event, author)
+
+
 def _command_evidence(args: argparse.Namespace) -> int:
     fixture = _load_fixture(args.fixture)
-    config = semantic_config_status(args.semantic_config) if args.semantic_config else {
-        "approved": False,
-        "version": "",
-    }
+    if args.semantic_config:
+        print(
+            "NOTE: --semantic-config is ignored; suites come from --registry",
+            file=sys.stderr,
+        )
     if fixture is None:
         if not args.token:
             raise CiError("evidence check requires --token for the GitHub API")
+        selection: Mapping[str, Any] | None = None
+        trusted: Mapping[str, Mapping[str, Any]] | None = None
+        registry_errors: list[str] = []
+        if args.pr:
+            selection = resolve_suite_selection(args.repo, args.pr, args.token)
+        elif args.semantic_required or _event_selection_declared(args.pr_body_file):
+            raise CiError("evidence check requires --pr for semantic suite selection")
+        if args.registry and (args.semantic_required or (selection and not selection.get("none"))):
+            trusted, registry_errors = trusted_suite_states(
+                args.registry, args.trusted_root or Path(args.registry).resolve().parents[2]
+            )
         result = fetch_evidence(
             args.repo,
             args.candidate,
@@ -2658,8 +3018,9 @@ def _command_evidence(args: argparse.Namespace) -> int:
             args.token,
             semantic_required=args.semantic_required,
             live_required=args.live_required,
-            semantic_config_approved=bool(config["approved"]),
-            semantic_config_version=str(config["version"]),
+            selection=selection,
+            trusted_suites=trusted,
+            registry_errors=registry_errors,
         )
         return _print_result(result)
     classification = fixture.get("classification", {})
@@ -2675,12 +3036,9 @@ def _command_evidence(args: argparse.Namespace) -> int:
         live_required=bool(
             fixture.get("live_required", classification.get("live_required"))
         ),
-        semantic_config_approved=bool(
-            fixture.get("semantic_config_approved", config["approved"])
-        ),
-        semantic_config_version=str(
-            fixture.get("semantic_config_version", config["version"])
-        ),
+        selection=fixture.get("selection"),
+        trusted_suites=fixture.get("trusted_suites"),
+        registry_errors=fixture.get("registry_errors", []),
     )
     return _print_result(result)
 
@@ -2713,30 +3071,22 @@ def _command_contract_tests(args: argparse.Namespace) -> int:
         paths = [item.strip() for item in args.paths.split(",") if item.strip()]
     else:
         paths = changed_paths_from_git(args.base, args.head, PROJECT_ROOT)
-    supplemental_texts: list[str] = []
-    supplemental = fields.get("Supplemental test specification", "")
-    if supplemental:
-        spec_path, spec_commit, _approval_url, parse_errors = (
-            parse_supplemental_specification(supplemental)
+    supplements: list[str] = []
+    if supplemental_specifications(fields):
+        # CI supplies its read-only job token explicitly; direct callers retain
+        # the public-read default. Authentication failure never falls back.
+        try:
+            repo, pr_number = _approval_location(fields.get("Approval evidence", ""))
+        except CiError as exc:
+            return _print_result({"errors": [str(exc)]})
+        supplemental = validate_supplemental_specifications(
+            PROJECT_ROOT, args.base, args.head, fields,
+            repo, pr_number, getattr(args, "token", ""), paths,
         )
-        if parse_errors:
-            return _print_result({"errors": parse_errors, "test_paths": []})
-        _, spec_path_error = resolve_project_file(
-            PROJECT_ROOT, spec_path, "Supplemental test specification"
-        )
-        if spec_path_error:
-            return _print_result({"errors": [spec_path_error], "test_paths": []})
-        sup_text, sup_error = read_specification_at_commit(
-            PROJECT_ROOT, spec_path, spec_commit
-        )
-        if sup_error:
-            return _print_result({"errors": [sup_error], "test_paths": []})
-        # Selection completeness only; the authoritative approval binding of this
-        # supplement is enforced by the test-approval job (which has the GitHub token).
-        supplemental_texts.append(sup_text or "")
-    plan = contract_test_plan(
-        PROJECT_ROOT, fields, paths, supplemental_spec_texts=supplemental_texts
-    )
+        if supplemental["errors"]:
+            return _print_result(supplemental)
+        supplements.extend(supplemental["spec_texts"])
+    plan = contract_test_plan(PROJECT_ROOT, fields, paths, supplemental_spec_texts=supplements)
     if plan["errors"]:
         return _print_result(plan)
     test_paths = plan["test_paths"]
@@ -2901,7 +3251,11 @@ def build_parser() -> argparse.ArgumentParser:
     evidence.add_argument("--repo", default="")
     evidence.add_argument("--default-branch", default="")
     evidence.add_argument("--token", default="")
-    evidence.add_argument("--semantic-config", default="")
+    evidence.add_argument("--semantic-config", default="", help="deprecated; ignored")
+    evidence.add_argument("--registry", default="")
+    evidence.add_argument("--trusted-root", default="")
+    evidence.add_argument("--pr", default=0, type=int)
+    evidence.add_argument("--pr-body-file", default="")
     evidence.add_argument("--semantic-required", action="store_true")
     evidence.add_argument("--live-required", action="store_true")
     evidence.add_argument("--fixture", default="")
@@ -2923,6 +3277,7 @@ def build_parser() -> argparse.ArgumentParser:
     contract_tests.add_argument("--base", default="")
     contract_tests.add_argument("--head", default="HEAD")
     contract_tests.add_argument("--paths", default="")
+    contract_tests.add_argument("--token", default="", help="GitHub API token for supplemental approval reads")
     contract_tests.set_defaults(func=_command_contract_tests)
 
     aggregate = subparsers.add_parser("aggregate")

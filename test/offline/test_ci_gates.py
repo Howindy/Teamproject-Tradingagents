@@ -16,6 +16,7 @@ import socket
 import sys
 import threading
 import urllib.request
+from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -1766,7 +1767,9 @@ def test_trusted_workflow_semantic_handoff_and_details_artifact():
     assert semantic_step["env"]["DEEPSEEK_API_KEY"] == "${{ secrets.DEEPSEEK_API_KEY }}"
     assert "--details-output" in semantic_step["run"]
     details_upload = next(s for s in steps if s.get("name") == "Upload semantic details artifact")
-    assert details_upload["if"] == "always() && inputs.mode == 'semantic'"
+    assert details_upload["if"] == (
+        "always() && inputs.mode == 'semantic' && steps.resolve.outcome == 'success'"
+    )
     assert "semantic-details.json" in details_upload["with"]["path"]
     ci_text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "DEEPSEEK_API_KEY" not in ci_text
@@ -1844,6 +1847,16 @@ def _record(
         "executed": True,
         "collected_only": False,
     }
+    if kind == "semantic":
+        record.update(
+            {
+                "suite_id": "financial-metrics",
+                "config_path": "docs/ci/semantic_eval.yaml",
+                "config_sha256": "cfgsha",
+                "runner": "financial_metrics_eval:evaluate",
+                "needs_review": [],
+            }
+        )
     record.update(overrides)
     return record
 
@@ -1871,46 +1884,65 @@ def _evidence(statuses, runs, **kwargs):
         "runs": runs,
         "semantic_required": True,
         "live_required": False,
-        "semantic_config_approved": True,
-        "semantic_config_version": "v1",
+        "selection": _selection("financial-metrics"),
+        "trusted_suites": {"financial-metrics": _trusted_suite()},
     }
     defaults.update(kwargs)
     return ci_checks.verify_evidence(**defaults)
 
 
+_FM_CONTEXT = "semantic-eval/financial-metrics"
+
+
+def _selection(*suites: str, none: bool = False, errors: list[str] | None = None) -> dict[str, Any]:
+    return {"suites": list(suites), "none": none, "errors": list(errors or [])}
+
+
+def _trusted_suite(**overrides: Any) -> dict[str, Any]:
+    suite = {
+        "approved": True,
+        "config_path": "docs/ci/semantic_eval.yaml",
+        "config_sha256": "cfgsha",
+        "config_version": "v1",
+        "runner": "financial_metrics_eval:evaluate",
+    }
+    suite.update(overrides)
+    return suite
+
+
 def test_semantic_evidence_accepts_trusted_candidate_and_config():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     runs = {"7": _run(7, _record("semantic"))}
     assert _evidence(statuses, runs)["errors"] == []
 
 
 def test_semantic_evidence_rejects_missing_wrong_sha_and_untrusted_runs():
     assert _evidence([], {})["errors"]
-    assert _evidence([_status(ci_checks.SEMANTIC_STATUS, "other", 7)], {"7": _run(7, _record("semantic"))})["errors"]
+    assert _evidence([_status(_FM_CONTEXT, "other", 7)], {"7": _run(7, _record("semantic"))})["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), path=".github/workflows/other.yml")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), repository="other/repo")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), event="push")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), head_branch="release")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, None)},
     )["errors"]
 
 
 def test_semantic_evidence_rejects_config_and_artifact_mismatches():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     assert _evidence(
         statuses,
         {"7": _run(7, _record("semantic", config_version="v2"))},
@@ -1918,7 +1950,7 @@ def test_semantic_evidence_rejects_config_and_artifact_mismatches():
     assert _evidence(
         statuses,
         {"7": _run(7, _record("semantic"))},
-        semantic_config_approved=False,
+        trusted_suites={"financial-metrics": _trusted_suite(approved=False)},
     )["errors"]
     assert _evidence(
         statuses,
@@ -1935,15 +1967,17 @@ def test_semantic_not_applicable_requires_review_reason():
     assert _evidence(
         [_status(noop, "cand1", 8)],
         {"8": _run(8, _record("semantic-noop", reason="", reviewed_by=""))},
+        selection=_selection(none=True),
     )["errors"]
     assert _evidence(
         [_status(noop, "cand1", 8)],
         {"8": _run(8, _record("semantic-noop", reason="layout only", reviewed_by="human"))},
+        selection=_selection(none=True),
     )["errors"] == []
 
 
 def test_workflow_head_sha_may_differ_but_new_candidate_invalidates():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     runs = {
         "7": _run(
             7,
@@ -1961,24 +1995,28 @@ def test_live_evidence_requires_execution_and_passes_with_docs_only_scope():
         [_status(live, "cand1", 9)],
         {"9": _run(9, _record("live"))},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"] == []
     assert _evidence(
         [_status(live, "cand1", 9)],
         {"9": _run(9, _record("live", collected_only=True))},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"]
     assert _evidence(
         [],
         {},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"]
     assert _evidence(
         [],
         {},
         semantic_required=False,
+        selection=None,
         live_required=False,
     )["errors"] == []
 
@@ -2065,92 +2103,53 @@ def test_semantic_config_validation_and_not_applicable_entry(tmp_path: Path):
     assert record["reviewed_by"] == "human"
 
 
-def test_semantic_entry_preserves_details_reference_and_fails_closed(tmp_path: Path, monkeypatch):
-    """FR-10 / P06: detailed evidence round-trip and failure status propagation."""
-    cfg_path = tmp_path / "semantic_eval.yaml"
-    cfg_path.write_text(
-        yaml.safe_dump(
-            {
-                "schema_version": "1.0",
-                "status": "approved",
-                "dataset": {"version": "v1", "cases": [{"id": "FM-S01"}]},
-                "rubric": {"version": "r1", "definition": "fixed"},
-                "thresholds": {"candidate_min_passed_checks": 18},
-                "model": {"provider": "deepseek", "model": "deepseek-flash"},
-                "approval": {
-                    "approved_by": "human",
-                    "approved_at": "2026-11-23T11:30:00Z",
-                    "evidence": ["https://github.com/o/r/pull/14#issuecomment-1"],
-                },
-            }
-        ),
-        encoding="utf-8",
+def test_semantic_entry_preserves_details_reference_and_fails_closed(tmp_path: Path):
+    """FR-10 / P06: detailed evidence round-trip and failure status propagation.
+
+    Runs through a registered suite (semantic-suite-routing §3.4); needs_review is
+    preserved as its own status instead of being flattened to failed (plan P6).
+    """
+    import hashlib
+
+    root, registry, _ = _semantic_suite_root(
+        tmp_path / "pass",
+        result={
+            "request_count": 6,
+            "candidate_summary": {"passed_checks": 20, "total_checks": 20},
+            "baseline_summary": {"paired_cases": ["FM-S01", "FM-S02"]},
+        },
     )
-
-    class _RunnerModule:
-        @staticmethod
-        def pass_runner(config, candidate, output_dir=None):
-            dpath = Path(output_dir or tmp_path) / "semantic-details.json"
-            body = json.dumps({"status": "passed", "candidate_sha": candidate})
-            dpath.write_text(body, encoding="utf-8")
-            import hashlib
-
-            return {
-                "status": "passed",
-                "details_path": str(dpath),
-                "details_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-                "dataset_sha256": "dsha",
-                "rubric_sha256": "rsha",
-                "request_count": 6,
-                "candidate_summary": {"passed_checks": 20, "total_checks": 20},
-                "baseline_summary": {"paired_cases": ["FM-S01", "FM-S02"]},
-            }
-
-        @staticmethod
-        def review_runner(config, candidate, output_dir=None):
-            return {
-                "status": "needs_review",
-                "errors": ["ambiguous claim"],
-                "candidate_summary": {"passed_checks": 19, "total_checks": 20},
-            }
-
-    monkeypatch.setitem(sys.modules, "synthetic_fr10_runner", _RunnerModule)
-    rec_out = tmp_path / "record-pass.json"
-    det_out = tmp_path / "out" / "semantic-details.json"
-    rc = ci_semantic_eval.main([
-        "--config", str(cfg_path),
-        "--candidate", "cand1",
-        "--workflow-sha", "wf1",
-        "--run-id", "42",
-        "--output", str(rec_out),
-        "--details-output", str(det_out),
-        "--runner", "synthetic_fr10_runner:pass_runner",
-    ])
+    rc, rec = _run_suite(root, registry, tmp_path, "record-pass")
     assert rc == 0
-    rec = json.loads(rec_out.read_text(encoding="utf-8"))
     assert rec["status"] == "passed"
     assert rec["request_count"] == 6
     assert rec["candidate_summary"]["passed_checks"] == 20
+    assert rec["baseline_summary"]["paired_cases"] == ["FM-S01", "FM-S02"]
+    det_out = tmp_path / "record-pass" / "semantic-details.json"
     assert det_out.is_file()
-    import hashlib
-
     assert rec["details_sha256"] == hashlib.sha256(det_out.read_bytes()).hexdigest()
 
-    fail_out = tmp_path / "record-review.json"
-    fail_det = tmp_path / "fail-out" / "semantic-details.json"
-    rc_fail = ci_semantic_eval.main([
-        "--config", str(cfg_path),
-        "--candidate", "cand1",
-        "--workflow-sha", "wf1",
-        "--run-id", "43",
-        "--output", str(fail_out),
-        "--details-output", str(fail_det),
-        "--runner", "synthetic_fr10_runner:review_runner",
-    ])
+    review_root, review_registry, _ = _semantic_suite_root(
+        tmp_path / "review",
+        result={
+            "status": "needs_review",
+            "errors": ["ambiguous claim"],
+            "needs_review": ["FM-S01:ambiguous_metric_claim:m1"],
+        },
+    )
+    rc_fail, fail_rec = _run_suite(review_root, review_registry, tmp_path, "record-review")
     assert rc_fail == 1
-    fail_rec = json.loads(fail_out.read_text(encoding="utf-8"))
-    assert fail_rec["status"] == "failed"
-    assert fail_det.is_file()
+    assert fail_rec["status"] == "needs_review"
+    assert fail_rec["needs_review"] == ["FM-S01:ambiguous_metric_claim:m1"]
+    assert "ambiguous claim" in fail_rec["reason"]
+    assert (tmp_path / "record-review" / "semantic-details.json").is_file()
+
+    failed_root, failed_registry, _ = _semantic_suite_root(
+        tmp_path / "failed", result={"status": "failed", "errors": ["critical"]}
+    )
+    rc_failed, failed_rec = _run_suite(failed_root, failed_registry, tmp_path, "record-failed")
+    assert rc_failed == 1
+    assert failed_rec["status"] == "failed"
 
 
 class _ArtifactProbeServer(http.server.ThreadingHTTPServer):
@@ -2372,9 +2371,1241 @@ def test_fetch_trusted_runs_propagates_artifact_download_failure(
         )
 
 
-# --- PR #13 repair: scope-ID namespaces and P3+A3 supplemental spec ---
+# ---------------------------------------------------------------------------
+# Semantic suite routing (docs/plans/semantic-suite-routing.md §3, §5 T01-T18)
+# ---------------------------------------------------------------------------
+
+_DA_CONTEXT = "semantic-eval/data-availability"
+_FM_CONFIG_LF_SHA256 = "20e15937f66a14617e9b613d1c42854dd2a1dd616771d84d40bc746d1423d9b7"
 
 
+def _da_record(**overrides: Any) -> dict[str, Any]:
+    record = _record(
+        "semantic",
+        suite_id="data-availability",
+        config_path="docs/ci/semantic-suites/data-availability.yaml",
+        config_sha256="dasha",
+        runner="data_availability_eval:evaluate",
+    )
+    record.update(overrides)
+    return record
+
+
+def _da_trusted(**overrides: Any) -> dict[str, Any]:
+    return _trusted_suite(
+        config_path="docs/ci/semantic-suites/data-availability.yaml",
+        config_sha256="dasha",
+        runner="data_availability_eval:evaluate",
+        **overrides,
+    )
+
+
+def _both_trusted() -> dict[str, Any]:
+    return {"financial-metrics": _trusted_suite(), "data-availability": _da_trusted()}
+
+
+def test_t01_single_selected_suite_with_matching_evidence_passes():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    assert _evidence(statuses, runs)["errors"] == []
+
+
+def test_t02_unrelated_suite_evidence_does_not_substitute():
+    result = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        selection=_selection("data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert any(_DA_CONTEXT in error for error in result["errors"])
+
+
+def test_t03_every_selected_suite_needs_its_own_evidence():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    missing = _evidence(
+        statuses,
+        runs,
+        selection=_selection("financial-metrics", "data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert missing["errors"]
+    assert all("financial-metrics" not in error for error in missing["errors"])
+    assert any(_DA_CONTEXT in error for error in missing["errors"])
+    both = _evidence(
+        statuses + [_status(_DA_CONTEXT, "cand1", 8)],
+        {**runs, "8": _run(8, _da_record())},
+        selection=_selection("financial-metrics", "data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert both["errors"] == []
+
+
+def test_t04_semantic_required_without_selection_blocks():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    for selection in (None, _selection()):
+        errors = _evidence(statuses, runs, selection=selection)["errors"]
+        assert any("no semantic suite was selected" in error for error in errors)
+
+
+def test_t05_unknown_suite_blocks_before_status_lookup():
+    errors = _evidence([], {}, selection=_selection("no-such-suite"))["errors"]
+    assert any("unknown semantic suite: no-such-suite" in error for error in errors)
+    assert all("missing semantic-eval/no-such-suite" not in error for error in errors)
+
+
+def test_t06_unapproved_trusted_config_blocks_even_with_passing_status():
+    errors = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        trusted_suites={"financial-metrics": _trusted_suite(approved=False)},
+    )["errors"]
+    assert any("is unapproved" in error for error in errors)
+
+
+def _suite_event(body: str, **overrides: Any) -> dict[str, Any]:
+    event = {
+        "reviewer": "reviewer",
+        "reviewer_type": "User",
+        "state": "COMMENTED",
+        "body": body,
+        "created_at": "2026-11-24T10:00:00Z",
+        "url": "https://github.com/o/r/pull/17#issuecomment-1",
+    }
+    event.update(overrides)
+    return event
+
+
+def _suite_fields(value: str, url: str = "https://github.com/o/r/pull/17#issuecomment-1"):
+    fields = {"Semantic suites": value}
+    if url:
+        fields["Semantic suites approval"] = url
+    return fields
+
+
+def test_t07_suite_selection_approval_rules():
+    verify = ci_checks.verify_suite_selection
+    ok = verify(
+        _suite_fields("Data-Availability ,financial-metrics"),
+        _suite_event("LGTM\nAPPROVED semantic-suites: financial-metrics, data-availability"),
+        "author",
+    )
+    assert ok["errors"] == []
+    assert ok["suites"] == ["data-availability", "financial-metrics"]
+    assert ok["none"] is False
+    phrase = "APPROVED semantic-suites: financial-metrics"
+    assert verify(_suite_fields("financial-metrics", url=""), _suite_event(phrase), "author")["errors"]
+    assert verify(_suite_fields("financial-metrics"), None, "author")["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"), _suite_event(phrase, reviewer="author"), "author"
+    )["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"),
+        _suite_event(phrase, reviewer="helper[bot]", reviewer_type="Bot"),
+        "author",
+    )["errors"]
+    assert verify(_suite_fields("financial-metrics"), _suite_event("approved"), "author")["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"), _suite_event(phrase + "\n" + phrase), "author"
+    )["errors"]
+    assert verify(
+        _suite_fields("financial-metrics, data-availability"), _suite_event(phrase), "author"
+    )["errors"]
+    mixed = verify(
+        _suite_fields("none, financial-metrics"),
+        _suite_event("APPROVED semantic-suites: none, financial-metrics"),
+        "author",
+    )
+    assert mixed["errors"]
+    none = verify(
+        _suite_fields("None"), _suite_event("APPROVED semantic-suites: none"), "author"
+    )
+    assert none["errors"] == [] and none["none"] is True and none["suites"] == []
+    assert ci_checks.parse_pr_body(
+        "Semantic suites: financial-metrics\n"
+        "Semantic suites approval: https://github.com/o/r/pull/17#issuecomment-1\n"
+    ) == _suite_fields("financial-metrics")
+
+
+def test_t08_record_must_match_suite_config_candidate_and_trusted_run():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    for record in (
+        _record("semantic", suite_id="data-availability"),
+        _record("semantic", config_sha256="stale"),
+        _record("semantic", config_path="docs/ci/other.yaml"),
+        _record("semantic", candidate="other"),
+        _record("semantic", status="failed"),
+    ):
+        assert _evidence(statuses, {"7": _run(7, record)})["errors"], record
+    for run_override in (
+        {"path": ".github/workflows/other.yml"},
+        {"head_branch": "feature"},
+        {"event": "push"},
+    ):
+        assert _evidence(
+            statuses, {"7": _run(7, _record("semantic"), **run_override)}
+        )["errors"], run_override
+
+
+def test_t09_needs_review_blocks_and_lists_items():
+    items = ["FM-S01:missing_metric_mention:m1", "FM-S03:unresolved_period:m2"]
+    errors = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic", status="needs_review", needs_review=items))},
+    )["errors"]
+    assert any(
+        "needs human review" in error and items[0] in error and items[1] in error
+        for error in errors
+    )
+    state, description = ci_semantic_eval.status_description(
+        {"candidate_sha": "cand1", "status": "needs_review", "needs_review": items}
+    )
+    assert state == "failure"
+    assert description == "needs_review: 2 pending items"
+    assert ci_semantic_eval.status_description({"status": "failed"}) == ("failure", "failed")
+    assert ci_semantic_eval.status_description(
+        {"candidate_sha": "cand1", "status": "passed"}
+    ) == ("success", "evidence recorded for cand1")
+    assert ci_semantic_eval.status_description(None)[0] == "failure"
+
+
+def test_t10_none_selection_uses_reviewed_not_applicable_only():
+    noop = ci_checks.SEMANTIC_NOOP_STATUS
+    noop_status = [_status(noop, "cand1", 8)]
+    noop_run = {"8": _run(8, _record("semantic-noop", reason="layout only", reviewed_by="human"))}
+    assert _evidence(noop_status, noop_run, selection=_selection(none=True))["errors"] == []
+    assert _evidence([], {}, selection=_selection(none=True))["errors"]
+    assert _evidence(noop_status, noop_run, selection=_selection("financial-metrics"))["errors"]
+
+
+def test_t11_legacy_shared_semantic_status_is_not_accepted():
+    errors = _evidence(
+        [_status("semantic-eval/evidence", "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+    )["errors"]
+    assert any(_FM_CONTEXT in error for error in errors)
+
+
+def test_t12_non_semantic_pr_without_selection_keeps_old_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    assert _evidence([], {}, semantic_required=False, selection=None, trusted_suites=None)[
+        "errors"
+    ] == []
+    assert _evidence(
+        [], {}, semantic_required=False, selection=_selection(none=True), trusted_suites=None
+    )["errors"] == []
+
+    def no_approval(*args: Any, **kwargs: Any):
+        raise AssertionError("approval must not be fetched for a non-enforced PR")
+
+    captured: dict[str, Any] = {}
+
+    def fake_fetch_evidence(repo, candidate, default_branch, token, **kwargs):
+        captured.update(kwargs)
+        return {"errors": []}
+
+    monkeypatch.setattr(ci_checks, "_github_request", lambda *a: {"body": "Plain PR description."})
+    monkeypatch.setattr(ci_checks, "fetch_approval_event", no_approval)
+    monkeypatch.setattr(ci_checks, "fetch_evidence", fake_fetch_evidence)
+    body = tmp_path / "body.txt"
+    body.write_text("Plain PR description without semantic fields.\n", encoding="utf-8")
+    rc = ci_checks.main(
+        [
+            "evidence",
+            "--candidate", "cand1",
+            "--repo", "o/r",
+            "--default-branch", "main",
+            "--token", "fake-local-token",
+            "--pr", "17",
+            "--pr-body-file", str(body),
+            "--registry", str(tmp_path / "missing" / "semantic-suites.yaml"),
+            "--trusted-root", str(tmp_path / "missing"),
+        ]
+    )
+    assert rc == 0
+    assert captured["selection"] is None
+    assert captured["trusted_suites"] is None
+
+
+def _write_registry(root: Path, suites: dict[str, Any] | str) -> Path:
+    path = root / "docs" / "ci" / "semantic-suites.yaml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if isinstance(suites, str):
+        path.write_text(suites, encoding="utf-8")
+    else:
+        path.write_text(
+            yaml.safe_dump({"schema_version": "1.0", "suites": suites}, sort_keys=False),
+            encoding="utf-8",
+        )
+    return path
+
+
+def _suite_root(tmp_path: Path, runner_module: str = "demo_eval", runner_source: str = "") -> Path:
+    root = tmp_path / "trusted"
+    (root / "scripts").mkdir(parents=True, exist_ok=True)
+    (root / "scripts" / f"{runner_module}.py").write_text(
+        runner_source or "def evaluate(config, candidate_sha, *, output_dir, model_transport=None):\n"
+        "    return {'status': 'failed'}\n",
+        encoding="utf-8",
+    )
+    config_dir = root / "docs" / "ci" / "semantic-suites"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "demo.yaml").write_text(
+        yaml.safe_dump(
+            {"schema_version": "1.0", "status": "unapproved", "execution": {"runner": f"{runner_module}:evaluate"}}
+        ),
+        encoding="utf-8",
+    )
+    return root
+
+
+def _demo_entry(**overrides: Any) -> dict[str, Any]:
+    entry = {
+        "requirement": "FR-TEST",
+        "config": "docs/ci/semantic-suites/demo.yaml",
+        "runner": "demo_eval:evaluate",
+    }
+    entry.update(overrides)
+    return entry
+
+
+def test_t13_registry_validation(tmp_path: Path):
+    root = _suite_root(tmp_path)
+    load = ci_checks.load_suite_registry
+    good = load(_write_registry(root, {"demo": _demo_entry()}), root)
+    assert good["errors"] == []
+    assert good["suites"]["demo"]["runner"] == "demo_eval:evaluate"
+    other = root / "docs" / "ci" / "other.yaml"
+    other.write_text("schema_version: '1.0'\n", encoding="utf-8")
+    outside = root / "outside.yaml"
+    outside.write_text("x: 1\n", encoding="utf-8")
+    bad_cases = [
+        {"Bad_ID": _demo_entry()},
+        {"evidence": _demo_entry()},
+        {"not-applicable": _demo_entry()},
+        {"demo": _demo_entry(config="outside.yaml")},
+        {"demo": _demo_entry(config="docs/ci/../../outside.yaml")},
+        {"demo": _demo_entry(config="docs/ci/semantic-suites/missing.yaml")},
+        {"demo": _demo_entry(), "demo-two": _demo_entry()},
+        {"demo": _demo_entry(runner="tradingagents.graph:evaluate")},
+        {"demo": _demo_entry(runner="missing_eval:evaluate")},
+        {"demo": _demo_entry(runner="demo_eval")},
+        {"demo": _demo_entry(runner="other_eval:evaluate")},
+        {"demo": {**_demo_entry(), "extra": 1}},
+        {"demo": {"config": "docs/ci/semantic-suites/demo.yaml", "runner": "demo_eval:evaluate"}},
+    ]
+    (root / "scripts" / "other_eval.py").write_text("", encoding="utf-8")
+    for suites in bad_cases:
+        result = load(_write_registry(root, suites), root)
+        assert result["errors"], suites
+    duplicate = load(
+        _write_registry(
+            root,
+            "schema_version: '1.0'\nsuites:\n"
+            "  demo:\n    requirement: FR-TEST\n    config: docs/ci/semantic-suites/demo.yaml\n"
+            "    runner: demo_eval:evaluate\n"
+            "  demo:\n    requirement: FR-TEST\n    config: docs/ci/semantic-suites/demo.yaml\n"
+            "    runner: demo_eval:evaluate\n",
+        ),
+        root,
+    )
+    assert duplicate["errors"]
+    assert load(_write_registry(root, "schema_version: '2.0'\nsuites: {}\n"), root)["errors"]
+
+
+_APPROVED_SUITE_CONFIG = {
+    "schema_version": "1.0",
+    "status": "approved",
+    "dataset": {"version": "v1", "cases": [{"id": "C1"}]},
+    "rubric": {"version": "r1", "definition": "fixed"},
+    "thresholds": {"min": 1},
+    "model": {"provider": "test", "model": "test-model"},
+    "execution": {"runner": "demo_eval:evaluate", "max_completion_requests": 1},
+    "approval": {
+        "approved_by": "human",
+        "approved_at": "2026-11-24T10:00:00Z",
+        "evidence": ["https://github.com/o/r/pull/1#issuecomment-1"],
+    },
+}
+
+_RUNNER_SOURCE = '''
+import hashlib
+import json
+from pathlib import Path
+
+RESULT = {"status": "passed"}
+
+
+def evaluate(config, candidate_sha, *, output_dir, model_transport=None):
+    details = Path(output_dir) / "semantic-details.json"
+    body = json.dumps({"candidate_sha": candidate_sha}).encode("utf-8")
+    details.write_bytes(body)
+    result = {
+        "status": "passed",
+        "errors": [],
+        "needs_review": [],
+        "request_count": 1,
+        "dataset_sha256": "dsha",
+        "rubric_sha256": "rsha",
+        "details_path": str(details),
+        "details_sha256": hashlib.sha256(body).hexdigest(),
+    }
+    result.update(RESULT)
+    return result
+'''
+
+
+def _semantic_suite_root(tmp_path: Path, result: dict[str, Any] | None = None, crlf: bool = False):
+    source = _RUNNER_SOURCE
+    if result is not None:
+        source = source.replace('RESULT = {"status": "passed"}', f"RESULT = {result!r}")
+    root = _suite_root(tmp_path, runner_source=source)
+    config_text = yaml.safe_dump(_APPROVED_SUITE_CONFIG, sort_keys=False)
+    config_path = root / "docs" / "ci" / "semantic-suites" / "demo.yaml"
+    config_path.write_bytes(
+        config_text.replace("\n", "\r\n").encode("utf-8") if crlf else config_text.encode("utf-8")
+    )
+    registry = _write_registry(root, {"demo": _demo_entry()})
+    return root, registry, config_text
+
+
+def _run_suite(root: Path, registry: Path, tmp_path: Path, name: str, suite: str = "demo"):
+    record_path = tmp_path / f"{name}.json"
+    rc = ci_semantic_eval.main(
+        [
+            "--registry", str(registry),
+            "--suite", suite,
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(record_path),
+            "--details-output", str(tmp_path / name / "semantic-details.json"),
+        ]
+    )
+    record = json.loads(record_path.read_text(encoding="utf-8")) if record_path.exists() else None
+    return rc, record
+
+
+def test_t14_semantic_entry_uses_registered_suite_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import hashlib
+
+    root, registry, config_text = _semantic_suite_root(tmp_path)
+    imported: list[str] = []
+    original = ci_semantic_eval.load_runner
+
+    def tracking_load(*args: Any, **kwargs: Any):
+        imported.append(str(args))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(ci_semantic_eval, "load_runner", tracking_load)
+    rc, record = _run_suite(root, registry, tmp_path, "unknown", suite="no-such-suite")
+    assert rc == 1 and record is None and imported == []
+
+    rc, record = _run_suite(root, registry, tmp_path, "pass")
+    assert rc == 0
+    assert record["suite_id"] == "demo"
+    assert record["config_path"] == "docs/ci/semantic-suites/demo.yaml"
+    assert record["runner"] == "demo_eval:evaluate"
+    assert record["status"] == "passed"
+    assert record["needs_review"] == []
+    expected_sha = hashlib.sha256(config_text.encode("utf-8")).hexdigest()
+    assert record["config_sha256"] == expected_sha
+    assert record["config_version"] == "v1"
+
+    crlf_root, crlf_registry, _ = _semantic_suite_root(tmp_path / "crlf", crlf=True)
+    _, crlf_record = _run_suite(crlf_root, crlf_registry, tmp_path, "crlf")
+    assert crlf_record["config_sha256"] == expected_sha
+
+    review_root, review_registry, _ = _semantic_suite_root(
+        tmp_path / "review",
+        result={"status": "needs_review", "needs_review": ["C1:ambiguous_claim:x", "C1:unresolved_period:y"]},
+    )
+    rc, review = _run_suite(review_root, review_registry, tmp_path, "review")
+    assert rc == 1
+    assert review["status"] == "needs_review"
+    assert review["needs_review"] == ["C1:ambiguous_claim:x", "C1:unresolved_period:y"]
+
+    unapproved = copy.deepcopy(_APPROVED_SUITE_CONFIG)
+    unapproved["status"] = "unapproved"
+    (root / "docs" / "ci" / "semantic-suites" / "demo.yaml").write_text(
+        yaml.safe_dump(unapproved), encoding="utf-8"
+    )
+    rc, record = _run_suite(root, registry, tmp_path, "unapproved")
+    assert rc == 1 and record is None
+
+    legacy_out = tmp_path / "legacy.json"
+    assert ci_semantic_eval.main(
+        [
+            "--config", str(root / "docs" / "ci" / "semantic-suites" / "demo.yaml"),
+            "--runner", "demo_eval:evaluate",
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(legacy_out),
+        ]
+    ) == 1
+    assert not legacy_out.exists()
+
+    noop_out = tmp_path / "noop.json"
+    assert ci_semantic_eval.main(
+        [
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(noop_out),
+            "--not-applicable",
+            "--reason", "layout only",
+            "--reviewer", "human",
+            "--approval-evidence", "https://github.com/o/r/pull/1#pullrequestreview-1",
+        ]
+    ) == 0
+    assert json.loads(noop_out.read_text(encoding="utf-8"))["status"] == "not_applicable"
+    assert ci_semantic_eval.main(["check-suite", "--registry", str(registry), "--suite", "demo"]) == 0
+    assert ci_semantic_eval.main(["check-suite", "--registry", str(registry), "--suite", "x"]) == 1
+
+
+def _run_steps(workflow: dict[str, Any], job: str) -> list[dict[str, Any]]:
+    return workflow["jobs"][job]["steps"]
+
+
+def test_t15_workflows_route_by_validated_suite():
+    trusted_text = (ROOT / ".github" / "workflows" / "trusted-evaluation.yml").read_text(
+        encoding="utf-8"
+    )
+    trusted = yaml.safe_load(trusted_text)
+    inputs = trusted[True]["workflow_dispatch"]["inputs"]
+    assert "suite_id" in inputs
+    assert "semantic_runner" not in inputs
+    for step in _run_steps(trusted, "evaluate"):
+        assert "${{ inputs." not in str(step.get("run", "")), step.get("name")
+    names = {step.get("name"): step for step in _run_steps(trusted, "evaluate")}
+    resolve = names["Resolve status context"]
+    assert "check-suite" in resolve["run"]
+    semantic = names["Write semantic evidence record"]
+    assert "--suite" in semantic["run"] and "--registry docs/ci/semantic-suites.yaml" in semantic["run"]
+    assert "--runner" not in semantic["run"] and "--config" not in semantic["run"]
+    assert semantic["env"]["DEEPSEEK_API_KEY"] == "${{ secrets.DEEPSEEK_API_KEY }}"
+    assert "steps.resolve.outputs.artifact_suffix" in str(names["Upload evidence record"]["with"]["name"])
+    assert "steps.resolve.outputs.suite" in str(
+        names["Upload semantic details artifact"]["with"]["name"]
+    )
+    status_step = names["Write candidate status"]
+    assert status_step["env"]["CONTEXT"] == "${{ steps.resolve.outputs.context }}"
+    assert "describe" in status_step["run"]
+    assert "inputs.suite_id" in trusted["concurrency"]["group"]
+    secret_steps = [s.get("name") for s in _run_steps(trusted, "evaluate") if "secrets." in json.dumps(s)]
+    assert set(secret_steps) <= {"Write semantic evidence record", "Run live suite", "Write candidate status"}
+
+    ci = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    evidence = ci["jobs"]["evidence-check"]
+    assert evidence["permissions"]["pull-requests"] == "read"
+    checkouts = [s for s in evidence["steps"] if str(s.get("uses", "")).startswith("actions/checkout")]
+    assert any(
+        s["with"].get("ref") == "${{ github.event.repository.default_branch }}"
+        and s["with"].get("path") == "trusted"
+        for s in checkouts
+    )
+    evidence_text = json.dumps(evidence)
+    assert "--registry trusted/docs/ci/semantic-suites.yaml" in evidence_text
+    assert "--trusted-root trusted" in evidence_text
+    assert "secrets." not in evidence_text
+
+
+def test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite():
+    import hashlib
+
+    config = ROOT / "docs" / "ci" / "semantic_eval.yaml"
+    assert hashlib.sha256(config.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == _FM_CONFIG_LF_SHA256
+    assert ci_checks.sha256_lf(config) == _FM_CONFIG_LF_SHA256
+    assert ci_checks.load_yaml(config)["status"] == "unapproved"
+    registry = ci_checks.load_suite_registry(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert registry["errors"] == []
+    assert registry["suites"]["financial-metrics"] == {
+        "requirement": "FR-10",
+        "config": "docs/ci/semantic_eval.yaml",
+        "runner": "financial_metrics_eval:evaluate",
+    }
+    states, errors = ci_checks.trusted_suite_states(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert errors == []
+    assert states["financial-metrics"]["approved"] is False
+    assert states["financial-metrics"]["config_sha256"] == _FM_CONFIG_LF_SHA256
+
+
+def test_t17_registry_absent_on_default_branch(tmp_path: Path):
+    states, errors = ci_checks.trusted_suite_states(tmp_path / "docs" / "ci" / "semantic-suites.yaml", tmp_path)
+    assert states is None and errors == []
+    assert _evidence([], {}, semantic_required=False, selection=None, trusted_suites=None)["errors"] == []
+    blocked = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        trusted_suites=None,
+    )["errors"]
+    assert any("registry is not present on the default branch" in error for error in blocked)
+
+
+def test_t18_registered_suites_conform_to_runner_contract(tmp_path: Path):
+    registry = ci_checks.load_suite_registry(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert registry["errors"] == []
+    for suite_id, entry in registry["suites"].items():
+        config = ci_checks.load_yaml(ROOT / entry["config"])
+        validation = ci_semantic_eval.validate_config(config)
+        assert validation["errors"] == [], suite_id
+        assert config["execution"]["runner"] == entry["runner"], suite_id
+        function = ci_semantic_eval.load_runner(ROOT, entry["runner"])
+        assert ci_semantic_eval.check_runner_signature(function) == [], suite_id
+
+    def good(config, candidate_sha, *, output_dir, model_transport=None):
+        return {}
+
+    def no_output_dir(config, candidate_sha):
+        return {}
+
+    def no_transport(config, candidate_sha, *, output_dir):
+        return {}
+
+    assert ci_semantic_eval.check_runner_signature(good) == []
+    assert ci_semantic_eval.check_runner_signature(no_output_dir)
+    assert ci_semantic_eval.check_runner_signature(no_transport)
+
+    for name, result in (
+        ("missing-status", {"errors": []}),
+        ("bad-status", {"status": "ok"}),
+        ("bad-review", {"status": "passed", "needs_review": "C1:x"}),
+    ):
+        root, registry_path, _ = _semantic_suite_root(tmp_path / name, result=result)
+        if name == "missing-status":
+            source = (root / "scripts" / "demo_eval.py").read_text(encoding="utf-8")
+            source = source.replace('"status": "passed",\n        "errors"', '"errors"')
+            (root / "scripts" / "demo_eval.py").write_text(source, encoding="utf-8")
+        rc, record = _run_suite(root, registry_path, tmp_path, name)
+        assert rc == 1, name
+        assert record["status"] == "failed", name
+
+
+@pytest.mark.parametrize(
+    ("override", "expected_status"),
+    [
+        ({"errors": ["evaluation error"]}, "failed"),
+        ({"needs_review": ["C1:ambiguous"]}, "needs_review"),
+        ({"candidate_summary": {"needs_review": ["C1:legacy-review"]}}, "needs_review"),
+        ({"errors": ["evaluation error"], "needs_review": ["C1:ambiguous"]}, "failed"),
+        ({"errors": ""}, "failed"),
+        ({"request_count": None}, "failed"),
+        ({"request_count": True}, "failed"),
+        ({"request_count": -1}, "failed"),
+        ({"dataset_sha256": ""}, "failed"),
+        ({"rubric_sha256": None}, "failed"),
+        ({"details_path": "missing.json"}, "failed"),
+        ({"details_path": "\u0000"}, "failed"),
+        ({"details_sha256": "incorrect"}, "failed"),
+        ({"status": []}, "failed"),
+    ],
+)
+def test_runner_conflicting_or_incomplete_result_cannot_pass(tmp_path, override, expected_status):
+    """I3: a self-reported pass cannot bypass errors, review or required evidence."""
+    root, registry, _ = _semantic_suite_root(tmp_path, result=override)
+    rc, record = _run_suite(root, registry, tmp_path, "contract-result")
+    assert rc == 1
+    assert record["status"] == expected_status
+    if override.get("needs_review"):
+        assert record["needs_review"] == override["needs_review"]
+
+
+def test_runner_status_only_cannot_pass(tmp_path):
+    root, registry, _ = _semantic_suite_root(tmp_path)
+    runner = root / "scripts" / "demo_eval.py"
+    runner.write_text(
+        'def evaluate(config, candidate_sha, *, output_dir, model_transport=None):\n'
+        '    return {"status": "passed"}\n', encoding="utf-8"
+    )
+    rc, record = _run_suite(root, registry, tmp_path, "status-only")
+    assert rc == 1
+    assert record["status"] == "failed"
+    assert "request_count" in record["reason"]
+
+
+def test_runner_details_outside_output_directory_cannot_pass(tmp_path):
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    root, registry, _ = _semantic_suite_root(tmp_path, result={"details_path": str(outside)})
+    rc, record = _run_suite(root, registry, tmp_path, "outside-details")
+    assert rc == 1
+    assert record["status"] == "failed"
+    assert "inside output_dir" in record["reason"]
+    assert outside.read_text(encoding="utf-8") == "{}"
+
+
+def test_current_pr_selection_is_read_when_event_body_has_no_selection(tmp_path, monkeypatch):
+    """P9/T12: reruns must notice suite opt-in added after the event payload."""
+    body = tmp_path / "old-body.txt"
+    body.write_text("Plain historical PR body.", encoding="utf-8")
+    monkeypatch.setattr(ci_checks, "_github_request", lambda *a: {
+        "body": "Semantic suites: financial-metrics\n", "user": {"login": "author"}
+    })
+    captured = {}
+
+    def fetch(repo, candidate, default_branch, token, **kwargs):
+        captured.update(kwargs)
+        return {"errors": list((kwargs.get("selection") or {}).get("errors", []))}
+
+    monkeypatch.setattr(ci_checks, "fetch_evidence", fetch)
+    rc = ci_checks.main([
+        "evidence", "--candidate", "cand1", "--repo", "o/r", "--default-branch", "main",
+        "--token", "fake-local-token", "--pr", "17", "--pr-body-file", str(body),
+    ])
+    assert rc == 1
+    assert captured["selection"]["suites"] == ["financial-metrics"]
+
+
+# Approved maintenance: semantic-registry-test-amendment.md, R1-R6/S1-S7/C1-C10.
+def _maintenance_t16_root(tmp_path, monkeypatch):
+    import shutil
+
+    original = ROOT
+    shutil.copytree(original / 'docs' / 'ci', tmp_path / 'docs' / 'ci')
+    (tmp_path / 'scripts').mkdir()
+    for name in ('financial_metrics_eval.py', 'data_availability_eval.py'):
+        shutil.copyfile(original / 'scripts' / name, tmp_path / 'scripts' / name)
+    monkeypatch.setitem(globals(), 'ROOT', tmp_path)
+    registry = tmp_path / 'docs' / 'ci' / 'semantic-suites.yaml'
+    return registry, ci_checks.load_yaml(registry)
+
+
+@pytest.mark.parametrize('additional', [False, True])
+def test_maintenance_t16_accepts_valid_registry_extensions(tmp_path, monkeypatch, additional):
+    """R1/R2: execute the real T16 assertions with one or multiple suites."""
+    path, registry = _maintenance_t16_root(tmp_path, monkeypatch)
+    if not additional:
+        registry['suites'].pop('data-availability')
+    path.write_text(yaml.safe_dump(registry), encoding='utf-8')
+    test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite()
+
+
+@pytest.mark.parametrize('change', ['missing', 'requirement', 'config', 'runner', 'invalid-extra', 'hash', 'status'])
+def test_maintenance_t16_keeps_original_protections(tmp_path, monkeypatch, change):
+    """R3-R6: missing/tampered FR-10 and invalid extensions cannot pass T16."""
+    path, registry = _maintenance_t16_root(tmp_path, monkeypatch)
+    entry = registry['suites']['financial-metrics']
+    if change == 'missing':
+        del registry['suites']['financial-metrics']
+    elif change in ('requirement', 'config', 'runner'):
+        entry[change] = {'requirement': 'FR-03', 'config': 'docs/ci/semantic-suites/data-availability.yaml',
+                         'runner': 'data_availability_eval:evaluate'}[change]
+    elif change == 'invalid-extra':
+        registry['suites']['invalid-suite'] = {'requirement': 'FR-03'}
+    else:
+        config = tmp_path / 'docs' / 'ci' / 'semantic_eval.yaml'
+        content = config.read_text(encoding='utf-8')
+        if change == 'status':
+            content = content.replace('status: "unapproved"', 'status: "approved"')
+        else:
+            content += '\n# changed material\n'
+        config.write_text(content, encoding='utf-8')
+    path.write_text(yaml.safe_dump(registry), encoding='utf-8')
+    with pytest.raises((AssertionError, KeyError)):
+        test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite()
+
+
+def _maintenance_commit(repo, message, timestamp):
+    _git(repo, 'add', '-A')
+    _git(repo, '-c', f'author.date={timestamp}', 'commit', '-q', '--allow-empty', '-m', message, '--date', timestamp)
+    return _git(repo, 'rev-parse', 'HEAD').strip()
+
+
+def _maintenance_history(tmp_path, monkeypatch, *, mixed=False):
+    """Synthetic real Git chronology; frozen literals are independent of gate output."""
+    repo, base = _repo(tmp_path)
+    primary = 'docs/plans/primary.md'
+    supplement = 'docs/plans/maintenance.md'
+    materials = ('docs/ci/data-availability-cases.json', 'docs/ci/data-availability-rubric.md',
+                 'docs/ci/semantic-suites/data-availability.yaml')
+    # Actual frozen input bytes, independent of the gate's implementation/digest.
+    config_text = (ROOT / materials[2]).read_text(encoding='utf-8')
+    for path, text in zip(materials, ('{}\n', '# Fixed rubric\n', config_text), strict=True):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding='utf-8')
+    plan = repo / primary
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text('Preparation materials:\n' + '\n'.join(materials) +
+                    '\nFR-03-FC05\nscripts/runner.py\ntest/offline/test_runner.py\n', encoding='utf-8')
+    source = repo / 'scripts' / 'runner.py'
+    source.parent.mkdir()
+    if mixed:
+        source.write_text('# FR-03-FC05\n', encoding='utf-8')
+    psha = _maintenance_commit(repo, 'specification and materials', '2026-01-01T10:00:00Z')
+    if not mixed:
+        source.write_text('# FR-03-FC05\n', encoding='utf-8')
+    test = repo / 'test' / 'offline' / 'test_runner.py'
+    test.parent.mkdir(parents=True)
+    test.write_text('def test_runner():\n    assert True\n', encoding='utf-8')
+    start = _maintenance_commit(repo, 'runner implementation', '2026-01-01T12:00:00Z')
+    amendment = repo / supplement
+    amendment.write_text('FR-10\n## 3. Allowed files\n- scripts/ci_checks.py\n- test/offline/test_ci_gates.py\n## 4. Exclusions\ndocs/ci/data-availability-cases.json\nscripts/unapproved.py\n', encoding='utf-8')
+    ssha = _maintenance_commit(repo, 'maintenance specification', '2026-01-01T13:00:00Z')
+    (repo / 'scripts' / 'ci_checks.py').write_text('SCOPE = \"FR-10\"\n', encoding='utf-8')
+    (repo / 'test' / 'offline' / 'test_ci_gates.py').write_text('def test_gate():\n    assert True\n', encoding='utf-8')
+    head = _maintenance_commit(repo, 'maintenance implementation', '2026-01-01T15:00:00Z')
+    primary_url = 'https://github.com/o/r/pull/1#issuecomment-1'
+    supplemental_url = 'https://github.com/o/r/pull/1#issuecomment-2'
+    fields = _approval_fields(**{
+        'Plan': primary, 'Approved test specification': f'{primary} @ {psha}',
+        'Approval evidence': primary_url, 'Implementation start': start,
+        'Approved scope': 'FR-03-FC05',
+        'Supplemental test specification': f'{supplement} @ {ssha} (approval: {supplemental_url})',
+    })
+    events = {
+        primary_url: _approval_event(url=primary_url, body=f'APPROVED test-spec: {primary} @ {psha}',
+                                    created_at='2026-01-01T11:00:00Z'),
+        supplemental_url: _approval_event(url=supplemental_url, body=f'APPROVED test-spec: {supplement} @ {ssha}',
+                                         created_at='2026-01-01T14:00:00Z'),
+    }
+    def fetch(repo_name, number, url, token):
+        if url not in events:
+            raise ci_checks.CiError('approval event unavailable')
+        return events[url], 'author'
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', fetch)
+    return SimpleNamespace(repo=repo, base=base, primary=primary, psha=psha, ssha=ssha, start=start,
+                           head=head, fields=fields, events=events, material_paths=materials,
+                           primary_url=primary_url, supplemental_url=supplemental_url)
+
+
+def _maintenance_approval(history):
+    body = '\n'.join(f'{key}: {value}' for key, value in history.fields.items())
+    return ci_checks.approval_check(history.repo, history.base, history.head, body, 'o/r', 1, 'synthetic-token')
+
+
+def test_maintenance_primary_and_supplement_approval_use_separate_chronology(tmp_path, monkeypatch):
+    """S1/C1: preparation precedes primary approval; maintenance follows its own approval."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    assert _maintenance_approval(history)['errors'] == []
+    excluded = ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    assert excluded == set(history.material_paths)
+
+
+@pytest.mark.parametrize('fault', ['author', 'bot', 'missing', 'marker', 'late', 'changed-spec', 'ancestry', 'ambiguous-marker', 'other-pr'])
+def test_maintenance_invalid_supplement_fails_closed(tmp_path, monkeypatch, fault):
+    """S2-S4: invalid supplements grant neither scope nor selected tests."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    event = history.events[history.supplemental_url]
+    if fault == 'author':
+        event['reviewer'] = 'author'
+    elif fault == 'bot':
+        event['reviewer_type'] = 'Bot'
+    elif fault == 'missing':
+        del history.events[history.supplemental_url]
+    elif fault == 'marker':
+        event['body'] = 'APPROVED test-spec: docs/plans/wrong.md @ ' + history.ssha
+    elif fault == 'late':
+        event['created_at'] = '2026-01-01T16:00:00Z'
+    elif fault == 'changed-spec':
+        (history.repo / 'docs' / 'plans' / 'maintenance.md').write_text('changed\n', encoding='utf-8')
+        history.head = _maintenance_commit(history.repo, 'changed specification', '2026-01-01T16:00:00Z')
+    elif fault == 'ancestry':
+        monkeypatch.setattr(ci_checks, '_is_ancestor', lambda *args: False)
+    elif fault == 'other-pr':
+        history.fields['Supplemental test specification'] = history.fields['Supplemental test specification'].replace('/pull/1#', '/pull/2#')
+    else:
+        event['body'] += '\n' + event['body']
+    result = _maintenance_approval(history)
+    assert result['errors']
+    assert result['supplemental_spec_texts'] == []
+    assert any('scope does not cover' in error for error in result['errors'])
+
+
+@pytest.mark.parametrize('fault', ['primary-author', 'primary-marker', 'missing-primary-scope', 'wrong-start', 'early-code', 'mixed'])
+def test_maintenance_preserves_primary_approval_checks(tmp_path, monkeypatch, fault):
+    """S5/C2/C3/C9: valid supplement cannot repair invalid primary evidence or history."""
+    history = _maintenance_history(tmp_path, monkeypatch, mixed=fault == 'mixed')
+    event = history.events[history.primary_url]
+    if fault == 'primary-author':
+        event['reviewer'] = 'author'
+    elif fault == 'primary-marker':
+        event['body'] = 'looks good'
+    elif fault == 'missing-primary-scope':
+        del history.fields['Approved scope']
+    elif fault == 'wrong-start':
+        history.fields['Implementation start'] = history.head
+    elif fault == 'early-code':
+        event['created_at'] = '2026-01-01T12:30:00Z'
+    assert _maintenance_approval(history)['errors']
+
+
+@pytest.mark.parametrize('fault', ['changed-material', 'approved', 'identity', 'approval-time', 'evidence', 'missing-approval', 'malformed-config', 'unlisted', 'missing-blob', 'unknown-sha'])
+def test_maintenance_preparation_exemption_is_exact_and_fail_closed(tmp_path, monkeypatch, fault):
+    """C4/C5/C7/C8: frozen material and configuration prerequisites are mandatory."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    config_path = history.repo / history.material_paths[2]
+    if fault == 'changed-material':
+        (history.repo / history.material_paths[0]).write_text('{"changed": true}\n', encoding='utf-8')
+    elif fault == 'unlisted':
+        plan = history.repo / history.primary
+        plan.write_text('not a preparation specification\n', encoding='utf-8')
+        revision = _maintenance_commit(history.repo, 'unlisted preparation', '2026-01-01T15:30:00Z')
+        history.fields['Approved test specification'] = f'{history.primary} @ {revision}'
+    elif fault == 'missing-blob':
+        (history.repo / history.material_paths[1]).unlink()
+    elif fault == 'unknown-sha':
+        history.fields['Approved test specification'] = f'{history.primary} @ ' + 'f' * 40
+    elif fault == 'malformed-config':
+        config_path.write_text('[invalid yaml', encoding='utf-8')
+    else:
+        config = ci_checks.load_yaml(config_path)
+        if fault == 'approved':
+            config['status'] = 'approved'
+        elif fault == 'missing-approval':
+            del config['approval']
+        else:
+            key = {'identity': 'approved_by', 'approval-time': 'approved_at', 'evidence': 'evidence'}[fault]
+            config['approval'][key] = ['review'] if fault == 'evidence' else 'review'
+        config_path.write_text(yaml.safe_dump(config), encoding='utf-8')
+    history.head = _maintenance_commit(history.repo, 'changed prerequisites', '2026-01-01T16:00:00Z')
+    excluded = ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    if fault == 'changed-material':
+        assert history.material_paths[0] not in excluded
+    elif fault == 'missing-blob':
+        assert history.material_paths[1] not in excluded
+    else:
+        assert excluded == set()
+    if fault == 'unknown-sha':
+        with pytest.raises(ci_checks.CiError):
+            _maintenance_approval(history)
+    elif fault != 'missing-blob':
+        assert _maintenance_approval(history)['errors']
+
+
+def test_maintenance_never_exempts_controls_or_unrelated_paths(tmp_path, monkeypatch):
+    """C6/C10: only three approved paths can be preparation materials."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    controls = ('docs/ci/semantic-suites.yaml', '.github/workflows/ci.yml', '.opencode/permissions.jsonc')
+    for path in controls:
+        target = history.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('{}\n', encoding='utf-8')
+    history.head = _maintenance_commit(history.repo, 'controls', '2026-01-01T16:00:00Z')
+    assert not set(controls) & ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head)
+    history.fields['Approved test specification'] = 'docs/plans/other.md @ ' + history.psha
+    assert ci_checks.frozen_preparation_paths(history.repo, history.fields, history.head) == set()
+
+
+@pytest.mark.parametrize('valid', [True, False])
+def test_maintenance_contract_selection_adds_only_verified_supplement(tmp_path, monkeypatch, valid):
+    """S6: selection gets independent supplement validation before collection."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    approved = _maintenance_approval(history)
+    assert approved['errors'] == []
+    paths = ['scripts/runner.py', 'scripts/ci_checks.py', 'test/offline/test_ci_gates.py']
+    plan = ci_checks.contract_test_plan(history.repo, history.fields, paths,
+                                      supplemental_spec_texts=approved['supplemental_spec_texts'])
+    assert plan['errors'] == []
+    assert plan['test_paths'] == ['test/offline/test_ci_gates.py', 'test/offline/test_runner.py']
+    assert ci_checks.contract_test_plan(history.repo, history.fields, [*paths, 'scripts/unapproved.py'],
+                                      supplemental_spec_texts=approved['supplemental_spec_texts'])['errors']
+    body = history.repo / 'body.txt'
+    body.write_text('\n'.join(f'{key}: {value}' for key, value in history.fields.items()), encoding='utf-8')
+    if not valid:
+        history.events[history.supplemental_url]['reviewer'] = 'author'
+    monkeypatch.setattr(ci_checks, 'PROJECT_ROOT', history.repo)
+    # Independent invalid-event validation must stop before pytest collection.
+    original_run = ci_checks.run_command
+    collections = []
+    def no_collection(command, *args, **kwargs):
+        if '-m' in command and 'pytest' in command:
+            assert valid, 'invalid supplemental approval reached test collection'
+            collections.append(command)
+            for arg in command:
+                if arg.startswith('--junitxml='):
+                    Path(arg.split('=', 1)[1]).write_text('<testsuite><testcase name="passed" /></testsuite>', encoding='utf-8')
+            return ci_checks.CommandResult(command, 0, '2 passed', '')
+        return original_run(command, *args, **kwargs)
+    monkeypatch.setattr(ci_checks, 'run_command', no_collection)
+    args = SimpleNamespace(pr_body_file=str(body), base=history.base, head=history.head, paths=','.join(paths))
+    assert ci_checks._command_contract_tests(args) == (0 if valid else 1)
+    assert len(collections) == (2 if valid else 0)
+    if valid:
+        assert all('test/offline/test_ci_gates.py' in command and 'test/offline/test_runner.py' in command for command in collections)
+
+
+@pytest.mark.parametrize('field', [*ci_checks.PR_BODY_FIELDS, 'ADR'])
+def test_maintenance_rejects_duplicate_primary_fields(field):
+    """S7: a second machine field cannot overwrite the first approval record."""
+    with pytest.raises(ci_checks.CiError, match='duplicate'):
+        ci_checks.parse_pr_body(f'{field}: first\n{field}: second\n')
+
+
+def test_maintenance_public_approval_reads_do_not_send_empty_bearer(monkeypatch):
+    """S6: the public contract job needs no invented token or workflow change."""
+    requests = []
+    def reply(request, **kwargs):
+        requests.append(request)
+        return contextlib.nullcontext(SimpleNamespace(read=lambda: b'{"ok": true}'))
+    monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', reply)
+    assert ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', '') == {'ok': True}
+    assert requests[0].get_header('Authorization') is None
+    ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', 'synthetic-token')
+    assert requests[1].get_header('Authorization') == 'Bearer synthetic-token'
+
+
+@pytest.mark.parametrize('activated', [False, True])
+def test_maintenance_approval_runs_without_site_packages(tmp_path, monkeypatch, activated):
+    """C1/C5/S1: setup-python-only approval needs no PyYAML or other site-packages."""
+    history = _maintenance_history(tmp_path, monkeypatch)
+    if activated:
+        config = history.repo / history.material_paths[2]
+        document = yaml.safe_load(config.read_text(encoding='utf-8'))
+        document['status'] = 'approved'
+        config.write_text(yaml.safe_dump(document), encoding='utf-8')
+        history.head = _maintenance_commit(history.repo, 'activation', '2026-01-01T16:00:00Z')
+    fixture = tmp_path / 'approval-fixture.json'
+    fixture.write_text(json.dumps({
+        'root': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': '\n'.join(f'{key}: {value}' for key, value in history.fields.items()),
+        'events': history.events, 'expect_errors': activated,
+    }), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec("yaml") is None
+spec = importlib.util.spec_from_file_location("ci_checks", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+fixture = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (fixture["events"][url], "author")
+result = module.approval_check(Path(fixture["root"]), fixture["base"], fixture["head"], fixture["body"], "o/r", 1, "")
+assert bool(result["errors"]) == fixture["expect_errors"], result
+print("stdlib-only approval checked")
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'stdlib-only approval checked' in result.stdout
+
+
+def test_maintenance_frozen_config_attests_unapproved_state():
+    """C1/C5: independently pin and interpret the reviewed fixed configuration."""
+    import hashlib
+
+    content = (ROOT / 'docs/ci/semantic-suites/data-availability.yaml').read_bytes().replace(b'\r\n', b'\n')
+    assert hashlib.sha256(content).hexdigest() == '96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015'
+    config = yaml.safe_load(content)
+    assert config['status'] == 'unapproved'
+    assert config['approval'] == {'approved_by': None, 'approved_at': None, 'evidence': []}
+
+
+# Auth amendment CA-T01–CA-T12; original maintenance chronology stays intact.
+def _auth_history(tmp_path, monkeypatch):
+    history = _maintenance_history(tmp_path, monkeypatch)
+    history.auth_path = 'docs/plans/auth.md'
+    plan = history.repo / history.auth_path
+    plan.write_text('## 3. Allowed files\n- .github/workflows/ci.yml\n\n'
+                    'Inherited: scripts/ci_checks.py\n'
+                    '## 4. Exclusions\nscripts/unapproved.py\n', encoding='utf-8')
+    history.auth_sha = _maintenance_commit(history.repo, 'auth specification', '2026-01-01T16:00:00Z')
+    history.auth_url = 'https://github.com/o/r/pull/1#issuecomment-3'
+    history.auth_value = f'{history.auth_path} @ {history.auth_sha} (approval: {history.auth_url})'
+    history.fields['Supplemental test specification'] += '\n' + history.auth_value
+    history.events[history.auth_url] = _approval_event(
+        url=history.auth_url, body=f'APPROVED test-spec: {history.auth_path} @ {history.auth_sha}',
+        created_at='2026-01-01T17:00:00Z')
+    workflow = history.repo / '.github' / 'workflows' / 'ci.yml'
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text('jobs: {}\n', encoding='utf-8')
+    with (history.repo / 'scripts' / 'ci_checks.py').open('a') as f:
+        f.write('# authentication implementation\n')
+    history.head = _maintenance_commit(history.repo, 'auth implementation', '2026-01-01T18:00:00Z')
+    return history
+
+
+def _auth_body(history):
+    lines: list[str] = []
+    for key, value in history.fields.items():
+        values = value.splitlines() if key == 'Supplemental test specification' else [value]
+        lines.extend(f'{key}: {item}' for item in values)
+    return '\n'.join(lines)
+
+
+def _auth_approval(history):
+    return ci_checks.approval_check(history.repo, history.base, history.head,
+                                    _auth_body(history), 'o/r', 1, 'synthetic-auth-token')
+
+
+def _auth_contract(history, tmp_path, monkeypatch, token='synthetic-auth-token', *, can_execute=True):
+    body = tmp_path / 'auth-pr-body.txt'
+    body.write_text(_auth_body(history), encoding='utf-8')
+    monkeypatch.setattr(ci_checks, 'PROJECT_ROOT', history.repo)
+    fetch = ci_checks.fetch_approval_event
+    queries, executions = [], []
+    def record_fetch(repo, pr, url, supplied):
+        queries.append((url, supplied))
+        return fetch(repo, pr, url, supplied)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', record_fetch)
+    original_run = ci_checks.run_command
+    def execute(command, *args, **kwargs):
+        if '-m' in command and 'pytest' in command:
+            assert can_execute, 'invalid evidence reached collection/execution'
+            executions.append(command)
+            for arg in command:
+                if arg.startswith('--junitxml='):
+                    Path(arg.split('=', 1)[1]).write_text(
+                        '<testsuite><testcase name="ok" /></testsuite>', encoding='utf-8')
+            return ci_checks.CommandResult(command, 0, 'passed', '')
+        return original_run(command, *args, **kwargs)
+    monkeypatch.setattr(ci_checks, 'run_command', execute)
+    arguments = ['contract-tests', '--pr-body-file', str(body), '--base', history.base, '--head', history.head]
+    if token is not None:
+        arguments.extend(['--token', token])
+    args = ci_checks.build_parser().parse_args(arguments)
+    return ci_checks._command_contract_tests(args), queries, executions
+
+
+def test_auth_workflow_uses_job_scoped_read_only_token():
+    """CA-T01: inspect actual workflow wiring, including the empty-token guard."""
+    workflow = yaml.safe_load((ROOT / '.github/workflows/ci.yml').read_text())
+    job = workflow['jobs']['contract-tests']
+    assert job['if'] == "github.event_name == 'pull_request'"
+    assert job['permissions'] == {'contents': 'read', 'pull-requests': 'read'}
+    step = next(item for item in job['steps'] if 'scripts/ci_checks.py contract-tests' in item.get('run', ''))
+    assert step['env'] == {'GH_TOKEN': '${{ github.token }}'}
+    assert 'test -n "$GH_TOKEN"' in step['run']
+    assert step['run'].index('test -n "$GH_TOKEN"') < step['run'].index('python scripts/ci_checks.py')
+    assert '--token "$GH_TOKEN"' in step['run']
+    assert 'GH_TOKEN' not in workflow.get('env', {})
+    assert 'GH_TOKEN' not in json.dumps(workflow['jobs']['security-paths'])
+
+
+@pytest.mark.parametrize('token', ['synthetic-auth-token', '', None])
+def test_auth_contract_forwards_token_and_preserves_direct_call_defaults(tmp_path, monkeypatch, token):
+    """CA-T02/03/05/11: CLI token reaches both approval events, never last-one-wins."""
+    history = _auth_history(tmp_path, monkeypatch)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, token)
+    assert code == 0
+    assert queries == [(history.supplemental_url, token or ''), (history.auth_url, token or '')]
+    assert len(executions) == 2
+    assert all('test/offline/test_ci_gates.py' in cmd and 'test/offline/test_runner.py' in cmd for cmd in executions)
+
+
+@pytest.mark.parametrize('status', [401, 403])
+def test_auth_api_failure_blocks_without_anonymous_retry_or_disclosure(tmp_path, monkeypatch, capsys, status):
+    """CA-T04: real API error conversion, no fallback and no collection."""
+    history = _auth_history(tmp_path, monkeypatch)
+    fetch = ci_checks.fetch_approval_event
+    headers = []
+    def denied(request, **kwargs):
+        headers.append(request.get_header('Authorization'))
+        raise urllib.error.HTTPError(request.full_url, status, 'denied', Message(), None)
+    monkeypatch.setattr(ci_checks.urllib.request, 'urlopen', denied)
+    def fetch_with_error(repo, pr, url, token):
+        if url == history.auth_url:
+            ci_checks._github_request('https://api.github.com/repos/o/r/pulls/1', token)
+        return fetch(repo, pr, url, token)
+    monkeypatch.setattr(ci_checks, 'fetch_approval_event', fetch_with_error)
+    code, queries, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+    assert headers == ['Bearer synthetic-auth-token']
+    assert len(queries) == 2 and all(token == 'synthetic-auth-token' for _, token in queries)
+    output = capsys.readouterr()
+    assert f'HTTP Error {status}' in output.err
+    assert 'synthetic-auth-token' not in output.out + output.err
+
+
+@pytest.mark.parametrize('index', [0, 1])
+@pytest.mark.parametrize('fault', ['author', 'bot', 'marker', 'missing', 'late', 'wrong-pr', 'changed-spec', 'ancestry'])
+def test_auth_each_supplement_is_validated_independently(tmp_path, monkeypatch, index, fault):
+    """CA-T06/09/10: a later valid event cannot overwrite an invalid earlier one."""
+    history = _auth_history(tmp_path, monkeypatch)
+    url = (history.supplemental_url, history.auth_url)[index]
+    event = history.events[url]
+    target_sha = (history.ssha, history.auth_sha)[index]
+    if fault == 'author':
+        event['reviewer'] = 'author'
+    elif fault == 'bot':
+        event['reviewer_type'] = 'Bot'
+    elif fault == 'marker':
+        event['body'] = 'APPROVED test-spec: docs/plans/wrong.md @ ' + target_sha
+    elif fault == 'missing':
+        del history.events[url]
+    elif fault == 'late':
+        event['created_at'] = '2026-01-01T19:00:00Z'
+    elif fault == 'wrong-pr':
+        history.fields['Supplemental test specification'] = history.fields['Supplemental test specification'].replace(url, url.replace('/pull/1#', '/pull/2#'))
+    elif fault == 'changed-spec':
+        path = ('docs/plans/maintenance.md', history.auth_path)[index]
+        with (history.repo / path).open('a') as f:
+            f.write('\nchanged after approval\n')
+        history.head = _maintenance_commit(history.repo, 'changed frozen spec', '2026-01-01T19:00:00Z')
+    else:
+        ancestor = ci_checks._is_ancestor
+        monkeypatch.setattr(ci_checks, '_is_ancestor', lambda root, old, new: False if old == target_sha else ancestor(root, old, new))
+    result = _auth_approval(history)
+    assert result['errors']
+    assert len(result['supplemental_spec_texts']) == 1
+    invalid_path = ('scripts/ci_checks.py', '.github/workflows/ci.yml')[index]
+    assert invalid_path not in result['supplemental_spec_texts'][0].splitlines()
+    code, _, executions = _auth_contract(history, tmp_path, monkeypatch, can_execute=False)
+    assert code == 1 and executions == []
+
+
+def test_auth_primary_and_both_supplements_keep_their_own_chronology(tmp_path, monkeypatch):
+    """CA-T05/08/09: primary=12:00, old maintenance=15:00, new workflow=18:00."""
+    history = _auth_history(tmp_path, monkeypatch)
+    assert _auth_approval(history)['errors'] == []
+    assert history.fields['Implementation start'] == history.start
+    texts = _auth_approval(history)['supplemental_spec_texts']
+    assert texts == ['scripts/ci_checks.py\ntest/offline/test_ci_gates.py', '.github/workflows/ci.yml']
+    plan = ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/ci_checks.py', 'test/offline/test_ci_gates.py', '.github/workflows/ci.yml'],
+        supplemental_spec_texts=texts)
+    assert plan['errors'] == []
+    assert ci_checks.contract_test_plan(history.repo, history.fields,
+        ['scripts/unapproved.py'], supplemental_spec_texts=texts)['errors']
+
+
+def test_auth_parser_preserves_distinct_supplements_and_rejects_ambiguity():
+    """CA-T07: only supplemental fields repeat; repeated paths/entries are rejected."""
+    field = 'Supplemental test specification'
+    old = 'docs/plans/old.md @ ' + 'a' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-1)'
+    new = 'docs/plans/new.md @ ' + 'b' * 40 + ' (approval: https://github.com/o/r/pull/1#issuecomment-2)'
+    assert ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {new}')[field] == old + '\n' + new
+    for value in (old, old.replace('a' * 40, 'c' * 40), old.replace('docs/plans/', './docs/plans/')):
+        with pytest.raises(ci_checks.CiError, match='duplicate|ambiguous'):
+            ci_checks.parse_pr_body(f'{field}: {old}\n{field}: {value}')
+    with pytest.raises(ci_checks.CiError, match='duplicate'):
+        ci_checks.parse_pr_body(f'Plan: old\n{field}: {old}\nPlan: new')
+
+
+@pytest.mark.parametrize('invalid', [None, 'primary', 'old', 'new'])
+def test_auth_multiple_approval_checks_need_only_stdlib(tmp_path, monkeypatch, invalid):
+    """CA-T12: no YAML/pytest installation is required by the approval entry."""
+    history = _auth_history(tmp_path, monkeypatch)
+    if invalid is not None:
+        url = {'primary': history.primary_url, 'old': history.supplemental_url, 'new': history.auth_url}[invalid]
+        history.events[url]['body'] = 'not an approval'
+    fixture = tmp_path / 'multiple-approvals.json'
+    fixture.write_text(json.dumps({'repo': str(history.repo), 'base': history.base, 'head': history.head,
+        'body': _auth_body(history), 'events': history.events, 'invalid': invalid is not None}), encoding='utf-8')
+    program = '''
+import importlib.util, json, sys
+from pathlib import Path
+assert importlib.util.find_spec('yaml') is None
+spec = importlib.util.spec_from_file_location('ci_checks', sys.argv[1])
+module = importlib.util.module_from_spec(spec);sys.modules[spec.name] = module;spec.loader.exec_module(module)
+data = json.loads(Path(sys.argv[2]).read_text())
+module.fetch_approval_event = lambda repo, pr, url, token: (data['events'][url], 'author')
+result = module.approval_check(Path(data['repo']), data['base'], data['head'], data['body'], 'o/r', 1, 'synthetic-token')
+assert bool(result['errors']) == data['invalid'], result
+print('isolated multi-supplement checked')
+'''
+    result = ci_checks.run_command([sys.executable, '-I', '-S', '-B', '-c', program,
+                                    str(SCRIPTS / 'ci_checks.py'), str(fixture)])
+    assert result.returncode == 0, result.stderr
+    assert 'isolated multi-supplement checked' in result.stdout
+
+
+# Retained Round 3 scope and approval regressions; supplemental fixtures use
+# the merged framework API and explicit allowed-file list.
 def test_scope_id_namespaces_distinguish_requirement_from_design_labels():
     for token in ("FR-03", "FR-03-FC01", "IR-05", "IR-13", "SB-01-FC01", "INV-01", "SR-01"):
         assert ci_checks.is_scope_id(token), token
@@ -2526,7 +3757,7 @@ def _supp_validate(tmp_path: Path, monkeypatch, value: str, event: dict[str, Any
     # Create a supplemental spec at a commit BEFORE a later implementation change.
     sup = repo / "docs" / "specs" / "a3.md"
     sup.parent.mkdir(parents=True)
-    sup.write_text("Use `test/offline/test_portfolio_context.py` for the portfolio scope.\n", encoding="utf-8")
+    sup.write_text("## 3. Allowed files\n\n- `test/offline/test_portfolio_context.py`\n", encoding="utf-8")
     t = repo / "test" / "offline" / "test_portfolio_context.py"
     t.parent.mkdir(parents=True, exist_ok=True)
     t.write_text("def test_ok():\n    assert True\n", encoding="utf-8")
@@ -2544,16 +3775,10 @@ def _supp_validate(tmp_path: Path, monkeypatch, value: str, event: dict[str, Any
         event = {**event, "body": f"APPROVED test-spec: docs/specs/a3.md @ {spec_commit}"}
     monkeypatch.setattr(ci_checks, "fetch_approval_event", lambda *a, **k: (event, "author"))
     resolved_value = value.replace("<COMMIT>", spec_commit)
+    event = {**event, "url": "https://github.com/o/r/pull/13#issuecomment-9"}
     return ci_checks.validate_supplemental_specification(
-        repo,
-        resolved_value,
-        base=base,
-        head=head,
-        pr_author="author",
-        pr_number=13,
-        repo="o/r",
-        token="tok",
-        changed_paths=["test/offline/test_portfolio_context.py"],
+        repo, base, head, resolved_value, "o/r", 13, "tok",
+        ["test/offline/test_portfolio_context.py"],
     )
 
 
@@ -2565,20 +3790,20 @@ def test_supplemental_validation_accepts_valid_non_author(tmp_path: Path, monkey
         "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)",
         event,
     )
-    assert result["ok"], result["errors"]
-    assert result["spec_commit"]
+    assert result["errors"] == []
+    assert "test/offline/test_portfolio_context.py" in result["spec_text"]
 
 
 def test_supplemental_validation_rejects_author_bot_late_and_bad_phrase(tmp_path: Path, monkeypatch):
     value = "docs/specs/a3.md @ <COMMIT> (approval: https://github.com/o/r/pull/13#issuecomment-9)"
     author = _approval_event(reviewer="author", created_at="2026-11-23T15:56:51Z")
-    assert not _supp_validate(tmp_path / "a", monkeypatch, value, author)["ok"]
+    assert _supp_validate(tmp_path / "a", monkeypatch, value, author)["errors"]
     bot = _approval_event(reviewer="dependabot[bot]", reviewer_type="Bot", created_at="2026-11-23T15:56:51Z")
-    assert not _supp_validate(tmp_path / "b", monkeypatch, value, bot)["ok"]
+    assert _supp_validate(tmp_path / "b", monkeypatch, value, bot)["errors"]
     late = _approval_event(created_at="2099-01-01T00:00:00Z")
-    assert not _supp_validate(tmp_path / "c", monkeypatch, value, late)["ok"]
+    assert _supp_validate(tmp_path / "c", monkeypatch, value, late)["errors"]
     wrong_phrase = _approval_event(body="APPROVED test-spec: docs/specs/other.md @ deadbee", created_at="2026-11-23T15:56:51Z")
-    assert not _supp_validate(tmp_path / "d", monkeypatch, value, wrong_phrase, use_event_body=True)["ok"]
+    assert _supp_validate(tmp_path / "d", monkeypatch, value, wrong_phrase, use_event_body=True)["errors"]
 
 
 def test_verify_approval_primary_fails_even_with_supplemental():
@@ -2593,24 +3818,24 @@ def test_supplemental_validation_phrase_must_match_exactly(tmp_path: Path, monke
     # Exact path + full SHA -> accepts.
     ok = _supp_validate(tmp_path / "ok", monkeypatch, value, good,
                         body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
-    assert ok["ok"], ok["errors"]
+    assert ok["errors"] == []
     # Correct path but SHA + extra char -> fail (prefix-only bug MUST NOT pass).
     appended = _supp_validate(tmp_path / "ap", monkeypatch, value, good,
                               body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>0")
-    assert not appended["ok"]
+    assert appended["errors"]
     # Correct phrase + trailing text -> fail.
     trailing = _supp_validate(tmp_path / "tr", monkeypatch, value, good,
                               body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT> WRONG-SPEC")
-    assert not trailing["ok"]
+    assert trailing["errors"]
     # Wrong path -> fail.
     wrong_path = _supp_validate(tmp_path / "wp", monkeypatch, value, good,
                                 body_override="APPROVED test-spec: docs/specs/other.md @ <COMMIT>")
-    assert not wrong_path["ok"]
+    assert wrong_path["errors"]
     # Multiple approval markers -> fail.
     multi = _supp_validate(tmp_path / "mu", monkeypatch, value, good,
                            body_override=("APPROVED test-spec: docs/specs/a3.md @ <COMMIT>\n"
                                           "APPROVED test-spec: docs/specs/a3.md @ <COMMIT>"))
-    assert not multi["ok"]
+    assert multi["errors"]
 
 
 def test_supplemental_validation_sha_last_digit_differs_fails(tmp_path: Path, monkeypatch):
@@ -2620,16 +3845,14 @@ def test_supplemental_validation_sha_last_digit_differs_fails(tmp_path: Path, mo
     base_value = value
     probe = _supp_validate(tmp_path / "probe", monkeypatch, base_value, good,
                            body_override="APPROVED test-spec: docs/specs/a3.md @ <COMMIT>")
-    assert probe["ok"], probe["errors"]
-    real = probe["spec_commit"]
-    if not real:
-        return
+    assert probe["errors"] == []
+    real = _git(tmp_path / "probe" / "repo", "rev-parse", "HEAD~1").strip()
     last = real[-1]
     alt = "0" if last != "0" else "1"
     bad_sha = real[:-1] + alt
     diff = _supp_validate(tmp_path / "diff", monkeypatch, base_value, good,
                           body_override=f"APPROVED test-spec: docs/specs/a3.md @ {bad_sha}")
-    assert not diff["ok"]
+    assert diff["errors"]
 
 
 def test_scope_extraction_full_flow_doc_vs_code(tmp_path: Path, monkeypatch):

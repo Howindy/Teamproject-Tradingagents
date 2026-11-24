@@ -1,0 +1,13 @@
+# Trusted semantic evaluation suite registry (docs/plans/semantic-suite-routing.md §3.1, §3.5 I1).
+# Read only from the default branch by trusted-evaluation.yml and the PR evidence-check.
+# Each entry: requirement (traceability), config (inside docs/ci/), runner (scripts/<module>.py:function).
+schema_version: "1.0"
+suites:
+  financial-metrics:
+    requirement: "FR-10"
+    config: "docs/ci/semantic_eval.yaml"
+    runner: "financial_metrics_eval:evaluate"
+  data-availability:
+    requirement: "FR-03"
+    config: "docs/ci/semantic-suites/data-availability.yaml"
+    runner: "data_availability_eval:evaluate"

@@ -413,3 +413,250 @@ candidate-only pass. Exact model controls/hashes are enforced, conflicting asser
 and absent source/period/interpretation claims route to review. Captured request/response details
 are retained on truncation. Local targeted tests: 6 passed; Ruff: passed. These fixes retain the
 frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be checked again.
+
+## RM-17-R1 — Semantic Suite Routing (AI-authored review summary; final human verdict pending)
+
+- PR: [#17](https://github.com/Howindy/Teamproject-Tradingagents/pull/17)
+- Baseline: `origin/main` `00833f4b281692c266bbd52c5955a4f40ec89493`
+- Frozen specification: `docs/plans/semantic-suite-routing.md @ 684ddb22460992831fc15348884778d76c505a32` (unchanged by the implementation)
+- Test-spec pre-approval: [Howindy's comment](https://github.com/Howindy/Teamproject-Tradingagents/pull/17#issuecomment-7127811834), 2026-11-24T09:43:55Z, approves the frozen specification above. The CI `test-approval` gate verifies the real event, author, phrase and time; this record does not substitute for it.
+- Scope: CI maintenance per the plan §3–§5 (registry, reviewer-confirmed suite selection, suite-scoped trusted dispatch and evidence, suite unit contract I1–I6); `FR-10` appears only as registry traceability. Excluded: `src/**`, FR-10 dataset/rubric/configuration/runner/tests, classifier detection rules, aggregate logic, `.opencode/**`, requirements and D2 documents.
+- Changed paths: `docs/ci/semantic-suites.yaml` (new), `scripts/ci_checks.py`, `scripts/ci_semantic_eval.py`, `.github/workflows/trusted-evaluation.yml`, `.github/workflows/ci.yml` (`evidence-check` only), `test/offline/test_ci_gates.py`, `docs/ci/README.md`, `CI.md`, `docs/ai-use-log.yaml`, this memo.
+
+### Actual local verification (cloud workspace, Python 3.13.18; not the CI 3.12 environment)
+
+- Tests first: with only the new/adapted tests applied, `pytest -q test/offline/test_ci_gates.py` gave 24 failed / 72 passed (18 new T01–T18 cases plus 6 adapted evidence tests).
+- After implementation: `pytest -q test/offline/test_ci_gates.py test/offline/test_financial_metrics_evaluation.py`: 100 passed, 2 failed. Both failures are FR-10 `P04` subprocess tests needing `langchain_core`, which is not installed in this workspace (same 2 failures on the unmodified baseline: 82 passed, 2 failed). Local runs used import stubs for `yfinance`, `curl_cffi`, `dotenv` and `cli.prefs` outside the repository only to load `test/conftest.py`.
+- `ruff check .` (Ruff 0.16.9 locally; CI pins 0.17.5): passed.
+- `mypy --config-file mypy.ini --python-version 3.12` on the two CI scripts and the gate test file: no diagnostics before or after the change.
+- `git diff --check`: clean. Workflows and registry parse as YAML. `docs/ci/semantic_eval.yaml`, `scripts/financial_metrics_eval.py`, `test/offline/test_financial_metrics_evaluation.py` and `src/` are byte-identical to the baseline.
+- Not run locally: full `pytest -q` regression (application dependencies unavailable), remote workflows, trusted dispatch, model calls. Remote PR CI is the regression evidence.
+
+### Changed assertions (approved behavior change, not weakening)
+
+- Existing evidence tests now use the suite context `semantic-eval/financial-metrics`; every earlier negative (wrong SHA, untrusted path/repo/event/branch, missing artifact, config version mismatch, unapproved config, failed status, noop without reason) is retained.
+- The FR-10 `P06` entry test runs through a registered suite; a `needs_review` runner result is now recorded as `needs_review` with its items instead of `failed` (plan problem P6). Exit code remains non-zero.
+- The trusted details-upload condition now also requires the validated suite step.
+
+### Final human review
+
+- Final verdict: Pending human review (`APPROVE`, `CHANGES REQUIRED`, or `REJECT`).
+
+### Local defect repair — 2026-11-24
+
+- Reproduced two defects in `0112cbc`: self-reported `passed` overrode errors/pending review or missing I3 evidence; an old event body without selection prevented reading a later PR-body opt-in.
+- Added regression cases before fixing: the initial 14 new cases failed against the original implementation. Final coverage adds 17 cases, including legacy review items, invalid field types, unavailable/mismatched/out-of-directory details and latest-body selection.
+- Runner contract errors now fail; `passed` plus errors fails; `passed` plus review items becomes blocking `needs_review`. Explicit `needs_review` with diagnostic errors remains `needs_review`, preserving P06. Dataset/rubric factual verification stays with the suite runner; the framework validates their required result fields, request count and actual details file/hash.
+- For a PR, read its current body before deciding whether suite evidence is enforced. T12 retains no semantic enforcement/approval fetch/registry load for absent or `none` selections on non-semantic PRs. Its former no-PR-fetch assertion was corrected: detecting a newly added opt-in requires one current-body GET. This clarifies the implementation of P9; the frozen plan and I1-I6 interfaces remain unchanged. The plan's historical "no GitHub fetch for suites" wording does not describe this necessary body read.
+- Verification: existing financial-prep Python 3.12.14 environment, no dependency installation. Command: `python -B -m pytest test/offline/test_ci_gates.py test/offline/test_financial_metrics_evaluation.py -q -p no:cacheprovider --basetemp <review-root>/verified-regression --junitxml=<review-root>/verified-regression.xml --tb=short`: **117 passed, 2 failed**. Both failures are existing redirect tests whose `127.1` hostname does not resolve on this Windows host; both reproduce using the original `0112cbc` scripts and tests in a separate snapshot. No skipped or suppressed failures.
+- `python -B -m ruff check scripts/ci_checks.py scripts/ci_semantic_eval.py test/offline/test_ci_gates.py`: passed. `python -B -m mypy --config-file mypy.ini --follow-imports=silent` on those same files: no diagnostics. `git diff --check`: passed. Earlier attempts with the project `.venv` additionally lacked jsonschema and sandbox loopback access; these were not counted as passes.
+- Evidence root: `D:/CityU/cs5351/project/baseline-review/semantic-routing-review/`; final JUnit `verified-regression.xml`, baseline reproduction `original-redirects.xml`, original source snapshot `original-0112cbc/`.
+- Application source, FR-10 scorer/configuration/oracle, workflows and frozen plan are unchanged by this repair. Full application regression, GitHub CI and live evaluation were not run. Final human verdict remains pending. No commit, push or merge in this repair session.
+
+
+## RM-18-R1 — FR-03 semantic maintenance (AI-authored; independent final review pending)
+
+- PR: [#18](https://github.com/Howindy/Teamproject-Tradingagents/pull/18).
+- Starting tree: `2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`; original suite specification
+  `1440c1ca2ae0806ce3b4b09c20634cfa213e63da` and original implementation start
+  `2982819d91784d29448671995dcf5937fc61ad27` remain unchanged.
+- Maintenance specification: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by non-author `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793)
+  at `2026-11-24T15:02:01Z`, before this maintenance implementation.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo.
+- R1-R6: T16 preserves exact FR-10 entry/hash/state checks while allowing valid
+  additional suites. T18 is unchanged and still inspects every registered runner.
+- S1-S7: supplements use their own reviewer, marker, ancestry and first-related-change
+  chronology. Only the explicit section-3 allowed-file list grants path coverage;
+  rationale and exclusions cannot expand selection. Invalid supplements contribute
+  nothing. Primary checks stay mandatory; duplicate machine fields are rejected.
+- C1-C10: the exact three frozen preparation paths can be removed from the primary
+  start-path set only under section-6 conditions. Git blob identity is used;
+  configuration approval/activation prevents the exception. Mixed-commit code,
+  shared routing, workflow and permission paths remain included.
+- No workflow, dependency, permission, runtime prompt, source application, FR-10
+  material or frozen FR-03 material/specification change is included.
+
+### Local evidence and limits
+
+Evidence root: `/private/tmp/cs5351-pr18-maintenance-13jnh35d`. Python 3.12.14 and pytest 9.2.0 from the existing
+suite environment; no installation. Imported application source was checked to
+resolve inside the isolated snapshot. HOME/temp/cache/JUnit outputs were confined
+to the new temporary evidence tree.
+
+- Reproduced the original T16 failure before implementation (`before.out`).
+- Final gate/FR-03/FR-10 combined tests: **220 passed**, including 45 new maintenance cases (`combined-final.xml`).
+- Default offline regression: **1759 passed, 3 failed, 1 skipped, 1 deselected**;
+  100 subtests passed (`regression.xml`). Remaining failures are the three simulated
+  Windows cache-lock tests using absent macOS `errno.EDEADLOCK`.
+- Repeated unchanged `2d10aa4` baseline cache tests: **5 passed, 3 failed**, with
+  the same cases/errors (`baseline-platform.xml`). They remain failures, not waived
+  passes; the optional skip is missing `langchain_aws`.
+- Ruff, baseline-relative mypy, direct changed-code/test mypy, requirements schema
+  and dependency check passed. No baseline diagnostics were changed.
+- Actual fetched PR fields and original/supplemental comments were replayed in an
+  isolated Git candidate: approval and contract-test selection reported no errors
+  (`actual-history-result.json`). That candidate is verification-only, not the
+  final project commit or a GitHub CI run.
+- The first sandbox gate run had six loopback-bind permission errors; existing
+  redirect tests were rerun with local loopback access. No skip/assertion weakening.
+- Public contract-job approval reads use no empty Bearer header; API failures or
+  rate limits block selection. No credentials are discovered and no workflow is changed.
+- Raw chat export is not in the repository; local command/JUnit evidence does not
+  substitute for it. No project commit/push, PR write, live semantic evaluation,
+  configuration activation or merge was performed in this implementation task.
+
+Independent human implementation verdict: pending. AI delivery recommendation
+while final remote CI and independent review remain outstanding: **CHANGES REQUIRED**.
+
+
+## RM-18-R2 — Lean approval-job dependency repair (AI-authored; human final review pending)
+
+- Starting commit: `e52ac47abebbc89489f7e5ddeeb88cd4559979c0` on the freshly cloned
+  `prep/fr03-semantic-suite` worktree under `~/Projects/CS5351`. Remote refs were
+  fetched and the branch was synchronized before implementation.
+- Existing maintenance basis: `docs/plans/semantic-registry-test-amendment.md @
+  2d10aa4a24eee3cced9cbe4835bb695de0ebaf2f`, approved by `espino2233`
+  [comment 7135347793](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7135347793).
+- Actual remote defect: [test-approval job](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45423751532/job/138550088770)
+  raises `ModuleNotFoundError: No module named 'yaml'`. That job installs no
+  third-party packages; earlier rich-environment tests missed this runtime boundary.
+- Repair: use stdlib SHA-256 attestation of the exact reviewed unapproved config
+  on the approval path, preserving the existing three-path bound and Git blob
+  equality checks. Unrecognized or activated config text is not exempt. The
+  reference's unapproved/null/empty approval fields are independently asserted.
+- Added tests run the full approval function under `python -I -S` with YAML
+  unavailable, covering valid preparation and rejected activation. The synthetic
+  Git fixture uses actual frozen input bytes rather than values derived from the gate.
+- Changed files: `scripts/ci_checks.py`, `test/offline/test_ci_gates.py`,
+  `docs/ci/README.md`, `docs/ai-use-log.yaml`, this memo. Workflows, dependencies,
+  permissions, application source and frozen specifications/materials are unchanged.
+
+### Actual validation and limitations
+
+Evidence: `/private/tmp/cs5351-pr18-stdlib-fix-e7kuh4u0`. The old checker reproduced missing YAML in both isolated
+cases (`before-stdlib.out`). Patched standalone public-gate tests: **161 passed**;
+maintenance-only subset: **48 passed**. Python 3.14.7 / pytest 9.1.1 was used with
+`--confcutdir=test/offline` and external plugin autoload disabled. This isolates
+CI-unit tests from missing application-level conftest dependencies and unrelated
+locally installed plugins; it is not a default application-regression pass.
+
+On the existing Python 3.12.14 interpreter, `-I -S` confirmed YAML and pytest were
+unavailable, then the approval CLI replayed current real PR fields/events against
+the existing `e52ac47` Git history and returned `errors: []` (`approval-stdlib.out`).
+This does not establish final-candidate remote CI. Python 3.12 syntax, requirements
+schema and the existing application environment's `pip check` passed.
+
+Full default regression cannot start in the existing application interpreter
+because pytest is missing. Ruff and mypy are unavailable. Their attempted command
+outputs are retained; no dependency installation, skipped assertion or fake pass
+was used to conceal these gaps. The old iCloud-dependent environment and the
+interrupted disappearing-file regression are not treated as current evidence.
+
+No iCloud source was used for the repair. No project commit/push, PR write, model
+call, activation or merge is included. Original approvals and chronology remain.
+Independent final verdict: pending. Until final-candidate CI and independent review
+complete, AI delivery recommendation: **CHANGES REQUIRED**.
+
+
+## RM-18-R4 — Authenticated contract approvals (AI-authored; final review pending)
+
+- Clean implementation checkpoint: `0539300c05b1b12c3ccff4a517dc132513a6facb`.
+- Frozen auth specification: `docs/plans/semantic-contract-auth-amendment.md` at
+  that commit, approved by non-author `espino2233` in
+  [comment 7137342374](https://github.com/Howindy/Teamproject-Tradingagents/pull/18#issuecomment-7137342374)
+  at `2026-11-24T16:14:27Z`, before executable implementation.
+- Original primary suite and maintenance specifications/approvals remain intact.
+  No first-change SHA or historical result is reset.
+- New allowance is only `.github/workflows/ci.yml`, only the contract-tests job:
+  contents/read and pull-requests/read, step-local github.token, nonempty-token
+  guard and --token argument. No global token or other job change is selected.
+- Associated changes use the inherited script/test/record file allowances.
+  The contract CLI forwards an explicitly supplied token to every supplemental
+  query; legacy no-token callers remain supported. 401/403 failures block before
+  collection, with no anonymous retry or token output.
+- Only distinct supplemental fields may repeat; primary/ADR fields stay unique.
+  All supplements retain their own event, immutable version, allow-list and
+  related-change chronology. Invalid documents contribute no coverage and block
+  execution; inherited prose cannot add paths. Original approvals are preserved.
+
+### Actual local verification
+
+Evidence: `/private/tmp/cs5351-pr18-auth-fix-5smxirmi`. Tests first: **28 failed** against the unchanged checker.
+After implementation: new auth tests **28 passed**; all public gate tests
+**189 passed** (`gates-final.xml`). These are existing Python 3.14 standalone
+CI-unit runs with --confcutdir=test/offline and third-party plugin autoload
+disabled; no application stubs, assertion exemptions or installations were used.
+
+Python 3.12.14 -I -S replayed actual saved PR fields and all three real approval
+comments against a verification-only Git candidate containing workflow/script/test
+changes together. Approval and contract-plan errors were empty; both supplements
+were retained and the gate/FR-03/FR-10 tests were selected (`replay-result.json`).
+The candidate is not a project delivery commit or a final remote-CI result.
+
+Full default application regression and Ruff/mypy cannot run in the recovered
+environment because required tools are missing. They are recorded as unavailable,
+not passes. No dependency, application source, frozen material/specification,
+other workflow, security-path token policy or evaluation activation change is made.
+
+Implementation is ready for one combined auth delivery commit after review.
+The PR must retain its old supplemental field and add the new real auth field
+when the compatible parser is delivered. Final-candidate remote CI, independent
+human implementation review and merge remain outstanding. AI recommendation
+until that delivery evidence is complete: **CHANGES REQUIRED**.
+
+
+## RM-18-R5 — Auth test typing repair and review assessment (AI-authored)
+
+- Starting candidate: `069e2606bc67380bfacbc077e5286d4a6da421bc`.
+- [Run 45437892172](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45437892172)
+  passed all Python regression, approval, contract, static, schema, dependency,
+  security, evidence and smoke jobs. Type-check failed on two newly added tests:
+  the unannotated `_auth_body` accumulator and HTTPError headers supplied as dict.
+- Repair: annotate `lines: list[str]` and use `email.message.Message()` as the
+  HTTPError header argument. Assertions and 401/403 behavior remain unchanged;
+  no evaluator, workflow, type baseline, ignored diagnostic or frozen spec changed.
+- Gate tests: **189 passed** (`/private/tmp/cs5351-pr18-type-fix-bts6jccf/gates.xml`). Python 3.12 syntax and actual
+  Message-header construction passed. Local mypy is missing, so its new-candidate
+  result remains for remote CI; no installation or local type-check pass is claimed.
+- Supplied review: the earlier T16 whole-registry restriction was a genuine issue
+  and is already fixed. T18 still validates all registered suites. The trusted
+  workflow dispatches from the repository default branch (currently main), so
+  suite infrastructure must be available there before formal feature evaluation.
+  Configuration approval and model-execution authorization remain additional
+  prerequisites. FR-10 offline regression remains applicable; FR-03 does not
+  thereby require live financial-metrics evaluation. This historical explanation
+  does not diagnose the current two mypy errors or justify a baseline change.
+- Existing independent maintenance/auth approvals cover this type-only repair.
+  Independent final review and final-candidate CI remain pending. AI delivery
+  recommendation until those are complete: **CHANGES REQUIRED**.
+
+
+## RM-13-R03-SYNC — Trusted suite synchronization (AI-authored)
+
+PR #18 merged at `f24cde487f8119bb238e171614066da4b60e6915`.
+The feature starts at `30421f025fc075d40751bcc7a955fc8e91f939c8`.
+Conflict resolution retains main's suite/evidence/token/supplemental checks and
+the feature's existing scope-ID/documentation extraction. Existing tests are
+adapted to the main API and independently authored executable scope fixtures;
+assertions and rejection cases are retained. No application/prompt edit is made.
+
+Verification in `/private/tmp/cs5351-round3-final-ntzigbfm`:
+- Gate regression: **215 passed**, including local-loopback HTTP probes.
+- Python 3.12 application/evaluator checks: **249 passed, 1 failed**; the failure
+  is missing `jsonschema` in that interpreter, not a schema acceptance result.
+- Actual saved GitHub P3/A3 event replay on a synthetic merge: primary approval
+  succeeds; A3 is rejected because its frozen section 3 uses the older explicit
+  file format. Contract selection consequently misses the portfolio test path.
+- Source/fixtures remain fixed and no dependency is installed. Ruff/mypy and
+  final-candidate remote CI remain outstanding.
+
+Next maintenance must preserve A3 `9e2c7793dc7d70fd2aeeecd480f78a5a81635614`
+and its real approval, add narrowly bound legacy compatibility, and activate
+the reviewed suite on trusted main with real approval metadata. A new human
+pre-approval covers only future maintenance, not historical editing.
+Non-author I6 selection, protected-environment approval and final-SHA trusted
+semantic execution are still required. Mock transport checks are not quality
+evidence. Current recommendation: **CHANGES REQUIRED**.
