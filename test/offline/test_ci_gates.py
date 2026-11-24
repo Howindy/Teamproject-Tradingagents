@@ -2596,8 +2596,8 @@ def test_t12_non_semantic_pr_without_selection_keeps_old_path(
         [], {}, semantic_required=False, selection=_selection(none=True), trusted_suites=None
     )["errors"] == []
 
-    def no_github(*args: Any, **kwargs: Any):
-        raise AssertionError("PR or approval must not be fetched for a non-enforced PR")
+    def no_approval(*args: Any, **kwargs: Any):
+        raise AssertionError("approval must not be fetched for a non-enforced PR")
 
     captured: dict[str, Any] = {}
 
@@ -2605,8 +2605,8 @@ def test_t12_non_semantic_pr_without_selection_keeps_old_path(
         captured.update(kwargs)
         return {"errors": []}
 
-    monkeypatch.setattr(ci_checks, "_github_request", no_github)
-    monkeypatch.setattr(ci_checks, "fetch_approval_event", no_github)
+    monkeypatch.setattr(ci_checks, "_github_request", lambda *a: {"body": "Plain PR description."})
+    monkeypatch.setattr(ci_checks, "fetch_approval_event", no_approval)
     monkeypatch.setattr(ci_checks, "fetch_evidence", fake_fetch_evidence)
     body = tmp_path / "body.txt"
     body.write_text("Plain PR description without semantic fields.\n", encoding="utf-8")
@@ -2983,3 +2983,78 @@ def test_t18_registered_suites_conform_to_runner_contract(tmp_path: Path):
         rc, record = _run_suite(root, registry_path, tmp_path, name)
         assert rc == 1, name
         assert record["status"] == "failed", name
+
+
+@pytest.mark.parametrize(
+    ("override", "expected_status"),
+    [
+        ({"errors": ["evaluation error"]}, "failed"),
+        ({"needs_review": ["C1:ambiguous"]}, "needs_review"),
+        ({"candidate_summary": {"needs_review": ["C1:legacy-review"]}}, "needs_review"),
+        ({"errors": ["evaluation error"], "needs_review": ["C1:ambiguous"]}, "failed"),
+        ({"errors": ""}, "failed"),
+        ({"request_count": None}, "failed"),
+        ({"request_count": True}, "failed"),
+        ({"request_count": -1}, "failed"),
+        ({"dataset_sha256": ""}, "failed"),
+        ({"rubric_sha256": None}, "failed"),
+        ({"details_path": "missing.json"}, "failed"),
+        ({"details_path": "\u0000"}, "failed"),
+        ({"details_sha256": "incorrect"}, "failed"),
+        ({"status": []}, "failed"),
+    ],
+)
+def test_runner_conflicting_or_incomplete_result_cannot_pass(tmp_path, override, expected_status):
+    """I3: a self-reported pass cannot bypass errors, review or required evidence."""
+    root, registry, _ = _semantic_suite_root(tmp_path, result=override)
+    rc, record = _run_suite(root, registry, tmp_path, "contract-result")
+    assert rc == 1
+    assert record["status"] == expected_status
+    if override.get("needs_review"):
+        assert record["needs_review"] == override["needs_review"]
+
+
+def test_runner_status_only_cannot_pass(tmp_path):
+    root, registry, _ = _semantic_suite_root(tmp_path)
+    runner = root / "scripts" / "demo_eval.py"
+    runner.write_text(
+        'def evaluate(config, candidate_sha, *, output_dir, model_transport=None):\n'
+        '    return {"status": "passed"}\n', encoding="utf-8"
+    )
+    rc, record = _run_suite(root, registry, tmp_path, "status-only")
+    assert rc == 1
+    assert record["status"] == "failed"
+    assert "request_count" in record["reason"]
+
+
+def test_runner_details_outside_output_directory_cannot_pass(tmp_path):
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    root, registry, _ = _semantic_suite_root(tmp_path, result={"details_path": str(outside)})
+    rc, record = _run_suite(root, registry, tmp_path, "outside-details")
+    assert rc == 1
+    assert record["status"] == "failed"
+    assert "inside output_dir" in record["reason"]
+    assert outside.read_text(encoding="utf-8") == "{}"
+
+
+def test_current_pr_selection_is_read_when_event_body_has_no_selection(tmp_path, monkeypatch):
+    """P9/T12: reruns must notice suite opt-in added after the event payload."""
+    body = tmp_path / "old-body.txt"
+    body.write_text("Plain historical PR body.", encoding="utf-8")
+    monkeypatch.setattr(ci_checks, "_github_request", lambda *a: {
+        "body": "Semantic suites: financial-metrics\n", "user": {"login": "author"}
+    })
+    captured = {}
+
+    def fetch(repo, candidate, default_branch, token, **kwargs):
+        captured.update(kwargs)
+        return {"errors": list((kwargs.get("selection") or {}).get("errors", []))}
+
+    monkeypatch.setattr(ci_checks, "fetch_evidence", fetch)
+    rc = ci_checks.main([
+        "evidence", "--candidate", "cand1", "--repo", "o/r", "--default-branch", "main",
+        "--token", "fake-local-token", "--pr", "17", "--pr-body-file", str(body),
+    ])
+    assert rc == 1
+    assert captured["selection"]["suites"] == ["financial-metrics"]

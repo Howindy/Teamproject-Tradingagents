@@ -306,6 +306,9 @@ Design and test specification: [`docs/plans/semantic-suite-routing.md`](../plans
   `APPROVED semantic-suites: <same list>`. The body is read from the GitHub API
   at check time, so edits take effect on re-run. A non-semantic PR without the
   field keeps the previous behavior; a non-semantic PR that lists suites opts in.
+    The current body is fetched even when the event payload had no selection;
+    absent/`none` selection on a non-semantic PR does not load the registry or
+    require semantic evidence. This costs one PR-body read, not an evaluation.
 - **Dispatch.** Run `trusted-evaluation.yml` once per selected suite with
   `mode=semantic` and `suite_id=<id>`. Status context is `semantic-eval/<id>`;
   artifacts are `ci-evidence-<sha>-semantic-<id>` and
@@ -319,6 +322,10 @@ Design and test specification: [`docs/plans/semantic-suite-routing.md`](../plans
   `none` requires the reviewed not-applicable record. Missing, unknown or
   unapproved selections and `needs_review` results block with the specific
   reason; `needs_review` goes to the existing human review, not to a CI override.
+    A runner's `passed` label cannot override reported errors or pending review
+    items. I3 fields are required, and the details file must be inside
+    `output_dir` with a matching hash. Contract violations are recorded as failed;
+    explicit `needs_review` results retain their review items and remain blocking.
 - **Bootstrap.** If the default branch has no registry, non-enforced PRs pass as
   before and enforced PRs block with "registry is not present on the default
   branch".

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import sys
 from collections.abc import Mapping, Sequence
@@ -197,26 +198,56 @@ def check_runner_signature(function: Any) -> list[str]:
     return errors
 
 
-def normalize_runner_result(result: Any) -> tuple[str, list[str], list[str]]:
+def normalize_runner_result(
+    result: Any, *, output_dir: Path | None = None
+) -> tuple[str, list[str], list[str]]:
     """Return (status, needs_review items, errors) per suite contract I3; fail closed."""
     if not isinstance(result, Mapping):
         return "failed", [], ["semantic evaluation runner did not return a mapping"]
-    raw_errors = result.get("errors", [])
-    errors = [str(e) for e in raw_errors] if isinstance(raw_errors, list) else [str(raw_errors)]
+    raw_errors = result.get("errors")
+    if isinstance(raw_errors, list) and all(isinstance(e, str) for e in raw_errors):
+        runner_errors = list(raw_errors)
+        errors: list[str] = []
+    else:
+        runner_errors = []
+        errors = ["runner errors must be a list of strings"]
     status = result.get("status")
-    if status not in RESULT_STATUSES:
+    if not isinstance(status, str) or status not in RESULT_STATUSES:
         errors.append(f"runner returned invalid status: {status!r}")
         status = "failed"
-    if "needs_review" in result:
-        items = result["needs_review"]
-        if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
-            return "failed", [], errors + ["runner needs_review must be a list of strings"]
+    summary = result.get("candidate_summary")
+    legacy_items = summary.get("needs_review") if isinstance(summary, Mapping) else None
+    items = result.get("needs_review", legacy_items)
+    if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
+        errors.append("runner needs_review must be a list of strings")
+        items = []
     else:
-        summary = result.get("candidate_summary")
-        items = summary.get("needs_review", []) if isinstance(summary, Mapping) else []
-        if not isinstance(items, list):
-            items = []
-    return str(status), [str(item) for item in items], errors
+        items = list(items)
+    if legacy_items is not None:
+        if not isinstance(legacy_items, list) or not all(isinstance(i, str) for i in legacy_items):
+            errors.append("runner candidate_summary.needs_review must be a list of strings")
+        else:
+            items = list(dict.fromkeys([*items, *legacy_items]))
+    count = result.get("request_count")
+    if type(count) is not int or count < 0:
+        errors.append("runner request_count must be a non-negative integer")
+    for field in ("dataset_sha256", "rubric_sha256", "details_path", "details_sha256"):
+        if not isinstance(result.get(field), str) or not result[field].strip():
+            errors.append(f"runner {field} must be a nonempty string")
+    if output_dir is not None and isinstance(result.get("details_path"), str):
+        try:
+            details = Path(result["details_path"]).resolve()
+            if not details.is_relative_to(output_dir.resolve()):
+                errors.append("runner details_path must be inside output_dir")
+            elif hashlib.sha256(details.read_bytes()).hexdigest() != result.get("details_sha256"):
+                errors.append("runner details_sha256 does not match details file")
+        except (OSError, ValueError) as exc:
+            errors.append(f"runner details file is unavailable: {exc}")
+    if errors or (runner_errors and status == "passed"):
+        status = "failed"
+    elif items and status == "passed":
+        status = "needs_review"
+    return str(status), items, [*runner_errors, *errors]
 
 
 def resolve_suite(registry_path: str, suite_id: str) -> dict[str, Any]:
@@ -317,17 +348,23 @@ def _run_suite(args: argparse.Namespace) -> int:
         result: Any = function(config, args.candidate, output_dir=output_dir)
     except Exception as exc:  # runner contract: an exception is a failed evaluation
         result = {"status": "failed", "errors": [f"runner raised: {exc}"]}
-    status, needs_review, errors = normalize_runner_result(result)
+    status, needs_review, errors = normalize_runner_result(result, output_dir=output_dir)
     result_map: Mapping[str, Any] = result if isinstance(result, Mapping) else {}
     details_path = str(result_map.get("details_path") or "")
     details_sha = str(result_map.get("details_sha256") or "")
     if args.details_output:
-        import hashlib
-
         target_details = Path(args.details_output)
-        if details_path and Path(details_path).is_file():
-            if Path(details_path).resolve() != target_details.resolve():
-                target_details.write_bytes(Path(details_path).read_bytes())
+        source_details: Path | None = None
+        try:
+            if details_path:
+                source = Path(details_path).resolve()
+                if source.is_relative_to(output_dir.resolve()) and source.is_file():
+                    source_details = source
+        except (OSError, ValueError):
+            pass  # Already reported as a runner contract error above.
+        if source_details is not None:
+            if source_details != target_details.resolve():
+                target_details.write_bytes(source_details.read_bytes())
         else:
             serialized = json.dumps(result_map, indent=2, sort_keys=True, default=str).encode("utf-8")
             target_details.write_bytes(serialized)
@@ -345,7 +382,7 @@ def _run_suite(args: argparse.Namespace) -> int:
         details_sha256=details_sha,
         dataset_sha256=str(result_map.get("dataset_sha256") or ""),
         rubric_sha256=str(result_map.get("rubric_sha256") or ""),
-        request_count=result_map.get("request_count") if isinstance(result_map.get("request_count"), int) else None,
+        request_count=result_map.get("request_count") if type(result_map.get("request_count")) is int else None,
         candidate_summary=result_map.get("candidate_summary") if isinstance(result_map.get("candidate_summary"), Mapping) else None,
         baseline_summary=result_map.get("baseline_summary") if isinstance(result_map.get("baseline_summary"), Mapping) else None,
         suite=suite_fields,

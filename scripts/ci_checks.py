@@ -2550,14 +2550,14 @@ def _command_evidence(args: argparse.Namespace) -> int:
         selection: Mapping[str, Any] | None = None
         trusted: Mapping[str, Mapping[str, Any]] | None = None
         registry_errors: list[str] = []
-        if args.semantic_required or _event_selection_declared(args.pr_body_file):
-            if not args.pr:
-                raise CiError("evidence check requires --pr for semantic suite selection")
+        if args.pr:
             selection = resolve_suite_selection(args.repo, args.pr, args.token)
-            if args.registry:
-                trusted, registry_errors = trusted_suite_states(
-                    args.registry, args.trusted_root or Path(args.registry).resolve().parents[2]
-                )
+        elif args.semantic_required or _event_selection_declared(args.pr_body_file):
+            raise CiError("evidence check requires --pr for semantic suite selection")
+        if args.registry and (args.semantic_required or (selection and not selection.get("none"))):
+            trusted, registry_errors = trusted_suite_states(
+                args.registry, args.trusted_root or Path(args.registry).resolve().parents[2]
+            )
         result = fetch_evidence(
             args.repo,
             args.candidate,

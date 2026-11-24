@@ -3288,3 +3288,46 @@ entries:
       - "Approval comment URL and timestamp not yet supplied to the session; left empty rather than invented."
       - "Local environment lacks application dependencies; full pytest regression relies on remote CI."
       - "No raw session export is in the repository; none fabricated."
+
+  - id: "AI-SSR-REPAIR-001"
+    date: "2026-11-24"
+    round: null
+    human_operator: "espino2233"
+    tool: "Codex"
+    model: "not_exposed"
+    activity: "ci_maintenance_repair"
+    task: "Fix reproduced runner-result fail-open and stale-event suite-selection defects under the approved semantic routing scope."
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "scripts/ci_checks.py"
+      - "scripts/ci_semantic_eval.py"
+      - "test/offline/test_ci_gates.py"
+      - "docs/ci/README.md"
+      - "docs/review-memo.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Added defect regression tests before implementation, validated required I3 result fields and
+      details evidence, prevented passing errors/review items, retained explicit needs_review diagnostics,
+      and read the current PR body before deciding opt-in enforcement. Updated operator and review records.
+      Corrected T12's no-PR-fetch assumption while retaining no semantic enforcement for non-selected PRs.
+    human_intervention: "User requested Codex to take over implementation after review identified the two defects."
+    approval:
+      subject: "Semantic suite routing plan @ 684ddb22460992831fc15348884778d76c505a32"
+      status: "approved"
+      approved_at: "2026-11-24T09:43:55Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/17#issuecomment-7127811834"
+    verification:
+      status: "local_checked_remote_pending"
+      summary: >-
+        Initial 14 added cases failed before fixes; final relevant suite 117 passed, 2 failed.
+        Both failures reproduce in original 0112cbc and concern Windows resolution of 127.1.
+        Ruff passed; scoped mypy had no diagnostics; git diff --check passed. Frozen plan unchanged.
+      evidence:
+        - "D:/CityU/cs5351/project/baseline-review/semantic-routing-review/verified-regression.xml"
+        - "D:/CityU/cs5351/project/baseline-review/semantic-routing-review/original-redirects.xml"
+    transcript_refs: []
+    limitations:
+      - "Full application regression and remote GitHub CI not run in this repair session."
+      - "Final human review remains pending; no commit, push or merge."
