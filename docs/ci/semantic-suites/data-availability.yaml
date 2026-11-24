@@ -31,19 +31,21 @@ dataset:
     - bear
     - research-manager
 rubric:
-  version: fr03-data-availability-rubric-v1
+  version: fr03-data-availability-rubric-v2
   path: docs/ci/data-availability-rubric.md
-  sha256: 173f020b0ed79d7b92e2805abe7506d87fb5a0f01247c214900691e1fe775ae6
-  definition: 'Three required dimensions per case/role: availability meaning, no material availability contradiction,
-    and retained role delivery. All 45 outcomes must pass; ambiguous claims remain needs_review. This is a proposed
-    bounded release check, not universal natural-language validation.'
+  sha256: 977c52c1a2c4180c3135d931cab4177213244f73c4de49c89dedcd38e021f1d9
+  definition: All role-delivery grades must pass. Unresolved coverage and contradiction grades are advisory. Explicit
+    failures and evidence errors block release.
 thresholds:
   required_case_count: 5
   required_combinations: 15
   required_dimension_outcomes: 45
-  require_all_applicable_checks: true
+  advisory_dimensions:
+  - A
+  - B
+  required_pass_dimensions:
+  - C
   max_critical_failures: 0
-  max_unresolved_reviews: 0
 model:
   provider: deepseek
   model: deepseek-flash
@@ -66,6 +68,6 @@ execution:
   llm_judge: false
 approval:
   approved_by: espino2233
-  approved_at: '2026-11-24T17:16:24Z'
+  approved_at: '2026-11-24T18:46:23Z'
   evidence:
-  - https://github.com/Howindy/Teamproject-Tradingagents/pull/20#issuecomment-7138946184
+  - https://github.com/Howindy/Teamproject-Tradingagents/pull/23#issuecomment-7141130685

@@ -636,3 +636,17 @@ and 26 advisories. Run 45453248371 fails with 19 passed, 25 advisories and the
 S02 Manager blanket denial of company news. The recorded v1 results stand.
 Implementation awaits independent review. Activation requires separately
 approved materials and a fresh authorized run for formal candidate evidence.
+
+## PR #23 activation materials
+
+The reviewer approved the frozen specification at b49c3261e344aea6ac650a413d9da2857a3785e4.
+The v2 rubric digest and canonical settings digest matched the independent approval.
+Full YAML SHA-256 including the real reviewer, timestamp and permalink:
+25d51c88a179951fcc932e6533ded29f62dbb48a3121fa01954f278b2a2b5a9c.
+
+Offline replay verified the archived details and dataset digests and reconstructed
+all 15 replies for each run. Run 45459356876 passed v2 with 19 passed grades and
+26 advisories. Run 45453248371 failed with 19 passed grades, 25 advisories and
+one critical S02 Manager denial of available company news. These are replay
+decisions; activation requires merge after independent review. PR #13 needs
+new candidate-bound evidence. No provider requests were made.
