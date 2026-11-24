@@ -30,12 +30,12 @@ handoff contract, not an assertion of Round 4 implementation or teammate approva
 | Final delivery, state/report/memory consistency | INV-01 / Round 4; FR-10 preserves the analyst's existing report output |
 | Run binding and graph state schema | Existing FR-03 contract; no FR-10 cache/provider/lock/bundle is added to serialized state |
 
-Shared source files are `graph/setup.py` and `graph/trading_graph.py`. Round 4 may
-extend their node/edge and final-delivery logic while retaining the optional
-`metrics_factory` argument and the financial metric scope. FR-10 adds no node or
-edge. There is no change to `src/cli/run.py`, `run_context.py`, AgentState, final
-recommendation, risk evaluation or report writers. Future concurrent edits can
-still produce textual merge conflicts; these ownership boundaries guide resolution.
+Shared source files are `graph/setup.py` and `graph/trading_graph.py`. Current
+FR-10 changes carry the optional `metrics_factory` argument and financial metric
+scope; they add no node or edge. There is no change to `src/cli/run.py`,
+`run_context.py`, AgentState, final recommendation, risk evaluation or report
+writers. Future concurrent edits can still produce textual merge conflicts.
+The integration approach with Round 4 remains a discussion between contributors.
 
 ## Enable in the normal CLI
 
