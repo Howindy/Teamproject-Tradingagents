@@ -613,3 +613,14 @@ until that delivery evidence is complete: **CHANGES REQUIRED**.
 - Existing independent maintenance/auth approvals cover this type-only repair.
   Independent final review and final-candidate CI remain pending. AI delivery
   recommendation until those are complete: **CHANGES REQUIRED**.
+
+## PR #20 implementation review
+
+The independent approval binds the frozen activation plan at d9352ef.
+Verification covered the real A3 bytes and rejected altered content, path and
+commit. The gate tests plus the activation assertion passed (191 tests). The
+data-availability suite passed all 56 offline tests. The source configuration
+records the actual approval timestamp and comment. Independent review of this
+implementation and the protected candidate run remain pending.
+
+AI review disposition pending independent review: CHANGES REQUIRED.
