@@ -1,12 +1,12 @@
 # ADR 001 — Graph-Internal Final Check with Run-Scoped Governance
 
-> Current scope amendment — 2026-11-23, D1 v1.50.0: seven active requirements / 37 FCs (FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 14 / 65. Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25) records five delivered requirements (FR-03, FR-04, FR-10, SB-01, INV-01, 28 fit criteria) and nine deferred requirements (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02, 37 fit criteria). FR-01 reuse and SR-01 credential controls below are retained designs for future activation. Existing vendor caches and baseline credential protections still apply.
 
 
 - Status: Proposed for human review
 - Date: 2026-11-17
 - Decision owners: Architecture review (human) with coding-agent analysis support
-- Requirements baseline: `docs/req/requirements.yaml` version 1.50.0
+- Requirements baseline: `docs/req/requirements.yaml` version 1.51.0
 - Related: [Architecture Blueprint](../../../architecture-blueprint.md), [Evaluation Table](../evaluation-table.md)
 - Supersedes: the earlier proposal to run the final business check in a shared entry-boundary `RunFinalizer`
 
@@ -23,7 +23,7 @@ No application code, test run, live model call, data-vendor call, measurement, o
 
 ## 1. Context and problem
 
-### 1.1 Existing architecture
+### 1.1 Pre-decision architecture (historical baseline)
 
 The repository is a LangGraph multi-agent analysis application. Both supported entry points eventually run the same graph:
 
@@ -71,12 +71,12 @@ Independent count from `docs/req/requirements.yaml`:
 
 | Scope | Requirements | Fit criteria |
 |---|---|---|
-| Active | 6 | 27 |
-| Deferred | 7 | 28 |
-| Total | 13 | 55 |
+| Active | 5 | 28 |
+| Deferred | 9 | 37 |
+| Total | 14 | 65 |
 
-Active: FR-01, FR-03, FR-04, SB-01, INV-01, SR-01.
-Deferred: FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01.
+Active: FR-03, FR-04, FR-10, SB-01, INV-01.
+Deferred: FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02.
 
 This matches the expected scope. Deferred items are not designed as current behavior.
 
@@ -106,7 +106,7 @@ Existing analysis and debate
   → CLI / propagate() deliver the unchanged formal fields
 ```
 
-`RunContext` owns ephemeral query reuse, availability registry and scope binding. It is not serialized into graph state or checkpoints.
+`RunContext` owns the ephemeral availability registry and scope binding. It is not serialized into graph state or checkpoints.
 
 The entry adapters do not perform a second business check. If an entry-boundary `RunFinalizer` exists, it coordinates entry-owned cleanup and binding restoration; it does not create a second close path, and `RunContext.finish()` does not close resources.
 
@@ -291,7 +291,7 @@ Input conversion boundary:
 
 Decision D-12a: the risk module has local responsibilities: parse and validate, decide, and generate one JSON-compatible result. These are not required to be separate classes, services, modules, or public APIs. Do not require all raw inputs to be first projected into a persistent normalized state and then parsed back; perform necessary conversion at the actual entry and risk-module boundary. If the scenario enters graph state, a simple JSON-compatible mapping is enough, not a normalized state protocol, representation version, digest, or round-trip proof. The result's metrics are decimal strings or null, and its `scenario`, `thresholds`, and `reasons` are display-safe values. The exact status is decided before result projection. `projected_weight` and `stop_distance` are computed separately; each is null only when its own operands cannot produce a legal metric, and an invalid ticker, currency, or threshold does not null a metric whose operands are legal. A repeating quotient is still computable and not null. A local formatting function may choose display precision; fixed decimal places, round-half-even, no-exponent notation, and trailing-zero rules are not architecture acceptance requirements or human-approval gates. Report/CLI display differences in layout or percentages are allowed, and character-for-character equality is not required.
 
-FR-04 reasons remain inside `portfolio_risk_result.reasons`; SB-01 writes its own top-level `reasons` and does not flatten or reuse the risk object. The check covers only the amounts and prices explicitly supplied in the caller scenario; other model-proposal numbers are not compared or shown as verified, and do not create a new blocked condition or change the model conclusion. No scenario/threshold signature extension is added for the new flow. Do not use `json.dump(default=str)` or another implicit encoder for risk objects, uniformly convert to float, or re-decide risk from formatted percentages. The manifest does not add risk fields, and memory is not required to store risk metadata. The current explicit `_log_state()` does not yet persist a risk result; this is a new type-contract gap, not an existing save failure.
+FR-04 reasons remain inside `portfolio_risk_result.reasons`; SB-01 writes its own top-level `reasons` and does not flatten or reuse the risk object. The check covers only the amounts and prices explicitly supplied in the caller scenario; other model-proposal numbers are not compared or shown as verified, and do not create a new blocked condition or change the model conclusion. No scenario/threshold signature extension is added for the new flow. Do not use `json.dump(default=str)` or another implicit encoder for risk objects, uniformly convert to float, or re-decide risk from formatted percentages. The manifest does not add risk fields, and memory is not required to store risk metadata. The state log includes the checked risk result.
 
 Remaining gap: security, history, and integration details.
 

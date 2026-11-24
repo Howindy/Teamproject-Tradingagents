@@ -1,6 +1,8 @@
 # CS5351 Agent Instructions
 
-> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25): five delivered requirements / 28 FCs (FR-03, FR-04, FR-10, SB-01, INV-01); nine deferred / 37 FCs (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02); total 14 / 65.
+
+> Historical approvals (2026-11-23): the six-active v1.49.0 scope was pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 ## Scope and project root
@@ -25,7 +27,7 @@ Check actual file availability. Missing governance files or machine configuratio
 
 The current application is under `src/`, imported from TradingAgents v0.7.0. Application packages are `src/tradingagents/` and `src/cli/`; tests are under `test/offline/` and `test/live/`. Consult the root `pyproject.toml` for supported Python, dependencies, build configuration, and test options. Build on this baseline rather than introducing a replacement application.
 
-The current D1 baseline is v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01). Historical approvals and existing tests do not establish unimplemented integration.
+Round 3 supplied the FR-03 availability registry and snapshots. Round 4 connected FR-04 and SB-01 after the Portfolio Manager and delivered the checked result through both entries, reports and new memory (INV-01). FR-10 supplies optional deterministic financial evidence to the Fundamentals Analyst. See the [FC trace matrix](docs/architecture/trace-matrix.md) for implementation and test mappings.
 
 ## Round plans and approval
 
@@ -43,7 +45,7 @@ Each round plan must state:
 
 Stop for human approval of the execution plan and specific tests before the corresponding application implementation begins. A general strategy or this file is not test approval. Security-critical changes also need the relevant ADR and human approval. An explicit approved scope does not require repeated permission for ordinary work within it. Reconfirm only affected changes to requirements, interfaces, expectations, permissions, or scope.
 
-OQ-01 remains a prerequisite for its affected scenario-input work. OQ-04 verifies the retained baseline save/display behavior; it is not a new product-decision gate unless a separately approved interaction change is proposed. OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) can be addressed by approved technical verification within existing scope; verification approval is not evidence that the assumption holds. OQ-02 fixes only `max_projected_weight` and `max_stop_distance`. Read current OQ tables rather than closing items automatically.
+Round 4 implements the OQ-01 scenario input as CLI `--purchase-scenario <json-file>` and keyword-only `purchase_scenario` on `propagate()`. OQ-04 verifies the retained baseline save/display behavior; it is not a new product-decision gate unless a separately approved interaction change is proposed. OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) can be addressed by approved technical verification within existing scope; verification approval is not evidence that the assumption holds. OQ-02 fixes only `max_projected_weight` and `max_stop_distance`. Read current OQ tables rather than closing items automatically.
 
 ## File and tool boundaries
 
@@ -61,13 +63,13 @@ Role permissions, exact task authorization, and the approved round file list mus
 Use the blueprint component/interface catalog as the authority. Each architecture element needs one declared primary module owner in the structural constraints or approved plan; multiple related responsibilities may share a module. Logical component IDs do not mandate separate classes, services, or files. Reference the relevant ADR and invariant in changed modules/functions where applicable; do not invent invariants or mass-edit untouched baseline code solely to add annotations.
 
 - CLI/programmatic entries coordinate runs and delivery; RunContext owns per-run infrastructure, not formal business decisions. Preserve existing return shapes.
-- Query reuse covers only supported news paths within a run. Preserve existing fetch, failure, fallback, and vendor-cache semantics and isolate mutable consumer results.
+- FR-01 run-scoped news reuse is deferred. Preserve existing fetch, failure, fallback, and vendor-cache semantics.
 - Availability records the supported paths and computes the fixed necessity rules without extra fetches or model reruns. Preserve research-start, check-time, and terminal delivery timing. Consumers do not independently rebuild completeness.
 - FR-04 evaluates the caller scenario deterministically, handles applicability and invalid input under its contract, and writes no formal recommendation fields. Display rounding does not decide risk.
 - SB-01 alone decides/generates formal values. Entries, reducers, and writers may pass, merge, or project those values unchanged. Missing/non-string/empty/whitespace-only conclusions are ordinary blocked/REVIEW inputs; invalid formal output at a consumer is a contract failure, not a consumer-generated REVIEW.
 - Reports and new memory consume the same formal result. Report writers use passed state rather than a live registry. Existing memory no-op and settlement behavior remains bounded by D1/D2.
 - Keep RunContext/collectors/registries out of serializable graph state and checkpoints. The selected new flow executes fully and does not resume or delete old checkpoint evidence.
-- Apply only the specified credential/path protections. Do not add generic scanners, transactions, archives, recovery systems, global dispatchers, or new dependencies without a separate decision.
+- Retain existing credential and path protections. Additional SR-01/SR-02 controls are deferred. Do not add generic scanners, transactions, archives, recovery systems, global dispatchers, or new dependencies without a separate decision.
 
 ## Verification and evidence
 

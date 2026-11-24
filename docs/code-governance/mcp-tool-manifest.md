@@ -1,10 +1,12 @@
 # MCP and Tool-Manifest for AI Coding Agents
 
-> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25): five delivered requirements / 28 FCs (FR-03, FR-04, FR-10, SB-01, INV-01); nine deferred / 37 FCs (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02); total 14 / 65.
+
+> Historical approvals (2026-11-23): the six-active v1.49.0 scope was pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 - Document status: Design-time tool inventory and role-use policy; not an approval, active permission configuration, MCP connection, execution record, or security certification.
-- Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) v1.49.0, independently counted as 13 requirements and 55 fit criteria: 6 active requirements with 27 FCs and 7 deferred requirements with 28 FCs.
+- Requirements basis: [D1 v1.51.0](../req/requirements.yaml). The [D2 trace matrix](../architecture/trace-matrix.md) identifies the delivered Round 4 paths and offline tests.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md) and [`ADR 001`](../architecture/adr/001-graph-internal-final-check.md).
 - Governance basis: [`permission-model.md`](../architecture/permission-model.md) and [`verification-constraints.md`](verification-constraints.md).
 - Project instruction basis: [`AGENTS.md`](../../AGENTS.md).
@@ -111,7 +113,7 @@ Without a plan or recorded approval, no development or test work is represented 
 
 - `docs/req/**`, `goal.md`, `baseline/**`, `.github/**`, governance/permission files, `.env*`, and credentials are read-only or forbidden as specified by the permission model.
 - Requirements and design guidance may be read as task inputs; they are not writable by an implementation or verification agent.
-- Do not read `.env*` or credential values, and do not use real credentials as fixtures. SR-01's limited runtime protection does not grant coding-agent secret access.
+- Do not read `.env*` or credential values, and do not use real credentials as fixtures. The deferred SR-01 runtime design does not grant coding-agent secret access.
 - Baseline evidence is read selectively; it must not be regenerated, formatted, cleaned, or rewritten.
 - Version-control metadata is not a normal write target. Local Git write operations require explicit local task authorization; push, PR, remote CI query, and merge require separate remote-operation authorization.
 

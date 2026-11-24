@@ -1,13 +1,15 @@
 # Structural Constraints
 
-> Current scope amendment — 2026-11-23, D1 v1.50.0: seven active requirements / 37 FCs (FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 14 / 65. Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](../architecture/adr/002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25): five delivered requirements / 28 FCs (FR-03, FR-04, FR-10, SB-01, INV-01); nine deferred / 37 FCs (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02); total 14 / 65.
+
+> Historical approvals (2026-11-23): Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](../architecture/adr/002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 ## 1. Scope and authority
 
 This D3 structural-constraints document is located at the course-required project path `docs/code-governance/structural-constraints.md`. All paths below are relative to the application project root containing `AGENTS.md` and `architecture-blueprint.md`. Module allocations marked proposed remain proposals; this document neither implements code nor grants file permissions or architecture approval.
 
-Inputs are `docs/req/requirements.yaml` (current v1.50.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, `docs/architecture/adr/002-deterministic-financial-metrics.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
+Inputs are `docs/req/requirements.yaml` (current v1.51.0), `architecture-blueprint.md`, `docs/architecture/adr/001-graph-internal-final-check.md`, `docs/architecture/adr/002-deterministic-financial-metrics.md`, and the D2 invariant, trace, state, runtime-policy, and permission artifacts. Verification is governed by `docs/code-governance/verification-constraints.md`. Course requirements are taken from the project specification, pages 5–6: unique module ownership for architecture elements, incremental extension of the baseline, module/function references to relevant ADRs and invariants, and explicit authority boundaries.
 
 D1 controls product semantics; D2 controls architecture contracts. This file constrains code organization without adding business checks or acceptance thresholds. Use the actual round plan. `docs/plans/round-01.md` is approved at `a8ec42ecdf4199f91d3001fc6e2b1e887a0c5e41`; its internal Pending/Proposed cells are historical, and later rounds need their own approval. No code or plan-file creation is authorized by this document alone.
 
@@ -15,38 +17,38 @@ D1 controls product semantics; D2 controls architecture contracts. This file con
 
 Preserve the imported TradingAgents application under `src/`. Its packages are `src/tradingagents/` and `src/cli/`; tests are under `test/offline/` and `test/live/`. Do not replace the baseline, introduce another source/test layout, reformat unrelated code, or rewrite existing vendors and agent workflows merely to implement governance.
 
-Static inspection shows that `src/tradingagents/graph/setup.py` currently connects Portfolio Manager directly to END. `src/tradingagents/graph/trading_graph.py` currently saves state and memory through `record_decision()`, uses `run_rating()` for the baseline rating, and contains checkpoint behavior. These are existing behaviors to adapt at approved integration points, not evidence that the proposed deterministic tail or other new requirements are already implemented. The C-08 FR-04 and C-09/IF-09 cores are implemented separately under their rounds; neither is wired into the production graph or formal-authority path. C-09 is the independent final-check callable only, not a production node or consumer contract.
+Both public entries use the graph tail in `src/tradingagents/graph/setup.py`: Portfolio Manager → Portfolio Risk Check → Final Recommendation Check → END. The manager writes the advisory proposal. C-08 evaluates the caller’s scenario and C-09 decides the formal result. `run_rating()` validates it before returning the rating. `record_decision()` writes the state log before conditionally appending new memory.
 
-The active scope is FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01. FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01 remain deferred. Do not add recovery, analyst briefs, performance/cost experiments, or reserved future interfaces for them.
+The [D2 trace matrix](../architecture/trace-matrix.md) maps all five delivered requirements to their offline tests and identifies the nine deferred requirements.
 
 ## 3. Unique primary module ownership
 
 Each logical architecture element must have exactly one primary owning module. Multiple related elements may share a module; an element does not require its own class, service, or file. Other modules may provide explicit call-site adapters or consume its outputs, but must not duplicate its decision logic.
 
-The table below is a proposed implementation allocation for review, except that Round 1 created the C-08 module and Round 2 created the independent C-09 module. It is not a claim that other new files exist or an authorization to create them. Paths start at the project root; application paths use `src/`. A round may approve a different equally small allocation before implementation, provided the affected ownership table and D2 references remain consistent. Do not silently introduce a second owner.
+The table maps delivered components to their owning modules. Deferred rows retain the design allocation for possible future activation.
 
 | D2 element | Primary owner | Existing integration sites / constraints |
 |---|---|---|
 | C-01 CLI Entry Adapter | `src/cli/run.py` (existing) | `src/cli/main.py` delegates; entry coordinates, never decides formal rating |
 | C-02 Programmatic Entry Adapter | `src/tradingagents/graph/trading_graph.py` (existing) | Preserve `propagate()` return shape and entry-specific lifecycle |
-| C-03 RunContext / RunGovernor | `src/tradingagents/run_context.py` (proposed) | Ephemeral scope binding/restoration and reuse/availability ownership/isolation only; no persisted identity, timers, new stats/status or business authority |
+| C-03 RunContext / RunGovernor | `src/tradingagents/run_context.py` | Ephemeral scope binding/restoration and availability registry ownership/isolation only; no persisted identity, timers, new stats/status or business authority |
 | **Deferred** C-04 Run statistics | `src/cli/stats_handler.py` (existing, adapted) | Future-only handler/collector; existing baseline statistics retained |
-| C-05 QueryReuseService | `src/tradingagents/dataflows/query_reuse.py` (proposed) | Supported news executor delegates here; existing vendor flow remains intact |
-| C-06 Observation protocol / local helper | `src/tradingagents/dataflows/availability.py` (proposed) | Local attachments remain at D2-listed tool/prefetch sites; they delegate to one protocol owner |
-| C-07 Availability registry/summarizer/renderer | `src/tradingagents/dataflows/availability.py` (proposed) | One completeness calculation; independent plain snapshots |
-| C-08 PortfolioRiskEvaluator | `src/tradingagents/portfolio_risk.py` (exists; Round 1) | Public module-level callable `evaluate(...)` (IF-08) plus local parse/validate/compare/project helpers, not a generic numeric framework. Offline tests: `test/offline/test_fr04_risk.py`; only FR-04-FC01–FC04/core IR-14 are verified. |
-| C-09 FinalRecommendationChecker | `src/tradingagents/final_recommendation.py` (exists; Round 2 independent core) | Public module-level callable `evaluate(proposal, availability, risk, asset_type)` with no default parameters, plus local projection/validation/result helpers; no class is required. It is the sole formal-business-value authority at the core boundary. Production graph/entry/consumer wiring and `FormalResultContract` (IF-19) remain unimplemented. Offline tests: `test/offline/test_sb01_final_check.py`; only SB-01-FC01–FC04 core and local IR-01/IR-02 responsibility are verified. |
+| **Deferred** C-05 QueryReuseService | `src/tradingagents/dataflows/query_reuse.py` (proposed) | Future owner for supported news reuse; existing vendor flow remains intact |
+| C-06 Observation protocol / local helper | `src/tradingagents/dataflows/availability.py` | Local attachments remain at D2-listed tool/prefetch sites; they delegate to one protocol owner |
+| C-07 Availability registry/summarizer/renderer | `src/tradingagents/dataflows/availability.py` | One completeness calculation; independent plain snapshots |
+| C-08 PortfolioRiskEvaluator | `src/tradingagents/portfolio_risk.py` | The graph risk node calls `evaluate(...)` (IF-08). This module owns threshold defaults, exact comparisons and the risk result. Core and public-entry coverage: `test/offline/test_fr04_risk.py`, `test/offline/test_round04a_integration.py`. |
+| C-09 FinalRecommendationChecker | `src/tradingagents/final_recommendation.py` | The final graph node invokes `evaluate(proposal, availability, risk, asset_type)` (IF-09). Consumers validate the result with `validate_formal_result` (IF-19). See `test/offline/test_sb01_final_check.py`, `test/offline/test_formal_result_contract.py` and the Round 4 entry tests. |
 | C-10 Graph wiring / deterministic nodes | `src/tradingagents/graph/setup.py` (existing, adapted) | Existing agent factories remain; wrapper and thin nodes delegate business logic |
 | C-11 Report writer | `src/tradingagents/reporting.py` (existing) | HTML and CLI renderers consume prepared values, not new business decisions |
 | C-12 Memory decision adapter | `src/tradingagents/memory/log.py` (existing) | Existing reflection/settlement modules retain their responsibilities |
 | **Deferred** C-13 HistoryReader | `src/tradingagents/history.py` (proposed) | Read-only manifest/report lookup |
-| **Deferred** C-14 ManifestStore | `src/tradingagents/run_context.py` (proposed) | Future-only manifest helper; no current implementation |
-| C-15 Limited security helpers | `src/tradingagents/security.py` (proposed) | Existing `src/tradingagents/dataflows/net.py`, `src/tradingagents/dataflows/symbols.py`, and CLI preferences delegate/reuse helpers as applicable; retain their existing interfaces |
+| **Deferred** C-14 ManifestStore | `src/tradingagents/run_context.py` (future allocation) | Future-only manifest helper; no current implementation |
+| **Deferred** C-15 Limited security helpers | `src/tradingagents/security.py` (proposed) | Existing `src/tradingagents/dataflows/net.py`, `src/tradingagents/dataflows/symbols.py`, and CLI preferences retain baseline protections; the shared helper is a future allocation; retain their existing interfaces |
 | C-16 Existing checkpoint adapter | `src/tradingagents/graph/checkpointer.py` (existing) | Outside the selected new flow; preserve baseline tooling/tests |
 | C-17 CLI display coordinator | `src/cli/display.py` (existing) | Streaming labels and prepared formal display; no rating generation |
-| C-18 Configuration/threshold access | `src/tradingagents/default_config.py` (existing, adapted) | Shared current-output allowlist and threshold access; preserve instance run_settings behavior; no pre-construction manifest-driven refactor |
-| C-20 DataResultClassifier | `src/tradingagents/dataflows/availability.py` (proposed) | Narrow producer-format recognition, no fetching or model judgment |
-| C-21 FinancialMetricsCalculator / Provider (FR-10, planned PR 2) | `src/tradingagents/financials/` (`models.py`, `metrics.py`, `service.py`, `sec_provider.py`, `wiring.py`, `__init__.py` — proposed for PR 2, not created in PR 1) | Source-preserving inputs, `Decimal`/`Fraction` calculation of ten fixed metrics, deterministic table rendering, fresh per-analysis scope bound at entry (`TradingAgentsGraph.propagate` / CLI), and opt-in injection into `src/tradingagents/agents/analysts/fundamentals_analyst.py`. Semantic runner lives under `scripts/financial_metrics_eval.py`. |
+| C-18 Configuration access | `src/tradingagents/default_config.py` | Run configuration and existing output settings. `TradingAgentsGraph.create_run_state()` extracts caller threshold overrides for C-08. |
+| C-20 DataResultClassifier | `src/tradingagents/dataflows/availability.py` | Narrow producer-format recognition, no fetching or model judgment |
+| C-21 FinancialMetricsCalculator / Provider (FR-10) | `src/tradingagents/financials/` (`models.py`, `metrics.py`, `service.py`, `sec_provider.py`, `wiring.py`, `__init__.py`) | Source-preserving inputs, `Decimal`/`Fraction` calculation of ten fixed metrics, deterministic table rendering, fresh per-analysis scope bound at entry (`TradingAgentsGraph.propagate` / CLI), and opt-in injection into `src/tradingagents/agents/analysts/fundamentals_analyst.py`. Semantic runner lives under `scripts/financial_metrics_eval.py`. |
 
 Do not create a missing C-19 or renumber D2 IDs. Exact new filenames are organizational proposals; approval must identify them in the round's file list. Reuse an existing suitable module when that makes the approved change smaller; do not create all proposed modules upfront.
 
@@ -66,26 +68,26 @@ Use the blueprint IF-* contracts rather than inventing duplicate DTOs or a secon
 
 ### 4.2 Run, statistics, and persistence
 
-- Create one ephemeral RunContext per analysis; explicit delegation shares it. Independent analyses isolate query reuse and availability. No new stats collector or persistent identity/status is current.
+- Create one ephemeral RunContext per analysis; explicit delegation shares it. Independent analyses isolate availability registries. No new stats collector or persistent identity/status is current.
 - Resource release belongs to the acquiring scope/wrapper. `finish()` restores prior scope binding after entry-owned cleanup and does not close resources twice.
 - Validate formal results before normal delivery/save. Preserve final-state-save then conditional new-memory-append ordering. The programmatic path does not force report saving.
 - The selected new flow executes fully, does not acquire/resume/read old checkpoints as current evidence, and does not delete them. Preserve underlying checkpoint code/tests outside this flow.
 
 ### 4.3 Queries and availability
 
-- Restrict run reuse to D2's P-09/P-13 news paths. Query identity excludes call path and follows effective business parameters. Preserve vendor selection, fallback/retry, original return/failure, and cross-run vendor caches.
+- Deferred FR-01 design: restrict run reuse to D2's P-09/P-13 news paths. Query identity excludes call path and follows effective business parameters. Preserve vendor selection, fallback/retry, original return/failure, and cross-run vendor caches.
 - Attach observation at the 15 supported business call positions, not in router/vendor/callback layers. P-03 observes individual indicators before concatenation; the two news paths delegate to a shared execution boundary without double observation.
-- Availability classification and tracking failures must not replace fetch results, strand reuse waiters, or trigger refetches. Follow D2's local failure-mark, pre-fetch-note, and tracking-error distinctions; do not add new statuses or a global public veto.
-- Match necessary targets before selecting the last accepted result. Do not substitute another object/window/item or prefer success. Follow the user-confirmed target-binding contract in D2 blueprint §8.3; implementation and verification remain pending, not the target-selection design choice.
+- Availability classification and tracking failures must not replace fetch results, or trigger refetches. Follow D2's local failure-mark, pre-fetch-note, and tracking-error distinctions; do not add new statuses or a global public veto.
+- Match necessary targets before selecting the last accepted result. Do not substitute another object/window/item or prefer success. Follow the user-confirmed target-binding contract in D2 blueprint §8.3. The implemented binding rules are exercised in `test/offline/test_fr03_availability.py`.
 - Obtain and deliver the research snapshot in the same first Bull call. Later research roles use the stored stage mapping. Terminal delivery is prepared by the entry; report writers and independent saves read passed state only. No refresh reruns a model or changes the already formed formal result.
 
 ### 4.4 Risk, history, and security
 
 - Risk uses the caller's minimal scenario, current object, and configured classroom thresholds. Follow D2 applicability/validation order and exact comparisons; formatting never determines status. No model/network fill, broker/account validation, or trade authorization.
-- Parsed business-invalid scenario/threshold inputs go to FR-04 for structured blocked results; missing applicable scenario is not an entry hard failure. Explicit file read/parse errors follow the entry contract still subject to OQ-01.
+- Parsed business-invalid scenario/threshold inputs go to FR-04 for structured blocked results; missing applicable scenario is not an entry hard failure. An unreadable or malformed explicit CLI scenario file fails before analysis.
 - Reports and new memory consume formal output without another model call to restate it. Preserve optional outputs and memory no-op cases; reflection does not rewrite recorded decision authority.
-- History reads only registered merged reports under the authorized root; it does not regenerate, repair, re-register, scan unrelated report directories, or require risk/memory evidence closure.
-- Reuse existing ticker protection and request-error scrubbing. Known-credential literal-substring omission follows IF-21; empty secrets do not match. Scope remains limited to D1's listed paths. No generic secret scanning or all-platform race guarantee is added.
+- Deferred FR-05 design: history reads only registered merged reports under the authorized root; it does not regenerate, repair, re-register, scan unrelated report directories, or require risk/memory evidence closure.
+- Reuse existing ticker protection and request-error scrubbing. The deferred SR-01 design for known-credential literal-substring omission follows IF-21; empty secrets do not match. Scope remains limited to D1's listed paths. No generic secret scanning or all-platform race guarantee is added.
 
 ## 5. ADR/invariant references in code
 
@@ -101,7 +103,7 @@ Run the D4 structural, prior-suite regression, and behavioral checks required fo
 
 Changes to authority, interfaces, requirement semantics, or security-critical behavior require the affected architecture decision and human approval before implementation. Ordinary internal details within an approved contract need no new architecture gate. If a proposed module allocation conflicts with D2, resolve only the affected allocation before coding rather than silently changing D2 or expanding the round.
 
-OQ-01 remains pending before affected scenario-input implementation; OQ-04 checks retained baseline save/display behavior and adds no new approval gate unless that behavior changes; OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) remain technical verification items; OQ-02 fixes only the two threshold key names. Do not confirm OQs through this document. Context budgeting/compression/reinjection and the deferred requirements are not activated here; the known course-alignment question remains for human decision.
+Round 4 implements OQ-01 through CLI `--purchase-scenario` and programmatic `purchase_scenario`; OQ-04 checks retained baseline save/display behavior and adds no new approval gate unless that behavior changes; OQ-07 belongs to D3 permission setup. OQ-08/12/13/15 (OQ-16 statistics work is deferred) remain technical verification items; OQ-02 fixes only the two threshold key names. Do not confirm OQs through this document. Context budgeting/compression/reinjection and the deferred requirements are not activated here; the known course-alignment question remains for human decision.
 
 ## Deferred and historical design archive — not current implementation instructions
 
