@@ -369,3 +369,47 @@ The [Round 3 plan](plans/round-03.md) now selects FR-03-FC01–FC05, names 13 pr
 No application/test code, CI, semantic configuration, permission control or dependency was changed by this planning task. No tests were implemented/executed as Round 3 acceptance. Semantic configuration stays paused; actual prompt injection still requires the course's real fixed semantic evaluation before production/full acceptance. Role/tool readiness is checked before build; remaining producer/attachment questions have concrete offline tests rather than extra product requirements. This proposal neither resolves the separate context-budget course limitation nor claims full course compliance.
 
 Planning checks and their exact results are recorded in AI-062 and the bounded local document-check artifact. This is AI-authored planning review, not non-author approval or an APPROVE verdict.
+
+## RM-14-R1 — FR-10 Integration Preparation (AI-authored review summary; final human verdict pending)
+
+- PR: [#14](https://github.com/Howindy/Teamproject-Tradingagents/pull/14)
+- Baseline: `origin/main` `5c6e2caed5e4baceb136b5544ba5e283c0822cdb` (D1 v1.49.0)
+- Frozen specification: `docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da` (unchanged after approval)
+- Test-spec pre-approval: [comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) by `Howindy` (non-author owner) at `2026-11-23T11:29:36Z`, matching `APPROVED test-spec: docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`
+- Implementation start: `f08bcab058dac13ec8b5898e4521b630aa221fbd` (freeze of `docs/ci/financial-metrics-cases.json`, `docs/ci/financial-metrics-rubric.md`, and `docs/ci/semantic_eval.yaml`, strictly after pre-approval timestamp)
+- Scope: `FR-10`, `FR-10-FC01`–`FR-10-FC10`; PR 1 D1 v1.50.0 / ADR 002 / D2 / D3 / D4 alignment, lossless projection, trusted semantic evaluation runner/workflow handoff, and `P01`–`P07` offline tests. Excluded: `src/` feature migration (deferred to PR 2), deferred `FR-07` analyst briefs, and live 6-request `deepseek-flash` execution (`docs/ci/semantic_eval.yaml` remains `unapproved`).
+
+### Actual local verification (isolated Python 3.12.14 venv)
+
+- `scripts/ci_checks.py schema`: 0 errors; `14` requirements / `65` FCs (`7` active / `37` FCs, `7` deferred / `28` FCs).
+- `ruff check .`: passed (0 errors).
+- `scripts/ci_checks.py permissions`, `api`, `mypy --baseline mypy-baseline.txt`: 0 new errors (`errors=[]`).
+- `pytest -q test/offline/test_financial_metrics_evaluation.py`: `6 passed` (`P01`–`P07`).
+- `pytest -q`: `1616 passed, 7 failed, 4 skipped, 1 deselected, 100 subtests passed` — all 7 failures are pre-existing Windows-environment assertions (`test_chatgpt_auth.py` POSIX `0o600`, `test_ci_gates.py` `127.1` DNS, `test_cli_updates.py` upgrade commands, `test_suite_isolation.py` Temp under home).
+
+### Final human review
+
+- Final verdict: Pending human review (`APPROVE`, `CHANGES REQUIRED`, or `REJECT` to be supplied by `Howindy` after inspecting PR #14 and CI).
+
+### CI follow-up (not a human review verdict)
+
+PR is now Ready for review. Run [45198004951](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951)
+passed approval, evidence, AI-use, security, schema, type, static, dependency and installation gates,
+but failed the two new loader/evaluation tests (and consequently contract-tests/aggregate).
+Diagnostics at `e842657` identified the frozen dataset's Windows-CRLF versus Git-LF digest mismatch.
+The correction binds trusted text hashes to LF, preserves the original case/rubric bytes in Git, and
+tests both checkout line endings plus a real numeric mutation. Local targeted tests: 6 passed;
+Ruff: passed. Remote result for the correction remains pending until checked.
+
+The earlier blanket description of all seven Windows failures as pre-existing is not established
+by a complete baseline reproduction in this continuation; retain them as local environment findings,
+not waived passes. No live semantic score, final human approval, or merge is claimed.
+
+Run [45198769895](https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198769895)
+at `b20d8a8` subsequently passed all applicable PR jobs, including four Python regression jobs,
+contract-tests and aggregate. Follow-up fixes within P03–P06 require a pinned, separately installed
+baseline and all six import preflights before any completion; missing baseline cannot become a
+candidate-only pass. Exact model controls/hashes are enforced, conflicting asserted numbers fail,
+and absent source/period/interpretation claims route to review. Captured request/response details
+are retained on truncation. Local targeted tests: 6 passed; Ruff: passed. These fixes retain the
+frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be checked again.

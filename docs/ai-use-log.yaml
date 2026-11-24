@@ -3211,3 +3211,192 @@ entries:
       correction above); contract-tests does not add it to its own selection for a mixed app+governance PR, which is a
       selection detail, not a reason the gate test goes unrun.'
     - Local evidence paths are not publicly accessible; they are not CI artifacts.
+
+
+  - id: "AI-FM-PREP-001"
+    date: "2026-11-23"
+    activity: "integration_preparation_planning"
+    tool: "OpenCode"
+    model: "GPT-6.1 Sol"
+    task: "Freeze a two-PR deterministic financial-metrics integration proposal from current origin/main; stop for real independent human approval."
+    files_changed:
+      - "docs/plans/financial-metrics-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Read current D1/D2/D3/D4 and CI approval/trusted-evaluation controls; fetched remote refs over existing SSH;
+      created an independent prep worktree at main 5c6e2caed5e4baceb136b5544ba5e283c0822cdb.
+      Inspected historical implementation/evidence at haoxi 7e676fb00fff319930685a9fa059265f3061aeff.
+      Proposed unused registry ID FR-10 with ten FCs, a maintenance allowlist, fixed cases/rubric/runner interface,
+      concrete runner tests, and separate preparation/migration approvals. No application, test, requirements,
+      architecture, evaluator, workflow, dependency or permission file was changed by this planning submission.
+    human_intervention: "User explicitly authorized fetch, isolated worktree/branch, plan commit/push and Draft PR; instructed no contact with Yifan and no reuse of old approvals."
+    approval:
+      subject: "FM-PREP-1 post-freeze execution and specific tests"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "planning_checks_only"
+      summary: >-
+        git diff --check passed. Using the unchanged scripts/ci_checks.py functions, verified that the plan selects
+        exactly the two PR1 contract-test paths and mentions all four proposed code/test paths; specification and
+        approval-phrase parsing, AI-use-log structure and docs-only classification passed. The example parser SHA
+        was synthetic and is not approval evidence. Schema CLI was attempted but blocked by missing jsonschema
+        in the existing Python environment; no dependency was installed. No application or semantic evaluation
+        executed; planned P01-P07 are not passing evidence.
+      evidence: []
+    transcript_refs: []
+    limitations:
+      - "No genuine current-session raw transcript export is available in the repository; do not fabricate one."
+      - "Existing permission-file effective loading and GitHub branch/environment protection are not verified."
+      - "GitHub CLI was not found in PATH or checked standard local installation paths; in-app GitHub browser is signed out. Draft PR creation may require human authentication; SSH Git access does not grant GitHub API authentication."
+      - "Old development/freeze/approval records are historical and do not authorize this preparation execution or migration."
+
+  - id: "AI-FM-PREP-002"
+    date: "2026-11-23"
+    activity: "integration_preparation_plan_revision"
+    tool: "OpenCode"
+    model: "GPT-6.1 Sol"
+    task: "Apply the user's five targeted FM-PREP-2 planning corrections; push the same preparation branch and attempt normal Draft PR creation."
+    files_changed:
+      - "docs/plans/financial-metrics-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Kept FR-10, two PRs and feature boundaries. Specified official deepseek-flash with thinking explicitly disabled;
+      withdrew 16 requests in favor of four candidate and two normal-case baseline requests, once each,
+      with 20 candidate scoring checks and paired non-regression only for AAPL/XOM. Removed source-path discovery
+      overrides, retained import-origin verification and documented the installation prerequisite. Submitted existing
+      independent expectations/counterexamples/projection rules together, avoiding a redundant approval for later
+      lossless copying after real plan approval. Clarified that the allowlist is a maximum, not mandatory file churn.
+    human_intervention: "User reviewed 4799b33b26dd97823dec937d3b8264eb7f9007aa and authorized only these plan revisions, same-branch commit/push and Draft PR creation attempt; actual execution approval remains pending."
+    approval:
+      subject: "FM-PREP-2 preparation execution and specific tests"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "planning_checks_only"
+      summary: >-
+        Normal package discovery in the existing project .venv resolves tradingagents to
+        D:/CityU/cs5351/project/tradingagents/__init__.py rather than this worktree; recorded the installation
+        prerequisite without overriding discovery or installing dependencies. No model requests, application
+        migration or product tests executed. Final documentation/parser checks are reported with the revision SHA.
+    transcript_refs: []
+    limitations:
+      - "No current-session raw transcript export is available; none fabricated."
+      - "Previous schema CLI block (missing jsonschema) remains unresolved; installation not authorized."
+      - "Real independent GitHub plan/test approval, preparation execution and merge remain pending."
+
+  - id: "AI-FM-PREP-003"
+    date: "2026-11-23"
+    activity: "integration_preparation_implementation"
+    tool: "OpenCode"
+    model: "Gemini 4 Hydrogen"
+    task: "Verify Howindy PR #14 test-spec approval and execute FM-PREP-2 preparation deliverables (D1 v1.50.0, ADR 002, D2/D4 alignment, fixed lossless projection/rubric, trusted semantic runner, workflow handoff, and offline evaluation/gate tests)."
+    files_changed:
+      - "docs/req/requirements.yaml"
+      - "architecture-blueprint.md"
+      - "docs/architecture/adr/001-graph-internal-final-check.md"
+      - "docs/architecture/adr/002-deterministic-financial-metrics.md"
+      - "docs/architecture/invariants.md"
+      - "docs/architecture/trace-matrix.md"
+      - "docs/architecture/runtime-policy-catalog.md"
+      - "docs/architecture/memory-design.md"
+      - "docs/architecture/evaluation-table.md"
+      - "docs/code-governance/structural-constraints.md"
+      - "docs/code-governance/verification-constraints.md"
+      - "docs/ci/financial-metrics-cases.json"
+      - "docs/ci/financial-metrics-rubric.md"
+      - "docs/ci/semantic_eval.yaml"
+      - "docs/ci/README.md"
+      - "scripts/financial_metrics_eval.py"
+      - "scripts/ci_semantic_eval.py"
+      - ".github/workflows/trusted-evaluation.yml"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "test/offline/test_ci_gates.py"
+      - "docs/review-memo.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Verified PR #14 issuecomment 7099714477 by Howindy (2026-11-23T11:29:36Z) binding e99ab57b6e460fad59bb4bf4a81cffa5c717c8da;
+      created an isolated temporary Python 3.12.14 venv installing editable main plus dev/CI requirements without altering sibling worktrees;
+      updated D1 to v1.50.0 (FR-10 with ten FCs, 14/65 total, 7/37 active, 7/28 deferred), authored ADR 002, aligned D2/D3/D4,
+      froze the lossless reference projection and rubric at implementation start f08bcab058dac13ec8b5898e4521b630aa221fbd,
+      implemented scripts/financial_metrics_eval.py and semantic details serialization/workflow handoff,
+      and added offline P01-P07 tests without migrating src/ or activating deferred FR-07 briefs.
+    human_intervention: "Non-author owner Howindy posted APPROVED test-spec in PR #14 comment 7099714477 (2026-11-23T11:29:36Z); user authorized isolated test-environment installation, preparation execution, commit/push, PR body update, and Ready-for-review transition."
+    approval:
+      subject: "FM-PREP-2 preparation implementation and P01-P07 offline tests"
+      status: "approved"
+      approved_at: "2026-11-23T11:29:36Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477"
+    verification:
+      status: "completed_with_baseline_findings"
+      summary: >-
+        In isolated venv (Python 3.12.14, tradingagents resolved to prep worktree src/tradingagents/__init__.py):
+        ruff check . passed; ci_checks.py schema passed (14/65, 7/37 active, 7/28 deferred); permissions, api, and mypy baseline passed (0 new errors);
+        test/offline/test_financial_metrics_evaluation.py passed (6 passed); full offline pytest recorded 1616 passed, 7 pre-existing Windows-environment failures
+        (2 test_chatgpt_auth POSIX 0o600, 2 test_ci_gates 127.1 DNS, 2 test_cli_updates upgrade-command, 1 test_suite_isolation Temp-under-home),
+        4 skipped, 1 deselected, 100 subtests passed (JUnit XML saved in temp output). No live semantic model requests executed; semantic_eval.yaml remains unapproved.
+      evidence:
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/full.xml"
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-prep/mypy-current.txt"
+    transcript_refs: []
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/14"
+    limitations:
+      - "No genuine current-session raw transcript export is available in the repository; none fabricated."
+      - "Seven pre-existing Windows-environment test failures remain recorded honestly and unwaived; remote Ubuntu CI is checked separately after push."
+      - "No PR 2 src/ migration, live DeepSeek evaluation requests, or merge occurred."
+
+  - id: "AI-FM-PREP-004"
+    date: "2026-11-23"
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-sol"
+    activity: "preparation_ci_repair"
+    task: "Continue authorized PR #14 preparation CI diagnosis and scoped fixes."
+    files_changed:
+      - "scripts/financial_metrics_eval.py"
+      - "docs/ci/semantic_eval.yaml"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "docs/ai-use-log.yaml"
+      - "docs/review-memo.md"
+      - "docs/ci/README.md"
+    ai_contribution: >-
+      Verified the real Howindy approval comment and successful remote test-approval gate, PR draft=false,
+      and initial Ubuntu CI failures. Added subprocess assertion diagnostics in e842657; the resulting
+      Linux log identified a dataset hash mismatch, not an installation failure. The original config hash
+      had been calculated on Windows CRLF bytes, whereas the frozen Git blob at f08bcab has LF and digest
+      9b49df4640993ccd48f3c5a2ca8a308711a5a70df2ee4883b208b725683371ac. Corrected that hash and
+      normalized only CRLF-to-LF for trusted text hashing; added LF/CRLF equivalence and content-mutation
+      assertions without changing the dataset, rubric, oracle, or thresholds.
+      Follow-up runner review requires both pinned baseline cases and all six import preflights before
+      any external completion, verifies exact request controls and mandatory material hashes, prevents
+      correct mentions from masking conflicting asserted values, and routes missing source/period or
+      qualitative interpretation to review instead of accepting number mentions alone. Details now retain
+      captured requests and returned model/usage/finish/content even on truncation; SDK exception bodies
+      are not published. These are fixes to the approved fail-closed contracts, not new expectations.
+    human_intervention: "User authorized scoped fixes, tests, commits, pushes, PR updates and Ready-for-review; user then requested continuation."
+    approval:
+      status: "approved"
+      approved_at: "2026-11-23T11:29:36Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477"
+    verification:
+      status: "local_pass_remote_pending"
+      summary: >-
+        Isolated Python 3.12: pytest -q test/offline/test_financial_metrics_evaluation.py: 6 passed;
+        ruff check .: passed. Remote run 45198004951 had two new evaluation-test failures on Linux
+        from the hash mismatch; contract-tests and aggregate consequently failed. Other gates passed.
+        Correction b20d8a8 passed all applicable remote PR gates in run 45198769895, including Python
+        3.11/3.12-New-York/3.13/3.14, contract-tests and aggregate. Subsequent fail-closed runner fixes
+        passed local targeted tests (6) and Ruff; their remote result is pending.
+        Earlier AI-FM-PREP-003's model attribution is not substantiated by the available checkpoint;
+        this continuation uses openai/gpt-6.1-sol. Its blanket pre-existing label for seven Windows
+        failures is not a completed full-baseline reproduction in this continuation.
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198004951/job/137773536552"
+        - "https://github.com/Howindy/Teamproject-Tradingagents/actions/runs/45198769895"
+    transcript_refs: []
+    limitations:
+      - "No raw session export is available; none fabricated."
+      - "No live model requests or merge; remote result after this fix must be verified separately."
