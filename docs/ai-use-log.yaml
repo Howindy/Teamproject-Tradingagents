@@ -3372,3 +3372,66 @@ entries:
       - "Actual current-session raw transcript export unavailable; no fabricated transcript."
       - "Round 3 final merge and Round 4 interfaces remain pending; separate trusted-side maintenance is required before real evaluation."
       - "Plan/test approval, suite-selection approval, safety review, semantic standard and live authorization remain pending."
+
+  - id: "AI-FM-FEATURE-A-001"
+    date: "2026-11-24"
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-terra"
+    activity: "financial_metrics_checkpoint_a"
+    task: "Migrate FR-10 calculation core and structured SEC/Yahoo adapters only; stop before graph/CLI/prompt integration."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC01", "FR-10-FC02", "FR-10-FC03", "FR-10-FC04", "FR-10-FC05", "FR-10-FC06", "FR-10-FC07", "FR-10-FC08"]
+    files_changed:
+      - "src/tradingagents/financials/__init__.py"
+      - "src/tradingagents/financials/models.py"
+      - "src/tradingagents/financials/metrics.py"
+      - "src/tradingagents/financials/service.py"
+      - "src/tradingagents/financials/sec_provider.py"
+      - "src/tradingagents/financials/wiring.py"
+      - "src/tradingagents/dataflows/vendors/sec_edgar.py"
+      - "src/tradingagents/dataflows/vendors/yahoo/market.py"
+      - "test/offline/test_financial_metrics.py"
+      - "test/offline/test_sec_financial_provider.py"
+      - "docs/architecture/permission-model.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Verified actual Howindy issue comment and exact plan/Suite approval before code commit;
+      migrated six modules from 7e676fb, added structured SEC cache and Yahoo completed-close
+      helpers, and added fixed independent projection and synthetic adapter tests. Fixed historical
+      analysis-day cutoff comparing against machine today instead of as_of; filtered same-day SEC
+      disclosures before deduplication. Prevented SEC price adapter from claiming the returned
+      price date independently proves latest-session freshness: absent such evidence now returns
+      price_availability_unknown. The current Yahoo helper does not yet supply independent latest-session
+      evidence, so live SEC-adapter P/E remains unavailable; this is an unresolved integration issue,
+      not a feature pass. The migrated historical wiring's date-keyed cache is not integrated and is
+      not cross-analysis safe; B must replace/bind it to the real entry lifecycle.
+    human_intervention: >-
+      User authorized checkpoint A, independent installation, targeted tests, Ruff, scoped permission
+      model maintenance, commit/push and PR update; explicitly excluded B, live model calls, trusted
+      maintenance and merge.
+    approval:
+      subject: "FR-10 feature plan/test specification and financial-metrics suite selection"
+      status: "approved"
+      approved_at: "2026-11-24T14:12:00Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/19#issuecomment-7133994045"
+    verification:
+      status: "checkpoint_a_partial"
+      summary: >-
+        Isolated Python 3.12 editable install of this worktree; first pip attempt timed out, second
+        succeeded; import origins for tradingagents and financials.metrics resolve inside this worktree;
+        pip check: no broken requirements. Targeted five-file pytest: 82 passed (15 FR-10 tests and
+        67 existing SEC/Yahoo regressions); ruff check . passed; git diff --check passed. Initial new
+        test asserted provenance bundle omitted raw excluded facts; corrected assertion to test that
+        unavailable facts are not consumed by any metric. Tests use frozen projection and synthetic
+        substitutes, no model/vendor request. Full regression, live and graph integration not run.
+      evidence:
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/"
+    transcript_refs: []
+    commit: "8db62f850e1d3ba1b289ad378cf4295e2840efdb"
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/19"
+    limitations:
+      - "A tests are partial: full approved fiscal/basis/sign/ytd boundaries and FR-10-FC09–FC10 entry behavior are not established."
+      - "Live P/E freshness lacks independently evidenced expected latest trading session; avoid equating returned bar to latest session."
+      - "Original date-keyed metric factory remains unintegrated and is not run-isolated; B requires explicit correction."
+      - "Semantic evidence, trusted maintenance, standard approval and real model execution remain pending; no raw transcript export available."
