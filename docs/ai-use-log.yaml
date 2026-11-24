@@ -3134,3 +3134,38 @@ entries:
     limitations:
       - "No raw session export is available; none fabricated."
       - "No live model requests or merge; remote result after this fix must be verified separately."
+
+  - id: "AI-SSR-PLAN-001"
+    date: "2026-11-24"
+    round: null
+    human_operator: "espino2233"
+    tool: "Claude (claude.ai agent session)"
+    model: "claude-opus-5-5"
+    activity: "ci_maintenance_planning"
+    task: "Plan per-suite semantic evaluation routing (registry, PR selection, per-suite evidence) for the shared CI framework."
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/plans/semantic-suite-routing.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Read AGENTS.md, Prompt.md, governance rules, CI.md, docs/ci/README.md and the CI scripts and workflows at
+      origin/main 00833f4b281692c266bbd52c5955a4f40ec89493. Confirmed that semantic routing is a single boolean with
+      one shared config, one status context, a free-text runner input, version-only config binding, candidate-read
+      config data and needs_review flattened to failed. Ran the existing classifier read-only against round-03-fr03
+      (semantic_required true). Wrote the maintenance plan and offline test specification. No workflow, checker,
+      config or application file was changed.
+    human_intervention: "User scoped the task, authorized read/fetch, worktree, plan commit, push and Draft PR, and required a stop before implementation."
+    approval:
+      subject: "Semantic suite routing plan"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "not_applicable"
+      summary: "Planning only; no checks executed beyond read-only classification of an existing branch."
+      evidence: []
+    transcript_refs: []
+    limitations:
+      - "No raw session export is in the repository; none fabricated."
+      - "Push/PR depend on GitHub access available to the session; see PR record."
