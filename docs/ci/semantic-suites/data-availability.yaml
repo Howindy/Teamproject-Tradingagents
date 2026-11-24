@@ -1,0 +1,71 @@
+# Draft material only. No suite approval or model execution is authorized.
+schema_version: '1.0'
+status: unapproved
+dataset:
+  version: fr03-data-availability-v1
+  path: docs/ci/data-availability-cases.json
+  sha256: f6ca5fc2c7eeb82deab34218eff19f84fb0d960bb37bea98929bc9c064ad84f2
+  cases:
+  - id: DA-S01
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S02
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S03
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S04
+    roles:
+    - bull
+    - bear
+    - research-manager
+  - id: DA-S05
+    roles:
+    - bull
+    - bear
+    - research-manager
+rubric:
+  version: fr03-data-availability-rubric-v1
+  path: docs/ci/data-availability-rubric.md
+  sha256: 173f020b0ed79d7b92e2805abe7506d87fb5a0f01247c214900691e1fe775ae6
+  definition: 'Three required dimensions per case/role: availability meaning, no material availability contradiction,
+    and retained role delivery. All 45 outcomes must pass; ambiguous claims remain needs_review. This is a proposed
+    bounded release check, not universal natural-language validation.'
+thresholds:
+  required_case_count: 5
+  required_combinations: 15
+  required_dimension_outcomes: 45
+  require_all_applicable_checks: true
+  max_critical_failures: 0
+  max_unresolved_reviews: 0
+model:
+  provider: deepseek
+  model: deepseek-flash
+  base_url: https://api.deepseek.com
+  configuration:
+    temperature: 0
+    max_tokens: 4096
+    stream: false
+    n: 1
+    language: English
+    max_retries: 0
+    timeout_seconds: 120
+    extra_body:
+      thinking:
+        type: disabled
+execution:
+  runner: data_availability_eval:evaluate
+  max_completion_requests: 20
+  repetitions: 1
+  llm_judge: false
+approval:
+  approved_by: null
+  approved_at: null
+  evidence: []
