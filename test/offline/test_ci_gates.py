@@ -257,10 +257,10 @@ def test_schema_current_document_and_invalid_inputs(tmp_path: Path):
     )
     assert result["errors"] == []
     assert result["counts"] == {
-        "requirements": 13,
-        "fit_criteria": 55,
-        "active_requirements": 6,
-        "active_fit_criteria": 27,
+        "requirements": 14,
+        "fit_criteria": 65,
+        "active_requirements": 7,
+        "active_fit_criteria": 37,
         "deferred_requirements": 7,
         "deferred_fit_criteria": 28,
     }
@@ -1755,6 +1755,23 @@ def test_trusted_workflow_live_uses_structured_pytest_results():
     assert "grep -E" not in text
 
 
+def test_trusted_workflow_semantic_handoff_and_details_artifact():
+    """FR-10 / P06: semantic mode passes DEEPSEEK_API_KEY only inside trusted job and uploads details."""
+    text = (ROOT / ".github" / "workflows" / "trusted-evaluation.yml").read_text(
+        encoding="utf-8"
+    )
+    workflow = yaml.safe_load(text)
+    steps = workflow["jobs"]["evaluate"]["steps"]
+    semantic_step = next(s for s in steps if s.get("name") == "Write semantic evidence record")
+    assert semantic_step["env"]["DEEPSEEK_API_KEY"] == "${{ secrets.DEEPSEEK_API_KEY }}"
+    assert "--details-output" in semantic_step["run"]
+    details_upload = next(s for s in steps if s.get("name") == "Upload semantic details artifact")
+    assert details_upload["if"] == "always() && inputs.mode == 'semantic'"
+    assert "semantic-details.json" in details_upload["with"]["path"]
+    ci_text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "DEEPSEEK_API_KEY" not in ci_text
+
+
 def test_aggregate_allows_not_applicable_skip_and_rejects_missing_applicability(
     capsys,
 ):
@@ -2046,6 +2063,94 @@ def test_semantic_config_validation_and_not_applicable_entry(tmp_path: Path):
     record = json.loads(output.read_text(encoding="utf-8"))
     assert record["status"] == "not_applicable"
     assert record["reviewed_by"] == "human"
+
+
+def test_semantic_entry_preserves_details_reference_and_fails_closed(tmp_path: Path, monkeypatch):
+    """FR-10 / P06: detailed evidence round-trip and failure status propagation."""
+    cfg_path = tmp_path / "semantic_eval.yaml"
+    cfg_path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "1.0",
+                "status": "approved",
+                "dataset": {"version": "v1", "cases": [{"id": "FM-S01"}]},
+                "rubric": {"version": "r1", "definition": "fixed"},
+                "thresholds": {"candidate_min_passed_checks": 18},
+                "model": {"provider": "deepseek", "model": "deepseek-flash"},
+                "approval": {
+                    "approved_by": "human",
+                    "approved_at": "2026-11-23T11:30:00Z",
+                    "evidence": ["https://github.com/o/r/pull/14#issuecomment-1"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _RunnerModule:
+        @staticmethod
+        def pass_runner(config, candidate, output_dir=None):
+            dpath = Path(output_dir or tmp_path) / "semantic-details.json"
+            body = json.dumps({"status": "passed", "candidate_sha": candidate})
+            dpath.write_text(body, encoding="utf-8")
+            import hashlib
+
+            return {
+                "status": "passed",
+                "details_path": str(dpath),
+                "details_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                "dataset_sha256": "dsha",
+                "rubric_sha256": "rsha",
+                "request_count": 6,
+                "candidate_summary": {"passed_checks": 20, "total_checks": 20},
+                "baseline_summary": {"paired_cases": ["FM-S01", "FM-S02"]},
+            }
+
+        @staticmethod
+        def review_runner(config, candidate, output_dir=None):
+            return {
+                "status": "needs_review",
+                "errors": ["ambiguous claim"],
+                "candidate_summary": {"passed_checks": 19, "total_checks": 20},
+            }
+
+    monkeypatch.setitem(sys.modules, "synthetic_fr10_runner", _RunnerModule)
+    rec_out = tmp_path / "record-pass.json"
+    det_out = tmp_path / "out" / "semantic-details.json"
+    rc = ci_semantic_eval.main([
+        "--config", str(cfg_path),
+        "--candidate", "cand1",
+        "--workflow-sha", "wf1",
+        "--run-id", "42",
+        "--output", str(rec_out),
+        "--details-output", str(det_out),
+        "--runner", "synthetic_fr10_runner:pass_runner",
+    ])
+    assert rc == 0
+    rec = json.loads(rec_out.read_text(encoding="utf-8"))
+    assert rec["status"] == "passed"
+    assert rec["request_count"] == 6
+    assert rec["candidate_summary"]["passed_checks"] == 20
+    assert det_out.is_file()
+    import hashlib
+
+    assert rec["details_sha256"] == hashlib.sha256(det_out.read_bytes()).hexdigest()
+
+    fail_out = tmp_path / "record-review.json"
+    fail_det = tmp_path / "fail-out" / "semantic-details.json"
+    rc_fail = ci_semantic_eval.main([
+        "--config", str(cfg_path),
+        "--candidate", "cand1",
+        "--workflow-sha", "wf1",
+        "--run-id", "43",
+        "--output", str(fail_out),
+        "--details-output", str(fail_det),
+        "--runner", "synthetic_fr10_runner:review_runner",
+    ])
+    assert rc_fail == 1
+    fail_rec = json.loads(fail_out.read_text(encoding="utf-8"))
+    assert fail_rec["status"] == "failed"
+    assert fail_det.is_file()
 
 
 class _ArtifactProbeServer(http.server.ThreadingHTTPServer):

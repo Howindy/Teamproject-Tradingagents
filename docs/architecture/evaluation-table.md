@@ -1,12 +1,12 @@
 # Architecture Evaluation Table
 
-> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> Current scope amendment — 2026-11-23, D1 v1.50.0: seven active requirements / 37 FCs (FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 14 / 65. Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](adr/002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 - Status: Proposed for human review
 - Date: 2026-11-17
-- Requirements baseline: `docs/req/requirements.yaml` version 1.49.0
-- Related: [Architecture Blueprint](../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md)
+- Requirements baseline: `docs/req/requirements.yaml` version 1.50.0
+- Related: [Architecture Blueprint](../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md), [ADR 002](adr/002-deterministic-financial-metrics.md)
 
 This document compares architecture candidates and key design options. It does not contain numeric scores, performance measurements, cost estimates, test results, or approvals. Ratings are qualitative and trace to requirements or static code evidence.
 
@@ -427,7 +427,8 @@ Select the existing graph with two deterministic post-PM nodes, separate proposa
 | FR-04 scenario is not derived from portfolio text | `portfolio.py:23-51` renders holdings/cash only | Static code; no scenario fields are filled |
 | FR-03 producer branches | `router.py`, vendor modules, `date_window.py`, social fetchers | Static code; authoritative mapping in blueprint §8.3; some AV empty-payload fixtures pending |
 | Baseline behavior | `baseline/runs/baseline-20261020-01` | Baseline only; data coverage incomplete |
-| Requirement counts | `docs/req/requirements.yaml` | Independently counted; matches 13/55 |
+| Requirement counts | `docs/req/requirements.yaml` | Independently counted; matches 14/65 |
+| FR-10 fixed semantic evaluation preparation | `docs/ci/financial-metrics-cases.json`, `docs/ci/financial-metrics-rubric.md`, `docs/ci/semantic_eval.yaml`, `scripts/financial_metrics_eval.py` | Preparation artifacts and offline runner/gate tests; `semantic_eval.yaml` remains `unapproved` and no live semantic model requests have been executed |
 | New behavior | None | Not implemented, not tested |
 
 ---
@@ -486,6 +487,17 @@ Select the existing graph with two deterministic post-PM nodes, separate proposa
 | Report availability source and terminal final_state handoff | ADR 001 §3.4, §6.3 | Proposed; integration pending verification |
 | Path-specific observation attachment and shared news execution | ADR 001 §3.4, §6.1 | Proposed; call-site integration pending verification |
 | Role-local context delivery and research summary | ADR 001 §3.4, §7 | Proposed; wrapper integration pending verification |
+| Deterministic financial metrics injection & semantic evaluation preparation | ADR 002; D-201–D-203 | Preparation pre-approved in PR #14; runtime migration belongs to PR 2 |
+
+### 3.20 FR-10 financial metric delivery options (ADR 002)
+
+| Option | Description | Pros | Cons | Outcome |
+|---|---|---|---|---|
+| O-76 | Rely only on LLM arithmetic over tool-formatted statements | No new code | Vulnerable to comparative `fy`/`fp`, YTD-as-quarter, Q4 subtraction, and proxy substitution | Rejected |
+| O-77 | Pre-model deterministic `Decimal`/`Fraction` calculation over structured `FinancialInputs`, rendered into Fundamentals Analyst prompt with explicit `n/a` and fresh per-analysis scope | Deterministic numeric authority, preserves existing tools and formal boundaries, offline testable and paired with fixed semantic cases (`FM-S01`..`FM-S04`) | Excludes TTM, FCF YoY, and Q4 subtraction; requires PR 2 run-entry scope binding | Selected (ADR 002) |
+| O-78 | Activate deferred downstream brief (`FR-07`) together with financial metrics | Shared prompt compression | Violates deferred `FR-07` boundary; expands scope beyond FR-10 | Rejected |
+
+Selected: **O-77**. No live semantic scores or runtime measurements are claimed prior to PR 2 and separate human authorization of the 6-request `deepseek-flash` (thinking disabled) run.
 
 ---
 

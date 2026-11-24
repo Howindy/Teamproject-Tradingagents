@@ -1,16 +1,17 @@
 # D2 Architecture Blueprint — Graph-Internal Final Check with Run-Scoped Governance
 
-> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> Current scope amendment — 2026-11-23, D1 v1.50.0: seven active requirements / 37 FCs (FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 14 / 65. Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](docs/architecture/adr/002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 - Status: Proposed for human review
 - Date: 2026-11-17
-- Requirements baseline: `docs/req/requirements.yaml` (document version 1.49.0, 13 requirements, 55 fit criteria)
+- Requirements baseline: `docs/req/requirements.yaml` (document version 1.50.0, 14 requirements, 65 fit criteria)
 - Code baseline: `src/` imported from TradingAgents v0.7.0 (`UPSTREAM.md`)
 - Module-path note: references such as `cli/run.py` and `tradingagents/graph/setup.py` are relative to the application source root; the current paths are `src/cli/run.py` and `src/tradingagents/graph/setup.py`.
 - Runtime evidence baseline: `baseline/runs/baseline-20261020-01` (existing behavior only; not new-requirement acceptance)
 - Related artifacts:
   - [ADR 001 — Graph-Internal Final Check with Run-Scoped Governance Context](docs/architecture/adr/001-graph-internal-final-check.md)
+  - [ADR 002 — Deterministic Disclosed Financial Metrics (FR-10)](docs/architecture/adr/002-deterministic-financial-metrics.md)
   - [Evaluation Table](docs/architecture/evaluation-table.md)
   - [`Invariants`](docs/architecture/invariants.md)
   - [`Memory and State Design`](docs/architecture/memory-design.md)
@@ -36,11 +37,11 @@ Independent count from `docs/req/requirements.yaml`:
 
 | Scope | Requirements | Fit criteria |
 |---|---|---|
-| Active | 6: FR-01, FR-03, FR-04, SB-01, INV-01, SR-01 | 27 |
+| Active | 7: FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01 | 37 |
 | Deferred | 7: FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01 | 28 |
-| Total | 13 | 55 |
+| Total | 14 | 65 |
 
-The count matches the expected 13 requirements / 55 fit criteria / 6 active / 27 active fit criteria / 7 deferred / 28 deferred fit criteria. The five scoped FC wording amendments are recorded in D1 and the frozen PR #12 specification.
+The count matches the expected 14 requirements / 65 fit criteria / 7 active / 37 active fit criteria / 7 deferred / 28 deferred fit criteria. The five scoped FC wording amendments are recorded in D1 and the frozen PR #12 specification; FR-10 is added under PR #14 (`FM-PREP-2`, ADR 002).
 
 ### 1.3 Evidence rules
 
@@ -296,6 +297,7 @@ Principles:
 | C-17 | CLI Display Coordinator | Streaming sections, waiting/formal states, post-run browsing | Final rating, save success |
 | C-18 | Config/Threshold Access | `run_settings()` allowlist, shared config-summary projection, risk thresholds, provider/config values | Credential persistence, graph construction |
 | C-20 | DataResultClassifier | Narrow per-method classification from verified producer branches into status, safe reason, and known/unknown source; a known-query internal exception becomes a conservative per-query unavailable observation at the local-wrapper/registry boundary | Data fetching, model calls, fuzzy keyword guessing, formal business decisions, replacing fetch outcomes, global run failure |
+| C-21 | FinancialMetricsCalculator / Provider (`src/tradingagents/financials/`, planned PR 2) | FR-10 immutable structured contracts, fiscal/cutoff selection, Decimal/exact calculation of ten fixed metrics, deterministic table rendering, run-scoped reuse within one analysis, and opt-in pre-model injection into Fundamentals Analyst | FR-03 completeness, SB-01 formal authority, FR-04 risk, TTM/Q4 subtraction, shared downstream briefs, cross-run cache persistence |
 
 Components in this table are logical responsibilities. They do not require one class, module, service, registry, or file per component. Prefer small functions at existing boundaries: a wrapper for research entry, a shared pure function for formal-result validation, risk parsing/comparison/projection helpers inside the risk module, registry collections and summary functions in one availability module, and small security helpers for the actual paths. Do not add a general registry, plugin framework, event bus, or universal service.
 
@@ -326,6 +328,7 @@ Components in this table are logical responsibilities. They do not require one c
 | IF-23 | `DataResultClassifier.classify(method, effective_params, raw_result_or_exception, source_hint) -> DataObservation or ClassificationFailure` | Apply the verified per-method branch table; return status, short safe reason, and source (known or null). A normal unrecognized format is the existing `unavailable` classification; an internal exception is `ClassificationFailure`, not a data-source status. With a known query key, the local observation helper/registry converts that failure into a conservative per-query `unavailable` observation; it does not mean all registry data is corrupt. Preserve the original return/exception; no fetch, model call, global source inference, or fuzzy keyword guessing. |
 | IF-24 | `ResearchEntry.prepare(state, first_bull_call) -> (state_update, bull_result)` | On the first research entry after analyst join, obtain one `AvailabilitySummary` from the summarizer using existing asset type, enabled analysts, and analysis context, or `null` when none can be formed. Render the mapping to a labeled program block; for `null`, the renderer emits the fixed display text “program summary currently unavailable.” Inject that block directly into the same first Bull invocation and return `research_availability_summary` as the mapping or `null` in state. It is a wrapper, not a top-level node; no extra data/model call, compression, truncation, refresh loop, seal, version view, registry exposure, or second completeness authority. |
 | IF-25 | Risk-module internal helpers | Small local functions for input parsing/validation, exact comparison, one JSON-compatible result projection, and display formatting. They are not public interfaces, separate services, or a generic numeric framework; no canonical state protocol, digest, round-trip proof, consumer-specific float conversion, or implicit encoder is added. |
+| IF-26 | `FinancialDataProvider.fetch(ticker, as_of) -> FinancialInputs` and `metrics_factory(state) -> FinancialMetricResult | None` (planned PR 2, ADR 002) | Source-preserving FR-10 input boundary using `EvaluationClock` (`00:00 America/New_York` on `trade_date`), Decimal/exact calculation, explicit `n/a` reasons, deterministic table rendering, per-analysis caching without cross-run inheritance on reused `TradingAgentsGraph` objects, and fail-open degradation without invented metrics. |
 
 ### 5.4 State ownership and data classes
 
@@ -363,6 +366,7 @@ The persistence column records whether a value is serializable for existing stru
 - C-06 observation sites call C-20 with the original result/exception and effective parameters; C-20 does not fetch or infer the configured vendor as the actual source. C-08 receives the analysis ticker explicitly from graph state and does not read a global or report text.
 - C-08 contains its own parsing/validation, exact comparison, one result projection, and local display formatting. C-09 consumes only the risk status and needed explanation, and C-01/C-11 consume the same result without re-parsing, recalculating, or re-judging risk.
 - C-01 and C-02 coordinate entry-owned cleanup and original error propagation; C-16 describes existing checkpoint code outside the new flow; the new flow acquires no checkpoint session. C-03 / `RunContext.finish()` does not release resources.
+- C-21 (FR-10, planned PR 2, ADR 002) reads structured inputs only through `FinancialDataProvider.fetch(ticker, as_of) -> FinancialInputs`, runs purely in-memory with `Decimal`/`Fraction` arithmetic, injects its rendered table only into the Fundamentals Analyst system prompt before model calls, keeps locks/`Decimal`/provider instances out of graph state/checkpoints, and binds fresh scope per outer analysis rather than sharing a date-keyed cache across `TradingAgentsGraph` runs. FR-10 does not alter FR-03 observations/completeness, FR-01 query reuse, FR-04 risk, or SB-01 formal authority.
 
 ---
 
@@ -512,7 +516,7 @@ The current design preserves each role's existing prompt assembly. Context class
 
 | Role | Existing inputs retained | FR-03 research-stage summary |
 |---|---|---|
-| Tool-using analysts | System prompt, instrument context, message/tool-call history, tool results | No |
+| Tool-using analysts | System prompt, instrument context, message/tool-call history, tool results; plus opt-in FR-10 deterministic financial metrics table on Fundamentals Analyst first/tool/wrap-up turns when enabled (ADR 002) | No |
 | Sentiment analyst | System prompt, instrument context, prefetched news/StockTwits/Reddit blocks, message history, structured output/fallback | No |
 | Bull and Bear Researchers | Instrument context, four full analyst reports through existing missing-report handling, debate history, latest opponent argument | Yes, same stage summary |
 | Research Manager | Instrument context, full debate history | Yes, same stage summary |
@@ -522,7 +526,7 @@ The current design preserves each role's existing prompt assembly. Context class
 
 The code paths differ and remain different: analysts use a system prompt with message history and tool calls, the sentiment analyst prefetches source blocks, Bull/Bear and risk roles use inline strings, Trader uses a message list, and managers use structured output with a free-text fallback. The design does not unify these paths.
 
-The only new active context increment is the FR-03 research-stage program summary. It is rendered by a small deterministic function into a clearly labeled block, passed directly to the same first Bull call, stored as `research_availability_summary`, and reused by later Bull/Bear rounds and the Research Manager. It does not replace the full reports, add a model call, refresh on later observations, compress, or truncate. The final check uses its check-time summary; the entry prepares the terminal report summary before save/return, and the writer does not take a snapshot.
+The only new active context increments are the FR-03 research-stage program summary (for research-stage roles) and, under ADR 002's bounded exception when FR-10 is enabled, the Fundamentals Analyst's opt-in deterministic financial metrics table injected before its first model turn (reused on its tool/wrap-up turns). Neither replaces full analyst reports or existing financial tools, adds a model call, or activates deferred FR-07 briefs. The FR-03 research summary does not refresh on later observations, compress, or truncate. The final check uses its check-time summary; the entry prepares the terminal report summary before save/return, and the writer does not take a snapshot.
 
 Portfolio Manager prompt text is adjusted only to describe a model proposal awaiting deterministic check, not a final formal decision. Its evidence, rating scale, structured `PortfolioDecision` path, and free-text fallback remain. SB-01 authority is established by the program result, never by prompt wording or a prompt-presence check.
 
@@ -1060,6 +1064,12 @@ Rules:
 
 Analysts may run concurrently. Reuse and availability adapters must be thread-safe; new precise statistics are deferred. The final post-PM nodes run after the graph's existing risk debate and Portfolio Manager, so they are not concurrent with analyst data calls. Any future new-statistics callback propagation belongs to deferred D2 OQ-16; current baseline callbacks are retained.
 
+### 8.9 FR-10 deterministic financial metrics (planned PR 2, ADR 002)
+
+- **Input boundary (`IF-26`):** `FinancialDataProvider.fetch(ticker, as_of) -> FinancialInputs` supplies immutable `FinancialFact` (with explicit carrying filing `fy`/`fp`, period dates, unit, currency, accession, concept, disclosure pairs, sign rule, and share basis) and `PriceRecord` (completed daily close, `completed_at`, `expected_latest_session`, freshness/share-basis evidence) using `EvaluationClock(as_of, cutoff=00:00 America/New_York)`.
+- **Calculation & failure boundary:** Pure `Decimal`/`Fraction` arithmetic with `ROUND_HALF_UP` display for ten fixed metrics (`revenue_yoy_q`, `revenue_yoy_a`, `revenue_qoq`, `gross_margin`, `operating_margin`, `net_margin`, `current_ratio`, `liabilities_to_assets`, `fcf_reported_span`, `pe_fy`). No TTM, FCF YoY, Q4 subtraction, concept proxy, or `abs()` on unknown-sign CapEx. Unprovable or incompatible inputs yield explicit `n/a` with typed reasons and retained known periods/sources. Disabled, unsupported, or failing providers degrade explicitly without inventing metrics or aborting otherwise valid analysis.
+- **Prompt & lifecycle boundary:** Injected only into the Fundamentals Analyst prompt before its first model turn when enabled and `fundamentals` is selected; five existing financial tools and original report saving remain unchanged. Independent analyses bind fresh metric scope per run so reused `TradingAgentsGraph` instances do not share mutable metric state. SEC/price reads under FR-10 do not expand FR-03's 15 observation sites, FR-01's `get_news` reuse, or SB-01's veto conditions.
+
 ---
 
 ## 9. Security and permissions
@@ -1143,6 +1153,7 @@ No new metrics backend, tracing service, diagnostic database, or warning file is
 | Entry integration | CLI and propagate normal/failure paths; current scenario/threshold passing; real availability/risk/check flow; IF-19, terminal summary, original saves and scope restoration; unchanged return shape. No manifest/history/new-stat acceptance. |
 | Output consistency | CLI streaming sections, immediate files, final report, final state, state log, memory, return value; waiting/unchecked/failed labels |
 | Security regression | Existing `test_get_scrubbed`, `test_safe_ticker_component`, relevant preference/report tests; new limited-scope negatives |
+| FR-10 evaluation preparation & feature integration | PR 1: offline gate/runner/projection checks (`test/offline/test_financial_metrics_evaluation.py`, `test/offline/test_ci_gates.py`). PR 2 (planned): deterministic selection/fiscal/cutoff/n-a/Decimal unit checks, first-turn/wrap-up injection, fresh-run isolation, opt-out, and authorized fixed semantic evaluation (`docs/ci/semantic_eval.yaml`, `scripts/financial_metrics_eval.py`) |
 | Static checks | No formal-value decision/generation outside SB-01; pass-through/merge/save of unchanged values is allowed and is not treated as a second authority; no model/data call in FR-04/SB-01; no RunContext in graph state/checkpoint; no credential fields in summaries |
 
 With the exceptions of the Round 1 C-08 offline core (`test/offline/test_fr04_risk.py`) and the Round 2 C-09 offline core (`test/offline/test_sb01_final_check.py`), no test in this list has been executed for this design. Other existing test files are baseline assets, not new acceptance.
@@ -1260,6 +1271,7 @@ The detailed fit-criterion mapping is in [`docs/architecture/trace-matrix.md`](d
 - FR-02 (deferred, no current task): RunContext lifecycle, manifest, stats, result references.
 - FR-03: 15 path-specific observation sites, availability registry, necessity list, consumer snapshots.
 - FR-04: structured scenario, evaluator, deterministic display.
+- FR-10 (ADR 002): structured financial inputs, deterministic calculation/n-a rules, and opt-in Fundamentals Analyst pre-model injection (PR 1 preparation/evaluation runner; PR 2 application migration planned).
 - FR-05 (deferred, no current task): manifest registration, list/read interface, path/error rules.
 - SB-01: graph-internal final check, proposal/formal separation, fail-closed REVIEW.
 - INV-01: formal-field-only consumers across CLI, final state, report, state log, memory.

@@ -92,7 +92,36 @@ event. Future PRs must use the evidence convention below.
 - `.github/requirements-ci.txt`: CI-only tool pins.
 - `mypy.ini` and `mypy-baseline.txt`: explicit type-check scope and the exact
   existing-diagnostic baseline.
-- `docs/ci/semantic_eval.yaml`: unapproved configuration container.
+- `docs/ci/semantic_eval.yaml`: fixed FR-10 evaluation configuration container (remains `unapproved` until separate human authorization of the 6-request `deepseek-flash` run against PR 2 candidate).
+- `docs/ci/financial-metrics-cases.json`: lossless projection of independent `fr07-sec-reference-v1` answers and four fixed semantic cases (`FM-S01`..`FM-S04`).
+- `docs/ci/financial-metrics-rubric.md`: deterministic 5-dimension binary rubric, critical failures, and `needs_review` escalation rules (`18/20` threshold).
+- `scripts/financial_metrics_eval.py`: trusted semantic evaluation runner (`financial_metrics_eval:evaluate`) verifying candidate/baseline SHAs, normal installed-package discovery, prompt injection capture, and 6-request cap.
+
+## FR-10 semantic runner invocation and limits
+
+Once PR 1 merges to `main`, `docs/ci/semantic_eval.yaml` is explicitly approved for execution, and PR 2 provides the migrated application candidate SHA, the protected `trusted-evaluation.yml` workflow invokes:
+
+```bash
+python scripts/ci_semantic_eval.py \
+  --config docs/ci/semantic_eval.yaml \
+  --candidate "$CANDIDATE_SHA" \
+  --workflow-sha "$GITHUB_SHA" \
+  --run-id "$GITHUB_RUN_ID" \
+  --output record.json \
+  --details-output "$RUNNER_TEMP/semantic-details.json" \
+  --runner financial_metrics_eval:evaluate
+```
+
+Preparation PR 1 adds only this trusted infrastructure and offline gate/runner tests; it does not migrate `src/` modules or run live model requests.
+
+The trusted runner requires `execution.baseline_root`, `execution.baseline_sha`
+and `execution.baseline_python_executable` (or equivalent direct Python arguments).
+PR 2 must pin that comparison checkout and separately installed environment as
+specified by FM-PREP-2; these are intentionally not invented in this preparation
+configuration. Missing baseline prerequisites fail before any completion request,
+as do invalid origins in any of the six preflight captures. A candidate-only
+four-request run cannot produce passing paired-evaluation evidence. Trusted text
+hashes use Git's LF representation (only checkout CRLF-to-LF is normalized).
 
 ## Test pre-approval fields
 
