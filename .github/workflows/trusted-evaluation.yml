@@ -30,8 +30,8 @@ on:
         required: false
         default: ""
         type: string
-      semantic_runner:
-        description: Optional module:function runner for an approved semantic config
+      suite_id:
+        description: Registered semantic suite ID (docs/ci/semantic-suites.yaml); required for semantic mode
         required: false
         default: ""
         type: string
@@ -42,7 +42,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: trusted-evaluation-${{ inputs.candidate_sha }}-${{ inputs.mode }}
+  group: trusted-evaluation-${{ inputs.candidate_sha }}-${{ inputs.mode }}-${{ inputs.suite_id }}
   cancel-in-progress: false
 
 jobs:
@@ -76,10 +76,12 @@ jobs:
           path: candidate
           fetch-depth: 0
       - name: Verify candidate checkout
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
         run: |
           actual="$(git -C candidate rev-parse HEAD)"
-          if [ "$actual" != "${{ inputs.candidate_sha }}" ]; then
-            echo "checked-out HEAD $actual does not match candidate ${{ inputs.candidate_sha }}"
+          if [ "$actual" != "$CANDIDATE_SHA" ]; then
+            echo "checked-out HEAD $actual does not match candidate $CANDIDATE_SHA"
             exit 1
           fi
       - uses: actions/setup-python@v7
@@ -89,32 +91,65 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "candidate[dev]" -r .github/requirements-ci.txt
+      - name: Resolve status context
+        id: resolve
+        env:
+          MODE: ${{ inputs.mode }}
+          SUITE_ID: ${{ inputs.suite_id }}
+        run: |
+          case "$MODE" in
+            semantic)
+              context="$(python scripts/ci_semantic_eval.py check-suite --registry docs/ci/semantic-suites.yaml --suite "$SUITE_ID")"
+              suffix="semantic-$SUITE_ID"
+              echo "suite=$SUITE_ID" >> "$GITHUB_OUTPUT"
+              ;;
+            semantic-not-applicable)
+              context="semantic-eval/not-applicable"
+              suffix="semantic-not-applicable"
+              ;;
+            live)
+              context="live-tests/evidence"
+              suffix="live"
+              ;;
+            *)
+              echo "unknown mode $MODE"
+              exit 1
+              ;;
+          esac
+          echo "context=$context" >> "$GITHUB_OUTPUT"
+          echo "artifact_suffix=$suffix" >> "$GITHUB_OUTPUT"
       - name: Write semantic evidence record
         if: inputs.mode == 'semantic'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          SUITE_ID: ${{ inputs.suite_id }}
         run: |
           python scripts/ci_semantic_eval.py \
-            --config docs/ci/semantic_eval.yaml \
-            --candidate "${{ inputs.candidate_sha }}" \
+            --registry docs/ci/semantic-suites.yaml \
+            --suite "$SUITE_ID" \
+            --candidate "$CANDIDATE_SHA" \
             --workflow-sha "${{ github.sha }}" \
             --run-id "${{ github.run_id }}" \
             --output record.json \
-            --details-output "${{ runner.temp }}/semantic-details.json" \
-            --runner "${{ inputs.semantic_runner }}"
+            --details-output "${{ runner.temp }}/semantic-details.json"
       - name: Write reviewed not-applicable record
         if: inputs.mode == 'semantic-not-applicable'
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          NA_REASON: ${{ inputs.not_applicable_reason }}
+          NA_REVIEWER: ${{ inputs.reviewer }}
+          NA_EVIDENCE: ${{ inputs.approval_evidence }}
         run: |
           python scripts/ci_semantic_eval.py \
-            --config docs/ci/semantic_eval.yaml \
-            --candidate "${{ inputs.candidate_sha }}" \
+            --candidate "$CANDIDATE_SHA" \
             --workflow-sha "${{ github.sha }}" \
             --run-id "${{ github.run_id }}" \
             --output record.json \
             --not-applicable \
-            --reason "${{ inputs.not_applicable_reason }}" \
-            --reviewer "${{ inputs.reviewer }}" \
-            --approval-evidence "${{ inputs.approval_evidence }}"
+            --reason "$NA_REASON" \
+            --reviewer "$NA_REVIEWER" \
+            --approval-evidence "$NA_EVIDENCE"
       - name: Run live suite
         if: inputs.mode == 'live'
         env:
@@ -138,36 +173,30 @@ jobs:
           fi
           python -c "import json,os; json.dump({'candidate_sha':os.environ['CANDIDATE_SHA'],'workflow_sha':os.environ['WORKFLOW_SHA'],'run_id':os.environ['RUN_ID'],'kind':'live','status':'passed','executed':True,'collected_only':False,'config_version':'','reason':'','reviewed_by':''}, open('record.json','w'), indent=2)"
       - name: Upload evidence record
-        if: always()
+        if: always() && steps.resolve.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ci-evidence-${{ inputs.candidate_sha }}-${{ inputs.mode }}
+          name: ci-evidence-${{ inputs.candidate_sha }}-${{ steps.resolve.outputs.artifact_suffix }}
           path: record.json
           if-no-files-found: error
       - name: Upload semantic details artifact
-        if: always() && inputs.mode == 'semantic'
+        if: always() && inputs.mode == 'semantic' && steps.resolve.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ci-semantic-details-${{ inputs.candidate_sha }}
+          name: ci-semantic-details-${{ inputs.candidate_sha }}-${{ steps.resolve.outputs.suite }}
           path: ${{ runner.temp }}/semantic-details.json
           if-no-files-found: ignore
       - name: Write candidate status
-        if: always()
+        if: always() && steps.resolve.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
-          MODE: ${{ inputs.mode }}
+          CONTEXT: ${{ steps.resolve.outputs.context }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          context="semantic-eval/evidence"
-          if [ "$MODE" = "live" ]; then context="live-tests/evidence"; fi
-          if [ "$MODE" = "semantic-not-applicable" ]; then context="semantic-eval/not-applicable"; fi
-          state="failure"
-          description="required evidence is missing or failed"
-          if [ -f record.json ]; then
-            state="$(python -c "import json; r=json.load(open('record.json')); print('success' if r.get('status') == 'passed' or r.get('status') == 'not_applicable' else 'failure')")"
-            description="evidence recorded for $CANDIDATE_SHA"
-          fi
+          described="$(python scripts/ci_semantic_eval.py describe --record record.json)"
+          state="${described%%$'\t'*}"
+          description="${described#*$'\t'}"
           gh api --method POST "repos/${{ github.repository }}/statuses/$CANDIDATE_SHA" \
-            -f state="$state" -f context="$context" -f description="$description" -f target_url="$RUN_URL"
+            -f state="$state" -f context="$CONTEXT" -f description="$description" -f target_url="$RUN_URL"
           test "$state" = "success"

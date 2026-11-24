@@ -92,7 +92,8 @@ event. Future PRs must use the evidence convention below.
 - `.github/requirements-ci.txt`: CI-only tool pins.
 - `mypy.ini` and `mypy-baseline.txt`: explicit type-check scope and the exact
   existing-diagnostic baseline.
-- `docs/ci/semantic_eval.yaml`: fixed FR-10 evaluation configuration container (remains `unapproved` until separate human authorization of the 6-request `deepseek-flash` run against PR 2 candidate).
+- `docs/ci/semantic-suites.yaml`: trusted semantic suite registry (suite ID → configuration and runner); read only from the default branch. See [Semantic suite routing](#semantic-suite-routing).
+- `docs/ci/semantic_eval.yaml`: fixed FR-10 evaluation configuration, bound to suite `financial-metrics` (remains `unapproved` until separate human authorization of the 6-request `deepseek-flash` run against PR 2 candidate).
 - `docs/ci/financial-metrics-cases.json`: lossless projection of independent `fr07-sec-reference-v1` answers and four fixed semantic cases (`FM-S01`..`FM-S04`).
 - `docs/ci/financial-metrics-rubric.md`: deterministic 5-dimension binary rubric, critical failures, and `needs_review` escalation rules (`18/20` threshold).
 - `scripts/financial_metrics_eval.py`: trusted semantic evaluation runner (`financial_metrics_eval:evaluate`) verifying candidate/baseline SHAs, normal installed-package discovery, prompt injection capture, and 6-request cap.
@@ -103,14 +104,17 @@ Once PR 1 merges to `main`, `docs/ci/semantic_eval.yaml` is explicitly approved 
 
 ```bash
 python scripts/ci_semantic_eval.py \
-  --config docs/ci/semantic_eval.yaml \
+  --registry docs/ci/semantic-suites.yaml \
+  --suite financial-metrics \
   --candidate "$CANDIDATE_SHA" \
   --workflow-sha "$GITHUB_SHA" \
   --run-id "$GITHUB_RUN_ID" \
   --output record.json \
-  --details-output "$RUNNER_TEMP/semantic-details.json" \
-  --runner financial_metrics_eval:evaluate
+  --details-output "$RUNNER_TEMP/semantic-details.json"
 ```
+
+The runner comes from the registry entry; the former `--config`/`--runner`
+semantic invocation is rejected.
 
 Preparation PR 1 adds only this trusted infrastructure and offline gate/runner tests; it does not migrate `src/` modules or run live model requests.
 
@@ -193,7 +197,8 @@ python scripts/ci_checks.py ai-log --base-log base-log.yaml \
   --head-log docs/ai-use-log.yaml --base "$BASE" --head "$HEAD"
 python scripts/ci_checks.py evidence --candidate "$HEAD" \
   --repo owner/repo --default-branch main --token "$GH_TOKEN" \
-  --semantic-config docs/ci/semantic_eval.yaml \
+  --pr 1 --pr-body-file pr-body.txt \
+  --registry trusted/docs/ci/semantic-suites.yaml --trusted-root trusted \
   --semantic-required
 python scripts/ci_checks.py contract-tests --pr-body-file pr-body.txt \
   --base "$BASE" --head "$HEAD"
@@ -270,7 +275,9 @@ The trusted workflow is manually dispatched from the default branch with:
 - `candidate_sha`: exact commit to evaluate;
 - `mode`: `semantic`, `live`, or `semantic-not-applicable`;
 - `reviewer`, `not_applicable_reason`, `approval_evidence` for not-applicable;
-- optional `semantic_runner` for an approved configuration.
+- `suite_id` for `semantic` mode: a suite registered in the default-branch
+  `docs/ci/semantic-suites.yaml`. The former free-text `semantic_runner` input
+  is removed.
 
 The trusted tool directory is checked out at `${{ github.sha }}` and verified;
 the candidate is checked out separately at `inputs.candidate_sha` and verified.
@@ -278,8 +285,50 @@ The default-branch source check and protected `trusted-evaluation` environment
 remain in place. The protected environment must be configured by a human with
 the required reviewers and secrets. The live mode is independent of the
 semantic configuration: an unapproved semantic configuration cannot block a
-live run. The semantic mode fails closed while `docs/ci/semantic_eval.yaml` is
+live run. The semantic mode fails closed while the selected suite's
+configuration (for `financial-metrics`, `docs/ci/semantic_eval.yaml`) is
 `unapproved`.
+
+## Semantic suite routing
+
+Design and test specification: [`docs/plans/semantic-suite-routing.md`](../plans/semantic-suite-routing.md)
+(§3 design, §3.5 suite unit contract I1–I6, §5 tests T01–T18).
+
+- **Registry.** `docs/ci/semantic-suites.yaml` maps each suite ID to
+  `requirement`, `config` (inside `docs/ci/`) and `runner`
+  (`scripts/<module>.py:function`). Only the default-branch copy is used: the
+  trusted workflow reads its own checkout, and `evidence-check` checks out the
+  default branch into `trusted/`. A new suite takes effect only after merge.
+- **Selection.** A PR whose change is classified `semantic_required` must state
+  `Semantic suites: <id>[, <id>...]` (or `none`) and
+  `Semantic suites approval: <review/comment URL>`. That event must be from a
+  non-author, non-bot human and contain exactly one line
+  `APPROVED semantic-suites: <same list>`. The body is read from the GitHub API
+  at check time, so edits take effect on re-run. A non-semantic PR without the
+  field keeps the previous behavior; a non-semantic PR that lists suites opts in.
+- **Dispatch.** Run `trusted-evaluation.yml` once per selected suite with
+  `mode=semantic` and `suite_id=<id>`. Status context is `semantic-eval/<id>`;
+  artifacts are `ci-evidence-<sha>-semantic-<id>` and
+  `ci-semantic-details-<sha>-<id>`. The record carries `suite_id`,
+  `config_path`, `config_sha256` (LF-normalized), `config_version`, `runner`,
+  `status` (`passed`, `failed` or `needs_review`) and `needs_review` items.
+- **Verification.** `evidence-check` requires a passing record for every
+  selected suite whose config hash matches the current trusted config. Another
+  suite's pass, the legacy `semantic-eval/evidence` context, or a
+  `semantic-eval/not-applicable` record never substitutes for a selected suite.
+  `none` requires the reviewed not-applicable record. Missing, unknown or
+  unapproved selections and `needs_review` results block with the specific
+  reason; `needs_review` goes to the existing human review, not to a CI override.
+- **Bootstrap.** If the default branch has no registry, non-enforced PRs pass as
+  before and enforced PRs block with "registry is not present on the default
+  branch".
+- **Adding a suite.** Follow plan §3.5: own files named per I4, a configuration
+  in the existing `validate_config` structure (I2), a runner implementing I3,
+  offline tests with a stub `model_transport`, and one registry line, in a PR
+  merged after this routing change and before the feature PR that selects it.
+- **Limit.** The evidence checker itself still runs from the candidate
+  checkout (CI.md "CI self-protection"); only registry and configuration data
+  come from the default branch.
 
 The live mode is optional and not a merge gate. It runs `test/live/` directly
 with pytest and writes JUnit XML. The `live-result` check requires at least one

@@ -1766,7 +1766,9 @@ def test_trusted_workflow_semantic_handoff_and_details_artifact():
     assert semantic_step["env"]["DEEPSEEK_API_KEY"] == "${{ secrets.DEEPSEEK_API_KEY }}"
     assert "--details-output" in semantic_step["run"]
     details_upload = next(s for s in steps if s.get("name") == "Upload semantic details artifact")
-    assert details_upload["if"] == "always() && inputs.mode == 'semantic'"
+    assert details_upload["if"] == (
+        "always() && inputs.mode == 'semantic' && steps.resolve.outcome == 'success'"
+    )
     assert "semantic-details.json" in details_upload["with"]["path"]
     ci_text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "DEEPSEEK_API_KEY" not in ci_text
@@ -1844,6 +1846,16 @@ def _record(
         "executed": True,
         "collected_only": False,
     }
+    if kind == "semantic":
+        record.update(
+            {
+                "suite_id": "financial-metrics",
+                "config_path": "docs/ci/semantic_eval.yaml",
+                "config_sha256": "cfgsha",
+                "runner": "financial_metrics_eval:evaluate",
+                "needs_review": [],
+            }
+        )
     record.update(overrides)
     return record
 
@@ -1871,46 +1883,65 @@ def _evidence(statuses, runs, **kwargs):
         "runs": runs,
         "semantic_required": True,
         "live_required": False,
-        "semantic_config_approved": True,
-        "semantic_config_version": "v1",
+        "selection": _selection("financial-metrics"),
+        "trusted_suites": {"financial-metrics": _trusted_suite()},
     }
     defaults.update(kwargs)
     return ci_checks.verify_evidence(**defaults)
 
 
+_FM_CONTEXT = "semantic-eval/financial-metrics"
+
+
+def _selection(*suites: str, none: bool = False, errors: list[str] | None = None) -> dict[str, Any]:
+    return {"suites": list(suites), "none": none, "errors": list(errors or [])}
+
+
+def _trusted_suite(**overrides: Any) -> dict[str, Any]:
+    suite = {
+        "approved": True,
+        "config_path": "docs/ci/semantic_eval.yaml",
+        "config_sha256": "cfgsha",
+        "config_version": "v1",
+        "runner": "financial_metrics_eval:evaluate",
+    }
+    suite.update(overrides)
+    return suite
+
+
 def test_semantic_evidence_accepts_trusted_candidate_and_config():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     runs = {"7": _run(7, _record("semantic"))}
     assert _evidence(statuses, runs)["errors"] == []
 
 
 def test_semantic_evidence_rejects_missing_wrong_sha_and_untrusted_runs():
     assert _evidence([], {})["errors"]
-    assert _evidence([_status(ci_checks.SEMANTIC_STATUS, "other", 7)], {"7": _run(7, _record("semantic"))})["errors"]
+    assert _evidence([_status(_FM_CONTEXT, "other", 7)], {"7": _run(7, _record("semantic"))})["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), path=".github/workflows/other.yml")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), repository="other/repo")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), event="push")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, _record("semantic"), head_branch="release")},
     )["errors"]
     assert _evidence(
-        [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)],
+        [_status(_FM_CONTEXT, "cand1", 7)],
         {"7": _run(7, None)},
     )["errors"]
 
 
 def test_semantic_evidence_rejects_config_and_artifact_mismatches():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     assert _evidence(
         statuses,
         {"7": _run(7, _record("semantic", config_version="v2"))},
@@ -1918,7 +1949,7 @@ def test_semantic_evidence_rejects_config_and_artifact_mismatches():
     assert _evidence(
         statuses,
         {"7": _run(7, _record("semantic"))},
-        semantic_config_approved=False,
+        trusted_suites={"financial-metrics": _trusted_suite(approved=False)},
     )["errors"]
     assert _evidence(
         statuses,
@@ -1935,15 +1966,17 @@ def test_semantic_not_applicable_requires_review_reason():
     assert _evidence(
         [_status(noop, "cand1", 8)],
         {"8": _run(8, _record("semantic-noop", reason="", reviewed_by=""))},
+        selection=_selection(none=True),
     )["errors"]
     assert _evidence(
         [_status(noop, "cand1", 8)],
         {"8": _run(8, _record("semantic-noop", reason="layout only", reviewed_by="human"))},
+        selection=_selection(none=True),
     )["errors"] == []
 
 
 def test_workflow_head_sha_may_differ_but_new_candidate_invalidates():
-    statuses = [_status(ci_checks.SEMANTIC_STATUS, "cand1", 7)]
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
     runs = {
         "7": _run(
             7,
@@ -1961,24 +1994,28 @@ def test_live_evidence_requires_execution_and_passes_with_docs_only_scope():
         [_status(live, "cand1", 9)],
         {"9": _run(9, _record("live"))},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"] == []
     assert _evidence(
         [_status(live, "cand1", 9)],
         {"9": _run(9, _record("live", collected_only=True))},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"]
     assert _evidence(
         [],
         {},
         semantic_required=False,
+        selection=None,
         live_required=True,
     )["errors"]
     assert _evidence(
         [],
         {},
         semantic_required=False,
+        selection=None,
         live_required=False,
     )["errors"] == []
 
@@ -2065,92 +2102,53 @@ def test_semantic_config_validation_and_not_applicable_entry(tmp_path: Path):
     assert record["reviewed_by"] == "human"
 
 
-def test_semantic_entry_preserves_details_reference_and_fails_closed(tmp_path: Path, monkeypatch):
-    """FR-10 / P06: detailed evidence round-trip and failure status propagation."""
-    cfg_path = tmp_path / "semantic_eval.yaml"
-    cfg_path.write_text(
-        yaml.safe_dump(
-            {
-                "schema_version": "1.0",
-                "status": "approved",
-                "dataset": {"version": "v1", "cases": [{"id": "FM-S01"}]},
-                "rubric": {"version": "r1", "definition": "fixed"},
-                "thresholds": {"candidate_min_passed_checks": 18},
-                "model": {"provider": "deepseek", "model": "deepseek-flash"},
-                "approval": {
-                    "approved_by": "human",
-                    "approved_at": "2026-11-23T11:30:00Z",
-                    "evidence": ["https://github.com/o/r/pull/14#issuecomment-1"],
-                },
-            }
-        ),
-        encoding="utf-8",
+def test_semantic_entry_preserves_details_reference_and_fails_closed(tmp_path: Path):
+    """FR-10 / P06: detailed evidence round-trip and failure status propagation.
+
+    Runs through a registered suite (semantic-suite-routing §3.4); needs_review is
+    preserved as its own status instead of being flattened to failed (plan P6).
+    """
+    import hashlib
+
+    root, registry, _ = _semantic_suite_root(
+        tmp_path / "pass",
+        result={
+            "request_count": 6,
+            "candidate_summary": {"passed_checks": 20, "total_checks": 20},
+            "baseline_summary": {"paired_cases": ["FM-S01", "FM-S02"]},
+        },
     )
-
-    class _RunnerModule:
-        @staticmethod
-        def pass_runner(config, candidate, output_dir=None):
-            dpath = Path(output_dir or tmp_path) / "semantic-details.json"
-            body = json.dumps({"status": "passed", "candidate_sha": candidate})
-            dpath.write_text(body, encoding="utf-8")
-            import hashlib
-
-            return {
-                "status": "passed",
-                "details_path": str(dpath),
-                "details_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
-                "dataset_sha256": "dsha",
-                "rubric_sha256": "rsha",
-                "request_count": 6,
-                "candidate_summary": {"passed_checks": 20, "total_checks": 20},
-                "baseline_summary": {"paired_cases": ["FM-S01", "FM-S02"]},
-            }
-
-        @staticmethod
-        def review_runner(config, candidate, output_dir=None):
-            return {
-                "status": "needs_review",
-                "errors": ["ambiguous claim"],
-                "candidate_summary": {"passed_checks": 19, "total_checks": 20},
-            }
-
-    monkeypatch.setitem(sys.modules, "synthetic_fr10_runner", _RunnerModule)
-    rec_out = tmp_path / "record-pass.json"
-    det_out = tmp_path / "out" / "semantic-details.json"
-    rc = ci_semantic_eval.main([
-        "--config", str(cfg_path),
-        "--candidate", "cand1",
-        "--workflow-sha", "wf1",
-        "--run-id", "42",
-        "--output", str(rec_out),
-        "--details-output", str(det_out),
-        "--runner", "synthetic_fr10_runner:pass_runner",
-    ])
+    rc, rec = _run_suite(root, registry, tmp_path, "record-pass")
     assert rc == 0
-    rec = json.loads(rec_out.read_text(encoding="utf-8"))
     assert rec["status"] == "passed"
     assert rec["request_count"] == 6
     assert rec["candidate_summary"]["passed_checks"] == 20
+    assert rec["baseline_summary"]["paired_cases"] == ["FM-S01", "FM-S02"]
+    det_out = tmp_path / "record-pass" / "semantic-details.json"
     assert det_out.is_file()
-    import hashlib
-
     assert rec["details_sha256"] == hashlib.sha256(det_out.read_bytes()).hexdigest()
 
-    fail_out = tmp_path / "record-review.json"
-    fail_det = tmp_path / "fail-out" / "semantic-details.json"
-    rc_fail = ci_semantic_eval.main([
-        "--config", str(cfg_path),
-        "--candidate", "cand1",
-        "--workflow-sha", "wf1",
-        "--run-id", "43",
-        "--output", str(fail_out),
-        "--details-output", str(fail_det),
-        "--runner", "synthetic_fr10_runner:review_runner",
-    ])
+    review_root, review_registry, _ = _semantic_suite_root(
+        tmp_path / "review",
+        result={
+            "status": "needs_review",
+            "errors": ["ambiguous claim"],
+            "needs_review": ["FM-S01:ambiguous_metric_claim:m1"],
+        },
+    )
+    rc_fail, fail_rec = _run_suite(review_root, review_registry, tmp_path, "record-review")
     assert rc_fail == 1
-    fail_rec = json.loads(fail_out.read_text(encoding="utf-8"))
-    assert fail_rec["status"] == "failed"
-    assert fail_det.is_file()
+    assert fail_rec["status"] == "needs_review"
+    assert fail_rec["needs_review"] == ["FM-S01:ambiguous_metric_claim:m1"]
+    assert "ambiguous claim" in fail_rec["reason"]
+    assert (tmp_path / "record-review" / "semantic-details.json").is_file()
+
+    failed_root, failed_registry, _ = _semantic_suite_root(
+        tmp_path / "failed", result={"status": "failed", "errors": ["critical"]}
+    )
+    rc_failed, failed_rec = _run_suite(failed_root, failed_registry, tmp_path, "record-failed")
+    assert rc_failed == 1
+    assert failed_rec["status"] == "failed"
 
 
 class _ArtifactProbeServer(http.server.ThreadingHTTPServer):
@@ -2370,3 +2368,618 @@ def test_fetch_trusted_runs_propagates_artifact_download_failure(
             [{"target_url": "https://github.com/o/r/actions/runs/1"}],
             "fake-local-token",
         )
+
+
+# ---------------------------------------------------------------------------
+# Semantic suite routing (docs/plans/semantic-suite-routing.md §3, §5 T01-T18)
+# ---------------------------------------------------------------------------
+
+_DA_CONTEXT = "semantic-eval/data-availability"
+_FM_CONFIG_LF_SHA256 = "20e15937f66a14617e9b613d1c42854dd2a1dd616771d84d40bc746d1423d9b7"
+
+
+def _da_record(**overrides: Any) -> dict[str, Any]:
+    record = _record(
+        "semantic",
+        suite_id="data-availability",
+        config_path="docs/ci/semantic-suites/data-availability.yaml",
+        config_sha256="dasha",
+        runner="data_availability_eval:evaluate",
+    )
+    record.update(overrides)
+    return record
+
+
+def _da_trusted(**overrides: Any) -> dict[str, Any]:
+    return _trusted_suite(
+        config_path="docs/ci/semantic-suites/data-availability.yaml",
+        config_sha256="dasha",
+        runner="data_availability_eval:evaluate",
+        **overrides,
+    )
+
+
+def _both_trusted() -> dict[str, Any]:
+    return {"financial-metrics": _trusted_suite(), "data-availability": _da_trusted()}
+
+
+def test_t01_single_selected_suite_with_matching_evidence_passes():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    assert _evidence(statuses, runs)["errors"] == []
+
+
+def test_t02_unrelated_suite_evidence_does_not_substitute():
+    result = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        selection=_selection("data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert any(_DA_CONTEXT in error for error in result["errors"])
+
+
+def test_t03_every_selected_suite_needs_its_own_evidence():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    missing = _evidence(
+        statuses,
+        runs,
+        selection=_selection("financial-metrics", "data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert missing["errors"]
+    assert all("financial-metrics" not in error for error in missing["errors"])
+    assert any(_DA_CONTEXT in error for error in missing["errors"])
+    both = _evidence(
+        statuses + [_status(_DA_CONTEXT, "cand1", 8)],
+        {**runs, "8": _run(8, _da_record())},
+        selection=_selection("financial-metrics", "data-availability"),
+        trusted_suites=_both_trusted(),
+    )
+    assert both["errors"] == []
+
+
+def test_t04_semantic_required_without_selection_blocks():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    runs = {"7": _run(7, _record("semantic"))}
+    for selection in (None, _selection()):
+        errors = _evidence(statuses, runs, selection=selection)["errors"]
+        assert any("no semantic suite was selected" in error for error in errors)
+
+
+def test_t05_unknown_suite_blocks_before_status_lookup():
+    errors = _evidence([], {}, selection=_selection("no-such-suite"))["errors"]
+    assert any("unknown semantic suite: no-such-suite" in error for error in errors)
+    assert all("missing semantic-eval/no-such-suite" not in error for error in errors)
+
+
+def test_t06_unapproved_trusted_config_blocks_even_with_passing_status():
+    errors = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        trusted_suites={"financial-metrics": _trusted_suite(approved=False)},
+    )["errors"]
+    assert any("is unapproved" in error for error in errors)
+
+
+def _suite_event(body: str, **overrides: Any) -> dict[str, Any]:
+    event = {
+        "reviewer": "reviewer",
+        "reviewer_type": "User",
+        "state": "COMMENTED",
+        "body": body,
+        "created_at": "2026-11-24T10:00:00Z",
+        "url": "https://github.com/o/r/pull/17#issuecomment-1",
+    }
+    event.update(overrides)
+    return event
+
+
+def _suite_fields(value: str, url: str = "https://github.com/o/r/pull/17#issuecomment-1"):
+    fields = {"Semantic suites": value}
+    if url:
+        fields["Semantic suites approval"] = url
+    return fields
+
+
+def test_t07_suite_selection_approval_rules():
+    verify = ci_checks.verify_suite_selection
+    ok = verify(
+        _suite_fields("Data-Availability ,financial-metrics"),
+        _suite_event("LGTM\nAPPROVED semantic-suites: financial-metrics, data-availability"),
+        "author",
+    )
+    assert ok["errors"] == []
+    assert ok["suites"] == ["data-availability", "financial-metrics"]
+    assert ok["none"] is False
+    phrase = "APPROVED semantic-suites: financial-metrics"
+    assert verify(_suite_fields("financial-metrics", url=""), _suite_event(phrase), "author")["errors"]
+    assert verify(_suite_fields("financial-metrics"), None, "author")["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"), _suite_event(phrase, reviewer="author"), "author"
+    )["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"),
+        _suite_event(phrase, reviewer="helper[bot]", reviewer_type="Bot"),
+        "author",
+    )["errors"]
+    assert verify(_suite_fields("financial-metrics"), _suite_event("approved"), "author")["errors"]
+    assert verify(
+        _suite_fields("financial-metrics"), _suite_event(phrase + "\n" + phrase), "author"
+    )["errors"]
+    assert verify(
+        _suite_fields("financial-metrics, data-availability"), _suite_event(phrase), "author"
+    )["errors"]
+    mixed = verify(
+        _suite_fields("none, financial-metrics"),
+        _suite_event("APPROVED semantic-suites: none, financial-metrics"),
+        "author",
+    )
+    assert mixed["errors"]
+    none = verify(
+        _suite_fields("None"), _suite_event("APPROVED semantic-suites: none"), "author"
+    )
+    assert none["errors"] == [] and none["none"] is True and none["suites"] == []
+    assert ci_checks.parse_pr_body(
+        "Semantic suites: financial-metrics\n"
+        "Semantic suites approval: https://github.com/o/r/pull/17#issuecomment-1\n"
+    ) == _suite_fields("financial-metrics")
+
+
+def test_t08_record_must_match_suite_config_candidate_and_trusted_run():
+    statuses = [_status(_FM_CONTEXT, "cand1", 7)]
+    for record in (
+        _record("semantic", suite_id="data-availability"),
+        _record("semantic", config_sha256="stale"),
+        _record("semantic", config_path="docs/ci/other.yaml"),
+        _record("semantic", candidate="other"),
+        _record("semantic", status="failed"),
+    ):
+        assert _evidence(statuses, {"7": _run(7, record)})["errors"], record
+    for run_override in (
+        {"path": ".github/workflows/other.yml"},
+        {"head_branch": "feature"},
+        {"event": "push"},
+    ):
+        assert _evidence(
+            statuses, {"7": _run(7, _record("semantic"), **run_override)}
+        )["errors"], run_override
+
+
+def test_t09_needs_review_blocks_and_lists_items():
+    items = ["FM-S01:missing_metric_mention:m1", "FM-S03:unresolved_period:m2"]
+    errors = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic", status="needs_review", needs_review=items))},
+    )["errors"]
+    assert any(
+        "needs human review" in error and items[0] in error and items[1] in error
+        for error in errors
+    )
+    state, description = ci_semantic_eval.status_description(
+        {"candidate_sha": "cand1", "status": "needs_review", "needs_review": items}
+    )
+    assert state == "failure"
+    assert description == "needs_review: 2 pending items"
+    assert ci_semantic_eval.status_description({"status": "failed"}) == ("failure", "failed")
+    assert ci_semantic_eval.status_description(
+        {"candidate_sha": "cand1", "status": "passed"}
+    ) == ("success", "evidence recorded for cand1")
+    assert ci_semantic_eval.status_description(None)[0] == "failure"
+
+
+def test_t10_none_selection_uses_reviewed_not_applicable_only():
+    noop = ci_checks.SEMANTIC_NOOP_STATUS
+    noop_status = [_status(noop, "cand1", 8)]
+    noop_run = {"8": _run(8, _record("semantic-noop", reason="layout only", reviewed_by="human"))}
+    assert _evidence(noop_status, noop_run, selection=_selection(none=True))["errors"] == []
+    assert _evidence([], {}, selection=_selection(none=True))["errors"]
+    assert _evidence(noop_status, noop_run, selection=_selection("financial-metrics"))["errors"]
+
+
+def test_t11_legacy_shared_semantic_status_is_not_accepted():
+    errors = _evidence(
+        [_status("semantic-eval/evidence", "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+    )["errors"]
+    assert any(_FM_CONTEXT in error for error in errors)
+
+
+def test_t12_non_semantic_pr_without_selection_keeps_old_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    assert _evidence([], {}, semantic_required=False, selection=None, trusted_suites=None)[
+        "errors"
+    ] == []
+    assert _evidence(
+        [], {}, semantic_required=False, selection=_selection(none=True), trusted_suites=None
+    )["errors"] == []
+
+    def no_github(*args: Any, **kwargs: Any):
+        raise AssertionError("PR or approval must not be fetched for a non-enforced PR")
+
+    captured: dict[str, Any] = {}
+
+    def fake_fetch_evidence(repo, candidate, default_branch, token, **kwargs):
+        captured.update(kwargs)
+        return {"errors": []}
+
+    monkeypatch.setattr(ci_checks, "_github_request", no_github)
+    monkeypatch.setattr(ci_checks, "fetch_approval_event", no_github)
+    monkeypatch.setattr(ci_checks, "fetch_evidence", fake_fetch_evidence)
+    body = tmp_path / "body.txt"
+    body.write_text("Plain PR description without semantic fields.\n", encoding="utf-8")
+    rc = ci_checks.main(
+        [
+            "evidence",
+            "--candidate", "cand1",
+            "--repo", "o/r",
+            "--default-branch", "main",
+            "--token", "fake-local-token",
+            "--pr", "17",
+            "--pr-body-file", str(body),
+            "--registry", str(tmp_path / "missing" / "semantic-suites.yaml"),
+            "--trusted-root", str(tmp_path / "missing"),
+        ]
+    )
+    assert rc == 0
+    assert captured["selection"] is None
+    assert captured["trusted_suites"] is None
+
+
+def _write_registry(root: Path, suites: dict[str, Any] | str) -> Path:
+    path = root / "docs" / "ci" / "semantic-suites.yaml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if isinstance(suites, str):
+        path.write_text(suites, encoding="utf-8")
+    else:
+        path.write_text(
+            yaml.safe_dump({"schema_version": "1.0", "suites": suites}, sort_keys=False),
+            encoding="utf-8",
+        )
+    return path
+
+
+def _suite_root(tmp_path: Path, runner_module: str = "demo_eval", runner_source: str = "") -> Path:
+    root = tmp_path / "trusted"
+    (root / "scripts").mkdir(parents=True, exist_ok=True)
+    (root / "scripts" / f"{runner_module}.py").write_text(
+        runner_source or "def evaluate(config, candidate_sha, *, output_dir, model_transport=None):\n"
+        "    return {'status': 'failed'}\n",
+        encoding="utf-8",
+    )
+    config_dir = root / "docs" / "ci" / "semantic-suites"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "demo.yaml").write_text(
+        yaml.safe_dump(
+            {"schema_version": "1.0", "status": "unapproved", "execution": {"runner": f"{runner_module}:evaluate"}}
+        ),
+        encoding="utf-8",
+    )
+    return root
+
+
+def _demo_entry(**overrides: Any) -> dict[str, Any]:
+    entry = {
+        "requirement": "FR-TEST",
+        "config": "docs/ci/semantic-suites/demo.yaml",
+        "runner": "demo_eval:evaluate",
+    }
+    entry.update(overrides)
+    return entry
+
+
+def test_t13_registry_validation(tmp_path: Path):
+    root = _suite_root(tmp_path)
+    load = ci_checks.load_suite_registry
+    good = load(_write_registry(root, {"demo": _demo_entry()}), root)
+    assert good["errors"] == []
+    assert good["suites"]["demo"]["runner"] == "demo_eval:evaluate"
+    other = root / "docs" / "ci" / "other.yaml"
+    other.write_text("schema_version: '1.0'\n", encoding="utf-8")
+    outside = root / "outside.yaml"
+    outside.write_text("x: 1\n", encoding="utf-8")
+    bad_cases = [
+        {"Bad_ID": _demo_entry()},
+        {"evidence": _demo_entry()},
+        {"not-applicable": _demo_entry()},
+        {"demo": _demo_entry(config="outside.yaml")},
+        {"demo": _demo_entry(config="docs/ci/../../outside.yaml")},
+        {"demo": _demo_entry(config="docs/ci/semantic-suites/missing.yaml")},
+        {"demo": _demo_entry(), "demo-two": _demo_entry()},
+        {"demo": _demo_entry(runner="tradingagents.graph:evaluate")},
+        {"demo": _demo_entry(runner="missing_eval:evaluate")},
+        {"demo": _demo_entry(runner="demo_eval")},
+        {"demo": _demo_entry(runner="other_eval:evaluate")},
+        {"demo": {**_demo_entry(), "extra": 1}},
+        {"demo": {"config": "docs/ci/semantic-suites/demo.yaml", "runner": "demo_eval:evaluate"}},
+    ]
+    (root / "scripts" / "other_eval.py").write_text("", encoding="utf-8")
+    for suites in bad_cases:
+        result = load(_write_registry(root, suites), root)
+        assert result["errors"], suites
+    duplicate = load(
+        _write_registry(
+            root,
+            "schema_version: '1.0'\nsuites:\n"
+            "  demo:\n    requirement: FR-TEST\n    config: docs/ci/semantic-suites/demo.yaml\n"
+            "    runner: demo_eval:evaluate\n"
+            "  demo:\n    requirement: FR-TEST\n    config: docs/ci/semantic-suites/demo.yaml\n"
+            "    runner: demo_eval:evaluate\n",
+        ),
+        root,
+    )
+    assert duplicate["errors"]
+    assert load(_write_registry(root, "schema_version: '2.0'\nsuites: {}\n"), root)["errors"]
+
+
+_APPROVED_SUITE_CONFIG = {
+    "schema_version": "1.0",
+    "status": "approved",
+    "dataset": {"version": "v1", "cases": [{"id": "C1"}]},
+    "rubric": {"version": "r1", "definition": "fixed"},
+    "thresholds": {"min": 1},
+    "model": {"provider": "test", "model": "test-model"},
+    "execution": {"runner": "demo_eval:evaluate", "max_completion_requests": 1},
+    "approval": {
+        "approved_by": "human",
+        "approved_at": "2026-11-24T10:00:00Z",
+        "evidence": ["https://github.com/o/r/pull/1#issuecomment-1"],
+    },
+}
+
+_RUNNER_SOURCE = '''
+import hashlib
+import json
+from pathlib import Path
+
+RESULT = {"status": "passed"}
+
+
+def evaluate(config, candidate_sha, *, output_dir, model_transport=None):
+    details = Path(output_dir) / "semantic-details.json"
+    body = json.dumps({"candidate_sha": candidate_sha}).encode("utf-8")
+    details.write_bytes(body)
+    result = {
+        "status": "passed",
+        "errors": [],
+        "needs_review": [],
+        "request_count": 1,
+        "dataset_sha256": "dsha",
+        "rubric_sha256": "rsha",
+        "details_path": str(details),
+        "details_sha256": hashlib.sha256(body).hexdigest(),
+    }
+    result.update(RESULT)
+    return result
+'''
+
+
+def _semantic_suite_root(tmp_path: Path, result: dict[str, Any] | None = None, crlf: bool = False):
+    source = _RUNNER_SOURCE
+    if result is not None:
+        source = source.replace('RESULT = {"status": "passed"}', f"RESULT = {result!r}")
+    root = _suite_root(tmp_path, runner_source=source)
+    config_text = yaml.safe_dump(_APPROVED_SUITE_CONFIG, sort_keys=False)
+    config_path = root / "docs" / "ci" / "semantic-suites" / "demo.yaml"
+    config_path.write_bytes(
+        config_text.replace("\n", "\r\n").encode("utf-8") if crlf else config_text.encode("utf-8")
+    )
+    registry = _write_registry(root, {"demo": _demo_entry()})
+    return root, registry, config_text
+
+
+def _run_suite(root: Path, registry: Path, tmp_path: Path, name: str, suite: str = "demo"):
+    record_path = tmp_path / f"{name}.json"
+    rc = ci_semantic_eval.main(
+        [
+            "--registry", str(registry),
+            "--suite", suite,
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(record_path),
+            "--details-output", str(tmp_path / name / "semantic-details.json"),
+        ]
+    )
+    record = json.loads(record_path.read_text(encoding="utf-8")) if record_path.exists() else None
+    return rc, record
+
+
+def test_t14_semantic_entry_uses_registered_suite_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import hashlib
+
+    root, registry, config_text = _semantic_suite_root(tmp_path)
+    imported: list[str] = []
+    original = ci_semantic_eval.load_runner
+
+    def tracking_load(*args: Any, **kwargs: Any):
+        imported.append(str(args))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(ci_semantic_eval, "load_runner", tracking_load)
+    rc, record = _run_suite(root, registry, tmp_path, "unknown", suite="no-such-suite")
+    assert rc == 1 and record is None and imported == []
+
+    rc, record = _run_suite(root, registry, tmp_path, "pass")
+    assert rc == 0
+    assert record["suite_id"] == "demo"
+    assert record["config_path"] == "docs/ci/semantic-suites/demo.yaml"
+    assert record["runner"] == "demo_eval:evaluate"
+    assert record["status"] == "passed"
+    assert record["needs_review"] == []
+    expected_sha = hashlib.sha256(config_text.encode("utf-8")).hexdigest()
+    assert record["config_sha256"] == expected_sha
+    assert record["config_version"] == "v1"
+
+    crlf_root, crlf_registry, _ = _semantic_suite_root(tmp_path / "crlf", crlf=True)
+    _, crlf_record = _run_suite(crlf_root, crlf_registry, tmp_path, "crlf")
+    assert crlf_record["config_sha256"] == expected_sha
+
+    review_root, review_registry, _ = _semantic_suite_root(
+        tmp_path / "review",
+        result={"status": "needs_review", "needs_review": ["C1:ambiguous_claim:x", "C1:unresolved_period:y"]},
+    )
+    rc, review = _run_suite(review_root, review_registry, tmp_path, "review")
+    assert rc == 1
+    assert review["status"] == "needs_review"
+    assert review["needs_review"] == ["C1:ambiguous_claim:x", "C1:unresolved_period:y"]
+
+    unapproved = copy.deepcopy(_APPROVED_SUITE_CONFIG)
+    unapproved["status"] = "unapproved"
+    (root / "docs" / "ci" / "semantic-suites" / "demo.yaml").write_text(
+        yaml.safe_dump(unapproved), encoding="utf-8"
+    )
+    rc, record = _run_suite(root, registry, tmp_path, "unapproved")
+    assert rc == 1 and record is None
+
+    legacy_out = tmp_path / "legacy.json"
+    assert ci_semantic_eval.main(
+        [
+            "--config", str(root / "docs" / "ci" / "semantic-suites" / "demo.yaml"),
+            "--runner", "demo_eval:evaluate",
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(legacy_out),
+        ]
+    ) == 1
+    assert not legacy_out.exists()
+
+    noop_out = tmp_path / "noop.json"
+    assert ci_semantic_eval.main(
+        [
+            "--candidate", "cand1",
+            "--workflow-sha", "wf1",
+            "--run-id", "5",
+            "--output", str(noop_out),
+            "--not-applicable",
+            "--reason", "layout only",
+            "--reviewer", "human",
+            "--approval-evidence", "https://github.com/o/r/pull/1#pullrequestreview-1",
+        ]
+    ) == 0
+    assert json.loads(noop_out.read_text(encoding="utf-8"))["status"] == "not_applicable"
+    assert ci_semantic_eval.main(["check-suite", "--registry", str(registry), "--suite", "demo"]) == 0
+    assert ci_semantic_eval.main(["check-suite", "--registry", str(registry), "--suite", "x"]) == 1
+
+
+def _run_steps(workflow: dict[str, Any], job: str) -> list[dict[str, Any]]:
+    return workflow["jobs"][job]["steps"]
+
+
+def test_t15_workflows_route_by_validated_suite():
+    trusted_text = (ROOT / ".github" / "workflows" / "trusted-evaluation.yml").read_text(
+        encoding="utf-8"
+    )
+    trusted = yaml.safe_load(trusted_text)
+    inputs = trusted[True]["workflow_dispatch"]["inputs"]
+    assert "suite_id" in inputs
+    assert "semantic_runner" not in inputs
+    for step in _run_steps(trusted, "evaluate"):
+        assert "${{ inputs." not in str(step.get("run", "")), step.get("name")
+    names = {step.get("name"): step for step in _run_steps(trusted, "evaluate")}
+    resolve = names["Resolve status context"]
+    assert "check-suite" in resolve["run"]
+    semantic = names["Write semantic evidence record"]
+    assert "--suite" in semantic["run"] and "--registry docs/ci/semantic-suites.yaml" in semantic["run"]
+    assert "--runner" not in semantic["run"] and "--config" not in semantic["run"]
+    assert semantic["env"]["DEEPSEEK_API_KEY"] == "${{ secrets.DEEPSEEK_API_KEY }}"
+    assert "steps.resolve.outputs.artifact_suffix" in str(names["Upload evidence record"]["with"]["name"])
+    assert "steps.resolve.outputs.suite" in str(
+        names["Upload semantic details artifact"]["with"]["name"]
+    )
+    status_step = names["Write candidate status"]
+    assert status_step["env"]["CONTEXT"] == "${{ steps.resolve.outputs.context }}"
+    assert "describe" in status_step["run"]
+    assert "inputs.suite_id" in trusted["concurrency"]["group"]
+    secret_steps = [s.get("name") for s in _run_steps(trusted, "evaluate") if "secrets." in json.dumps(s)]
+    assert set(secret_steps) <= {"Write semantic evidence record", "Run live suite", "Write candidate status"}
+
+    ci = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    evidence = ci["jobs"]["evidence-check"]
+    assert evidence["permissions"]["pull-requests"] == "read"
+    checkouts = [s for s in evidence["steps"] if str(s.get("uses", "")).startswith("actions/checkout")]
+    assert any(
+        s["with"].get("ref") == "${{ github.event.repository.default_branch }}"
+        and s["with"].get("path") == "trusted"
+        for s in checkouts
+    )
+    evidence_text = json.dumps(evidence)
+    assert "--registry trusted/docs/ci/semantic-suites.yaml" in evidence_text
+    assert "--trusted-root trusted" in evidence_text
+    assert "secrets." not in evidence_text
+
+
+def test_t16_fr10_config_migrated_unchanged_to_financial_metrics_suite():
+    import hashlib
+
+    config = ROOT / "docs" / "ci" / "semantic_eval.yaml"
+    assert hashlib.sha256(config.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == _FM_CONFIG_LF_SHA256
+    assert ci_checks.sha256_lf(config) == _FM_CONFIG_LF_SHA256
+    assert ci_checks.load_yaml(config)["status"] == "unapproved"
+    registry = ci_checks.load_suite_registry(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert registry["errors"] == []
+    assert registry["suites"] == {
+        "financial-metrics": {
+            "requirement": "FR-10",
+            "config": "docs/ci/semantic_eval.yaml",
+            "runner": "financial_metrics_eval:evaluate",
+        }
+    }
+    states, errors = ci_checks.trusted_suite_states(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert errors == []
+    assert states["financial-metrics"]["approved"] is False
+    assert states["financial-metrics"]["config_sha256"] == _FM_CONFIG_LF_SHA256
+
+
+def test_t17_registry_absent_on_default_branch(tmp_path: Path):
+    states, errors = ci_checks.trusted_suite_states(tmp_path / "docs" / "ci" / "semantic-suites.yaml", tmp_path)
+    assert states is None and errors == []
+    assert _evidence([], {}, semantic_required=False, selection=None, trusted_suites=None)["errors"] == []
+    blocked = _evidence(
+        [_status(_FM_CONTEXT, "cand1", 7)],
+        {"7": _run(7, _record("semantic"))},
+        trusted_suites=None,
+    )["errors"]
+    assert any("registry is not present on the default branch" in error for error in blocked)
+
+
+def test_t18_registered_suites_conform_to_runner_contract(tmp_path: Path):
+    registry = ci_checks.load_suite_registry(ROOT / "docs" / "ci" / "semantic-suites.yaml", ROOT)
+    assert registry["errors"] == []
+    for suite_id, entry in registry["suites"].items():
+        config = ci_checks.load_yaml(ROOT / entry["config"])
+        validation = ci_semantic_eval.validate_config(config)
+        assert validation["errors"] == [], suite_id
+        assert config["execution"]["runner"] == entry["runner"], suite_id
+        function = ci_semantic_eval.load_runner(ROOT, entry["runner"])
+        assert ci_semantic_eval.check_runner_signature(function) == [], suite_id
+
+    def good(config, candidate_sha, *, output_dir, model_transport=None):
+        return {}
+
+    def no_output_dir(config, candidate_sha):
+        return {}
+
+    def no_transport(config, candidate_sha, *, output_dir):
+        return {}
+
+    assert ci_semantic_eval.check_runner_signature(good) == []
+    assert ci_semantic_eval.check_runner_signature(no_output_dir)
+    assert ci_semantic_eval.check_runner_signature(no_transport)
+
+    for name, result in (
+        ("missing-status", {"errors": []}),
+        ("bad-status", {"status": "ok"}),
+        ("bad-review", {"status": "passed", "needs_review": "C1:x"}),
+    ):
+        root, registry_path, _ = _semantic_suite_root(tmp_path / name, result=result)
+        if name == "missing-status":
+            source = (root / "scripts" / "demo_eval.py").read_text(encoding="utf-8")
+            source = source.replace('"status": "passed",\n        "errors"', '"errors"')
+            (root / "scripts" / "demo_eval.py").write_text(source, encoding="utf-8")
+        rc, record = _run_suite(root, registry_path, tmp_path, name)
+        assert rc == 1, name
+        assert record["status"] == "failed", name

@@ -3240,3 +3240,51 @@ entries:
     limitations:
       - "No raw session export is in the repository; none fabricated."
       - "Push and PR update performed by the human operator; this session has no GitHub write access."
+
+  - id: "AI-SSR-IMPL-001"
+    date: "2026-11-24"
+    round: null
+    human_operator: "espino2233"
+    tool: "Claude (claude.ai agent session)"
+    model: "claude-opus-5-5"
+    activity: "ci_maintenance_implementation"
+    task: "Implement semantic suite routing per docs/plans/semantic-suite-routing.md @ 684ddb22460992831fc15348884778d76c505a32."
+    requirement_ids: []
+    fit_criterion_ids: []
+    files_changed:
+      - "docs/ci/semantic-suites.yaml"
+      - "scripts/ci_checks.py"
+      - "scripts/ci_semantic_eval.py"
+      - ".github/workflows/trusted-evaluation.yml"
+      - ".github/workflows/ci.yml"
+      - "test/offline/test_ci_gates.py"
+      - "docs/ci/README.md"
+      - "CI.md"
+      - "docs/review-memo.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Wrote tests T01-T18 first and adapted existing evidence tests to suite-scoped contexts (24 failing before
+      implementation). Implemented the trusted registry loader and validation, reviewer-confirmed suite selection
+      read from the current PR body, per-suite evidence verification with config-hash binding, needs_review
+      preservation, the registry-only runner loader with contract signature and result checks, the trusted workflow
+      suite_id input with env-passed inputs and suite-scoped status/artifact/concurrency names, and the evidence-check
+      default-branch registry checkout. Updated operator documentation. FR-10 configuration, runner and tests and
+      all application code are unchanged.
+    human_intervention: "User confirmed the plan approval, directed implementation under the existing process, required that commits and PRs not list the AI as a contributor, and chose to keep the earlier commit history unchanged."
+    approval:
+      subject: "Semantic suite routing plan @ 684ddb22460992831fc15348884778d76c505a32"
+      status: "approved"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "local_pass_remote_pending"
+      summary: >-
+        Local Python 3.13: test_ci_gates.py + test_financial_metrics_evaluation.py 100 passed, 2 failed
+        (FR-10 P04 needs langchain_core, absent locally; same 2 failures on the unmodified baseline). Ruff passed;
+        mypy (3.12 mode) no diagnostics; git diff --check clean. Full regression and remote CI not run locally.
+      evidence: []
+    transcript_refs: []
+    limitations:
+      - "Approval comment URL and timestamp not yet supplied to the session; left empty rather than invented."
+      - "Local environment lacks application dependencies; full pytest regression relies on remote CI."
+      - "No raw session export is in the repository; none fabricated."

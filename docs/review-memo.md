@@ -394,3 +394,31 @@ candidate-only pass. Exact model controls/hashes are enforced, conflicting asser
 and absent source/period/interpretation claims route to review. Captured request/response details
 are retained on truncation. Local targeted tests: 6 passed; Ruff: passed. These fixes retain the
 frozen oracle, rubric, thresholds and six-request maximum. Final-HEAD CI must be checked again.
+
+## RM-17-R1 — Semantic Suite Routing (AI-authored review summary; final human verdict pending)
+
+- PR: [#17](https://github.com/Howindy/Teamproject-Tradingagents/pull/17)
+- Baseline: `origin/main` `00833f4b281692c266bbd52c5955a4f40ec89493`
+- Frozen specification: `docs/plans/semantic-suite-routing.md @ 684ddb22460992831fc15348884778d76c505a32` (unchanged by the implementation)
+- Test-spec pre-approval: stated by the human operator in the implementation session on 2026-11-24 (UTC+08:00) before implementation began; the approval comment URL was not yet supplied to the session and is to be entered in the PR `Approval evidence` field. The CI `test-approval` gate verifies the real event, author, phrase and time; this record does not substitute for it.
+- Scope: CI maintenance per the plan §3–§5 (registry, reviewer-confirmed suite selection, suite-scoped trusted dispatch and evidence, suite unit contract I1–I6); `FR-10` appears only as registry traceability. Excluded: `src/**`, FR-10 dataset/rubric/configuration/runner/tests, classifier detection rules, aggregate logic, `.opencode/**`, requirements and D2 documents.
+- Changed paths: `docs/ci/semantic-suites.yaml` (new), `scripts/ci_checks.py`, `scripts/ci_semantic_eval.py`, `.github/workflows/trusted-evaluation.yml`, `.github/workflows/ci.yml` (`evidence-check` only), `test/offline/test_ci_gates.py`, `docs/ci/README.md`, `CI.md`, `docs/ai-use-log.yaml`, this memo.
+
+### Actual local verification (cloud workspace, Python 3.13.18; not the CI 3.12 environment)
+
+- Tests first: with only the new/adapted tests applied, `pytest -q test/offline/test_ci_gates.py` gave 24 failed / 72 passed (18 new T01–T18 cases plus 6 adapted evidence tests).
+- After implementation: `pytest -q test/offline/test_ci_gates.py test/offline/test_financial_metrics_evaluation.py`: 100 passed, 2 failed. Both failures are FR-10 `P04` subprocess tests needing `langchain_core`, which is not installed in this workspace (same 2 failures on the unmodified baseline: 82 passed, 2 failed). Local runs used import stubs for `yfinance`, `curl_cffi`, `dotenv` and `cli.prefs` outside the repository only to load `test/conftest.py`.
+- `ruff check .` (Ruff 0.16.9 locally; CI pins 0.17.5): passed.
+- `mypy --config-file mypy.ini --python-version 3.12` on the two CI scripts and the gate test file: no diagnostics before or after the change.
+- `git diff --check`: clean. Workflows and registry parse as YAML. `docs/ci/semantic_eval.yaml`, `scripts/financial_metrics_eval.py`, `test/offline/test_financial_metrics_evaluation.py` and `src/` are byte-identical to the baseline.
+- Not run locally: full `pytest -q` regression (application dependencies unavailable), remote workflows, trusted dispatch, model calls. Remote PR CI is the regression evidence.
+
+### Changed assertions (approved behavior change, not weakening)
+
+- Existing evidence tests now use the suite context `semantic-eval/financial-metrics`; every earlier negative (wrong SHA, untrusted path/repo/event/branch, missing artifact, config version mismatch, unapproved config, failed status, noop without reason) is retained.
+- The FR-10 `P06` entry test runs through a registered suite; a `needs_review` runner result is now recorded as `needs_review` with its items instead of `failed` (plan problem P6). Exit code remains non-zero.
+- The trusted details-upload condition now also requires the validated suite step.
+
+### Final human review
+
+- Final verdict: Pending human review (`APPROVE`, `CHANGES REQUIRED`, or `REJECT`).
