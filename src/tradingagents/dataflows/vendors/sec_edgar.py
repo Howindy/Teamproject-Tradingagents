@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 _TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 _FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
+_SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
 # A filing history only changes when something new is filed, so one fetch per
 # company per day serves every date a run asks about.
@@ -140,6 +141,22 @@ def cik_for(ticker: str) -> str | None:
         if entry.get("ticker", "").upper() == wanted:
             return f"{int(entry['cik_str']):010d}"
     return None
+
+
+def company_facts(ticker: str) -> tuple[str, dict]:
+    """Structured FR-10 inputs via the existing SEC cache (ADR 002, IR-09)."""
+    cik = cik_for(ticker)
+    if cik is None:
+        raise NoMarketDataError(ticker, ticker, "not a US SEC filer")
+    return cik, _cached_json(_FACTS_URL.format(cik=cik), f"CIK{cik}.json")
+
+
+def submissions(ticker: str) -> tuple[str, dict]:
+    """Return SEC filing metadata without invoking an observed model tool (ADR 002)."""
+    cik = cik_for(ticker)
+    if cik is None:
+        raise NoMarketDataError(ticker, ticker, "not a US SEC filer")
+    return cik, _cached_json(_SUBMISSIONS_URL.format(cik=cik), f"CIK{cik}-submissions.json")
 
 
 def _span_index(fact: dict, spans: tuple[tuple[int, int], ...]) -> int | None:

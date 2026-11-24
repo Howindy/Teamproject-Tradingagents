@@ -272,6 +272,48 @@ def get_closes(symbol: str, start_date: str, end_date: str) -> pd.Series:
     return history["Close"] if history is not None and "Close" in history else pd.Series(dtype=float)
 
 
+def completed_close(symbol: str, as_of_date: str, cutoff: datetime, split_floor: str | None = None) -> dict | None:
+    """Return a completed daily close and basis metadata (ADR 002, FR-10-FC06)."""
+    from zoneinfo import ZoneInfo
+
+    canonical = normalize_symbol(symbol)
+    as_of = datetime.strptime(as_of_date, "%Y-%m-%d")
+    start = (as_of - relativedelta(days=40)).strftime("%Y-%m-%d")
+    end = (as_of + relativedelta(days=1)).strftime("%Y-%m-%d")
+    closes = get_closes(symbol, start, end)
+    if closes is None or len(closes) == 0:
+        return None
+    ticker = yf.Ticker(canonical)
+    try:
+        metadata = ticker.get_history_metadata() or {}
+    except Exception:
+        metadata = {}
+    zone = metadata.get("exchangeTimezoneName") or "America/New_York"
+    tz = ZoneInfo(zone)
+    sessions = []
+    for stamp, close in closes.items():
+        day = stamp.date()
+        completed = datetime(day.year, day.month, day.day, 16, tzinfo=tz)
+        if completed <= cutoff:
+            sessions.append((day, float(close), completed))
+    if not sessions:
+        return None
+    price_date, value, completed = sessions[-1]
+    try:
+        split_index = ticker.splits
+        floor = datetime.strptime(split_floor, "%Y-%m-%d").date() if split_floor else price_date
+        splits = [stamp.date().isoformat() for stamp in split_index.index
+                  if floor < stamp.date() <= as_of.date()] if split_index is not None else []
+    except Exception:
+        return None
+    currency = metadata.get("currency")
+    return {"value": value, "currency": currency,
+            "unit": f"{currency}/shares" if currency else None,
+            "price_date": price_date.isoformat(), "completed_at": completed,
+            "exchange_timezone": zone, "splits_between": splits,
+            "source_ref": f"yahoo://{canonical}/close/{price_date.isoformat()}"}
+
+
 def get_stock_stats(
     symbol: Annotated[str, "ticker symbol for the company"],
     indicator: Annotated[
