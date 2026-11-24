@@ -1,5 +1,7 @@
 # Coding-Agent Permission Model
 
+> **FR-10 feature-integration planning exception (2026-11-24):** The human explicitly authorizes the Plan responsibility, for this round only, to read the relevant FR-10, current CI/semantic-suite and Round 3 materials; create and edit `docs/plans/financial-metrics-feature-integration.md`; append the actual planning and permission-maintenance record to `docs/ai-use-log.yaml`; and perform status inspection, fetch, plan commit, push and Draft PR creation. This is an exact, temporary role-maximum exception to §§2–4 below, not implementation, test, live-evaluation, merge, or general governance authorization. Existing protections and other role boundaries remain. Actual configured tool permissions are separately enforced; no tool denial may be bypassed. This human-authorized exception does not establish automatic loading or OS isolation.
+
 - Document status: Proposed role-permission design. A machine-readable project permission file exists and CI includes a static configuration check, but effective OpenCode loading, merged policy, runtime access restriction, and enforcement are not verified; this is not a security certification.
 - Requirements basis: [`docs/req/requirements.yaml`](../req/requirements.yaml) version 1.49.0, independently counted as 13 requirements and 55 fit criteria: 6 active requirements with 27 FCs and 7 deferred requirements with 28 FCs.
 - Architecture basis: [`architecture-blueprint.md`](../../architecture-blueprint.md), especially §9.3 and §11, and [`ADR 001`](adr/001-graph-internal-final-check.md).

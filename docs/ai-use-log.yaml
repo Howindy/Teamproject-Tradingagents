@@ -3331,3 +3331,44 @@ entries:
     limitations:
       - "Full application regression and remote GitHub CI not run in this repair session."
       - "Final human review remains pending; no commit, push or merge."
+
+  - id: "AI-FM-FEATURE-PLAN-001"
+    date: "2026-11-24"
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-terra"
+    activity: "feature_integration_planning"
+    task: "Prepare FR-10 feature migration plan, independent test specification and Draft PR without implementation."
+    requirement_ids: ["FR-10"]
+    files_changed:
+      - "docs/plans/financial-metrics-feature-integration.md"
+      - "docs/architecture/permission-model.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Fetched main dc77e6d and historical source 7e676fb, inspected Round 3 PR #13 head 30421f0,
+      created independent feature worktree, compared entry lifecycle and semantic suite registry, and
+      documented the baseline environment handoff and negation-scoring blockers with scoped proposed tests.
+      Added only the explicitly user-authorized temporary Plan-role exception to the permission model.
+      The OpenCode executable was not found in the shell PATH; the shell did not expose OPENCODE_CONFIG.
+      V2 documentation identifies project-discovered opencode.json(c), not permissions.jsonc, but the
+      running server's actual version, environment, merged configuration and effective enforcement are
+      unverified. No claim is made that permissions.jsonc is active or inactive, or that natural-language
+      controls enforce isolation; no actual tool denial occurred in this task. No config was modified.
+    human_intervention: >-
+      User explicitly authorized the narrow permission-model amendment, exact plan and AI-use record,
+      relevant reads, fetch, plan commit, push and Draft PR; no application implementation or live requests.
+    approval:
+      subject: "FR-10 feature implementation and test specification"
+      status: "pending"
+      approved_at: null
+      evidence: []
+    verification:
+      status: "planning_only"
+      summary: >-
+        Confirmed independent worktree root and clean initial branch at dc77e6d, PR #14 and #17 merged,
+        PR #13 open at 30421f0, and financial-metrics registered with unapproved config. Inspected the
+        course PDF pages 6, 7 and 10. No feature tests, model calls, installation or workflow dispatch.
+    transcript_refs: []
+    limitations:
+      - "Actual current-session raw transcript export unavailable; no fabricated transcript."
+      - "Round 3 final merge and Round 4 interfaces remain pending; separate trusted-side maintenance is required before real evaluation."
+      - "Plan/test approval, suite-selection approval, safety review, semantic standard and live authorization remain pending."
