@@ -4506,3 +4506,65 @@ entries:
       - "Tests use synthetic external model/vendor responses, not real completions or live data."
       - "CI configuration/scoring was not independently changed or disabled; main's inherited maintenance is retained."
       - "Formal semantic-quality evidence and final human merge review remain outstanding."
+
+  - id: "AI-FM-SEMANTIC-DRAFT-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_local_semantic_unit_discussion"
+    task: "Create local post-implementation semantic-check examples for discussion; do not publish or activate CI."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC01", "FR-10-FC02", "FR-10-FC03", "FR-10-FC05", "FR-10-FC06", "FR-10-FC08", "FR-10-FC09"]
+    files_changed:
+      - "docs/drafts/fr10-semantic-units.json"
+      - "docs/drafts/fr10-semantic-units.md"
+      - "test/offline/test_fr10_semantic_units_draft.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Created seven question/expected-claim/counterexample units from the pre-existing independent
+      reference. Reused the existing scorer and its synthetic good-report fixture; no calculator
+      output was used as an oracle. Fourteen tests check synthetic positive controls and explicit
+      corruptions, including an omitted metric requiring review. Marked the work as post-implementation
+      local regression examples, not independent held-out evaluation or real LLM responses.
+    human_intervention: "User requested a few local semantic units to discuss with Yifan before any publication."
+    verification:
+      status: "local_draft_tests_passed"
+      summary: "14 passed in 2.41s; Ruff check passed. Zero model/vendor requests. No production/configuration/scorer changes."
+    transcript_refs: []
+    limitations:
+      - "Uncommitted on local codex/fr10-semantic-unit-draft; no push, workflow activation or approval event."
+      - "Known-answer regression fixtures are not evidence of unseen-data or live-model quality."
+      - "No retrospective pre-implementation approval or formal semantic pass is asserted."
+
+  - id: "AI-R04-SEMANTIC-DRAFT-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "round04a_local_scenario_meaning_unit_discussion"
+    task: "Add local Round-04A question/answer/counterexample examples alongside the FR-10 discussion draft."
+    requirement_ids: ["FR-03", "FR-04", "SB-01", "INV-01"]
+    fit_criterion_ids: ["FR-03-FC04", "FR-04-FC05", "SB-01-FC05", "INV-01-FC01", "INV-01-FC02"]
+    files_changed:
+      - "docs/drafts/round04-semantic-units.json"
+      - "docs/drafts/round04-semantic-units.md"
+      - "test/offline/test_round04_semantic_units_draft.py"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Added seven local scenario/meaning units for exact limits, precision breaches, stop risk,
+      missing purchase scenario, necessary data gaps, risk errors and formal persistence.
+      Used real risk/final evaluators, result validation and state/memory writes; externally mocked
+      graph construction and controlled risk-fault injection only. No new semantic registry,
+      evaluator, threshold, runtime prompt or CI workflow. Clearly distinguished deterministic
+      output-contract checks from live-model semantic quality and formal gate evidence.
+    human_intervention: "User requested the same local draft treatment for Round 4, following the unpushed FR-10 draft."
+    verification:
+      status: "local_draft_tests_passed"
+      summary: >-
+        Initial Round-04A tests: 6 failed, 8 passed because detailed FR-04 reasons were incorrectly
+        sought in SB-01's decision text. Checked the existing separate-reason contract and corrected
+        the test locator, not production behavior. Round-04A and FR-10 drafts together: 28 passed
+        in 2.60s; Ruff passed. Zero LLM/vendor requests. Draft JSON and AI-use YAML checked on completion.
+    transcript_refs: []
+    limitations:
+      - "Uncommitted local discussion draft; no push, registered semantic suite or CI activation."
+      - "Constructed questions/counterexamples and deterministic checks do not measure real-model analysis quality."
