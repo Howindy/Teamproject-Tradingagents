@@ -1,8 +1,8 @@
 # ADR 002 — Deterministic Disclosed Financial Metrics (FR-10)
 
-- Status: Proposed for final human review (design/test pre-approval for preparation recorded in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477), binding `docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`; no feature migration or merge claimed)
+- Status: Proposed for final human review (design/test pre-approval for preparation recorded in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477), binding `docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`; runtime integration is delivered)
 - Date: 2026-11-23
-- Requirements baseline: `docs/req/requirements.yaml` version `1.50.0` (`FR-10`, `FR-10-FC01` through `FR-10-FC10`)
+- Requirements baseline: `docs/req/requirements.yaml` version `1.51.0` (`FR-10`, `FR-10-FC01` through `FR-10-FC10`)
 - Historical provenance: succeeds the personal branch's old financial `FR-07` (`origin/haoxi @ 7e676fb00fff319930685a9fa059265f3061aeff`, reference freeze `fr07-sec-reference-v1`); distinct from current deferred `FR-07` (analyst briefs)
 - Related: [Architecture Blueprint](../../../architecture-blueprint.md), [ADR 001](001-graph-internal-final-check.md), [Evaluation Table](../evaluation-table.md)
 
@@ -10,15 +10,15 @@
 
 ## 1. Context and problem
 
-The current Fundamentals Analyst receives five financial tools (`get_fundamentals`, `get_income_statement`, `get_balance_sheet`, `get_cashflow`, `get_insider_transactions`) and computes ratios/growth prose using the LLM. That permits comparative filing `fy`/`fp` misattribution, YTD-vs-quarter confusion, Q4 subtraction, unit/basis mismatch, future-price lookahead, and silent proxy substitution when an issuer omits a concept.
+Before FR-10, the Fundamentals Analyst receives five financial tools (`get_fundamentals`, `get_income_statement`, `get_balance_sheet`, `get_cashflow`, `get_insider_transactions`) and computes ratios/growth prose using the LLM. That permits comparative filing `fy`/`fp` misattribution, YTD-vs-quarter confusion, Q4 subtraction, unit/basis mismatch, future-price lookahead, and silent proxy substitution when an issuer omits a concept.
 
-Current D1 v1.50.0 introduces `FR-10: Deterministic disclosed financial metrics` as an opt-in, source-preserving calculation and prompt-injection feature without activating deferred `FR-07` analyst briefs or altering `FR-03`/`FR-04`/`SB-01` authorities.
+D1 v1.50.0 introduced `FR-10: Deterministic disclosed financial metrics` as an opt-in, source-preserving calculation and prompt-injection feature without activating deferred `FR-07` analyst briefs or altering `FR-03`/`FR-04`/`SB-01` authorities.
 
 ## 2. Architecture decisions
 
 ### D-201 Bounded `financials` component (`C-21` / `IF-26`)
 
-Logical ownership for `FR-10` is placed under `src/tradingagents/financials/` (planned for feature PR 2; not created in preparation PR 1):
+Logical ownership for `FR-10` is placed under `src/tradingagents/financials/`:
 
 - `models.py`: immutable contracts (`EvaluationClock`, `FinancialFact`, `PriceRecord`, `FinancialInputs`, `MetricResult`, `MetricBundle`) rejecting booleans and binary floats (`Decimal` / exact `Fraction` only).
 - `metrics.py`: pure selection, disclosure/cutoff filtering, calculation, `ROUND_HALF_UP` formatting, and deterministic table rendering for the ten fixed metrics (`revenue_yoy_q`, `revenue_yoy_a`, `revenue_qoq`, `gross_margin`, `operating_margin`, `net_margin`, `current_ratio`, `liabilities_to_assets`, `fcf_reported_span`, `pe_fy`).
@@ -47,4 +47,4 @@ ADR 001 Decision `D-10c` preserves existing analyst prompt assembly while noting
 ## 4. Verification and semantic gate
 
 - **PR 1 (preparation):** Align D1/D2/D4, freeze compact lossless reference projection (`docs/ci/financial-metrics-cases.json`) and rubric (`docs/ci/financial-metrics-rubric.md`), implement trusted semantic runner (`scripts/financial_metrics_eval.py`) and offline evaluation/gate tests (`test/offline/test_financial_metrics_evaluation.py`, `test/offline/test_ci_gates.py`). `docs/ci/semantic_eval.yaml` remains `unapproved` until separate authorization of the 6-request `deepseek-flash` (thinking disabled) run.
-- **PR 2 (feature integration, separate approval required):** Migrate/adapt `financials/` under `src/tradingagents/financials/`, wire SEC/Yahoo read helpers and fresh-run lifecycle, port financial-only offline tests, and run full offline regression plus authorized fixed semantic evaluation against the exact candidate SHA.
+- **Delivered integration.** Both public entries bind the analysis-local metric scope. `test/offline/test_financial_metrics.py`, `test/offline/test_sec_financial_provider.py`, `test/offline/test_financial_metrics_integration.py` exercise calculation, source adapters and analyst delivery. Live semantic evaluation has its own approval record.

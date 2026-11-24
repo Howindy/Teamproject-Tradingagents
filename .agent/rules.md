@@ -1,6 +1,8 @@
 # Project Covenant
 
-> Current scope amendment — 2026-11-23, D1 v1.49.0: six active requirements / 27 FCs (FR-01, FR-03, FR-04, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 13 / 55. Pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25): five delivered requirements / 28 FCs (FR-03, FR-04, FR-10, SB-01, INV-01); nine deferred / 37 FCs (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02); total 14 / 65.
+
+> Historical approvals (2026-11-23): the six-active v1.49.0 scope was pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044), binding frozen specification cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9. This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
 
 
 ## Purpose and authority
@@ -12,7 +14,7 @@ The course requires abstraction limits, dependency constraints, independent test
 ## 1. Scope and abstraction limits
 
 - Extend the existing application under `src/` and preserve its normal interfaces and unrelated behavior. Do not replace the baseline, introduce another source/test layout, or broadly reformat the application to implement a local feature.
-- Implement only the active requirements selected by the approved round plan. FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01 remain deferred unless a new explicit scope decision activates them. Do not reserve interfaces or add placeholder machinery for deferred work.
+- Implement only the active requirements selected by the approved round plan. FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01 and SR-02 remain deferred unless a new explicit scope decision activates them. Do not reserve interfaces or add placeholder machinery for deferred work.
 - Prefer existing modules, narrow functions, plain data structures, and explicit local adapters. Logical D2 components do not mandate separate classes, files, services, or agent processes. Give each architectural responsibility one primary module owner, as defined in the structural constraints or approved plan.
 - Do not introduce generic registries, plugin frameworks, event buses, global dispatchers, universal numeric/security frameworks, cross-file transactions, immutable archives, or recovery platforms for requirements that do not need them.
 - An abstraction must serve the current approved behavior and make responsibilities or interfaces clearer. Explain a consequential new abstraction in the plan; no arbitrary class-count, line-count, or nesting threshold is imposed.
@@ -29,7 +31,7 @@ The course requires abstraction limits, dependency constraints, independent test
 
 ## 3. Round planning and permissions
 
-- Specific work belongs in the selected round plan, initially `docs/plans/round-01.md` when created by an authorized task. This reference neither creates the plan nor approves it.
+- Specific work belongs in the selected round plan, with `docs/plans/round-01.md` retained as the historical first-round plan. This reference neither creates the plan nor approves it.
 - The plan states included requirement/FC IDs and exclusions; exact files and D2 interfaces; test scenarios, controlled inputs, independent expectations and FC/IR links; structural/regression/behavioral scope; prerequisites; and actual approval evidence tied to the approved version.
 - Obtain human approval of the execution plan and specific tests before the corresponding application implementation. Record approval only after it occurs; do not infer it from a template, a Proposed ADR, or an earlier round.
 - Use only the intersection of task authorization, role/file limits, and actual tool permissions. A denied capability is not permission to use another tool to bypass it. Read-only review does not permit application edits.

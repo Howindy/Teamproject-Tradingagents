@@ -1,11 +1,11 @@
 # Architecture Evaluation Table
 
-> Current scope amendment — 2026-11-23, D1 v1.50.0: seven active requirements / 37 FCs (FR-01, FR-03, FR-04, FR-10, SB-01, INV-01, SR-01); seven deferred / 28 FCs (FR-02, FR-05, SR-02, FR-06, FR-07, PR-01, CR-01); total 14 / 65. Six-active scope pre-approved in [PR #12 comment 7089283044](https://github.com/Howindy/Teamproject-Tradingagents/pull/12#issuecomment-7089283044) (`cc2c834c3ce9097f08d95b4beef1a5dc1bb0b7e9`); FR-10 preparation pre-approved in [PR #14 comment 7099714477](https://github.com/Howindy/Teamproject-Tradingagents/pull/14#issuecomment-7099714477) (`docs/plans/financial-metrics-integration.md @ e99ab57b6e460fad59bb4bf4a81cffa5c717c8da`), governed by [ADR 002](adr/002-deterministic-financial-metrics.md). This is scoped design/test pre-approval, not final review or product acceptance. Native manifest, new precise statistics, history and their dedicated path controls are future-only. Existing baseline statistics, saves and protections remain.
+> D1 v1.51.0 (2026-11-25) records five delivered requirements (FR-03, FR-04, FR-10, SB-01, INV-01, 28 fit criteria) and nine deferred requirements (FR-01, FR-02, FR-05, FR-06, FR-07, PR-01, CR-01, SR-01, SR-02, 37 fit criteria). FR-01 reuse and SR-01 credential controls below are retained designs for future activation. Existing vendor caches and baseline credential protections still apply.
 
 
 - Status: Proposed for human review
 - Date: 2026-11-17
-- Requirements baseline: `docs/req/requirements.yaml` version 1.50.0
+- Requirements baseline: `docs/req/requirements.yaml` version 1.51.0
 - Related: [Architecture Blueprint](../../architecture-blueprint.md), [ADR 001](adr/001-graph-internal-final-check.md), [ADR 002](adr/002-deterministic-financial-metrics.md)
 
 This document compares architecture candidates and key design options. It does not contain numeric scores, performance measurements, cost estimates, test results, or approvals. Ratings are qualitative and trace to requirements or static code evidence.
@@ -281,7 +281,7 @@ Rules:
 - Report metrics may be locally formatted; a repeating quotient is still computed and not null. Each metric is null only when its own operands are invalid; an invalid ticker, currency, or threshold does not clear a computable metric. Fixed decimal places, round-half-even, no-exponent notation, and trailing-zero rules are not acceptance requirements or approval gates.
 - Display formatting never feeds back into status. CLI and report consume the same result but may differ in layout or percentage presentation.
 - The deterministic risk area states that only the listed caller scenario is checked and that other model-proposal amounts/prices are not verified; it also keeps the classroom and non-trade-authorization statements.
-- No new risk artifact or memory risk metadata is required; the current state log does not yet persist risk data. Existing save-failure and full-execution checkpoint policies are unchanged.
+- No new risk artifact or memory risk metadata is required; the current state log includes the risk result. Existing save-failure and full-execution checkpoint policies are unchanged.
 
 ### 3.15 Context delivery for the research stage
 
@@ -398,7 +398,7 @@ Rules:
 
 ## 4. Selected architecture summary
 
-Select the existing graph with two deterministic post-PM nodes, separate proposal/formal fields and IF-19. Ephemeral C-03 owns C-05 reuse and C-07 availability only. Keep 15 observation positions, stage-specific summaries, pure C-08/C-09, existing output/optional memory/save behavior and limited SR-01 protection. These safety, data-isolation and compatibility drivers support the choice without relying on deferred manifest, exact stats, history or SR-02 path features. No new measurement or score is claimed.
+Select the existing graph with two deterministic post-PM nodes, separate proposal/formal fields and IF-19. Ephemeral C-03 owns C-07 availability. C-05 reuse is deferred. Keep 15 observation positions, stage-specific summaries, pure C-08/C-09, existing output/optional memory/save behavior and limited SR-01 protection. These safety, data-isolation and compatibility drivers support the choice without relying on deferred manifest, exact stats, history or SR-02 path features. No new measurement or score is claimed.
 
 ## 5. Evidence ledger
 
@@ -429,7 +429,7 @@ Select the existing graph with two deterministic post-PM nodes, separate proposa
 | Baseline behavior | `baseline/runs/baseline-20261020-01` | Baseline only; data coverage incomplete |
 | Requirement counts | `docs/req/requirements.yaml` | Independently counted; matches 14/65 |
 | FR-10 fixed semantic evaluation preparation | `docs/ci/financial-metrics-cases.json`, `docs/ci/financial-metrics-rubric.md`, `docs/ci/semantic_eval.yaml`, `scripts/financial_metrics_eval.py` | Preparation artifacts and offline runner/gate tests; `semantic_eval.yaml` remains `unapproved` and no live semantic model requests have been executed |
-| New behavior | None | Not implemented, not tested |
+| Delivered application behavior | [FC trace matrix](trace-matrix.md) | Offline unit and public-entry integration tests for the five delivered requirements. |
 
 ---
 
