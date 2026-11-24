@@ -2997,3 +2997,54 @@ entries:
       - "True approval URL/time, implementation start and final verdict do not yet exist."
       - "Historical pilot/checklist located in approved local temp evidence; later portable projection must verify source bytes/hashes; no historical scripts rerun."
       - "No source/test/requirements/architecture/CI/permission changes, live requests, merge or product acceptance in this checkpoint."
+
+  - id: "AI-SS-PREP-002"
+    date: "2026-11-24"
+    round: "SS-REQ-1 / precise specification preparation"
+    human_operator: null
+    tool: "OpenCode"
+    model: "openai/gpt-6.1-sol"
+    activity: "test_specification_planning"
+    task: "Resolve roadmap versus contract-test selection conflict; publish requirements/architecture-only approval specification."
+    requirement_ids: ["FR-07"]
+    fit_criterion_ids: ["FR-07-FC01", "FR-07-FC02", "FR-07-FC03", "FR-07-FC04", "FR-07-FC05"]
+    files_changed:
+      - "docs/plans/shared-summary-requirements.md"
+      - "docs/plans/shared-summary-integration.md"
+      - "docs/ai-use-log.yaml"
+      - "docs/review-memo.md"
+    ai_contribution: >-
+      Created the separate bounded SS-REQ-1 specification with retained five FC IDs,
+      exact maintenance file list, independent inventory oracle, one existing contract
+      test module and preserved negative checks. Kept overall roadmap/design intact,
+      with explicit next-spec selection. Inspected unchanged checker extraction/scope
+      logic and dry-ran positive governance selection and unlisted-application negative.
+    human_intervention: >-
+      User reviewed PR 15 and retained the design but identified broad future test-path
+      selection as incompatible with the requirements-only next checkpoint. Requested
+      exact specification, actual-main count assertions, parser verification, commit/push
+      and PR metadata update, then a stop pending Yifan's real non-author approval.
+    approval:
+      status: "pending_non_author_SS_REQ_1_approval"
+      evidence:
+        - "Current user message authorizes this planning revision/publication, not the future maintenance or product implementation."
+    verification:
+      status: "planning_parser_checks_only"
+      summary: >-
+        Fetched main unchanged at 5c6e2caed5e4baceb136b5544ba5e283c0822cdb;
+        public PR 14 remains unmerged. Current schema errors=[] (13/55, 6/27 active,
+        7/28 deferred). Exact proposed after counts are 13/55, 7/32 active, 6/23 deferred.
+        Existing parser extracts only test/offline/test_ci_gates.py. Contract preview
+        uses its real governance branch with errors=[]; extra unlisted application
+        path is rejected. No pytest, actual count assertion edit, or runtime execution.
+      evidence:
+        - "docs/plans/shared-summary-requirements.md"
+        - "docs/review-memo.md: RM-15-R1"
+        - "Session checker/schema output; no synthetic approval evidence."
+    transcript_refs: []
+    commit: null
+    pull_request: "https://github.com/Howindy/Teamproject-Tradingagents/pull/15"
+    limitations:
+      - "Non-author approval, implementation start and final verdict pending."
+      - "Raw transcript export unavailable; no fabricated export."
+      - "No core/graph/evaluation tests selected by this specification; later slices need separate approval."

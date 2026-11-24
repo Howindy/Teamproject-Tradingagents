@@ -1,5 +1,7 @@
 # Shared-summary integration — SS-PREP-1
 
+> Current selection after user review: this document is the **overall roadmap**, not the next checkpoint's contract-test specification. PR #15's next approval source is [shared-summary-requirements.md](shared-summary-requirements.md), limited to requirements/architecture/count maintenance and one existing gate module. Its immutable version and genuine non-author approval are required before that work. Later core/graph/semantic slices below remain future work and need their own bounded specifications/approvals. The original roadmap approval marker in §11 is historical proposed text, not the marker to request now. No recursive inclusion of this roadmap's test paths is intended.
+
 ## 1. Status, evidence and approval boundary
 
 **Proposed; human plan/test approval pending.** This checkpoint submits this plan and a factual AI-use entry only. No requirements activation, application/test implementation, model request, dependency installation, workflow dispatch, merge or acceptance is authorized by publication. Stop after the Draft PR; each subsequent checkpoint ends for human inspection.
