@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import sys
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -16,6 +16,7 @@ from tradingagents.dataflows.config import run_config, run_config_context, set_c
 from tradingagents.dataflows.date_window import get_current_date, is_historical
 from tradingagents.dataflows.symbols import safe_ticker_component
 from tradingagents.default_config import DEFAULT_CONFIG
+from tradingagents.financials.wiring import build_metrics_factory
 from tradingagents.llm_clients import create_tier_client, tier_provider
 from tradingagents.memory import TradingMemoryLog, settlement
 from tradingagents.memory.reflection import Reflector
@@ -60,6 +61,8 @@ class TradingAgentsGraph:
         debug=False,
         config: dict[str, Any] = None,
         callbacks: list | None = None,
+        *,
+        metrics_factory=None,
     ):
         """Initialize the trading agents graph and components.
 
@@ -72,6 +75,7 @@ class TradingAgentsGraph:
         self.debug = debug
         self.config = config or DEFAULT_CONFIG
         self.callbacks = callbacks or []
+        self.metrics_factory = metrics_factory if metrics_factory is not None else build_metrics_factory(self.config)
 
         set_config(self.config)
 
@@ -101,6 +105,7 @@ class TradingAgentsGraph:
             self.deep_thinking_llm,
             self.conditional_logic,
             max_tool_rounds,
+            metrics_factory=self.metrics_factory,
         )
 
         self.propagator = Propagator(
@@ -191,7 +196,7 @@ class TradingAgentsGraph:
         # checkpoint management API (begin/end/checkpoint_scope/clear) is retained
         # for callers that use it explicitly; the new default flow does not.
         identity = self._analysis_identity(company_name, trade_date, asset_type)
-        with run_config(self.config), RunContext(analysis_context=identity):
+        with run_config(self.config), RunContext(analysis_context=identity), self._metric_scope():
             # ``_run_graph`` prepares the terminal availability summary AFTER graph END
             # and BEFORE record_decision, so the recorded decision and every downstream
             # consumer see the SAME run's terminal field. The entry does not re-add it.
@@ -199,6 +204,16 @@ class TradingAgentsGraph:
                 company_name, trade_date, asset_type=asset_type,
                 checkpoint_thread_id=None, portfolio=portfolio,
             )
+
+    def _metric_scope(self):
+        """FR-10/IR-05: separate material cache, never replaces FR-03 RunContext.
+
+        Round 4 owns the scenario/risk/final-result boundary. This scope only
+        controls financial evidence reuse and supplies no business-gate input.
+        """
+        factory = getattr(self, "metrics_factory", None)
+        scope = getattr(factory, "analysis_scope", None)
+        return scope() if scope is not None else nullcontext()
 
     def _analysis_identity(self, company_name, trade_date, asset_type: str) -> dict:
         """The minimal internal run identity (existing ticker/date/asset) passed to a
@@ -467,8 +482,13 @@ class TradingAgentsGraph:
         # is inside the entry's run scope, so the copied context carries that binding
         # for the stream's whole lifetime (iteration AND close).
         context = run_config_context(self.config)
-        stream = context.run(self.graph.stream, graph_input, subgraphs=True, **args)
+        # The CLI uses this boundary. Enter/exit in the copied execution context
+        # so interleaved streams do not bind a metric cache in their caller.
+        resources = ExitStack()
+        stream = None
         try:
+            context.run(resources.enter_context, self._metric_scope())
+            stream = context.run(self.graph.stream, graph_input, subgraphs=True, **args)
             while (step := context.run(next, stream, None)) is not None:
                 namespace, mode, chunk = step
                 if namespace:
@@ -486,12 +506,15 @@ class TradingAgentsGraph:
             # surfaced, not silently swallowed. ``close`` is called exactly once.
             closing_after_error = sys.exc_info()[0] is not None
             try:
-                context.run(stream.close)
+                if stream is not None:
+                    context.run(stream.close)
             except Exception as exc:  # noqa: BLE001 - close boundary
                 if closing_after_error:
                     logger.warning("stream close failed after a primary error: %s", exc)
                 else:
                     raise
+            finally:
+                context.run(resources.close)
 
     def _log_state(self, trade_date, final_state):
         """Write a run's final state to JSON under the run's own ticker."""

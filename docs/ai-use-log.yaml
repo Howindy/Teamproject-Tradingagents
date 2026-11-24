@@ -4262,3 +4262,59 @@ entries:
       summary: All 82 data-availability and six financial-metrics tests passed across local environments. The financial requirements schema test was repeated in Python 3.14 with jsonschema installed. Zero provider requests.
     pull_request: https://github.com/Howindy/Teamproject-Tradingagents/pull/23
     limitations: [Formal candidate evaluation needs separate execution approval.]
+
+  - id: "AI-FM-FEATURE-B-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_runtime_integration"
+    task: "Check Round 4 boundaries, synchronize merged Round 3, and connect opt-in FR-10 material to real entries."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC09", "FR-10-FC10"]
+    files_changed:
+      - "src/tradingagents/financials/wiring.py"
+      - "src/tradingagents/agents/analysts/fundamentals_analyst.py"
+      - "src/tradingagents/graph/setup.py"
+      - "src/tradingagents/graph/trading_graph.py"
+      - "src/tradingagents/default_config.py"
+      - "test/offline/test_financial_metrics_integration.py"
+      - "docs/fr10-integration.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Saved prior local work in eeb3089 and merged origin/main 5718bac in 00cf810.
+      The only merge conflict was the appended AI-use records; retained both branches' entries.
+      Checked the actual merged FR-03 RunContext and entries and planned Round 4 ownership.
+      Added no node, graph state field, availability observation or formal/risk mutation.
+      The analyst resolves metric material before first inference and during subsequent tool/wrap-up
+      turns, using the analysis-local provider cache. Config is default-off with fr10_* names.
+      propagate binds a separate metric scope; stream_run enters it in its copied context and closes
+      it on exhaustion, error or explicit close. Existing CLI code and RunContext are unchanged.
+      Documented the branch-side Round 4 handoff contract; no teammate approval is claimed.
+    human_intervention: >-
+      User explicitly requested checking Round 4 conflicts, establishing interface boundaries and
+      proceeding with modifications. User requested proceeding without CI gating. No CI settings,
+      workflows or frozen specifications were changed; no remote merge or live call was performed.
+    approval:
+      subject: "Existing feature plan and B integration tests; current user continuation instruction"
+      status: "approved"
+      approved_at: "2026-11-24T14:12:00Z"
+      evidence:
+        - "https://github.com/Howindy/Teamproject-Tradingagents/pull/19#issuecomment-7133994045"
+    verification:
+      status: "offline_runtime_integration_passed"
+      summary: >-
+        Eleven initial integration cases failed before implementation; then passed. Added an
+        interleaved-stream case and strengthened paired research-summary assertions. Integration,
+        financial core/provider, FR-03, analyst execution, graph end-to-end, FR-04 and SB-01 tests
+        were exercised together. Separate portfolio/checkpoint/Yahoo tests initially had eight
+        temporary-directory access failures. Setting TEMP/TMP to the approved dedicated test root
+        fixed the environment: all 70 cases in that group passed, including the previously failing
+        Yahoo SQLite cases. No tests were skipped or weakened for that repair. CLI --help smoke
+        succeeded. Final combined run of all thirteen named application test files: 463 passed
+        in 9.19s; Ruff check . and git diff --check passed. AI-use YAML parsed successfully.
+    transcript_refs: []
+    limitations:
+      - "No live SEC/Yahoo/model execution or semantic-quality acceptance for this integration."
+      - "Round 4 has not merged; the handoff contract is branch-side documentation, not teammate sign-off."
+      - "CI remains unchanged; local passes do not imply remote gates passed or course-process compliance."
+      - "Prior independent calendar/price-policy limitations remain; unsupported inputs degrade explicitly."

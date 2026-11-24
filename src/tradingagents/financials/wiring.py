@@ -14,10 +14,12 @@ from datetime import date, datetime, time
 from threading import Lock
 from zoneinfo import ZoneInfo
 
+from tradingagents.financials.metrics import unavailable_bundle
 from tradingagents.financials.models import EvaluationClock
 from tradingagents.financials.service import (
     FinancialDataProvider,
     FinancialMetricProvider,
+    FinancialMetricResult,
     LocalReferenceDataProvider,
 )
 
@@ -56,6 +58,11 @@ class MetricProviderFactory:
         if not ticker:
             return None
         clock = run_clock(state["trade_date"])
+        if state.get("asset_type", "stock") != "stock":
+            return FinancialMetricResult(
+                unavailable_bundle(str(ticker), clock.as_of.isoformat(), "not_supported"),
+                "", "not_supported", "not_supported",
+            )
         scope = self._scope.get()
         if scope is None:
             provider = FinancialMetricProvider(self._data_factory(clock), clock)
@@ -69,15 +76,15 @@ class MetricProviderFactory:
 
 
 def build_metrics_factory(config, *, data_factory=None):
-    """None unless FR-07 input is configured; never silently fetches.
+    """None unless FR-10 input is configured; never silently fetches.
 
-    ``fr07_sec_enabled`` selects the general SEC companyfacts adapter;
-    ``fr07_reference_root`` selects the frozen reference snapshot. An explicit
+    ``fr10_sec_enabled`` selects the general SEC companyfacts adapter;
+    ``fr10_reference_root`` selects the frozen reference snapshot. An explicit
     ``data_factory(clock)`` wins, which is the team-data-service injection point.
     """
     config = config or {}
-    root = config.get("fr07_reference_root") or ""
-    use_sec = bool(config.get("fr07_sec_enabled"))
+    root = config.get("fr10_reference_root") or ""
+    use_sec = bool(config.get("fr10_sec_enabled"))
     if data_factory is None and not root and not use_sec:
         return None
 

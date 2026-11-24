@@ -20,7 +20,7 @@ TOOLS = (
 )
 
 
-def create_fundamentals_analyst(llm):
+def create_fundamentals_analyst(llm, metrics_factory=None):
     def fundamentals_analyst_node(state):
         current_date = state["trade_date"]
         instrument_context = get_instrument_context_from_state(state)
@@ -31,6 +31,26 @@ def create_fundamentals_analyst(llm):
             + " Use the available tools: `get_fundamentals` for comprehensive company analysis, `get_balance_sheet`, `get_cashflow`, and `get_income_statement` for specific financial statements, and `get_insider_transactions` for recent insider buying and selling."
             + get_language_instruction()
         )
+
+        # FR-10 / ADR 002 D-203: analyst material only. This resolver owns no
+        # availability, risk or formal-decision fields (Round 4 / IR-01, IR-14).
+        if metrics_factory is not None:
+            try:
+                metrics = metrics_factory(state)
+                material = metrics.text if metrics is not None else ""
+                reason = metrics.reason if metrics is not None else "missing_input"
+            except Exception:
+                material, reason = "", "data_entry_failure"
+            system_message += (
+                "\n\nFR-10 program financial evidence: use the supplied value for the"
+                " matching metric and period instead of recomputing it from narrative."
+                " Preserve units, periods, sources and n/a reasons. n/a does not mean zero."
+                " Other metrics may still use the existing tools; label any additional"
+                " model calculation as an unverified derivation. Do not relabel annual"
+                " P/E as TTM, or reported-span FCF as a derived quarter. This table does"
+                " not establish overall data completeness or determine risk/final rating.\n"
+                + (material or f"FR-10 metrics unavailable: {reason or 'missing_input'}.")
+            )
 
         prompt = ChatPromptTemplate.from_messages(
             [
