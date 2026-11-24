@@ -80,5 +80,8 @@ context in disclosure metadata can supply calendar evidence only when the cited
 file/element and period fields match; absent/contradictory metadata remains n/a.
 SEC structured facts now use raw-text decimal-preserving caching separately from
 legacy statement-tool caches. Initialization failures are reused within a run;
-the next run can retry. Yahoo quote conversion is unchanged. None of these checks
-uses a real model completion or establishes semantic-quality acceptance.
+the next run can retry. A Yahoo history frame containing only binary floating-point
+quotes yields `price_precision_unknown` for FY P/E. Supply an exact quote to
+compute that row. The remaining nine rows retain their own inputs and results.
+A SEC outage yields `data_entry_failure:sec_unavailable` in the rendered rows.
+Reported net margin requires disclosed net income. These checks use offline inputs.

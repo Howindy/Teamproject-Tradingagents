@@ -222,7 +222,7 @@ def calculate_metrics(inputs: FinancialInputs, clock: EvaluationClock) -> Metric
                     # Preserve the price adapter's explicit reason, without
                     # deriving availability from model prose or other fields.
                     reason = next((issue for issue in inputs.issues if issue in {
-                        "stale_price", "price_availability_unknown", "price_currency_unconfirmed",
+                        "stale_price", "price_availability_unknown", "price_currency_unconfirmed", "price_precision_unknown",
                     }), "missing_price")
                     raise _Unavailable(reason, known, ("completed_close",))
                 extra_sources = (price.source_ref,)

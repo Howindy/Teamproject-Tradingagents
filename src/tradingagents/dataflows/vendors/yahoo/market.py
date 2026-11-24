@@ -304,7 +304,7 @@ def completed_close(symbol: str, as_of_date: str, cutoff: datetime, split_floor:
         day = stamp.date()
         completed = datetime(day.year, day.month, day.day, 16, tzinfo=tz)
         if completed <= cutoff and pd.notna(close):
-            sessions.append((day, float(close), completed))
+            sessions.append((day, close, completed))
     if not sessions:
         return None
     price_date, value, completed = max(sessions, key=lambda session: session[0])

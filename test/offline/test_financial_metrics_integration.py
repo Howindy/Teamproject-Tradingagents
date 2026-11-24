@@ -12,11 +12,11 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+import test_fr03_integration as fr03
 from langchain_core.messages import HumanMessage
 from pydantic import Field
+from test_financial_metrics import projected
 
-from test.offline import test_fr03_integration as fr03
-from test.offline.test_financial_metrics import projected
 from tradingagents.agents.analysts.fundamentals_analyst import TOOLS, create_fundamentals_analyst
 from tradingagents.agents.analysts.turn import WRAP_UP
 from tradingagents.default_config import DEFAULT_CONFIG
@@ -29,8 +29,8 @@ from tradingagents.run_context import RunContext, current
 @pytest.mark.parametrize("case_index", range(4))
 def test_actual_trusted_probe_uses_current_calculator_and_prompt(case_index):
     """FC01-FC10: original trusted projection/driver, real installed candidate, no API."""
-    from test.offline.test_financial_metrics import DATA
-    from test.offline.test_financial_metrics_evaluation import fm_eval
+    from test_financial_metrics import DATA
+    from test_financial_metrics_evaluation import fm_eval
 
     case = DATA["cases"][case_index]
     captured = fm_eval._run_prompt_capture_subprocess(

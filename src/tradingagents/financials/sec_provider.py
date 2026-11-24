@@ -25,7 +25,7 @@ CONCEPTS = {
     "revenue": (("RevenueFromContractWithCustomerExcludingAssessedTax", 0), ("Revenues", 1), ("SalesRevenueNet", 2)),
     "gross_profit": (("GrossProfit", 0),),
     "operating_income": (("OperatingIncomeLoss", 0),),
-    "net_income": (("NetIncomeLoss", 0), ("NetIncomeLossAvailableToCommonStockholdersBasic", 1)),
+    "net_income": (("NetIncomeLoss", 0),),
     "diluted_eps": (("EarningsPerShareDiluted", 0),),
     "cfo": (("NetCashProvidedByUsedInOperatingActivities", 0),
             ("NetCashProvidedByUsedInOperatingActivitiesContinuingOperations", 1)),
@@ -206,6 +206,9 @@ def _price(ticker, as_of, clock, eps_period_end):
     # session. Do not self-certify stale vendor data as fresh (FR-10-FC06).
     if not row.get("expected_latest_session") or not row.get("freshness_evidence"):
         return None, "price_availability_unknown"
+    value = row["value"]
+    if isinstance(value, bool) or not isinstance(value, (Decimal, int, str)):
+        return None, "price_precision_unknown"
     basis = "common_shares"
     evidence = [f"yahoo://{ticker}/history-metadata currency={row['currency']}"]
     if row["splits_between"]:
@@ -213,7 +216,7 @@ def _price(ticker, as_of, clock, eps_period_end):
         evidence.append(f"splits after annual EPS: {row['splits_between']}")
     price_date = date.fromisoformat(row["price_date"])
     return PriceRecord(
-        value=Decimal(str(row["value"])),
+        value=value,
         currency=row["currency"],
         unit=row["unit"],
         price_date=price_date,
