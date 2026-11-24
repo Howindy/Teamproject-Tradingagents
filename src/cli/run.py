@@ -190,9 +190,13 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
             if section_name in obj.report_sections and obj.report_sections[section_name] is not None:
                 content = obj.report_sections[section_name]
                 if content:
-                    file_name = f"{section_name}.md"
+                    paths = {"portfolio_proposal": "5_portfolio/proposal.md",
+                             "final_trade_decision": "5_portfolio/decision.md",
+                             "risk_discussion": "4_risk/discussion.md"}
+                    path = report_dir / paths.get(section_name, f"{section_name}.md")
+                    path.parent.mkdir(parents=True, exist_ok=True)
                     text = "\n".join(str(item) for item in content) if isinstance(content, list) else content
-                    with open(report_dir / file_name, "w", encoding="utf-8") as f:
+                    with open(path, "w", encoding="utf-8") as f:
                         f.write(text)
         return wrapper
 
@@ -235,7 +239,8 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
         # instrument identity; the graph's Memory Log step settles past
         # decisions and loads their lessons alongside the analysts.
         init_agent_state = graph.create_run_state(
-            selections["ticker"], selections["analysis_date"], selections["asset_type"], portfolio
+            selections["ticker"], selections["analysis_date"], selections["asset_type"], portfolio,
+            **({"purchase_scenario": flags["purchase_scenario"]} if "purchase_scenario" in flags else {}),
         )
         # Pass callbacks to graph config for tool execution tracking
         # (LLM tracking is handled separately via LLM constructor)
@@ -324,30 +329,30 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
                     agg_hist = risk_state.get("aggressive_history", "").strip()
                     con_hist = risk_state.get("conservative_history", "").strip()
                     neu_hist = risk_state.get("neutral_history", "").strip()
-                    judge = (chunk.get("final_trade_decision") or "").strip()
+                    judge = ((chunk.get("model_proposal") or {}).get("text") or "").strip()
 
                     if agg_hist:
                         if message_buffer.agent_status.get("Aggressive Analyst") != "completed":
                             message_buffer.update_agent_status("Aggressive Analyst", "in_progress")
                         message_buffer.update_report_section(
-                            "final_trade_decision", f"### Aggressive Analyst Analysis\n{agg_hist}"
+                            "risk_discussion", f"### Intermediate Aggressive Analyst Analysis\n{agg_hist}"
                         )
                     if con_hist:
                         if message_buffer.agent_status.get("Conservative Analyst") != "completed":
                             message_buffer.update_agent_status("Conservative Analyst", "in_progress")
                         message_buffer.update_report_section(
-                            "final_trade_decision", f"### Conservative Analyst Analysis\n{con_hist}"
+                            "risk_discussion", f"### Intermediate Conservative Analyst Analysis\n{con_hist}"
                         )
                     if neu_hist:
                         if message_buffer.agent_status.get("Neutral Analyst") != "completed":
                             message_buffer.update_agent_status("Neutral Analyst", "in_progress")
                         message_buffer.update_report_section(
-                            "final_trade_decision", f"### Neutral Analyst Analysis\n{neu_hist}"
+                            "risk_discussion", f"### Intermediate Neutral Analyst Analysis\n{neu_hist}"
                         )
                     if judge and message_buffer.agent_status.get("Portfolio Manager") != "completed":
                         message_buffer.update_agent_status("Portfolio Manager", "in_progress")
                         message_buffer.update_report_section(
-                            "final_trade_decision", f"### Portfolio Manager Decision\n{judge}"
+                            "portfolio_proposal", f"### Original Model Proposal — Not Yet Checked\n{judge}"
                         )
                         message_buffer.update_agent_status("Aggressive Analyst", "completed")
                         message_buffer.update_agent_status("Conservative Analyst", "completed")
@@ -369,6 +374,7 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
             # state that already carries the terminal field. The snapshot is generated
             # exactly ONCE per normal CLI run. (The new flow leaves any old checkpoint
             # untouched; it does not clear it on success.)
+            rating = run_rating(final_state)
             final_state["data_availability_summary"] = _prepare_terminal_summary(
                 ctx.registry, selected_analyst_keys, identity)
             graph.record_decision(selections["ticker"], selections["analysis_date"], final_state)
@@ -401,7 +407,9 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
         message_buffer.add_message("System", analyst_wall_time_tracker.format_summary())
 
         for section in message_buffer.report_sections:
-            if section in final_state:
+            if section == "final_trade_decision":
+                message_buffer.update_report_section(section, f"Formal rating: {rating}\n\n{final_state[section]}")
+            elif section in final_state:
                 message_buffer.update_report_section(section, final_state[section])
 
         update_display(layout, stats_handler=stats_handler, start_time=start_time)
@@ -409,14 +417,9 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
     # Post-analysis prompts (outside Live context for clean interaction)
     console.print("\n[bold cyan]Analysis Complete![/bold cyan]\n")
 
-    # A decision nobody can read is not a position. Say so here rather than
-    # leaving the run to look like a normal result.
-    if is_review(run_rating(final_state)):
-        console.print(
-            "[yellow]No rating could be read from the final decision, so this run "
-            "is recorded for review rather than as a position. Re-run, or read the "
-            "decision text below and judge it yourself.[/yellow]\n"
-        )
+    console.print(f"Formal rating: {rating}")
+    if is_review(final_state["final_rating"]):
+        console.print(final_state["final_trade_decision"], markup=False)
     console.print(f"[dim]{analyst_wall_time_tracker.format_summary()}[/dim]")
 
     _offer_reports(final_state, graph, selections["ticker"],

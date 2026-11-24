@@ -15,10 +15,12 @@ from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 
+from tradingagents.agents.rating import run_rating
 from tradingagents.graph.analyst_execution import (
     ANALYST_NODE_SPECS,
     AnalystExecutionPlan,
 )
+from tradingagents.reporting import proposal_label, risk_text
 
 console = Console()
 
@@ -50,6 +52,8 @@ class MessageBuffer:
         "fundamentals_report": ("fundamentals", "Fundamentals Analyst"),
         "investment_plan": (None, "Research Manager"),
         "trader_investment_plan": (None, "Trader"),
+        "risk_discussion": (None, "Portfolio Manager"),
+        "portfolio_proposal": (None, "Portfolio Manager"),
         "final_trade_decision": (None, "Portfolio Manager"),
     }
 
@@ -147,7 +151,9 @@ class MessageBuffer:
                 "fundamentals_report": "Fundamentals Analysis",
                 "investment_plan": "Research Team Decision",
                 "trader_investment_plan": "Trading Team Plan",
-                "final_trade_decision": "Portfolio Management Decision",
+                "risk_discussion": "Intermediate Risk Discussion",
+                "portfolio_proposal": "Original Model Proposal — Not Yet Checked",
+                "final_trade_decision": "Formal Recommendation",
             }
             self.current_report = (
                 f"### {section_titles[latest_section]}\n{latest_content}"
@@ -378,6 +384,7 @@ def update_display(layout, spinner_text=None, stats_handler=None, start_time=Non
 
 def display_complete_report(final_state):
     """Display the complete analysis report sequentially (avoids truncation)."""
+    rating = run_rating(final_state)
     console.print()
     console.print(Rule("Complete Analysis Report", style="bold green"))
 
@@ -431,10 +438,17 @@ def display_complete_report(final_state):
             for title, content in risk_reports:
                 console.print(Panel(Markdown(content), title=title, border_style="blue", padding=(1, 2)))
 
-    # V. Portfolio Manager Decision
+    if risk := final_state.get("portfolio_risk_result"):
+        console.print(Rule("Portfolio Risk Check"))
+        console.print(Text(risk_text(risk)))
+
+    proposal = final_state["model_proposal"] or {}
+    if proposal.get("text"):
+        console.print(Panel(Markdown(proposal["text"]), title=proposal_label(final_state["gate_status"])))
+    # V. Formal decision
     if final_state.get("final_trade_decision"):
-        console.print(Panel("[bold]V. Portfolio Manager Decision[/bold]", border_style="green"))
-        console.print(Panel(Markdown(final_state["final_trade_decision"]), title="Portfolio Manager", border_style="blue", padding=(1, 2)))
+        console.print(Panel("[bold]V. Formal Recommendation[/bold]", border_style="green"))
+        console.print(Panel(Markdown(final_state["final_trade_decision"]), title=f"Formal rating: {rating}", border_style="blue", padding=(1, 2)))
 
     # VI. Program Data Availability (deterministic; from the passed state only).
     # A terminal mapping renders that block; terminal null OR an absent field both

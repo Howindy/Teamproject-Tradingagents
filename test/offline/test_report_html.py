@@ -20,6 +20,8 @@ def _state(**overrides):
              "market_report": "# Market view\n\nPrice | Level\n--- | ---\nClose | 181.2\n",
              "news_report": "News text.",
              "final_trade_decision": "**Rating**: Overweight\n\nAdd on weakness."}
+    state.update(model_proposal={"rating": "Overweight", "text": state["final_trade_decision"]},
+                 gate_status="passed", reasons=[], final_rating="Overweight")
     state.update(overrides)
     return state
 

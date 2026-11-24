@@ -2152,7 +2152,7 @@ def collect_api_surface() -> dict[str, list[str]]:
 
 
 EXPECTED_API_SURFACE = {
-    "graph.propagate": ["self", "company_name", "trade_date", "asset_type", "portfolio"],
+    "graph.propagate": ["self", "company_name", "trade_date", "asset_type", "portfolio", "purchase_scenario"],
     "cli.run_analysis": ["checkpoint", "portfolio", "flags"],
     "net.get_scrubbed": ["url", "params", "timeout", "secret", "passthrough"],
     "symbols.normalize_symbol": ["raw"],

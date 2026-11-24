@@ -3,8 +3,10 @@ import json
 import logging
 import os
 import sys
+from collections.abc import Mapping
 from contextlib import contextmanager
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -167,7 +169,7 @@ class TradingAgentsGraph:
             f"settings={digest}",
         ])
 
-    def propagate(self, company_name, trade_date, asset_type: str = "stock", portfolio=None):
+    def propagate(self, company_name, trade_date, asset_type: str = "stock", portfolio=None, *, purchase_scenario=None):
         """Run the trading agents graph for a company on a specific date.
 
         ``asset_type`` selects between the stock pipeline (default) and the
@@ -180,7 +182,7 @@ class TradingAgentsGraph:
 
         Returns ``(final_state, signal)`` where ``signal`` is one of the 5-tier
         ratings (Buy / Overweight / Hold / Underweight / Sell) or ``"REVIEW"``
-        when the decision had no parseable rating (#1170); guard with
+        when the final check requires manual review; guard with
         ``tradingagents.agents.rating.is_review`` before mapping it to the
         PortfolioRating enum.
         """
@@ -197,7 +199,7 @@ class TradingAgentsGraph:
             # consumer see the SAME run's terminal field. The entry does not re-add it.
             return self._run_graph(
                 company_name, trade_date, asset_type=asset_type,
-                checkpoint_thread_id=None, portfolio=portfolio,
+                checkpoint_thread_id=None, portfolio=portfolio, purchase_scenario=purchase_scenario,
             )
 
     def _analysis_identity(self, company_name, trade_date, asset_type: str) -> dict:
@@ -322,20 +324,32 @@ class TradingAgentsGraph:
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return Path(self.config["results_dir"]) / "reports" / f"{safe_ticker_component(ticker)}_{stamp}"
 
-    def create_run_state(self, company_name, trade_date, asset_type: str = "stock", portfolio=None):
+    def create_run_state(self, company_name, trade_date, asset_type: str = "stock", portfolio=None, *, purchase_scenario=None):
         """Build a run's initial state; propagate() and the CLI both start here.
 
         Injects the resolved instrument identity for every agent (#814). The
         memory log's lessons are not here: the graph's Memory Log step settles
         and loads them alongside the analysts (see ``_memory_step``).
         """
-        return self.propagator.create_initial_state(
+        state = self.propagator.create_initial_state(
             company_name,
             trade_date,
             asset_type=asset_type,
             instrument_context=self.resolve_instrument_context(company_name, asset_type, trade_date),
             portfolio_context=portfolio.render(company_name) if portfolio is not None else "",
         )
+
+        thresholds = {}
+        if isinstance(purchase_scenario, Mapping):
+            purchase_scenario = {
+                key: str(value) if isinstance(value, Decimal) else value
+                for key, value in purchase_scenario.items()
+            }
+            for key in ("max_projected_weight", "max_stop_distance"):
+                if key in purchase_scenario:
+                    thresholds[key] = purchase_scenario.pop(key)
+        state.update(purchase_scenario=purchase_scenario, thresholds=thresholds)
+        return state
 
     def _memory_step(self, state):
         """The graph's Memory Log step, alongside the analysts (#1428): settle every
@@ -390,6 +404,7 @@ class TradingAgentsGraph:
     def record_decision(self, company_name, trade_date, final_state):
         """Record a finished run: its state log, and its decision in the memory log
         for reflection on the next same-ticker run. propagate() and the CLI both end here."""
+        rating = run_rating(final_state)
         self._log_state(trade_date, final_state)
         decision = final_state.get("final_trade_decision")
         if not decision:
@@ -398,13 +413,13 @@ class TradingAgentsGraph:
             return
         self.memory_log.store_decision(
             ticker=company_name, trade_date=trade_date, final_trade_decision=decision,
-            rating=run_rating(final_state),
+            rating=rating,
         )
 
     def _run_graph(self, company_name, trade_date, asset_type: str = "stock",
-                   checkpoint_thread_id: str | None = None, portfolio=None):
+                   checkpoint_thread_id: str | None = None, portfolio=None, *, purchase_scenario=None):
         """Execute the graph and write the resulting state to disk and memory log."""
-        init_agent_state = self.create_run_state(company_name, trade_date, asset_type, portfolio)
+        init_agent_state = self.create_run_state(company_name, trade_date, asset_type, portfolio, purchase_scenario=purchase_scenario)
         args = self.propagator.get_graph_args()
 
         # Inject the checkpoint thread_id (from checkpoint_scope) so the same
@@ -435,6 +450,7 @@ class TradingAgentsGraph:
         # state (already carrying the terminal field) enters record_decision and every
         # later delivery/save step. The snapshot is generated exactly ONCE per normal
         # entry execution here (the research snapshot is a separate, independent one).
+        rating = run_rating(final_state)
         ctx = current_run()
         registry = ctx.registry if ctx is not None else None
         identity = self._analysis_identity(company_name, trade_date, asset_type)
@@ -446,7 +462,7 @@ class TradingAgentsGraph:
         # The new default flow never clears (or otherwise touches) an old
         # checkpoint; old evidence is left byte-identical. The explicit
         # ``clear_checkpoint_on_success`` API remains available to direct callers.
-        return final_state, run_rating(final_state)
+        return final_state, rating
 
     def stream_run(self, graph_input, **args):
         """Stream a run as ``(messages, state)`` pairs.
@@ -519,7 +535,11 @@ class TradingAgentsGraph:
             },
             "investment_plan": final_state["investment_plan"],
             "final_trade_decision": final_state["final_trade_decision"],
-            "final_rating": run_rating(final_state),
+            "final_rating": final_state["final_rating"],
+            "model_proposal": final_state["model_proposal"],
+            "gate_status": final_state["gate_status"],
+            "reasons": final_state["reasons"],
+            "portfolio_risk_result": final_state.get("portfolio_risk_result"),
             "run_settings": self.run_settings(),
         }
 

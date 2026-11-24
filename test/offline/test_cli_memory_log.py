@@ -16,6 +16,12 @@ from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.memory import TradingMemoryLog
 
 
+def _checked_buy():
+    text = "Rating: Buy\n\nBuy NVDA."
+    return {"model_proposal": {"rating": "Buy", "text": text}, "gate_status": "passed",
+            "final_rating": "Buy", "reasons": [], "final_trade_decision": text}
+
+
 def _bare_graph(tmp_path):
     """A graph without __init__ (no LLM clients), wired to a temp log."""
     graph = object.__new__(TradingAgentsGraph)
@@ -28,7 +34,7 @@ def _bare_graph(tmp_path):
 @pytest.mark.unit
 def test_record_decision_appends_a_pending_entry(tmp_path):
     graph = _bare_graph(tmp_path)
-    graph.record_decision("NVDA", "2026-01-10", {"final_trade_decision": "Rating: Buy\n\nBuy NVDA."})
+    graph.record_decision("NVDA", "2026-01-10", _checked_buy())
     entries = graph.memory_log.load_entries()
     assert [(e["ticker"], e["pending"], e["rating"]) for e in entries] == [("NVDA", True, "Buy")]
 
@@ -36,7 +42,9 @@ def test_record_decision_appends_a_pending_entry(tmp_path):
 @pytest.mark.unit
 def test_record_decision_skips_a_run_without_a_decision(tmp_path):
     graph = _bare_graph(tmp_path)
-    graph.record_decision("NVDA", "2026-01-10", {})
+    graph._log_state = lambda *args: pytest.fail("An incomplete result reached the state writer")
+    with pytest.raises(ValueError):
+        graph.record_decision("NVDA", "2026-01-10", {})
     assert graph.memory_log.load_entries() == []
 
 
@@ -78,7 +86,7 @@ class _FakeGraph:
 
     def stream_run(self, graph_input, **kwargs):
         yield [], {"messages": [], "market_report": "M"}
-        yield [], {"messages": [], "final_trade_decision": "Rating: Buy\n\nBuy NVDA.", "final_rating": "Buy"}
+        yield [], {"messages": [], **_checked_buy()}
 
 
 class _NullLive:
@@ -191,6 +199,8 @@ def test_recording_a_run_writes_its_state_log(tmp_path):
              "trader_investment_plan": "T", "investment_plan": "P",
              "risk_debate_state": {"aggressive_history": "", "conservative_history": "",
                                    "neutral_history": "", "history": ""},
+             "model_proposal": {"rating": "Hold", "text": "**Rating**: Hold"},
+             "gate_status": "passed", "reasons": [],
              "final_trade_decision": "**Rating**: Hold", "final_rating": "Hold"}
 
     graph.record_decision("NVDA", "2026-09-23", state)
