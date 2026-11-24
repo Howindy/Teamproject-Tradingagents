@@ -113,6 +113,13 @@ TEMP/TMP 后相关 70 项全部通过；没有靠 skip/xfail 或改应用代码�
 并包含补充的 probe、边界和异常测试。准备/评估相关四文件组合另为 **73 passed**；
 两次运行有重叠，不相加。Ruff、API、依赖一致性和 diff 检查通过，未执行真实模型评估。
 
+其后收到价格异常隔离反馈：原先 Yahoo 超时或非有限价格会向服务层传播，导致已取得的
+SEC facts 被整组降级。该问题已在 `SecCompanyFactsProvider.fetch()` 的价格读取边界修正。
+现在只令 FY P/E 为 `n/a: price_availability_unknown`，保留其他九项及已知 EPS 来源。
+新增 timeout/Infinity/NaN 的真实 provider→service→calculator 测试，验证同分析复用失败、
+下次分析价格恢复后十项均正常。此次四文件相关回归 **90 passed**，Ruff 通过；
+未将历史 511 项重跑结果或真实模型验收归入本次结论。
+
 ### 1. trusted probe 的财历证据兼容
 
 当前 `scripts/financial_metrics_eval.py` 的 candidate probe 构造 FinancialFact 时传

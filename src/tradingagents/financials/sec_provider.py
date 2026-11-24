@@ -250,9 +250,14 @@ class SecCompanyFactsProvider:
         if not facts:
             return FinancialInputs(subject_id=cik, issues=("not_supported:no_visible_fr07_facts",))
         eps = [f for f in facts if f.metric == "diluted_eps" and f.span == "annual"]
-        price, reason = (
-            _price(ticker, as_of, self._clock, max(f.period_end for f in eps)) if eps else (None, "missing_input")
-        )
+        price, reason = None, "missing_input"
+        if eps:
+            try:
+                price, reason = _price(ticker, as_of, self._clock, max(f.period_end for f in eps))
+            except Exception:
+                # FC06/FC10: price is optional evidence for FY P/E only. Keep
+                # successfully acquired SEC facts when Yahoo or price parsing fails.
+                price, reason = None, "price_availability_unknown"
         return FinancialInputs(
             subject_id=cik,
             facts=tuple(facts),

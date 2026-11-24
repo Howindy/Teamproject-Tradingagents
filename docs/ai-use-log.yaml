@@ -4423,3 +4423,34 @@ entries:
       - "Current main remains 5718bac; Round-04A is on a separate branch, with no combined acceptance performed."
       - "Yahoo quote conversion and weekday freshness limitations are unchanged."
       - "Trusted semantic baseline wiring, claim-negation scoring and remote PR gate status remain separate unresolved items."
+
+  - id: "AI-FM-PRICE-ISOLATION-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_optional_price_failure_isolation"
+    task: "Fix the teammate-reported P1: Yahoo exceptions must not discard successful SEC financial facts."
+    requirement_ids: ["FR-10"]
+    fit_criterion_ids: ["FR-10-FC06", "FR-10-FC10"]
+    files_changed:
+      - "src/tradingagents/financials/sec_provider.py"
+      - "test/offline/test_sec_financial_provider.py"
+      - "docs/fr10-handoff-yifan.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Reproduced timeout and nonfinite-price failures through the real SEC adapter, metric factory,
+      service and calculator. All three new cases initially lost the other nine metrics. Caught
+      exceptions strictly at the optional price-read boundary in SecCompanyFactsProvider.fetch;
+      successful facts remain intact, and price_availability_unknown affects FY P/E only.
+      No change to whole-SEC-fetch failure semantics, graph, quote precision or formal decisions.
+    human_intervention: "User supplied the teammate's P1 report; continued the authorized FR-10 correction and branch update."
+    verification:
+      status: "passed"
+      summary: >-
+        Regression cases for timeout, Infinity and NaN: 3 failed before the fix. After the fix,
+        financial core, SEC provider, actual entry/probe integration and existing SEC tools:
+        90 passed in 13.94s. Asserted nine unchanged computed rows with operands/sources, P/E-only
+        unavailability retaining annual EPS evidence, one price attempt within an analysis and
+        full recovery in the next analysis. Ruff check . passed. No external API request.
+    transcript_refs: []
+    limitations: ["Targeted regression only; no full-suite rerun, live evaluation or main merge."]

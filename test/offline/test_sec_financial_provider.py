@@ -224,3 +224,60 @@ def test_january_fiscal_year_comparative_is_not_carrying_filing_year():
     assert (by_end[date(2024, 10, 31)].fiscal_year, by_end[date(2024, 10, 31)].fiscal_quarter) == (2025, 3)
     assert (by_end[date(2023, 10, 31)].fiscal_year, by_end[date(2023, 10, 31)].fiscal_quarter) == (2024, 3)
     assert dict(by_end[date(2023, 10, 31)].disclosure)["fy"] == "2025"
+
+
+@pytest.mark.parametrize("fault", ["timeout", "infinity", "nan"])
+def test_price_failure_preserves_sec_metrics_and_next_analysis_recovers(monkeypatch, fault):
+    """FC06/FC10: optional Yahoo failure affects P/E only, including cached failure and recovery."""
+    import copy
+
+    from test.offline.test_financial_metrics import DATA
+    from tradingagents.financials.sec_provider import SecCompanyFactsProvider
+    from tradingagents.financials.wiring import build_metrics_factory
+
+    us_gaap = {}
+    reference = DATA["reference_data"]
+    for fact in reference["selected_facts"].values():
+        if fact["issuer"] == "aapl":
+            concept = fact["concept"].split(":")[-1]
+            units = us_gaap.setdefault(concept, {"units": {}})["units"]
+            units.setdefault(fact["unit"], []).append(copy.deepcopy(fact["raw_companyfacts_record"]))
+    monkeypatch.setattr(sec_edgar, "company_facts", lambda _: (
+        "0000320193", {"facts": {"us-gaap": copy.deepcopy(us_gaap)}}))
+    calls = []
+
+    def price(*args, **kwargs):
+        calls.append(args)
+        if len(calls) == 1 and fault == "timeout":
+            raise TimeoutError("synthetic Yahoo timeout")
+        value = Decimal(reference["price_records"]["aapl"]["value"])
+        if len(calls) == 1:
+            value = Decimal("Infinity" if fault == "infinity" else "NaN")
+        return {"value": value, "currency": "USD", "unit": "USD/shares",
+                "price_date": "2025-08-04", "completed_at": datetime(
+                    2025, 8, 4, 16, tzinfo=ZoneInfo("America/New_York")),
+                "expected_latest_session": "2025-08-04", "freshness_evidence": "fixture weekday policy",
+                "freshness_status": "verified", "splits_between": [],
+                "exchange_timezone": "America/New_York", "source_ref": "fixture://aapl-close"}
+
+    monkeypatch.setattr(market, "completed_close", price)
+    factory = build_metrics_factory({}, data_factory=SecCompanyFactsProvider)
+    state = {"company_of_interest": "AAPL", "trade_date": "2025-08-05"}
+    expected = [r["expected_display"] for r in reference["expected_metrics"] if r["issuer"] == "aapl"]
+    with factory.analysis_scope():
+        failed_price = factory(state)
+        assert factory(state) is failed_price
+        rows = failed_price.bundle.rows
+        assert [r.display for r in rows[:-1]] == expected[:-1]
+        assert all(r.status == "computed" and r.input_fact_ids and r.sources for r in rows[:-1])
+        assert (rows[-1].status, rows[-1].reason) == ("n/a", "price_availability_unknown")
+        assert rows[-1].input_fact_ids and rows[-1].sources  # annual EPS evidence remains
+        assert failed_price.bundle.facts
+        assert "data_entry_failure" not in failed_price.bundle.issues
+        assert len(calls) == 1
+    with factory.analysis_scope():
+        recovered = factory(state)
+        assert [r.display for r in recovered.bundle.rows] == expected
+        assert all(r.status == "computed" for r in recovered.bundle.rows)
+        assert factory(state) is recovered
+    assert len(calls) == 2
