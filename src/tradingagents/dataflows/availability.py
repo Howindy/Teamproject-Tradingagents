@@ -1395,6 +1395,19 @@ def research_block(summary):
     return render_summary_block(summary, stage="research")
 
 
+def research_prompt_block(summary):
+    """Pair the fixed snapshot with guidance for its use in research reasoning."""
+    return research_block(summary) + (
+        "\nIn your reasoning, state what the program can confirm about necessary coverage "
+        "for this asset. Distinguish coverage from the strength of the investment case. "
+        "For a missing source, identify its scope and acknowledge any other source the "
+        "reports show is available. Treat supplementary limitations separately. "
+        "If the summary is missing, explain that coverage is unconfirmed and use the "
+        "reports you have. If the rules do not apply, identify which rules and why; "
+        "that status alone says nothing about individual source outcomes."
+    )
+
+
 def report_block(summary):
     """The deterministic report-stage block for the terminal report/display.
     ``None`` renders the fixed report-stage unavailable text."""
