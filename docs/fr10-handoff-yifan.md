@@ -11,7 +11,7 @@ Round-04B-v3 中引用的 `0b9de969` 是较早版本，与当前实现存在下�
 
 - 分支：`feat/financial-metrics-integration`，现有 PR：[#19](https://github.com/Howindy/Teamproject-Tradingagents/pull/19)。
 - 运行入口接入基准：`2fbd1cf`；后续离线适配修正见本分支最新提交和本文更新。
-- 已包含 main 的 Round 3 合并版本 `5718bac`。
+- 已包含 Round 3 `5718bac`，并于后续组合测试中合入 Round-04A main `a835d43`。
 - 早期交接材料描述的是该接入基准；本说明下方记录了其后的修正，不代表已经最终验收。
 - 当前仍未合并 main，也没有当前功能候选的正式语义评估通过结论。
 
@@ -71,10 +71,28 @@ FR-10 本身不增加摘要调用或其他模型请求，仍使用财务分析�
    正式决策；指标缺失不额外 veto。模型报告内容改变可能间接改变建议，这是正常业务影响。
 7. **只在 Fundamentals 使用程序指标。** 后续角色继续消费原有报告，不注入共享摘要。
 
-共享修改主要在 `graph/setup.py` 和 `graph/trading_graph.py`；文本冲突仍可能发生。
+共享修改主要在 `graph/setup.py` 和 `graph/trading_graph.py`。
 本分支在这两个文件中的插入点是可选 `metrics_factory` 参数、财务分析员参数传递和
-作用域清理。04A 描述的插入点是后置节点、场景和正式交付逻辑。目前没有完成双方最终
-实现的联合合并或组合验证，因此这里不作“合并一定无冲突”的结论。
+作用域清理。04A 的插入点是后置节点、场景和正式交付逻辑。与 `a835d43` 合并时仅图
+文件 import 和重复 P07 维护发生文本冲突：图保留双方 import，P07 采用 main 已合并版本。
+两入口 × 风险 passed/blocked/error × FR-10 off/on/unavailable 的 18 次运行组合已通过；
+正式结果、保存 JSON 和 memory 内容一致，两个实际 evaluator 每次各执行一次。
+这不是双方真实模型运行结果或最终验收结论。
+
+合并测试记录（Windows，2026-11-25）：
+
+- FR-10 / Round-04A / formal-contract 首轮定向检查 66 passed；新增矩阵 6 个测试，
+  每项实际跑三种 FR-10 模式，共 18 次运行，并检查正式 JSON 和 memory 内容。
+- 全量离线复验原始结果：2096 passed、11 failed、15 errors、4 skipped、1 deselected，
+  另有 100 subtests passed。未把该次运行称为全绿。
+- 其中 18 个失败/错误与测试进程残缺的 Git 配置有关（缺少 GIT_CONFIG_VALUE_0）。
+  只对复验进程设置 GIT_CONFIG_COUNT=0 后，两组离线评估模块 92 passed、1 failed；
+  该单项仍是下述已在纯 main 复现的换行测试。未改仓库 Git 设置或测试断言。
+- 剩余 8 项均在独立 `a835d43` main 工作区复现：2 项 Windows 文件权限断言、
+  2 项 POSIX 升级命令预期、1 项临时缓存位于用户目录、2 项 Windows `127.1`
+  回环解析、1 项数据集换行哈希。没有把这些失败改成 skip/xfail 或计为通过。
+- `test_cache_writes.py` 的 8 项在全量运行中均通过。未运行 macOS 环境。
+- Ruff、API 和依赖检查通过。没有发现新增应用回归；真实模型质量和最终验收未由此证明。
 
 更详细的现有接口与启动示例见 [fr10-integration.md](fr10-integration.md)。
 
@@ -154,8 +172,8 @@ SEC facts 被整组降级。该问题已在 `SecCompanyFactsProvider.fetch()` �
 
 ### 4. 历史准备测试、语义评估与 CI 单独说明
 
-P07 已将准备阶段范围断言绑定到固定 main `5718bacff6cafb9412a805878fe82e97f279a8bc`
-的 Git tree/blob；当前候选仍检查没有引入 deferred brief。受控违规准备快照仍失败，
+P07 在合并 `a835d43` 时统一采用 main 上已合入的版本：核对历史准备 PR 的固定 base
+`5c6e2cae` 与 head `88d47e71` 的源码差异及配置，并保留当前 deferred brief 检查。
 没有 skip、运行时 fetch 或修改 frozen cases/rubric/scorer。
 
 语义 baseline 注入及否定句评分问题仍未在本轮修复。当前没有 candidate-bound 真实
@@ -169,5 +187,5 @@ P07 已将准备阶段范围断言绑定到固定 main `5718bacff6cafb9412a80587
 
 - 当前分支与 04B 的实现如何整合、分别由谁处理，尚未共同确定。
 - 市场价格的精度边界与 SEC 披露数字的保真约定，尚未统一。
-- 真实 probe 的离线兼容已补测；正式语义评估、04A 联合验证和最终验收尚未完成。
+- 真实 probe 离线兼容和 04A 的控制输入联合测试已补测；正式语义评估及最终验收尚未完成。
 - 门禁、语义评估和最终合并安排仍属单独讨论事项，本文不代替任何一方作决定。

@@ -800,7 +800,9 @@ class TestPortfolioManagerInjection:
         llm = _structured_pm_llm(captured, decision)
         pm_node = create_portfolio_manager(llm)
         result = pm_node(_make_pm_state())
-        md = result["final_trade_decision"]
+        assert "final_trade_decision" not in result and "final_rating" not in result
+        assert result["model_proposal"]["rating"] == "Overweight"
+        md = result["model_proposal"]["text"]
         assert "**Rating**: Overweight" in md
         assert "**Executive Summary**: Build position gradually" in md
         assert "**Investment Thesis**: AI capex cycle" in md
@@ -817,7 +819,8 @@ class TestPortfolioManagerInjection:
         llm.invoke.return_value = MagicMock(content=plain_response)
         pm_node = create_portfolio_manager(llm)
         result = pm_node(_make_pm_state())
-        assert result["final_trade_decision"] == plain_response
+        assert "final_trade_decision" not in result and "final_rating" not in result
+        assert result["model_proposal"] == {"rating": "Sell", "text": plain_response}
 
     # get_past_context ordering and limits
 
@@ -910,6 +913,8 @@ class TestLegacyRemoval:
         import functools
 
         fake_state = {
+            "model_proposal": {"rating": "Buy", "text": "Rating: Buy\nBuy NVDA."},
+            "gate_status": "passed", "reasons": [],
             "final_trade_decision": "Rating: Buy\nBuy NVDA.",
             "final_rating": "Buy",
             "company_of_interest": "NVDA",

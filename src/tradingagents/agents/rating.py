@@ -104,12 +104,11 @@ def parse_rating(text: str, default: str = RATING_REVIEW) -> str:
 
 
 def run_rating(final_state: dict) -> str:
-    """A finished run's rating: the Portfolio Manager's own, else read from its decision.
+    """Return the formal rating after validating the completed run (IF-19)."""
+    from tradingagents.final_recommendation import validate_formal_result
 
-    The fallback serves a state without ``final_rating``, such as a run an older
-    version completed and a checkpoint hands back unchanged.
-    """
-    return final_state.get("final_rating") or parse_rating(final_state.get("final_trade_decision", ""))
+    validate_formal_result(final_state)
+    return final_state["final_rating"]
 
 
 def is_review(signal: str) -> bool:

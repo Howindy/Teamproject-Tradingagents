@@ -1136,6 +1136,19 @@ def test_r03_09_null_snapshot_fixed_text(tmp_path, monkeypatch, offline):
 # =========================================================================== #
 # R03-10: terminal snapshot and writers (FC05; IR-13)                         #
 # =========================================================================== #
+def _assert_checked_review(state, signal):
+    assert state["model_proposal"]["rating"] == "Overweight"
+    assert state["gate_status"] == "blocked"
+    assert signal == state["final_rating"] == "REVIEW"
+    assert state["final_trade_decision"].startswith("Manual review required:")
+
+
+def _passed_overweight():
+    text = "**Rating**: Overweight"
+    return {"model_proposal": {"rating": "Overweight", "text": text}, "gate_status": "passed",
+            "reasons": [], "final_rating": "Overweight", "final_trade_decision": text}
+
+
 def _handbuilt_summary(marker, *, completeness="incomplete"):
     """A legal hand-built five-field summary fixture for consumer tests: the exact
     approved top-level structure, with a distinguishable marker in
@@ -1191,7 +1204,7 @@ def test_r03_10_programmatic_terminal_summary_state_and_report(tmp_path, monkeyp
         assert str(gap["reason"])[:40] in md
         assert str(gap["reason"])[:40] in html
     # Formal result intact and the report is not suppressed.
-    assert signal == "Overweight"
+    _assert_checked_review(final_state, signal)
     assert final_state["final_trade_decision"].strip()
 
 
@@ -1239,7 +1252,7 @@ def test_r03_10_independent_save_uses_passed_state_not_live_scope(tmp_path, monk
         "company_of_interest": "NVDA", "trade_date": TRADE_DATE,
         "market_report": "m", "sentiment_report": "s", "news_report": "n",
         "fundamentals_report": "f",
-        "final_trade_decision": "**Rating**: Overweight", "final_rating": "Overweight",
+        **_passed_overweight(),
         "investment_debate_state": {"bull_history": "", "bear_history": "",
                                     "history": "", "current_response": ""},
         "risk_debate_state": {"aggressive_history": "", "conservative_history": "",
@@ -1287,7 +1300,7 @@ def test_r03_10_null_terminal_shows_unavailable_fixed_text(tmp_path, monkeypatch
     html = (save_path / "complete_report.html").read_text(encoding="utf-8")
     assert fixed.lower() in md.lower()
     assert fixed.lower() in html.lower()
-    assert signal == "Overweight"
+    _assert_checked_review(final_state, signal)
 
 
 def test_r03_10_snapshot_failure_warns_without_changing_result(tmp_path, monkeypatch, offline):
@@ -1309,7 +1322,7 @@ def test_r03_10_snapshot_failure_warns_without_changing_result(tmp_path, monkeyp
         final_state, signal = graph.propagate("NVDA", TRADE_DATE)
 
     # Formal result is intact; the terminal summary is null/absent.
-    assert signal == "Overweight"
+    _assert_checked_review(final_state, signal)
     assert final_state.get("data_availability_summary") is None or \
         "data_availability_summary" not in final_state
     # A real warning was logged by the production path.
@@ -1526,7 +1539,7 @@ def test_r03_11_program_entry_no_resume_full_execution(tmp_path, monkeypatch, of
     violations = _install_checkpoint_guards(monkeypatch, graph)
 
     final_state, signal = graph.propagate("NVDA", TRADE_DATE)
-    assert signal == "Overweight"
+    _assert_checked_review(final_state, signal)
     # No checkpoint acquisition/read/resume/clear was performed at all.
     assert violations == [], f"checkpoint boundary used by the new flow: {violations}"
     # Full execution: every report body is present.
@@ -1551,10 +1564,10 @@ def test_r03_11_cli_entry_no_resume(tmp_path, monkeypatch, offline):
     graph = _graph(tmp_path, monkeypatch, model, checkpoint_enabled=True)
     violations = _install_checkpoint_guards(monkeypatch, graph)
 
-    recorded = {"decision": None}
+    recorded = {}
 
     def record_decision(ticker, trade_date, final_state):
-        recorded["decision"] = final_state.get("final_trade_decision")
+        recorded["state"] = final_state.copy()
 
     monkeypatch.setattr(graph, "record_decision", record_decision)
 
@@ -1571,7 +1584,7 @@ def test_r03_11_cli_entry_no_resume(tmp_path, monkeypatch, offline):
     cli_run.run_analysis()
 
     # The CLI executed the real graph fully and recorded a real decision.
-    assert recorded["decision"] and "Overweight" in recorded["decision"]
+    _assert_checked_review(recorded["state"], recorded["state"]["final_rating"])
     # No checkpoint boundary was touched by the CLI new flow.
     assert violations == [], f"CLI used a checkpoint boundary: {violations}"
     assert db.exists()
@@ -1636,9 +1649,9 @@ def test_r03_12_compat_return_and_existing_behavior(tmp_path, monkeypatch, offli
     state log and memory behavior remain compatible under the new flow."""
     graph = _graph(tmp_path, monkeypatch, ScriptedModel(structured=True))
     final_state, signal = graph.propagate("NVDA", TRADE_DATE)
-    assert signal == final_state["final_rating"] == "Overweight"
+    _assert_checked_review(final_state, signal)
     assert list(tmp_path.glob("results/NVDA/TradingAgentsStrategy_logs/*.json"))
-    assert [e["rating"] for e in graph.memory_log.load_entries()] == ["Overweight"]
+    assert [e["rating"] for e in graph.memory_log.load_entries()] == ["REVIEW"]
 
 
 # =========================================================================== #
@@ -1692,7 +1705,7 @@ def test_r03_10_programmatic_terminal_ready_before_record_once(tmp_path, monkeyp
     assert seen["terminal_snapshots"] == 1
     # Same object reaches the returned state; formal result intact.
     assert final_state["data_availability_summary"] is seen["records"][0]["value"]
-    assert signal == "Overweight"
+    _assert_checked_review(final_state, signal)
 
 
 def test_r03_10_cli_terminal_ready_before_record_once(tmp_path, monkeypatch, offline):
@@ -1745,7 +1758,7 @@ def test_r03_10_terminal_failure_record_gets_null_and_no_extra_calls(tmp_path, m
     assert seen["records"][0]["has_field"]                 # field present but null
     assert seen["records"][0]["value"] is None
     assert final_state["data_availability_summary"] is None
-    assert signal == "Overweight"                          # formal result unchanged
+    _assert_checked_review(final_state, signal)
     assert final_state["final_trade_decision"].strip()
     assert seen["terminal_snapshots"] == 1                 # attempted once, not retried
 
@@ -1772,8 +1785,7 @@ def test_r03_10_report_and_display_mapping_null_absent(tmp_path, monkeypatch, of
         graph = _graph(tmp_path / label, monkeypatch, ScriptedModel(structured=True))
         state = {
             "company_of_interest": "NVDA", "trade_date": TRADE_DATE,
-            "market_report": "m", "final_trade_decision": "**Rating**: Overweight",
-            "final_rating": "Overweight",
+            "market_report": "m", **_passed_overweight(),
         }
         if value != "<ABSENT>":
             state["data_availability_summary"] = copy.deepcopy(value)
@@ -1823,8 +1835,7 @@ def test_r03_10_independent_save_ab_md_html_display(tmp_path, monkeypatch, offli
     summary_b = _handbuilt_summary("B")
     state_a = {
         "company_of_interest": "NVDA", "trade_date": TRADE_DATE,
-        "market_report": "m", "final_trade_decision": "**Rating**: Overweight",
-        "final_rating": "Overweight",
+        "market_report": "m", **_passed_overweight(),
         "data_availability_summary": copy.deepcopy(summary_a),
         "research_availability_summary": copy.deepcopy(summary_b),
     }

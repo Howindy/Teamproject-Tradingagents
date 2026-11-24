@@ -128,6 +128,13 @@ def _graph(tmp_path, monkeypatch, model, debug=False, **config):
     return trading_graph.TradingAgentsGraph(config=cfg, debug=debug)
 
 
+def _assert_checked_review(state, signal):
+    assert state["model_proposal"]["rating"] == "Overweight"
+    assert state["gate_status"] == "blocked"
+    assert signal == state["final_rating"] == "REVIEW"
+    assert state["final_trade_decision"].startswith("Manual review required:")
+
+
 @pytest.mark.unit
 @pytest.mark.parametrize("structured", [False, True], ids=["free-text", "structured"])
 def test_a_full_run_reaches_a_logged_decision(tmp_path, monkeypatch, offline, structured):
@@ -135,7 +142,7 @@ def test_a_full_run_reaches_a_logged_decision(tmp_path, monkeypatch, offline, st
 
     state, signal = graph.propagate("NVDA", TRADE_DATE)
 
-    assert signal == state["final_rating"] == "Overweight"
+    _assert_checked_review(state, signal)
     for key in ("market_report", "sentiment_report", "news_report", "fundamentals_report",
                 "investment_plan", "trader_investment_plan", "final_trade_decision"):
         assert state[key].strip(), key
@@ -144,7 +151,7 @@ def test_a_full_run_reaches_a_logged_decision(tmp_path, monkeypatch, offline, st
                     "get_balance_sheet", "get_cashflow", "get_income_statement",
                     "get_insider_transactions", "ohlcv"}
     assert offline == tool_methods
-    assert [e["rating"] for e in graph.memory_log.load_entries()] == ["Overweight"]
+    assert [e["rating"] for e in graph.memory_log.load_entries()] == ["REVIEW"]
 
 
 @pytest.mark.unit
@@ -168,9 +175,9 @@ def test_an_interrupted_run_reexecutes_fully_instead_of_resuming(tmp_path, monke
     cp_dir = tmp_path / "cache" / "checkpoints"
     old_dbs = {db: db.read_bytes() for db in (sorted(cp_dir.glob("*.db")) if cp_dir.exists() else [])}
 
-    _, signal = graph.propagate("NVDA", TRADE_DATE)
+    state, signal = graph.propagate("NVDA", TRADE_DATE)
 
-    assert signal == "Overweight"
+    _assert_checked_review(state, signal)
     second_run_calls = len(model.calls) - calls_before
     full_run = ScriptedModel()
     _graph(tmp_path / "fresh", monkeypatch, full_run).propagate("NVDA", TRADE_DATE)
@@ -214,7 +221,7 @@ def test_a_debug_run_prints_the_analysts_work_and_reaches_the_same_decision(tmp_
 
     state, signal = graph.propagate("NVDA", TRADE_DATE)
 
-    assert signal == "Overweight"
+    _assert_checked_review(state, signal)
     assert state["market_report"].strip() and state["fundamentals_report"].strip()
     printed = capsys.readouterr().out
     assert "get_stock_data" in printed and "get_balance_sheet" in printed
@@ -282,7 +289,7 @@ def test_an_analyst_that_keeps_calling_tools_writes_its_report_at_the_limit(tmp_
     assert len(model.tool_turns) == 3 * 3   # three tool-using analysts, three rounds each
     for key in ("market_report", "news_report", "fundamentals_report"):
         assert final_state[key] == TEXT
-    assert rating == "Overweight"
+    _assert_checked_review(final_state, rating)
 
 
 @pytest.mark.unit
@@ -361,7 +368,7 @@ def test_a_settlement_failure_is_noted_and_the_run_goes_on(tmp_path, monkeypatch
     monkeypatch.setattr(graph, "settle_all_pending", locked)
     final_state, rating = graph.propagate("NVDA", TRADE_DATE)
 
-    assert rating == "Overweight"
+    _assert_checked_review(final_state, rating)
     assert "could not be settled" in final_state["memory_note"]
     report = write_report_tree(final_state, "NVDA", tmp_path / "report").read_text()
     assert "Memory log: Past decisions could not be settled" in report

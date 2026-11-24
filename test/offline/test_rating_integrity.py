@@ -144,7 +144,10 @@ def test_the_cli_says_when_a_run_produced_no_usable_rating(monkeypatch, tmp_path
             pass
 
         def stream_run(self, *a, **k):
-            yield [], {"messages": [], "final_trade_decision": REFUSAL, "final_rating": RATING_REVIEW}
+            yield [], {"messages": [], "model_proposal": {"rating": None, "text": REFUSAL},
+                       "gate_status": "blocked", "reasons": ["unreadable proposal rating"],
+                       "final_trade_decision": "Manual review required: unreadable proposal rating.",
+                       "final_rating": RATING_REVIEW}
 
     fake = _Graph()
     fake.graph = fake
@@ -217,14 +220,16 @@ def test_a_decision_prompt_states_the_shape_of_its_answer(module, factory, must_
 
 @pytest.mark.unit
 def test_a_state_without_the_typed_rating_reads_it_from_the_decision():
-    """A run finished by an older version and resumed from its checkpoint has
-    no final_rating; every reader falls back the same way instead of one
-    raising and another reporting REVIEW."""
+    """IF-19 requires a checked rating even when the body contains a rating label."""
     from tradingagents.agents.rating import run_rating
 
-    assert run_rating({"final_rating": "Hold", "final_trade_decision": "**Rating**: Buy"}) == "Hold"
-    assert run_rating({"final_trade_decision": "**Rating**: Sell\n\nExit."}) == "Sell"
-    assert run_rating({}) == RATING_REVIEW
+    text = "**Rating**: Buy"
+    state = {"model_proposal": {"rating": "Hold", "text": text}, "gate_status": "passed",
+             "reasons": [], "final_rating": "Hold", "final_trade_decision": text}
+    assert run_rating(state) == "Hold"
+    for incomplete in ({"final_trade_decision": "**Rating**: Sell\n\nExit."}, {}):
+        with pytest.raises(ValueError):
+            run_rating(incomplete)
 
 
 @pytest.mark.unit

@@ -646,45 +646,83 @@ def test_p04_p05_full_candidate_run_budget_failures_and_details(
     assert exc_calls == 1
 
 
-PREPARATION_BASELINE = "5718bacff6cafb9412a805878fe82e97f279a8bc"
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=repo, text=True).strip()
 
 
-def _assert_preparation_snapshot(paths, default_cfg, semantic_cfg):
-    """PR 1's historical boundary; it is not a ban on the later FR-10 feature."""
-    assert not any(p.startswith(("src/tradingagents/financials/", "src/tradingagents/run/")) for p in paths)
-    assert "fr08_enabled" not in default_cfg
-    assert "fr07_sec_enabled" not in default_cfg
-    assert ci_semantic_eval.validate_config(semantic_cfg)["approved"] is False
+def _assert_preparation_source_delta(repo: Path, base: str, head: str) -> None:
+    for rev in (base, head):
+        _git(repo, "rev-parse", "--verify", f"{rev}^{{commit}}")
+    changed = _git(repo, "diff", "--name-only", base, head, "--", "src/")
+    assert not changed, f"Preparation source changes between {base} and {head}: {changed}"
+
+
+def _assert_live_deferred_guards(repo: Path) -> None:
+    package = repo / "src/tradingagents"
+    assert not (package / "run").exists(), "Deferred src/tradingagents/run path present"
+    config = (package / "default_config.py").read_text(encoding="utf-8")
+    for token in ("fr08_enabled", "fr07_sec_enabled"):
+        assert token not in config, f"Forbidden activation token: {token}"
 
 
 def test_p07_preparation_scope_has_no_src_migration_or_brief_activation():
-    """P07 / FR-10: preparation-only claims bind to a fixed main tree, not moving HEAD."""
-    def show(*args):
-        # Missing historical objects are a prerequisite failure, not a skip or fetch.
-        return subprocess.check_output(["git", "-C", str(ROOT), *args], text=True)
+    """PR #14 preparation evidence is historical; deferred-feature guards apply today."""
+    base = "5c6e2caed5e4baceb136b5544ba5e283c0822cdb"
+    head = "88d47e712f7eac6e6babc8d2e1b0dc87d17c4b17"
+    _assert_preparation_source_delta(ROOT, base, head)
+    assert not _git(ROOT, "ls-tree", "--name-only", head, "--", "src/tradingagents/financials")
 
-    paths = show("ls-tree", "-r", "--name-only", PREPARATION_BASELINE).splitlines()
-    default_cfg = show("show", f"{PREPARATION_BASELINE}:src/tradingagents/default_config.py")
-    semantic_cfg = yaml.safe_load(show("show", f"{PREPARATION_BASELINE}:docs/ci/semantic_eval.yaml"))
-    _assert_preparation_snapshot(paths, default_cfg, semantic_cfg)
-    # The current candidate still must not activate the separate deferred brief feature.
-    assert not (ROOT / "src" / "tradingagents" / "run").exists()
-    default_cfg = (ROOT / "src" / "tradingagents" / "default_config.py").read_text(encoding="utf-8")
-    assert "fr08_enabled" not in default_cfg
-    assert "fr07_sec_enabled" not in default_cfg
+    blob = f"{head}:docs/ci/semantic_eval.yaml"
+    raw = _git(ROOT, "show", blob)
+    try:
+        config = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        pytest.fail(f"Cannot parse {blob}: {exc}")
+    verdict = ci_semantic_eval.validate_config(config)
+    assert not verdict["errors"], (blob, verdict["errors"])
+    assert config.get("status") == "unapproved", blob
+    assert verdict["approved"] is False, blob
+    _assert_live_deferred_guards(ROOT)
 
 
-@pytest.mark.parametrize("fault", ["financials", "brief", "activation", "approved"])
-def test_p07_rejects_violating_preparation_snapshots(fault):
-    """The historical scope check continues to reject product/config activation in preparation."""
-    paths, config, semantic = [], "", ci_checks.load_yaml(SEMANTIC_CFG_PATH)
-    if fault == "financials":
-        paths = ["src/tradingagents/financials/metrics.py"]
-    elif fault == "brief":
-        paths = ["src/tradingagents/run/summary.py"]
-    elif fault == "activation":
-        config = "fr07_sec_enabled = True"
+@pytest.fixture
+def p07_history(tmp_path):
+    base = _init_git_repo(tmp_path, {"src/tradingagents/default_config.py": "DEFAULT_CONFIG = {}"})
+    (tmp_path / "prep.md").write_text("Preparation", encoding="utf-8")
+    _git(tmp_path, "add", "prep.md")
+    _git(tmp_path, "commit", "-qm", "Document preparation")
+    head = _git(tmp_path, "rev-parse", "HEAD")
+    later_path = tmp_path / "src/tradingagents/financials/example.py"
+    later_path.parent.mkdir()
+    later_path.write_text("# Later feature", encoding="utf-8")
+    _git(tmp_path, "add", "src")
+    _git(tmp_path, "commit", "-qm", "Add later feature")
+    return tmp_path, base, head
+
+
+def test_p07_source_change_is_rejected_only_inside_preparation(p07_history):
+    repo, base, head = p07_history
+    _assert_preparation_source_delta(repo, base, head)
+    _assert_live_deferred_guards(repo)
+    later = _git(repo, "rev-parse", "HEAD")
+    with pytest.raises(AssertionError, match=r"Preparation source changes.*src/tradingagents/financials/example\.py"):
+        _assert_preparation_source_delta(repo, base, later)
+
+
+@pytest.mark.parametrize("guard", ["src/tradingagents/run", "fr08_enabled", "fr07_sec_enabled"])
+def test_p07_deferred_guards_read_current_checkout(p07_history, guard):
+    repo, base, head = p07_history
+    if guard == "src/tradingagents/run":
+        (repo / guard).mkdir()
     else:
-        semantic = _approved_config()
-    with pytest.raises(AssertionError):
-        _assert_preparation_snapshot(paths, config, semantic)
+        (repo / "src/tradingagents/default_config.py").write_text(f"{guard} = False", encoding="utf-8")
+    _assert_preparation_source_delta(repo, base, head)
+    with pytest.raises(AssertionError, match=guard):
+        _assert_live_deferred_guards(repo)
+
+
+def test_p07_unresolved_preparation_head_is_an_evidence_error(p07_history):
+    repo, base, _ = p07_history
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        _assert_preparation_source_delta(repo, base, "missing-preparation-head")
+    assert error.value.cmd[1:] == ["rev-parse", "--verify", "missing-preparation-head^{commit}"]

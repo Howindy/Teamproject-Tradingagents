@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
+from tradingagents import final_recommendation, portfolio_risk
 from tradingagents.agents import (
     create_aggressive_debator,
     create_bear_researcher,
@@ -234,6 +235,28 @@ class GraphSetup:
                 RISK_ANALYSIS_PATH_MAP,
             )
 
-        workflow.add_edge("Portfolio Manager", END)
+        def risk_check(state):
+            identity = _research_identity(state)
+            ctx = current_run()
+            try:
+                summary = availability.AvailabilitySummarizer(ctx.registry if ctx else None).snapshot(
+                    identity["asset_type"], selected_analysts, identity)
+            except Exception as exc:
+                logger.warning("Check-time availability summary failed: %s", exc)
+                summary = None
+            risk = portfolio_risk.evaluate(identity["ticker"], state["model_proposal"],
+                                           state.get("purchase_scenario"), state.get("thresholds"),
+                                           identity["asset_type"])
+            return {"data_availability_summary": summary, "portfolio_risk_result": risk}
+
+        def final_check(state):
+            return final_recommendation.evaluate(state["model_proposal"], state["data_availability_summary"],
+                                                 state["portfolio_risk_result"], state["asset_type"])
+
+        workflow.add_node("Portfolio Risk Check", risk_check)
+        workflow.add_node("Final Recommendation Check", final_check)
+        workflow.add_edge("Portfolio Manager", "Portfolio Risk Check")
+        workflow.add_edge("Portfolio Risk Check", "Final Recommendation Check")
+        workflow.add_edge("Final Recommendation Check", END)
 
         return workflow

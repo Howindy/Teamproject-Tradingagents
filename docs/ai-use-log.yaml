@@ -4454,3 +4454,55 @@ entries:
         full recovery in the next analysis. Ruff check . passed. No external API request.
     transcript_refs: []
     limitations: ["Targeted regression only; no full-suite rerun, live evaluation or main merge."]
+
+  - id: "AI-FM-MERGE-04A-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    model: "Model identifier not captured"
+    activity: "financial_metrics_round04a_combined_verification"
+    task: "Merge main a835d43 into the FR-10 feature branch and test actual combined behavior."
+    requirement_ids: ["FR-10", "FR-03", "FR-04", "SB-01", "INV-01"]
+    fit_criterion_ids: ["FR-10-FC09", "FR-10-FC10", "FR-04-FC05", "SB-01-FC05"]
+    files_changed:
+      - "src/tradingagents/graph/trading_graph.py"
+      - "test/offline/test_financial_metrics_evaluation.py"
+      - "test/offline/test_financial_metrics_integration.py"
+      - "docs/fr10-integration.md"
+      - "docs/fr10-handoff-yifan.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: >-
+      Combined feature 33f3eb9 with main a835d43. Two conflicts: preserved both graph imports,
+      and adopted main's reviewed P07 maintenance in place of the duplicate feature implementation.
+      All other main changes merged automatically, including Round-04A production wiring.
+      Added six real-entry matrix tests, each executing FR-10 off/on/unavailable: 18 analyses
+      across programmatic/CLI entries and passed/blocked/error risk results. Actual evaluators
+      execute once each per run; formal fields, saved JSON and memory agree. No financial n/a
+      veto or new availability target. Initial matrix failures exposed insufficient synthetic
+      vendor result formats and nondeterministic observation ordering, not production defects:
+      provided recognized CSV and compared all observation/limitation fields and multiplicities
+      independent of parallel completion order. No business logic changed to make tests pass.
+    human_intervention: "User authorized testing the merge with Yifan's newly merged Round-04A. No remote-main merge or live-model authorization was inferred."
+    verification:
+      status: "combined_behavior_passed_full_suite_not_green"
+      summary: >-
+        Initial targeted FR-10/Round-04A/formal-contract run: 66 passed. Matrix including saved
+        JSON/memory assertions: 6 passed (18 executions). First restricted full run: 2092 passed,
+        15 failed, 15 errors, 4 skipped, 1 deselected, 100 subtests passed. Short-path/local-loopback
+        full rerun: 2096 passed, 11 failed, 15 errors, 4 skipped, 1 deselected, 100 subtests passed.
+        Eighteen failures/errors came from missing GIT_CONFIG_VALUE_0 in the process environment;
+        setting GIT_CONFIG_COUNT=0 for the recheck process only yielded 92 passed, 1 failed in the
+        two evaluation modules. The remaining 8 full-run failures were separately reproduced on
+        untouched main a835d43: five permission/upgrade/cache-location cases and three line-ending/
+        Windows loopback-alias cases. Main's independent environment import origin was verified;
+        no dependencies downloaded. All 8 cache/lock tests passed on Windows. Ruff check ., API
+        check and pip check passed. No full-suite all-green or macOS pass is claimed.
+      evidence:
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/merged-main-results.xml"
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/main-baseline-results.xml"
+        - "C:/Users/24968/AppData/Local/Temp/opencode/financial-metrics-feature/merged-evaluation-recheck.xml"
+    transcript_refs: []
+    limitations:
+      - "Baseline comparison worktree: D:/CityU/cs5351/project/Teamproject-Tradingagents-fr10-main-check, detached at a835d43; test-only environment, not a delivery branch."
+      - "Tests use synthetic external model/vendor responses, not real completions or live data."
+      - "CI configuration/scoring was not independently changed or disabled; main's inherited maintenance is retained."
+      - "Formal semantic-quality evidence and final human merge review remain outstanding."

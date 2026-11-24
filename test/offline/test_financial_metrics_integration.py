@@ -5,6 +5,7 @@ is replaced. Financial facts are the independent synthetic AAPL/XOM projection.
 """
 
 import copy
+import json
 import sys
 from dataclasses import replace
 from decimal import Decimal
@@ -314,3 +315,110 @@ def test_bad_provider_payload_is_unavailable_not_analysis_failure(tmp_path, monk
     state, _ = graph.propagate("NVDA", fr03.TRADE_DATE)
     assert state["fundamentals_report"]
     assert all("invalid_financial_input" in p for p in financial_prompts(model))
+
+
+@pytest.mark.parametrize("entry", ["programmatic", "cli"])
+@pytest.mark.parametrize("risk_status", ["passed", "blocked", "error"])
+def test_round04a_formal_delivery_is_independent_of_metric_availability(
+    tmp_path, monkeypatch, external, entry, risk_status,
+):
+    """FC09/FC10, IR-01/14: actual risk/gate × FR-10 off/on/unavailable through both entries."""
+    from tradingagents import final_recommendation, portfolio_risk
+    from tradingagents.agents import schemas
+
+    # The earlier generic vendor text intentionally represents unavailable data.
+    # This matrix needs recognized, sufficient evidence for a real SB-01 pass.
+    for method in ("get_stock_data", "get_income_statement", "get_balance_sheet", "get_cashflow"):
+        for vendor in fr03.router.VENDOR_METHODS[method]:
+            monkeypatch.setitem(fr03.router.VENDOR_METHODS[method], vendor, lambda *a, **k:
+                                "Date,Open,High,Low,Close,Volume\n2026-01-09,100,101,99,100,1000\n")
+    monkeypatch.setitem(fr03.STRUCTURED, schemas.PortfolioDecision, schemas.PortfolioDecision(
+        rating=schemas.PortfolioRating.BUY, executive_summary="fixed proposal", investment_thesis="fixed thesis"))
+    if risk_status == "error":
+        def fail_risk(*args, **kwargs):
+            raise RuntimeError("controlled risk calculation failure")
+        monkeypatch.setattr(portfolio_risk, "_evaluate_stock_scenario", fail_risk)
+    scenario = {"ticker": "NVDA", "currency": "USD", "portfolio_value": "100000",
+                "current_position_value": "0", "proposed_buy_value": "30000",
+                "entry_price": "100", "stop_loss_price": "95"}
+    if risk_status == "blocked":
+        scenario["proposed_buy_value"] = "40000"
+    risk_calls, gate_calls = [], []
+    real_risk, real_gate = portfolio_risk.evaluate, final_recommendation.evaluate
+
+    def observe_risk(*args, **kwargs):
+        result = real_risk(*args, **kwargs)
+        risk_calls.append(copy.deepcopy(result))
+        return result
+
+    def observe_gate(*args, **kwargs):
+        result = real_gate(*args, **kwargs)
+        gate_calls.append(copy.deepcopy(result))
+        return result
+
+    monkeypatch.setattr(portfolio_risk, "evaluate", observe_risk)
+    monkeypatch.setattr(final_recommendation, "evaluate", observe_gate)
+    delivered = []
+    for mode in ("off", "on", "unavailable"):
+        factory, reads = factory_and_reads(unsupported=mode == "unavailable")
+        graph, model = graph_for(tmp_path / mode, monkeypatch,
+                                 factory if mode != "off" else None,
+                                 analysts=("market", "fundamentals"))
+        with RunContext() as parent:
+            if entry == "programmatic":
+                state, signal = graph.propagate("NVDA", fr03.TRADE_DATE, purchase_scenario=scenario)
+                assert signal == state["final_rating"]
+            else:
+                import cli.main as main
+                import cli.run as cli_run
+                from cli.models import AnalystType
+
+                captured = []
+                monkeypatch.setattr(cli_run, "TradingAgentsGraph", lambda *a, _graph=graph, **k: _graph)
+                monkeypatch.setattr(cli_run, "get_user_selections", lambda flags=None: {
+                    "ticker": "NVDA", "analysis_date": fr03.TRADE_DATE,
+                    "analysts": [AnalystType.MARKET, AnalystType.FUNDAMENTALS], "asset_type": "stock"})
+                monkeypatch.setattr(cli_run, "_build_run_config", lambda *a, _graph=graph: _graph.config)
+                monkeypatch.setattr(cli_run, "Live", fr03._NullLive)
+                monkeypatch.setattr(cli_run, "create_layout", lambda: None)
+                monkeypatch.setattr(cli_run, "update_display", lambda *a, **k: None)
+                monkeypatch.setattr(cli_run, "display_complete_report", lambda state, _captured=captured:
+                                    _captured.append(copy.deepcopy(state)))
+                monkeypatch.setattr(main.typer, "prompt", lambda *a, **k: "N")
+                cli_run.run_analysis(flags={"save": False, "show": True, "html": False,
+                                           "purchase_scenario": scenario})
+                assert len(captured) == 1
+                state = captured[0]
+            assert current() is parent
+        assert len(reads) == (0 if mode == "off" else 1)
+        assert state["portfolio_risk_result"]["status"] == risk_status
+        assert state["gate_status"] == ("passed" if risk_status == "passed" else "blocked")
+        assert state["final_rating"] == ("Buy" if risk_status == "passed" else "REVIEW")
+        saved_paths = list((tmp_path / mode / "results").rglob("full_states_log_*.json"))
+        assert len(saved_paths) == 1
+        saved = json.loads(saved_paths[0].read_text(encoding="utf-8"))
+        for key in ("final_rating", "final_trade_decision", "gate_status", "reasons", "portfolio_risk_result"):
+            assert saved[key] == state[key]
+        memories = graph.memory_log.load_entries()
+        assert len(memories) == 1
+        assert (memories[0]["rating"], memories[0]["decision"]) == (
+            state["final_rating"], state["final_trade_decision"])
+        if mode == "unavailable":
+            assert all("FR-10 metrics unavailable: not_supported" in p for p in financial_prompts(model))
+        delivered.append(state)
+    assert len(risk_calls) == len(gate_calls) == 3  # one actual check of each per run
+
+    def availability_content(summary):
+        normalized = copy.deepcopy(summary)
+        # Independent parallel analysts can complete in either order. Compare
+        # every observation/limitation field and multiplicity, not scheduling order.
+        for key in ("observations", "supplementary_limitations"):
+            normalized[key] = sorted(normalized[key], key=lambda row: json.dumps(row, sort_keys=True))
+        return normalized
+
+    for state in delivered[1:]:
+        for key in ("model_proposal", "purchase_scenario", "portfolio_risk_result", "gate_status",
+                    "final_rating", "final_trade_decision", "reasons"):
+            assert state[key] == delivered[0][key], (mode, key)
+        for key in ("data_availability_summary", "research_availability_summary"):
+            assert availability_content(state[key]) == availability_content(delivered[0][key])

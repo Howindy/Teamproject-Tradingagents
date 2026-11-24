@@ -8,6 +8,7 @@ run produces the same on-disk report tree a CLI run does.
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from tradingagents.agents.rating import run_rating
 
@@ -67,8 +68,8 @@ _SECTIONS = (
         ("Conservative Analyst", "conservative.md", ("risk_debate_state", "conservative_history")),
         ("Neutral Analyst", "neutral.md", ("risk_debate_state", "neutral_history")),
     )),
-    ("V. Portfolio Manager Decision", "5_portfolio", (
-        ("Portfolio Manager", "decision.md", ("final_trade_decision",)),
+    ("V. Formal Recommendation", "5_portfolio", (
+        ("Checked Decision", "decision.md", ("final_trade_decision",)),
     )),
 )
 
@@ -79,14 +80,37 @@ def _report_parts(final_state: dict) -> list[tuple[str, str, list[tuple[str, str
     for heading, folder, agents in _SECTIONS:
         written = []
         for agent, filename, path in agents:
-            value = final_state
+            value: Any = final_state
             for key in path:
                 value = (value or {}).get(key)
             if value:
                 written.append((agent, filename, value))
+        if folder == "5_portfolio":
+            proposal = final_state["model_proposal"] or {}
+            if proposal.get("text"):
+                label = proposal_label(final_state["gate_status"])
+                written.append((label, "proposal.md", f"{label}\n\n{proposal['text']}"))
         if written:
             parts.append((heading, folder, written))
     return parts
+
+
+def proposal_label(gate_status: str) -> str:
+    if gate_status in ("blocked", "error"):
+        return "Original Model Proposal — Did Not Pass Final Check"
+    return "Original Model Proposal — Before Final Check"
+
+
+def risk_text(result: dict) -> str:
+    """Project the evaluator's safe values and reasons without recalculating risk."""
+    lines = [f"Status: {result['status']}", "Scope: supplied purchase scenario only."]
+    for name in ("scenario", "thresholds"):
+        lines.extend(f"{key}: {value}" for key, value in result[name].items())
+    for key in ("projected_weight", "stop_distance"):
+        if result[key] is not None:
+            lines.append(f"{key}: {result[key]}")
+    lines.extend(result["reasons"])
+    return "\n\n".join(lines)
 
 
 def _availability_part(final_state: dict):
@@ -115,6 +139,7 @@ def write_report_tree(final_state: dict, ticker: str, save_path, settings: dict 
     to the report's header. ``html`` also writes ``complete_report.html``, one
     self-contained page of the same report (#1419).
     """
+    rating = run_rating(final_state)
     save_path = Path(save_path)
     save_path.mkdir(parents=True, exist_ok=True)
     parts = _report_parts(final_state)
@@ -124,11 +149,15 @@ def write_report_tree(final_state: dict, ticker: str, save_path, settings: dict 
     availability_part = _availability_part(final_state)
     if availability_part is not None:
         parts.append(availability_part)
+    if risk := final_state.get("portfolio_risk_result"):
+        parts.append(("VII. Portfolio Risk Check", "7_risk_check",
+                      [("Purchase Scenario", "risk.md", risk_text(risk))]))
     sections = []
     for heading, folder, written in parts:
         (save_path / folder).mkdir(exist_ok=True)
         for _agent, filename, text in written:
-            (save_path / folder / filename).write_text(text, encoding="utf-8")
+            file_text = f"Formal rating: {rating}\n\n{text}" if filename == "decision.md" else text
+            (save_path / folder / filename).write_text(file_text, encoding="utf-8")
         content = "\n\n".join(f"### {agent}\n{text}" for agent, _filename, text in written)
         sections.append(f"## {heading}\n\n{content}")
 

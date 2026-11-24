@@ -1,7 +1,8 @@
 # FR-10 runtime integration and Round 4 boundary
 
-Implemented against `main @ 5718bac` (merged Round 3). This is the FR-10 branch's
-handoff contract, not an assertion of Round 4 implementation or teammate approval.
+Initially implemented against `main @ 5718bac` (Round 3), then combined locally
+with `main @ a835d43` (Round-04A) for verification on 2026-11-25. This document
+describes the FR-10 branch; it is not teammate approval or a merge into main.
 
 ## Runtime interface
 
@@ -35,7 +36,11 @@ FR-10 changes carry the optional `metrics_factory` argument and financial metric
 scope; they add no node or edge. There is no change to `src/cli/run.py`,
 `run_context.py`, AgentState, final recommendation, risk evaluation or report
 writers. Future concurrent edits can still produce textual merge conflicts.
-The integration approach with Round 4 remains a discussion between contributors.
+The combination retains both insertions. Real programmatic and CLI entry tests
+exercise FR-10 off/on/unavailable against passed/blocked/error risk results, with
+one risk evaluation and one final check per run. The formal state, saved JSON and
+memory record agree; financial n/a does not add a veto. Integration ownership
+and final acceptance remain a discussion between contributors.
 
 ## Enable in the normal CLI
 
@@ -64,7 +69,7 @@ cleanup. Only external model/vendor responses are substituted. Paired tests comp
 FR-03 availability and existing decision outputs with metrics enabled/disabled.
 Risk and final-result sentinels are unchanged by the analyst.
 
-This does not establish live model quality or complete Round 4 acceptance. No live
+This does not establish live model quality or final combined-candidate acceptance. No live
 request was made for this integration. The price freshness policy remains limited
 to a matching preceding regular weekday; holiday/data-gap cases may return n/a.
 CI configuration has not been disabled or modified.
