@@ -1,7 +1,7 @@
 # D4 Bug Diary
 
-- Document status: Reusable significant-bug record template with two registered records; this does not claim that no other bugs exist.
-- Registered records: BUG-01 (contract-test placeholder path, Closed) and BUG-02 (reported macOS errno.EDEADLOCK failures, Open).
+- Document status: Reusable significant-bug record template with three registered records; this does not claim that no other bugs exist.
+- Registered records: BUG-01 (contract-test placeholder path, Closed), BUG-02 (reported macOS errno.EDEADLOCK failures, Open) and BUG-03 (optional price failure discarded SEC facts, Re-verified).
 - Purpose: Preserve symptoms, reproduction, classification, root cause, fix history, regression evidence, and any exposed invariant or test gap for important bugs.
 - Related records: [Review memo](review-memo.md) and [Debt register](debt-register.md).
 
@@ -167,3 +167,91 @@ Important bugs may remain open with partial information. Leave unresolved fields
 - State: remains `Open`. No fix, guard, skip policy, waiver, or cross-platform treatment is approved by this update.
 - Evidence: `/private/tmp/cs5351-round02/regression.xml` (local temporary evidence; user-reported; Codex read the JUnit read-only; OpenCode did not execute the run or read the report; not committed or remote CI evidence).
 - Remaining work: unchanged; decide and verify a non-Windows treatment, with no owner or closure evidence recorded.
+
+### BUG-03-optional-price-failure-discards-sec-facts
+
+#### Identification
+
+| Field | Recorded value |
+|---|---|
+| Bug ID | `BUG-03-optional-price-failure-discards-sec-facts` |
+| Discovery time | Not recorded; teammate P1 report captured in `AI-FM-PRICE-ISOLATION-001` (2026-11-25). |
+| Round | FR-10 feature integration, PR #19; regression extension in PR #25. |
+| Affected code/version | `src/tradingagents/financials/sec_provider.py` before commit `33f3eb9`; regression file `test/offline/test_sec_financial_provider.py`. |
+| Current state | `Re-verified` |
+| Related review memo | No dedicated RM record; see [PR #19](https://github.com/Howindy/Teamproject-Tradingagents/pull/19) and [PR #25](https://github.com/Howindy/Teamproject-Tradingagents/pull/25). |
+| Related debt record | None. |
+
+#### Symptom
+
+- Summary: SEC financial facts were retrieved successfully, but a timeout or invalid value from the optional Yahoo price read caused metrics that depend only on SEC facts to become unavailable too.
+- Expected behavior: A price failure should affect only the annual P/E row; the other nine metrics should remain computed from their complete SEC inputs. This follows FR-10-FC06 and FR-10-FC10 and the failure-isolation intent of RP-36.
+- Actual behavior: Before the fix, the price exception escaped `SecCompanyFactsProvider.fetch()` before it returned the successfully acquired facts. `FinancialMetricProvider.get()` caught the exception and replaced the whole input with `data_entry_failure`, so every row became `n/a` instead of only `pe_fy`.
+- When and where observed: FR-10-enabled Fundamentals Analyst material, exercised through the provider, metric factory and calculator with controlled SEC and Yahoo substitutes.
+
+#### Reproduction
+
+- Controlled inputs: The AAPL fixture in `test/offline/test_financial_metrics.py` (`DATA`), with valid SEC `companyfacts` and a first `yahoo.market.completed_close` call that raises `TimeoutError`; later calls return the fixture close. The current parameterized test also covers `Infinity`, `NaN` and a binary-float quote.
+- Preconditions: FR-10 is enabled through an injected SEC provider or `fr10_sec_enabled`; the run has an active analysis scope; no network access is required.
+- Steps:
+  1. Monkeypatch `sec_edgar.company_facts` to return the valid AAPL companyfacts payload.
+  2. Monkeypatch `market.completed_close` to fail on the first price read and succeed afterwards.
+  3. Build the metrics factory with `SecCompanyFactsProvider` and call it for `AAPL` on `2025-08-05`.
+  4. Inspect the ten rows and then run a second analysis scope with a successful price read.
+- Observed evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230), `test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`. The recorded pre-fix run had three failing cases (timeout, Infinity, NaN); after the fix the same targeted group recorded 90 passed. PR #25 added the float-quote case and the recovery assertion.
+- Reproducibility: Deterministic in the controlled test; no intermittent network condition is required.
+
+#### Classification and impact
+
+- Classification: External-dependency exception handling and fault-isolation defect.
+- Affected scope: `SecCompanyFactsProvider.fetch()`, the FR-10 metric factory/cache, the rendered financial-metrics table and the annual P/E row; no formal recommendation field.
+- Impact: A successful SEC fetch could be discarded because an optional price source failed, hiding nine valid metrics and producing an unnecessarily unavailable analyst table. It did not grant trade authority or change SB-01/FR-04 decisions.
+- Severity or prioritization basis: Reported by a teammate as a P1 integration issue; no separate project severity scale is introduced.
+
+#### Requirement, architecture, and test linkage
+
+- Requirements / FCs: `FR-10-FC06` (fiscal-year P/E and price evidence), `FR-10-FC10` (explicit degradation without aborting valid analysis).
+- Invariants / ADR decisions: `ADR 002` D-201–D-203; no dedicated IR number was assigned to this narrow failure. The exposed property is stated in the invariant-gap section below.
+- Runtime policies: `RP-36` (FR-10 disabled/unsupported/provider-failure degradation).
+- Existing tests or evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`; commit `33f3eb9`; PR #19; PR #25.
+
+#### Root cause
+
+- Status: Confirmed.
+- Cause: `_price()` was called inside `SecCompanyFactsProvider.fetch()` before constructing the `FinancialInputs` return value. In the pre-fix source, the call was an unguarded expression in the same execution path as the already selected SEC facts. A `TimeoutError` or another price-read exception escaped `fetch()`. The broader `FinancialMetricProvider.get()` boundary then caught it and substituted `FinancialInputs(..., issues=("data_entry_failure",))`, so the calculator saw no facts and marked every metric unavailable.
+- Evidence: The diff in commit `33f3eb9` wraps only the price read in `try/except` and records `price_availability_unknown`; the current test asserts nine computed rows and a P/E-only `n/a` row. See [`sec_provider.py:255`](src/tradingagents/financials/sec_provider.py#L255).
+- Why the bug escaped detection: The initial tests exercised a successful price path and did not inject a failure at the optional price boundary. They therefore did not distinguish "SEC facts acquired" from "price evidence acquired".
+
+#### Fix and change history
+
+- Fix approach: Isolate the optional price source at its own boundary. Preserve the SEC facts and return `price=None` with `price_availability_unknown` when the price read raises. Only the annual P/E row becomes unavailable; the other nine rows continue to use their complete inputs.
+- Actual change implemented: Commit `33f3eb9` added the narrow `try/except` around `_price()` in `SecCompanyFactsProvider.fetch()`. The later source-contract repair in PR #25 retained that boundary and extended the regression inputs to include a binary-float quote, which is rejected as `price_precision_unknown` without discarding the facts.
+- PR or review reference: [PR #19](https://github.com/Howindy/Teamproject-Tradingagents/pull/19), commit [`33f3eb9`](https://github.com/Howindy/Teamproject-Tradingagents/commit/33f3eb958de9bd6b525cd42c8d392a6cf806c5f9); [PR #25](https://github.com/Howindy/Teamproject-Tradingagents/pull/25), commit [`dd47a4e`](https://github.com/Howindy/Teamproject-Tradingagents/commit/dd47a4e555a301bfec2346fec1a41071c31478ff).
+- Compatibility or scope impact: No formal rating, SB-01, FR-04, FR-03 availability or graph-state change. The degraded path adds an explicit P/E reason and leaves the other metric rows intact.
+- State at this point: `Fixed`; targeted regression was recorded after the fix.
+
+#### Regression and re-verification
+
+- New regression test: [`test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`](test/offline/test_sec_financial_provider.py#L230), parameterized over `timeout`, `infinity`, `nan` and `float` (the float case was added in PR #25). It cites FR-10-FC06/FC10 in its docstring.
+- Reused test: None required; the existing financial-metric and SEC-adapter suites were also exercised in the recorded target run.
+- Exact command or CI run: The exact original command was not recorded. The evidence is the targeted run summarized in `AI-FM-PRICE-ISOLATION-001` (90 passed) and the PR #25 targeted run summarized in `AI-FR10-SOURCE-CONTRACTS-001` (460 targeted tests passed on macOS/Python 3.12). A reproducible command from the project root is:
+  `python -m pytest -q test/offline/test_sec_financial_provider.py::test_price_failure_preserves_sec_metrics_and_next_analysis_recovers`
+- Environment and input version: Controlled offline substitutes; AAPL fixture from `test_financial_metrics.DATA`; analysis date `2025-08-05`; no live Yahoo or SEC request.
+- Expected result: The first nine rows remain computed with their fact IDs and sources; `pe_fy` is `n/a` with `price_availability_unknown` (or `price_precision_unknown` for a float quote) and retains the annual EPS evidence; one price attempt occurs per analysis; a new analysis scope recovers all ten computed rows.
+- Actual result: The current regression test asserts exactly those outcomes. The recorded targeted runs passed after the fix.
+- Status: `Re-verified` (recorded evidence, not a new execution performed by this diary update).
+- Evidence: [`test_sec_financial_provider.py:230`](test/offline/test_sec_financial_provider.py#L230); `AI-FM-PRICE-ISOLATION-001`; `AI-FR10-SOURCE-CONTRACTS-001`.
+
+#### Exposed invariant or test gap
+
+- Invariant gap: The property "a failure of an optional input for one metric must not suppress metrics whose required inputs are complete" was not enforced. No formal IR number was assigned; the property should be treated as part of FR-10-FC06/FC10's degradation contract.
+- Test gap: The original suite had no injected failure at the optional price boundary and did not verify next-analysis recovery. The new parameterized regression covers timeout, non-finite values, float precision and recovery.
+- Other QA gap: The fix relies on a broad `except Exception` at the price boundary; the test set now makes the intended narrow behavior observable, but it is not a universal exception taxonomy.
+- Follow-up record: None; no separate debt item is opened by this record.
+
+#### Status, remaining work, and follow-up
+
+- Current state: `Re-verified`.
+- Unresolved items: No dedicated review-memo record was created for the fix; the PR #25 merge and targeted test records are the current evidence. No live-provider validation is claimed.
+- Follow-up actions: None assigned; keep the price-boundary regression in the FR-10 suite.
+- Closure evidence: The regression test above and the recorded targeted runs; no new run was performed for this diary update.
