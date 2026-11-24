@@ -7,3 +7,7 @@ suites:
     requirement: "FR-10"
     config: "docs/ci/semantic_eval.yaml"
     runner: "financial_metrics_eval:evaluate"
+  data-availability:
+    requirement: "FR-03"
+    config: "docs/ci/semantic-suites/data-availability.yaml"
+    runner: "data_availability_eval:evaluate"

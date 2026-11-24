@@ -14,6 +14,7 @@ import datetime as dt
 import importlib
 import inspect
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -194,7 +195,18 @@ PR_BODY_FIELDS = (
 SUITE_SELECTION_FIELD = "Semantic suites"
 SUITE_APPROVAL_FIELD = "Semantic suites approval"
 SUITE_PHRASE_PREFIX = "APPROVED semantic-suites:"
-OPTIONAL_PR_BODY_FIELDS = ("ADR", SUITE_SELECTION_FIELD, SUITE_APPROVAL_FIELD)
+SUPPLEMENTAL_SPEC_FIELD = "Supplemental test specification"
+OPTIONAL_PR_BODY_FIELDS = ("ADR", SUITE_SELECTION_FIELD, SUITE_APPROVAL_FIELD, SUPPLEMENTAL_SPEC_FIELD)
+# Approved bounded compatibility rule: semantic-registry-test-amendment.md §6.
+# Exact reviewed configuration at the original frozen specification. Its status
+# is unapproved and approval identity/time/evidence are empty. Using a digest
+# keeps the setup-python-only approval job independent of YAML packages.
+FR03_PREPARATION_CONFIG_SHA256 = "96f7d51f93316b351ac70949d753d5bd81282cc285c0ed946d003a4de7a7b015"
+FR03_PREPARATION_PATHS = frozenset({
+    "docs/ci/data-availability-cases.json",
+    "docs/ci/data-availability-rubric.md",
+    "docs/ci/semantic-suites/data-availability.yaml",
+})
 SUITE_REGISTRY_PATH = "docs/ci/semantic-suites.yaml"
 SUITE_CONFIG_PREFIX = "docs/ci/"
 SUITE_ID_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
@@ -1122,6 +1134,24 @@ def ai_log_check(
     }
 
 
+def supplemental_specifications(fields: Mapping[str, str]) -> list[str]:
+    """Preserve distinct supplemental lines; never replace historical evidence."""
+    values = [value.strip() for value in fields.get(SUPPLEMENTAL_SPEC_FIELD, "").splitlines() if value.strip()]
+    seen_values: set[str] = set()
+    seen_paths: set[str] = set()
+    for value in values:
+        if value in seen_values:
+            raise CiError("duplicate supplemental specification entry")
+        seen_values.add(value)
+        match = re.match(r"(\S+)\s+@", value)
+        if match:
+            path = posixpath.normpath(normalize_path(match[1]))
+            if path in seen_paths:
+                raise CiError(f"ambiguous duplicate supplemental specification path: {path}")
+            seen_paths.add(path)
+    return values
+
+
 def parse_pr_body(text: str) -> dict[str, str]:
     fields: dict[str, str] = {}
     for line in text.splitlines():
@@ -1130,7 +1160,13 @@ def parse_pr_body(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         key = key.strip()
         if key in PR_BODY_FIELDS or key in OPTIONAL_PR_BODY_FIELDS:
-            fields[key] = value.strip()
+            if key == SUPPLEMENTAL_SPEC_FIELD:
+                fields[key] = fields[key] + "\n" + value.strip() if key in fields else value.strip()
+                supplemental_specifications(fields)
+            else:
+                if key in fields:
+                    raise CiError(f"duplicate PR body field: {key}")
+                fields[key] = value.strip()
     return fields
 
 
@@ -1219,6 +1255,7 @@ def contract_test_plan(
     fields: Mapping[str, str],
     changed_paths: Iterable[str],
     spec_text: str | None = None,
+    supplemental_spec_texts: Sequence[str] = (),
 ) -> dict[str, Any]:
     classification = classify_paths(changed_paths)
     errors: list[str] = []
@@ -1273,14 +1310,15 @@ def contract_test_plan(
                     "test_paths": [],
                 }
         assert spec_text is not None
-        test_paths = plan_test_paths(spec_text)
+        specifications = [spec_text, *supplemental_spec_texts]
+        test_paths = sorted({path for text in specifications for path in plan_test_paths(text)})
         if not test_paths:
             errors.append(
                 "approved test specification contains no test/offline or "
                 "test/live test paths"
             )
         for code_path in code_paths:
-            if not specification_mentions_path(spec_text, code_path):
+            if not any(specification_mentions_path(text, code_path) for text in specifications):
                 errors.append(
                     "approved test specification does not mention changed "
                     f"code path: {code_path}"
@@ -1490,7 +1528,7 @@ def _github_request(url: str, token: str) -> Any:
         url,
         headers={
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
+            **({"Authorization": f"Bearer {token}"} if token else {}),
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "cs5351-ci-gates",
         },
@@ -1553,6 +1591,142 @@ def fetch_approval_event(
     raise CiError("approval event cannot be located from the GitHub API")
 
 
+def frozen_preparation_paths(root: Path, fields: Mapping[str, str], head: str) -> set[str]:
+    """§6: exact frozen FR-03 preparation materials only; uncertainty grants nothing.
+
+    This is classification, not approval. The calling gate must still validate
+    the primary event, specification ancestry, timing and unchanged spec.
+    """
+    import hashlib
+
+    path, commit, errors = parse_approved_specification(fields.get("Approved test specification", ""))
+    if errors:
+        return set()
+    text, error = read_specification_at_commit(root, path, commit)
+    if error or text is None:
+        return set()
+    config_path = "docs/ci/semantic-suites/data-availability.yaml"
+    try:
+        for revision in (commit, head):
+            config_text = git_output(["show", f"{revision}:{config_path}"], cwd=root)
+            # Recognize only the fixed reviewed content. Different formatting,
+            # values or activation are conservatively outside this exception.
+            if hashlib.sha256(config_text.encode("utf-8")).hexdigest() != FR03_PREPARATION_CONFIG_SHA256:
+                return set()
+        eligible: set[str] = set()
+        for material in FR03_PREPARATION_PATHS:
+            if not specification_mentions_path(text, material):
+                continue
+            # Compare Git blob identities, not decoded/line-ending-normalized text.
+            try:
+                frozen = git_output(["rev-parse", "--verify", f"{commit}:{material}"], cwd=root).strip()
+                candidate = git_output(["rev-parse", "--verify", f"{head}:{material}"], cwd=root).strip()
+                kind = git_output(["cat-file", "-t", frozen], cwd=root).strip()
+            except CiError:
+                continue
+            if kind == "blob" and frozen == candidate:
+                eligible.add(material)
+        return eligible
+    except CiError:
+        return set()
+
+
+def _approval_location(url: str) -> tuple[str, int]:
+    match = re.fullmatch(
+        r"https://github\.com/([^/]+/[^/]+)/pull/([1-9][0-9]*)#(?:issuecomment-|pullrequestreview-)[0-9]+",
+        url,
+    )
+    if not match:
+        raise CiError("approval URL must identify a GitHub PR comment or review")
+    return match[1], int(match[2])
+
+
+def supplemental_allowed_scope(text: str) -> str:
+    """Only the explicit allowed-file list grants coverage; rationale/exclusions do not."""
+    section = re.search(r"(?m)^## 3\. Allowed files\s*$", text)
+    if section is None:
+        return ""
+    tail = text[section.end():]
+    next_section = re.search(r"(?m)^## ", tail)
+    allowed = tail[:next_section.start()] if next_section else tail
+    paths = re.findall(r"(?m)^- `?([\w./-]+\.(?:py|sh|md|yaml|yml|json))`?\s*$", allowed)
+    return "\n".join(paths)
+
+
+def validate_supplemental_specification(
+    root: Path, base: str, head: str, value: str, repo: str, pr_number: int,
+    token: str, changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """§5: validate independently before granting scope or contract selection."""
+    def failed(errors: list[str]) -> dict[str, Any]:
+        return {"errors": errors, "spec_text": "", "scope_ids": set()}
+
+    match = re.fullmatch(r"(\S+)\s+@\s+([0-9a-f]{40})\s+\(approval:\s*(https://[^\s)]+)\)", value.strip())
+    if not match:
+        return failed(["invalid Supplemental test specification: expected path @ full SHA (approval: URL)"])
+    path, commit, url = match.groups()
+    _, error = resolve_project_file(root, path, SUPPLEMENTAL_SPEC_FIELD)
+    if error:
+        return failed([error])
+    try:
+        if _approval_location(url) != (repo, pr_number):
+            return failed(["supplemental approval belongs to another PR"])
+        text, error = read_specification_at_commit(root, path, commit)
+        if error or text is None:
+            return failed([error])
+        allowed_scope = supplemental_allowed_scope(text)
+        if not allowed_scope:
+            return failed(["supplemental specification has no explicit allowed-file list"])
+        event, author = fetch_approval_event(repo, pr_number, url, token)
+        classification = classify_paths(changed_paths)
+        implementation_paths = set(
+            classification["code"] + classification["tests"] + classification["semantic"]
+            + classification["governance_ci"] + classification["safety_critical"]
+            + classification["safety_relevant"]
+        )
+        covered = sorted(p for p in implementation_paths if p != path and specification_mentions_path(allowed_scope, p))
+        first, first_time = _implementation_start(root, base, head, covered) if covered else (head, "")
+        # Reuse the same independent reviewer/marker/time checks as the primary.
+        fields = {
+            "Plan": path, "Approved test specification": f"{path} @ {commit}",
+            "Approval evidence": url, "Implementation start": first, "Approved scope": "supplement",
+        }
+        result = verify_approval(
+            fields, approval_event=event, pr_author=author,
+            specification_ancestor=_is_ancestor(root, commit, first),
+            specification_changed_after=_specification_changed(root, commit, head, [path]),
+            implementation_start_time=first_time or "9999-01-01T00:00:00Z",
+            declared_start_matches=True, changed_ids=(),
+        )
+        errors = result["errors"]
+        if event.get("url") != url:
+            errors.append("supplemental approval event URL does not match its evidence URL")
+        if errors:
+            return failed([f"supplemental: {error}" for error in errors])
+        return {"errors": [], "spec_text": allowed_scope, "scope_ids": extract_ids(text)}
+    except CiError as exc:
+        return failed([f"supplemental approval not verifiable: {exc}"])
+
+
+def validate_supplemental_specifications(
+    root: Path, base: str, head: str, fields: Mapping[str, str], repo: str,
+    pr_number: int, token: str, changed_paths: Sequence[str],
+) -> dict[str, Any]:
+    """Each approved version retains its own event, coverage and chronology."""
+    errors: list[str] = []
+    texts: list[str] = []
+    scope_ids: set[str] = set()
+    for value in supplemental_specifications(fields):
+        result = validate_supplemental_specification(
+            root, base, head, value, repo, pr_number, token, changed_paths,
+        )
+        errors.extend(result["errors"])
+        if not result["errors"]:
+            texts.append(result["spec_text"])
+            scope_ids.update(result["scope_ids"])
+    return {"errors": errors, "spec_texts": texts, "scope_ids": scope_ids}
+
+
 def approval_check(
     root: Path,
     base: str,
@@ -1564,51 +1738,40 @@ def approval_check(
 ) -> dict[str, Any]:
     fields = parse_pr_body(pr_body)
     if not fields.get("Approval evidence"):
-        return {"errors": ["approval evidence is missing"]}
-    approval_event, author = fetch_approval_event(
-        repo,
-        pr_number,
-        fields["Approval evidence"],
-        token,
-    )
+        return {"errors": ["approval evidence is missing"], "supplemental_spec_texts": []}
+    approval_event, author = fetch_approval_event(repo, pr_number, fields["Approval evidence"], token)
     changed = changed_paths_from_git(base, head, root)
     classification = classify_paths(changed)
-    implementation_paths = [
-        *classification["code"],
-        *classification["tests"],
-        *classification["semantic"],
-        *classification["governance_ci"],
-        *classification["safety_critical"],
-        *classification["safety_relevant"],
-    ]
-    start_commit, start_time = _implementation_start(
-        root,
-        base,
-        head,
-        sorted(set(implementation_paths)) or changed,
+    implementation_paths = set(
+        classification["code"] + classification["tests"] + classification["semantic"]
+        + classification["governance_ci"] + classification["safety_critical"]
+        + classification["safety_relevant"]
     )
+    implementation_paths -= frozen_preparation_paths(root, fields, head)
+    start_commit, start_time = _implementation_start(root, base, head, sorted(implementation_paths) or changed)
     specification = fields.get("Approved test specification", "")
     specification_paths = SPEC_PATH_PATTERN.findall(specification)
     _, specification_commit, _ = parse_approved_specification(specification)
-    ancestor = bool(specification_commit) and _is_ancestor(
-        root, specification_commit, start_commit
+    ancestor = bool(specification_commit) and _is_ancestor(root, specification_commit, start_commit)
+    supplemental = validate_supplemental_specifications(
+        root, base, head, fields, repo, pr_number, token, changed,
     )
-    changed_ids = collect_changed_scope_ids(root, base, head, changed)
+    # A valid supplement adds IDs; never manufacture a missing primary scope field.
+    effective_fields = dict(fields)
+    if fields.get("Approved scope"):
+        effective_fields["Approved scope"] += " " + " ".join(sorted(supplemental["scope_ids"]))
     result = verify_approval(
-        fields,
-        approval_event=approval_event,
-        pr_author=author,
+        effective_fields, approval_event=approval_event, pr_author=author,
         specification_ancestor=ancestor,
         specification_changed_after=_specification_changed(
-            root,
-            specification_commit or start_commit,
-            head,
-            specification_paths,
+            root, specification_commit or start_commit, head, specification_paths,
         ),
         implementation_start_time=start_time,
         declared_start_matches=fields.get("Implementation start", "") == start_commit,
-        changed_ids=changed_ids,
+        changed_ids=collect_changed_scope_ids(root, base, head, changed),
     )
+    result["errors"].extend(supplemental["errors"])
+    result["supplemental_spec_texts"] = supplemental["spec_texts"]
     return result
 
 
@@ -2305,7 +2468,7 @@ def _github_bytes(url: str, token: str) -> bytes:
         url,
         headers={
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
+            **({"Authorization": f"Bearer {token}"} if token else {}),
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "cs5351-ci-gates",
         },
@@ -2618,7 +2781,22 @@ def _command_contract_tests(args: argparse.Namespace) -> int:
         paths = [item.strip() for item in args.paths.split(",") if item.strip()]
     else:
         paths = changed_paths_from_git(args.base, args.head, PROJECT_ROOT)
-    plan = contract_test_plan(PROJECT_ROOT, fields, paths)
+    supplements: list[str] = []
+    if supplemental_specifications(fields):
+        # CI supplies its read-only job token explicitly; direct callers retain
+        # the public-read default. Authentication failure never falls back.
+        try:
+            repo, pr_number = _approval_location(fields.get("Approval evidence", ""))
+        except CiError as exc:
+            return _print_result({"errors": [str(exc)]})
+        supplemental = validate_supplemental_specifications(
+            PROJECT_ROOT, args.base, args.head, fields,
+            repo, pr_number, getattr(args, "token", ""), paths,
+        )
+        if supplemental["errors"]:
+            return _print_result(supplemental)
+        supplements.extend(supplemental["spec_texts"])
+    plan = contract_test_plan(PROJECT_ROOT, fields, paths, supplemental_spec_texts=supplements)
     if plan["errors"]:
         return _print_result(plan)
     test_paths = plan["test_paths"]
@@ -2809,6 +2987,7 @@ def build_parser() -> argparse.ArgumentParser:
     contract_tests.add_argument("--base", default="")
     contract_tests.add_argument("--head", default="HEAD")
     contract_tests.add_argument("--paths", default="")
+    contract_tests.add_argument("--token", default="", help="GitHub API token for supplemental approval reads")
     contract_tests.set_defaults(func=_command_contract_tests)
 
     aggregate = subparsers.add_parser("aggregate")
