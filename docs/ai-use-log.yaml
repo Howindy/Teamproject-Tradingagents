@@ -5215,3 +5215,20 @@ entries:
       final human review.
     - Open debt records neither approve the compromises nor establish completed remediation.
     - No fresh full-suite success, remote CI pass or formal semantic acceptance is claimed.
+
+  - id: "AI-BUG-DIARY-LINKS-001"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "documentation_link_and_stale_reference_fix"
+    task: "Repair five BUG-03 relative links and replace the stale missing-review statement with RM-25-R1."
+    files_changed:
+      - "docs/bug-diary.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Corrected only the BUG-03 Markdown destinations and review cross-reference; preserved source code, test results and actual human-review status."
+    human_intervention: "User authorized the previously identified quick documentation fixes."
+    verification:
+      status: "documentation_checks_only"
+      summary: "BUG-03 local link targets and RM-25-R1 heading checked; YAML validation and git diff whitespace checked. No application tests or live requests."
+    transcript_refs: []
+    limitations:
+      - "Current maintenance conversation is not yet exported; no transcript reference or review approval is fabricated."
