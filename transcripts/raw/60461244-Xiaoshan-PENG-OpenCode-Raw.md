@@ -1,8 +1,8 @@
 # 报告归档与恢复功能需求梳理
 
 **Session ID:** ses_df13ad326ffejnZljxPqwSw0fS
-**Created:** 11/25/2026, 2:15:32 AM
-**Updated:** 11/25/2026, 3:28:07 AM
+**Created:** 10/27/2026, 2:15:32 AM
+**Updated:** 10/27/2026, 3:28:07 AM
 
 ---
 
