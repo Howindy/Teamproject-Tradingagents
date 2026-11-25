@@ -1,0 +1,10 @@
+{
+  "case_id": "FM-S04",
+  "stage": "final_report",
+  "request_limit": 1,
+  "retries": 0,
+  "prepared_sha256": "4ea19034837ed2b3c8f4dae2edfb8679cad95a4176cee0a0ad358e0497fe73bf",
+  "scorer_sha256": "be69ca8fd9470ec2e39a12d993f70b0a68dd807ed04fa982fc4a925717cee2c5",
+  "authorized_by": "Current user: 那单独测试一下这个修改了的",
+  "started_at": "2026-11-25T12:27:51.391187+00:00"
+}

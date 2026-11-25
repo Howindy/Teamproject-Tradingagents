@@ -5232,3 +5232,141 @@ entries:
     transcript_refs: []
     limitations:
       - "Current maintenance conversation is not yet exported; no transcript reference or review approval is fabricated."
+
+  - id: "AI-FR10-LOCAL-GATES-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "local_semantic_checker_maintenance"
+    task: "Write focused FR-10 local gates and retest saved real responses, without GitHub workflows."
+    files_changed:
+      - "scripts/fr10_local_gates.py"
+      - "test/offline/test_fr10_local_gates.py"
+      - "test/fixtures/fr10-live-replay-20261125.json"
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Added five bounded assertion checks and 32 regression cases. Reused exact saved live responses and independent expected values. Preserved the frozen evaluator, rubric, prior failed run and application code."
+    human_intervention: "User explicitly requested correct local gates and another test; GitHub workflows excluded."
+    verification:
+      status: "local_checks_with_incomplete_live_case"
+      summary: "32 new cases pass. Combined related suites: 70 passed, 1 failed (existing requirements inventory mismatch). Saved complete S01-S03 each pass five local checks; saved S04 remains incomplete. No new model requests."
+    transcript_refs: []
+    limitations:
+      - "Local checker is not the frozen D1-D5 evaluation and does not establish formal acceptance."
+      - "Real candidate S04 and paired baseline S01 contain tool intent rather than complete reports."
+      - "Current conversation export and independent review remain pending; neither is fabricated."
+
+  - id: "AI-FR10-S04-FINAL-REPLAY-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "local_final_report_test_correction"
+    task: "Correct S04 test execution to use the existing final-report path; retain the independent expected P/E unavailability."
+    files_changed:
+      - "scripts/financial_metrics_eval.py"
+      - "scripts/fr10_local_gates.py"
+      - "test/offline/test_fr10_final_report_replay.py"
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Added optional final-report prompt capture using application WRAP_UP, an offline S04 preparation command and four regression checks. Default initial capture, application code, expectations and GitHub workflows unchanged."
+    human_intervention: "User requested correcting the test unit after the tool-intent-only S04 response."
+    verification:
+      status: "offline_finalization_path_verified"
+      summary: "38 passed, 9 deselected in focused new/local and selected existing scorer/projection checks; Ruff lint passed. Real installed candidate captured final-stage prompts without network requests. Initial TEMP setup failure resolved by using the established workspace TEMP."
+    transcript_refs: []
+    limitations:
+      - "No new real model response; S04 final-report acceptance remains pending."
+      - "The prior failed evaluation and original response are preserved."
+
+  - id: "AI-FR10-S04-LIVE-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "single_case_real_model_verification"
+    task: "Execute the corrected S04 final-report replay once."
+    files_changed:
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Ran one official DeepSeek request with thinking disabled and retries zero; saved request, response metadata, full report and five-gate result outside the repository. Inspected the P/E unavailability explanation and retained metrics."
+    human_intervention: "User explicitly requested: 那单独测试一下这个修改了的."
+    verification:
+      status: "single_case_local_live_check_passed"
+      summary: "S04 local gates 5/5. Finish stop, no tool calls, 3032 input + 4050 output = 7082 provider tokens, 17.33 seconds. No other model requests, application edits, GitHub operations or retrospective evidence rewriting."
+    evidence_refs:
+      - "D:/CityU/cs5351/project/fr10-local-gates-20261125-01/s04-live-final-report/result.json"
+      - "D:/CityU/cs5351/project/fr10-local-gates-20261125-01/s04-live-final-report/report.md"
+      - "D:/CityU/cs5351/project/fr10-local-gates-20261125-01/s04-live-final-report/response-metadata.json"
+    transcript_refs: []
+    limitations:
+      - "Pass applies to the versioned local checker and this single real response; not the frozen D1-D5 run or GitHub CI."
+
+  - id: "AI-FR10-EVIDENCE-DOCS-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "verification_documentation_and_submission_update"
+    task: "Update prior FR-10 evidence-gap statements to reflect the completed local real-response checks."
+    files_changed:
+      - "docs/debt-register.md"
+      - "docs/review-memo.md"
+      - "docs/drafts/fr10-semantic-units.md"
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/evidence/fr10-local-20261125/"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Updated current status, retained historical failures and approvals, packaged exact reports/prompts/provider records and checker source snapshots, and prepared a separate revised submission archive."
+    human_intervention: "User requested correcting the earlier documentation after all four FR-10 candidate reports passed local checks."
+    verification:
+      status: "documentation_and_artifact_checks"
+      summary: "Verify YAML, evidence hashes, new local links and archive integrity; retain original archive and unchanged application payloads. No new API request or GitHub operation."
+    transcript_refs: []
+    limitations:
+      - "The local four-case pass does not establish the frozen paired D1-D5 run or GitHub workflow acceptance."
+
+  - id: "AI-FR10-FORMAL-TEST-FILES-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "submission_executable_test_synchronization"
+    task: "Install the corrected checker and tests at formal repository paths in the upload archive."
+    files_changed:
+      - "scripts/financial_metrics_eval.py"
+      - "scripts/fr10_local_gates.py"
+      - "test/offline/test_fr10_local_gates.py"
+      - "test/offline/test_fr10_final_report_replay.py"
+      - "test/fixtures/fr10-live-replay-20261125.json"
+      - "test/fixtures/fr10-s04-final-report-20261125.json"
+      - "docs/ci/fr10-report-checks.md"
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/evidence/fr10-local-20261125/index.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Promoted the previously supplied executable checker/tests into the actual submission paths, added the saved real final S04 as a regression fixture, and documented the offline command. No fabricated final response, changed oracle, application logic or GitHub workflow."
+    human_intervention: "User explicitly requested replacing the formal test files; these are now the submission's executable local checks."
+    verification:
+      status: "unpacked_submission_targeted_verification"
+      summary: "From the unpacked submission root, both formal test modules passed 37 tests in 2.79 seconds. Verify source hashes and archive integrity; actual console output is packaged. No paid calls or GitHub operations."
+    transcript_refs: []
+    limitations:
+      - "Offline rerunning checks saved real outputs; it does not generate another paid response or establish a remote CI pass."
+
+  - id: "AI-FR10-TESTS-PUBLICATION-20261125"
+    date: "2026-11-25"
+    tool: "Codex"
+    activity: "authorized_test_evidence_publication"
+    task: "Publish the corrected semantic checker, executable tests, fixtures and evidence on an independent branch for teammate review."
+    files_changed:
+      - "scripts/financial_metrics_eval.py"
+      - "scripts/fr10_local_gates.py"
+      - "test/offline/test_fr10_local_gates.py"
+      - "test/offline/test_fr10_final_report_replay.py"
+      - "test/fixtures/fr10-live-replay-20261125.json"
+      - "test/fixtures/fr10-s04-final-report-20261125.json"
+      - "docs/ci/fr10-report-checks.md"
+      - "docs/drafts/fr10-local-gates.md"
+      - "docs/drafts/fr10-semantic-units.md"
+      - "docs/evidence/fr10-local-20261125/"
+      - "docs/debt-register.md"
+      - "docs/review-memo.md"
+      - "docs/ai-use-log.yaml"
+    ai_contribution: "Prepared the already user-authorized local changes for a separate review PR; preserved runtime code, workflow configuration, independent expectations and historical failed results. Added evidence-local Git attributes to preserve original bytes/hashes and explicitly staged the three archived reports ignored by the general reports rule. The user will create the PR manually."
+    human_intervention: "User explicitly requested pushing these changes through the normal review process and providing next steps for Yifan; no direct merge authorized."
+    verification:
+      status: "targeted_regressions_passed"
+      summary: "65 passed in 2.68 seconds across the new checker/finalization modules and existing FR-10/Round-04 semantic units. Ruff lint passed. SSH 443 fetch confirmed main remains 3d457be78fcf72c9aa3b5d1879396292d7b391bc. No new paid requests."
+    transcript_refs: []
+    limitations:
+      - "PR creation, teammate review and merge are distinct publication steps; no retrospective approval or remote CI pass is asserted."

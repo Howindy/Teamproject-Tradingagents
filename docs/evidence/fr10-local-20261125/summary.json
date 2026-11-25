@@ -1,0 +1,129 @@
+{
+  "application_sha": "3d457be78fcf72c9aa3b5d1879396292d7b391bc",
+  "checker_version": "fr10-local-gates-v1",
+  "candidate_cases": [
+    {
+      "case_id": "FM-S01",
+      "status": "passed",
+      "checks_passed": 5,
+      "checks_total": 5,
+      "report_stage": "original_complete_response"
+    },
+    {
+      "case_id": "FM-S02",
+      "status": "passed",
+      "checks_passed": 5,
+      "checks_total": 5,
+      "report_stage": "original_complete_response"
+    },
+    {
+      "case_id": "FM-S03",
+      "status": "passed",
+      "checks_passed": 5,
+      "checks_total": 5,
+      "report_stage": "original_complete_response"
+    },
+    {
+      "case_id": "FM-S04",
+      "status": "passed",
+      "checks_passed": 5,
+      "checks_total": 5,
+      "report_stage": "separate_final_report_rerun"
+    }
+  ],
+  "new_s04_request_count": 1,
+  "original_frozen_evaluation": "failed_preserved",
+  "github_workflow_pass": false,
+  "paired_baseline_s01": "incomplete",
+  "independent_final_review": "not_recorded",
+  "artifacts": [
+    {
+      "path": "reports/FM-S01.md",
+      "sha256": "48fec9901809b94f5a4a45e52fbbabb62e1f355f8461f13479076c53cb09c2b0"
+    },
+    {
+      "path": "responses/FM-S01.json",
+      "sha256": "80543ba9727cf93f7eab5cf7de626881fb68bb2ea5d7674951b487eb6ec7d58b"
+    },
+    {
+      "path": "prompts/FM-S01.json",
+      "sha256": "dfff88a9efebae9bc1bc5982dfd81ef4dec4e6f62a5f6d5cbf39f20d9ec4afeb"
+    },
+    {
+      "path": "reports/FM-S02.md",
+      "sha256": "fff4419226e1c277ea124d117c450133a0922d237dcf4be035dcb9d2cffcf59e"
+    },
+    {
+      "path": "responses/FM-S02.json",
+      "sha256": "ea698c9ba2d3bb7c906532d1f527e1d74d1fdbe6c2dec42c8845c64c45803577"
+    },
+    {
+      "path": "prompts/FM-S02.json",
+      "sha256": "446f6e323c59a8b02009270fb7d75dab7b08491181ecf00149e7a16c83120567"
+    },
+    {
+      "path": "reports/FM-S03.md",
+      "sha256": "26c948f80f6f0801f5969b416bef9888f16f937d0412ddd264afd4f0e8cbdfd1"
+    },
+    {
+      "path": "responses/FM-S03.json",
+      "sha256": "2da1642a35be988e1ca2df81313cb830e76508ebcbc66163e9fcfd832282350d"
+    },
+    {
+      "path": "prompts/FM-S03.json",
+      "sha256": "9c5c649a2f0be87ee2f71cb210ca92b4c6933925e602c4b69ca8ac05ab433819"
+    },
+    {
+      "path": "s04/report.md",
+      "sha256": "943e101d807d3dc00f620874b3a6333cce3f6ebc797cbf7a8f484716a97aa192"
+    },
+    {
+      "path": "s04/request.json",
+      "sha256": "cc907ce9e61f9229a6198d279b28dd21e96e3a26cf36a1e64a0599f9a9548886"
+    },
+    {
+      "path": "s04/response-metadata.json",
+      "sha256": "36c436f337b31328989f2cc8b475198c400add9f74139cbc0b301a1dac40fc9c"
+    },
+    {
+      "path": "s04/plan.json",
+      "sha256": "722784b9a07e94d4277df5f337f4689d57e296689755b7f1f269a5cc1e9c1215"
+    },
+    {
+      "path": "s04/result.json",
+      "sha256": "2b714306ceaeacdd783ecc9585cacc0b777b7b18844f0d779a6d45bc96a9a741"
+    },
+    {
+      "path": "s04/prepared-final-stage.json",
+      "sha256": "4ea19034837ed2b3c8f4dae2edfb8679cad95a4176cee0a0ad358e0497fe73bf"
+    },
+    {
+      "path": "earlier-local-replay.json",
+      "sha256": "ff666d3cfcf15a89c1d1f08b9575c5597635a531cd98b15a1673d9f0de124416"
+    },
+    {
+      "path": "local-checker.py",
+      "sha256": "be69ca8fd9470ec2e39a12d993f70b0a68dd807ed04fa982fc4a925717cee2c5"
+    },
+    {
+      "path": "local-checker-tests.py",
+      "sha256": "a2ba07b7a19173e62796c49cd048ff620f0fb37d52453ee737f161905d996612"
+    },
+    {
+      "path": "final-report-replay-tests.py",
+      "sha256": "1798c8c559e14a82d99838fc1d4e2a5229b3c39297617a4ec67633456ad0f3c7"
+    },
+    {
+      "path": "original-evaluation-result.json",
+      "sha256": "91bc28fcdb5d183689188c325b8e44bbbaa49ff32014fd70ff7f4e1c7056bce6"
+    },
+    {
+      "path": "reference-cases.json",
+      "sha256": "0e77cf0ea3e700c74be096f00fad1f54132342d0afe1dfbb2b63d8e202002b4c"
+    },
+    {
+      "path": "targeted-tests.txt",
+      "sha256": "06f721207dab71d21dc6f9db6e8030918be40798cb4de1df8e85e6b7f9229b87"
+    }
+  ]
+}

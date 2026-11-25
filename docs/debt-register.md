@@ -132,25 +132,45 @@ Baseline inspected: `a78aee443e4c3be127535dd86e3e50745b5da5de`, D1 v1.51.0. Thes
 
 **Review trigger and closure.** Recheck before claiming course-compliant blocking gates or final release governance. Close only when actual settings and an applicable execution demonstrate enforcement; otherwise retain Open and describe the limitation. No reactivation, test run, owner or completion date is assigned here.
 
-### DEBT-EVALUATION-001 — FR-10 formal semantic acceptance remains unestablished
+### DEBT-EVALUATION-001 — FR-10 local real-model checks completed; formal workflow evidence outstanding
 
 | Field | Recorded value |
 |---|---|
 | Category | EVALUATION |
-| First recorded here | 2026-11-25; earlier planning records already disclosed the gap |
-| Status | Open |
+| First recorded here | 2026-11-25 |
+| Status | Partially resolved — local candidate checks passed; formal workflow/paired evidence remains open |
 | Owner | Unassigned |
-| Related reviews | RM-19-R1, RM-25-R1 and RM-26-R1 |
+| Related reviews | RM-19-R1, RM-25-R1, RM-26-R1 and RM-FR10-LOCAL-20261125 |
 
-**Confirmed condition and evidence.** Financial metrics and their fundamentals-prompt injection are on main, but [financial-metrics evaluation configuration](ci/semantic_eval.yaml) remains `status: unapproved`, with null approval identity/time and no execution-approval evidence. The [registered suite](ci/semantic-suites.yaml), [fixed cases](ci/financial-metrics-cases.json), [rubric](ci/financial-metrics-rubric.md), runner and offline scorer tests exist. The fixed Git dataset/rubric hashes match their configuration. Presence and integrity of those artifacts do not demonstrate a candidate-bound completed model evaluation.
+**Current evidence.** Four candidate cases now have complete real `deepseek-flash`
+reports against application commit `3d457be78fcf72c9aa3b5d1879396292d7b391bc`.
+FM-S01/S02/S03 use the earlier saved real replies; FM-S04 was separately rerun
+through the application's existing final-report path after its first reply
+contained only tool intent. All four pass the versioned local checker (five
+checks per case). The S04 rerun preserves `n/a: price_not_completed` and the other
+nine metrics. No FR-10 application change was required for that rerun.
+See the [evidence index](evidence/fr10-local-20261125/index.md) and
+[local checker scope and history](drafts/fr10-local-gates.md).
 
-**Why this is debt.** The implementation has been delivered while the formal quality-evidence step for the prompt-affecting change remains open. This is not merely a deferred future feature or a demand for an invented quality threshold. The existing plan proposes a maximum six-request replay and its existing scoring contract; this entry changes neither.
+**What changed.** The earlier statement that only synthetic/offline examples
+exist is superseded by these real response artifacts. The new local checks
+recognize equivalent metric labels, source aliases and negated basis disclaimers.
+They are bounded checks of explicit assertions, not universal financial truth or
+completeness validation. The independent numerical reference was unchanged.
 
-**Retention and risk.** Offline reference calculations, injection tests, fault-isolation tests and the 28 post-implementation regression examples provide useful deterministic evidence. They do not establish that a live analyst consistently uses the program evidence correctly. Earlier personal-branch pilots concern different code/input versions and are not substituted for the formal candidate. A team-approved permanent waiver is **not recorded**. No general model-quality or cost-saving guarantee is supported by the current evidence.
+**Remaining distinction.** The original frozen D1-D5 run was unsuccessful and is
+preserved as such; it has not been replaced by this different local checker. Its
+paired baseline S01 is still incomplete. The registered configuration remains
+`unapproved`, and no GitHub formal workflow pass or new independent human review
+is asserted. Thus the local candidate-response verification gap is resolved,
+while the separate formal-governance/paired-evaluation part stays open. No team
+waiver, retrospective approval or broad quality/cost guarantee is invented.
 
-**Handling.** When authorized, obtain actual approval of the fixed evaluation configuration and bounded model execution, check the existing trusted-runner prerequisites, and run the existing suite against a fixed candidate and baseline. Preserve outputs, usage, finish reasons, scoring and failed/ambiguous claims. An unsuccessful or blocked replay remains unsuccessful or blocked; do not lower thresholds or relabel offline examples as a live pass.
-
-**Review trigger and closure.** Recheck before asserting formal semantic acceptance or producing another prompt/model release. Closure requires locatable approval plus candidate/input/model-bound results meeting the approved contract and actual human review. Any unexecuted prerequisites remain open. No paid request, scoring change or approval-state change was made by this registration.
+**Handling.** For an optional later claim of formal workflow acceptance, review
+and approve the intended evaluator, repair final-stage replay consistently for
+both conditions, and retain the resulting bound evidence. These remaining steps
+are not prerequisites to accurately reporting the completed local four-case
+checks. Other course-control debts remain independent and unchanged.
 
 ### DEBT-GUARDRAIL-002 — Unbounded context and incomplete course-budget design
 

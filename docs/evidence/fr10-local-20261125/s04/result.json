@@ -1,0 +1,13 @@
+{
+  "case_id": "FM-S04",
+  "status": "passed",
+  "checks": {
+    "injection": true,
+    "values": true,
+    "period_units": true,
+    "sources": true,
+    "unavailable_basis": true
+  },
+  "errors": [],
+  "passed_checks": 5
+}
