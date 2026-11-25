@@ -69,7 +69,7 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 payload = json.loads(sys.stdin.read())
@@ -113,6 +113,18 @@ class _CaptureLLM(BaseChatModel):
 llm = _CaptureLLM()
 case = payload["case"]
 ref_data = payload["reference_data"]
+capture_stage = payload.get("capture_stage", "initial")
+if capture_stage not in ("initial", "final_report"):
+    raise RuntimeError("unsupported capture stage")
+
+def _report_messages():
+    material = case["task"] + "\n\n" + case["statement_material"]
+    if capture_stage == "initial":
+        return [("human", material)]
+    # Use the application's existing no-tools finalization path, rather than
+    # treating an initial tool-selection turn as a completed financial report.
+    turn_mod, origins["analyst_turn"] = _check_origin("tradingagents.agents.analysts.turn")
+    return [HumanMessage(content=material), HumanMessage(content=turn_mod.WRAP_UP)]
 
 if mode == "baseline":
     factory = getattr(analyst_mod, "create_fundamentals_analyst")
@@ -120,7 +132,7 @@ if mode == "baseline":
     state = {
         "trade_date": case["as_of"],
         "company_of_interest": case["ticker"],
-        "messages": [("human", case["task"] + "\n\n" + case["statement_material"])],
+        "messages": _report_messages(),
     }
     node(state)
     print(json.dumps({
@@ -129,6 +141,7 @@ if mode == "baseline":
         "origins": origins,
         "prompts": llm.prompts,
         "metric_block": "",
+        "capture_stage": capture_stage,
     }))
     raise SystemExit(0)
 
@@ -238,7 +251,7 @@ node = create_fn(llm, metrics_factory=wrapped_factory)
 state = {
     "trade_date": case["as_of"],
     "company_of_interest": case["ticker"],
-    "messages": [("human", case["task"] + "\n\n" + case["statement_material"])],
+    "messages": _report_messages(),
 }
 node(state)
 print(json.dumps({
@@ -247,6 +260,7 @@ print(json.dumps({
     "origins": origins,
     "prompts": llm.prompts,
     "metric_block": captured_result["text"],
+    "capture_stage": capture_stage,
 }))
 """
 
@@ -371,7 +385,10 @@ def _run_prompt_capture_subprocess(
     reference_data: Mapping[str, Any],
     python_executable: str,
     timeout: int = 60,
+    capture_stage: str = "initial",
 ) -> dict[str, Any]:
+    if capture_stage not in ("initial", "final_report"):
+        raise CiError("unsupported prompt capture stage")
     env = {
         key: val
         for key, val in os.environ.items()
@@ -382,6 +399,7 @@ def _run_prompt_capture_subprocess(
         "mode": mode,
         "case": dict(case),
         "reference_data": dict(reference_data),
+        "capture_stage": capture_stage,
     })
     proc = subprocess.run(
         [python_executable, "-B", "-c", _CHILD_DRIVER],

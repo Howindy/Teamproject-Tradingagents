@@ -1,0 +1,22 @@
+{
+  "model": "deepseek-flash",
+  "response_id": "29264526-681c-4695-841a-2f62d4c0681b",
+  "finish_reason": "stop",
+  "usage": {
+    "completion_tokens": 4050,
+    "prompt_tokens": 3032,
+    "total_tokens": 7082,
+    "completion_tokens_details": null,
+    "prompt_tokens_details": {
+      "audio_tokens": null,
+      "cache_write_tokens": null,
+      "cached_tokens": 0,
+      "image_tokens": null,
+      "text_tokens": null
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 3032
+  },
+  "elapsed_seconds": 17.32799999997951,
+  "tool_calls": []
+}

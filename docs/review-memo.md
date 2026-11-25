@@ -720,7 +720,7 @@ The API snapshot showed both `CI` and `Trusted evaluation` as `disabled_manually
 
 **Security and efficiency.** Providers and caches stay outside serialized graph state; the existing formal-decision boundary is retained. Analysis-local reuse is tested, but no provider billing, latency or general live-model benefit is established. No new paid calls or security scan was performed during this record maintenance.
 
-**Disposition and outstanding evidence.** The implementation is merged, but FR-10's [formal semantic configuration](ci/semantic_eval.yaml) remains `unapproved`. Known-answer offline tests do not replace a candidate-bound model replay. Subsequent source-contract fixes are assessed in RM-25-R1.
+**Disposition and outstanding evidence.** The implementation is merged. A later local real-model review now covers all four candidate cases; see RM-FR10-LOCAL-20261125 below. The registered [formal semantic configuration](ci/semantic_eval.yaml) remains `unapproved`; local checker success is not a frozen D1-D5 or GitHub workflow pass. Subsequent source-contract fixes are assessed in RM-25-R1.
 
 - Final human verdict: **Not recorded** in the formal Review API snapshot.
 - Human reviewer/time/rationale: Not recorded for a final implementation review; do not substitute the test-specification comment.
@@ -798,3 +798,40 @@ The API snapshot showed both `CI` and `Trusted evaluation` as `disabled_manually
 - Final human verdict: **Not recorded** in the formal Review API snapshot.
 - Human reviewer/time/rationale: Not recorded.
 - Follow-up: Confirm the scope/document changes through an actual human review, retain the explicit course-alignment gaps, and distinguish configured controls from live GitHub settings. This maintenance assigns no retrospective APPROVE.
+
+
+### RM-FR10-LOCAL-20261125 — Local real-model financial-metric verification
+
+**Scope and identity.** Post-implementation local verification of four fixed FR-10
+candidate cases on application commit `3d457be78fcf72c9aa3b5d1879396292d7b391bc`.
+The checker version is `fr10-local-gates-v1`. This entry records actual automated
+checks and AI-assisted passage inspection, not a human APPROVE or earlier test
+pre-approval. The user authorized the local checks and separate S04 real rerun.
+
+**Results.** FM-S01, FM-S02 and FM-S03 each pass five local checks on their saved
+complete real model reports. The original S04 contained tool intent rather than
+a final report. Its corrected final-stage replay made one real request and passed
+5/5: the cutoff-ineligible price was not used for FY P/E, the reason was retained,
+and the other nine metrics remained. All four candidate cases therefore have
+real-response local passes. See [packaged evidence](evidence/fr10-local-20261125/index.md).
+
+**Executed checks.** The new checker has 32 passing positive/negative tests. Four
+final-stage wiring tests were then added; these plus selected existing
+projection/scoring regressions passed 38 tests (9 unrelated tests deselected).
+The earlier broader related run had 70 passes and one stale inventory-count
+assertion failure, reproduced on the untouched application candidate. Ruff lint
+passed. No application runtime logic, independent expected value or GitHub
+workflow was changed. Exact new response and usage artifacts are preserved.
+
+**Limitations.** The original frozen evaluator misclassified some ordinary
+labels, source aliases and negated statements; its unsuccessful result remains
+historical evidence. The local checker does not certify every free-form claim.
+The four cases were not all generated under identical final-stage replay: the
+first three were already complete, and only S04 required the separate final
+stage. The paired baseline S01 remains incomplete; no completed formal paired
+D1-D5 or GitHub pass is claimed. Round-04 synthetic tests are not relabeled as
+real model runs. No general quality or cost guarantee follows.
+
+**Disposition.** Local four-case candidate-response verification: **PASSED**.
+Formal workflow/paired evidence: **not completed**. Independent final human
+review: **not recorded**. This is an evidence update, not a retrospective verdict.
